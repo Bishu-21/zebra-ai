@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Zebra AI - Resume Precision</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-primary": "#adc6ff",
+                        "on-error-container": "#93000a",
+                        "background": "#fcf8f8",
+                        "on-surface-variant": "#424754",
+                        "on-secondary-container": "#405682",
+                        "outline-variant": "#c2c6d6",
+                        "primary-container": "#2170e4",
+                        "on-tertiary": "#ffffff",
+                        "inverse-surface": "#313030",
+                        "on-primary-fixed-variant": "#004395",
+                        "tertiary-fixed-dim": "#ffb786",
+                        "primary-fixed": "#d8e2ff",
+                        "on-tertiary-fixed-variant": "#723600",
+                        "on-primary": "#ffffff",
+                        "surface": "#fcf8f8",
+                        "primary-fixed-dim": "#adc6ff",
+                        "tertiary": "#924700",
+                        "secondary-container": "#b6ccff",
+                        "primary": "#0058be",
+                        "on-background": "#1c1b1b",
+                        "surface-container-high": "#ebe7e7",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed": "#001a42",
+                        "on-tertiary-container": "#fffbff",
+                        "on-secondary": "#ffffff",
+                        "secondary": "#495e8a",
+                        "error": "#ba1a1a",
+                        "on-tertiary-fixed": "#311400",
+                        "on-error": "#ffffff",
+                        "surface-tint": "#005ac2",
+                        "on-primary-container": "#fefcff",
+                        "surface-variant": "#e5e2e1",
+                        "surface-container-low": "#f6f3f2",
+                        "surface-container-highest": "#e5e2e1",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-bright": "#fcf8f8",
+                        "inverse-on-surface": "#f3f0ef",
+                        "on-primary-fixed": "#001a42",
+                        "on-surface": "#1c1b1b",
+                        "tertiary-fixed": "#ffdcc6",
+                        "surface-dim": "#dcd9d9",
+                        "outline": "#727785",
+                        "surface-container": "#f0edec",
+                        "on-secondary-fixed-variant": "#304671",
+                        "secondary-fixed": "#d8e2ff",
+                        "tertiary-container": "#b75b00",
+                        "secondary-fixed-dim": "#b1c6f9"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #ffffff; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .text-display-lg { font-size: 3.5rem; font-weight: 700; line-height: 1.1; letter-spacing: -0.04em; }
+        .text-headline-md { font-size: 1.75rem; font-weight: 700; line-height: 1.2; letter-spacing: -0.02em; }
+        .text-label-md { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+        .asymmetric-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 8px; }
+        .intelligence-trace { border-left: 2px solid #3B82F6; padding-left: 1.5rem; }
+    </style>
+</head>
+<body class="antialiased text-on-background selection:bg-primary selection:text-white">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-white/80 dark:bg-black/80 backdrop-blur-sm">
+<div class="flex justify-between items-center px-8 py-4 max-w-7xl mx-auto">
+<div class="text-xl font-bold tracking-tighter text-black dark:text-white font-['Inter'] antialiased">
+                Zebra AI
+            </div>
+<div class="hidden md:flex items-center gap-8">
+<a class="text-black dark:text-white font-bold border-b-2 border-blue-600 transition-colors" href="#">Product</a>
+<a class="text-zinc-500 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" href="#">Pricing</a>
+<a class="text-zinc-500 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" href="#">About</a>
+</div>
+<button class="bg-primary text-on-primary px-6 py-2 rounded-lg font-bold hover:translate-y-[-2px] transition-transform duration-200">
+                Sign In
+            </button>
+</div>
+</nav>
+<main class="pt-32 pb-24 px-8 overflow-x-hidden">
+<div class="max-w-7xl mx-auto">
+<!-- Hero Layout Section -->
+<section class="relative min-h-[800px] flex flex-col justify-center">
+<!-- Asymmetric Header -->
+<div class="w-full md:w-2/3 mb-24">
+<p class="text-label-md text-primary mb-4">The Precision Editor</p>
+<h1 class="text-display-lg text-on-background mb-8">
+                        Resumes aren't broken. <br/>
+<span class="text-zinc-300">The process is.</span>
+</h1>
+</div>
+<!-- Chaos-to-Grid Floating Cards -->
+<div class="relative w-full h-[600px]">
+<!-- Background Cards (Floating) -->
+<div class="absolute top-0 left-0 w-64 p-8 bg-primary text-white rounded-lg rotate-[-6deg] z-10">
+<p class="text-label-md opacity-80 mb-4">Query 01</p>
+<p class="font-bold leading-tight uppercase">Why do resumes get ignored?</p>
+</div>
+<div class="absolute top-20 right-10 w-72 p-8 bg-primary text-white rounded-lg rotate-[4deg] z-10">
+<p class="text-label-md opacity-80 mb-4">Query 02</p>
+<p class="font-bold leading-tight uppercase">Am I writing for humans or machines?</p>
+</div>
+<div class="absolute bottom-10 left-20 w-64 p-8 bg-primary text-white rounded-lg rotate-[2deg] z-10">
+<p class="text-label-md opacity-80 mb-4">Query 03</p>
+<p class="font-bold leading-tight uppercase">1,000 applicants. 1 role. How?</p>
+</div>
+<div class="absolute bottom-20 right-40 w-64 p-8 bg-primary text-white rounded-lg rotate-[-8deg] z-10">
+<p class="text-label-md opacity-80 mb-4">Query 04</p>
+<p class="font-bold leading-tight uppercase">Is my formatting the killer?</p>
+</div>
+<!-- Centered Zoomed Card -->
+<div class="absolute inset-0 flex items-center justify-center z-40 pointer-events-none">
+<div class="w-full max-w-2xl p-12 bg-primary text-white rounded-xl shadow-[0px_10px_30px_rgba(0,0,0,0.08)] pointer-events-auto transform scale-110">
+<div class="relative bg-white rounded-lg p-10 text-on-background overflow-hidden">
+<!-- Scratch Effect Realized as a Reveal Section -->
+<div class="intelligence-trace space-y-6">
+<div class="space-y-1">
+<p class="text-label-md text-secondary">Applicant</p>
+<p class="text-headline-md italic font-normal">"I applied everywhere... nothing."</p>
+</div>
+<div class="space-y-1">
+<p class="text-label-md text-primary">Zebra Intelligence</p>
+<p class="text-headline-md">Your resume didn't fail. <span class="text-primary">ATS rejected it.</span></p>
+</div>
+<div class="pt-6">
+<button class="bg-primary text-white px-8 py-4 rounded-lg text-label-md tracking-widest hover:translate-y-[-2px] transition-transform">
+                                            Fix with Zebra AI
+                                        </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Tonal Layered Content Section -->
+<section class="mt-48 grid grid-cols-1 md:grid-cols-2 gap-24 items-start">
+<div class="space-y-12">
+<h2 class="text-headline-md">The 1% Difference</h2>
+<p class="text-body-lg text-on-surface-variant max-w-md">
+                        We don't just generate text. We audit the technical metadata of your career. Zebra AI uses surgical precision to align your experience with algorithmic gatekeepers.
+                    </p>
+<div class="bg-surface-container-low p-12 rounded-xl">
+<p class="text-label-md text-primary mb-4">Real-time Feedback</p>
+<div class="space-y-4">
+<div class="h-2 bg-primary w-3/4 rounded-full"></div>
+<div class="h-2 bg-zinc-200 w-1/2 rounded-full"></div>
+<div class="h-2 bg-zinc-200 w-2/3 rounded-full"></div>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant/20 p-12 rounded-xl shadow-[0px_10px_30px_rgba(0,0,0,0.02)]">
+<div class="intelligence-trace">
+<p class="text-body-lg mb-8 italic text-on-surface-variant">
+                            "Zebra identified 14 formatting errors that were making my resume unreadable to standard ATS software. Three days after the fix, I had two interviews."
+                        </p>
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 bg-surface-container-high rounded-full overflow-hidden">
+<img alt="" class="w-full h-full object-cover" data-alt="portrait of a professional man in a white studio setting with soft neutral lighting and clean aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCa0S8S6v9GRTSbIMIFU3rP4QwKiUshwLrzTegk9RaYuqj2XSO0FhWnRgus8JwIzavPGHTBn7xbPKFjsfVyBDwzIclhbPaoToJUHGAhRgZsrxtBX-i21OzIIFE8OEsWbKaGA_8vlSJRxurmeyigB3xGB1S_wsCTY-gulx_ARLPmxJma7hqW0Wys8g7oBCqOEpmKlQfPVORcmjyodnIoouMJ-nbcF4fIZTDppaC3FtX_-AJAcPyiFgkvMxFoVrbJNC9TaTJOTG9F3E4T"/>
+</div>
+<div>
+<p class="font-bold text-sm">Marcus Chen</p>
+<p class="text-label-md text-secondary">Senior Product Designer</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full rounded-t-lg bg-zinc-50 dark:bg-zinc-950">
+<div class="flex flex-col md:flex-row justify-between items-center px-12 py-16 gap-8 max-w-7xl mx-auto">
+<div class="space-y-4">
+<div class="text-lg font-bold text-black dark:text-white font-['Inter']">Zebra AI</div>
+<p class="text-zinc-500 dark:text-zinc-400 font-['Inter'] text-sm">© 2024 Zebra AI. All rights reserved.</p>
+</div>
+<div class="flex gap-8">
+<a class="text-zinc-500 dark:text-zinc-400 hover:text-black dark:hover:text-white font-['Inter'] text-sm transition-opacity duration-200 hover:opacity-80" href="#">Twitter</a>
+<a class="text-zinc-500 dark:text-zinc-400 hover:text-black dark:hover:text-white font-['Inter'] text-sm transition-opacity duration-200 hover:opacity-80" href="#">LinkedIn</a>
+<a class="text-zinc-500 dark:text-zinc-400 hover:text-black dark:hover:text-white font-['Inter'] text-sm transition-opacity duration-200 hover:opacity-80" href="#">Status</a>
+<a class="text-zinc-500 dark:text-zinc-400 hover:text-black dark:hover:text-white font-['Inter'] text-sm transition-opacity duration-200 hover:opacity-80" href="#">Privacy</a>
+</div>
+</div>
+</footer>
+</body></html>
