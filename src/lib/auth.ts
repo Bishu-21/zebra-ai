@@ -11,5 +11,10 @@ export const auth = betterAuth({
 	emailAndPassword: {
 		enabled: true,
 	},
-	// We will add social providers here once we have the keys from phase 2 instructions
+	socialProviders: {
+		google: {
+			clientId: process.env.GOOGLE_CLIENT_ID!,
+			clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+		},
+	},
 });

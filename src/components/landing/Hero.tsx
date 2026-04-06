@@ -1,100 +1,122 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import React from "react";
+import { m, useScroll, useTransform } from "framer-motion";
 import { ScratchCard } from "./ScratchCard";
 import Link from "next/link";
+import { useSession } from "@/lib/auth-client";
 
-export function Hero({ isLoggedIn }: { isLoggedIn?: boolean }) {
+export function Hero() {
+  const { data: session } = useSession();
+  const isLoggedIn = !!session;
+  
   const { scrollY } = useScroll();
-  const isGrid = useTransform(scrollY, [0, 400], [0, 1]);
-  const [gridValue, setGridValue] = useState(0);
 
-  useEffect(() => {
-    return isGrid.on('change', v => setGridValue(v));
-  }, [isGrid]);
+  // Transform values for Card 1
+  const card1Top = useTransform(scrollY, [0, 400], ["-20px", "20px"]);
+  const card1Left = useTransform(scrollY, [0, 400], ["-20px", "0px"]);
+  const card1Rotate = useTransform(scrollY, [0, 400], [-8, 0]);
+  const card1Scale = useTransform(scrollY, [0, 400], [1, 0.9]);
+  const card1Opacity = useTransform(scrollY, [400, 600], [1, 0]);
+
+  // Transform values for Card 2
+  const card2Top = useTransform(scrollY, [0, 400], ["40px", "20px"]);
+  const card2Right = useTransform(scrollY, [0, 400], ["20px", "0px"]);
+  const card2Rotate = useTransform(scrollY, [0, 400], [6, 0]);
+  const card2Scale = useTransform(scrollY, [0, 400], [1, 0.9]);
+  const card2Opacity = useTransform(scrollY, [400, 600], [1, 0]);
+
+  // Transform values for Card 3
+  const card3Bottom = useTransform(scrollY, [0, 400], ["10px", "20px"]);
+  const card3Left = useTransform(scrollY, [0, 400], ["60px", "0px"]);
+  const card3Rotate = useTransform(scrollY, [0, 400], [-3, 0]);
+  const card3Scale = useTransform(scrollY, [0, 400], [1, 0.9]);
+  const card3Opacity = useTransform(scrollY, [400, 600], [1, 0]);
+
+  // Transform values for Focus Card
+  const focusScale = useTransform(scrollY, [0, 400], [0.95, 1.05]);
 
   return (
-    <section className="relative min-h-[70vh] flex flex-col pt-32 pb-8 px-5 md:px-8 max-w-7xl mx-auto overflow-x-visible font-sans">
+    <section className="relative min-h-[60vh] flex flex-col pt-16 md:pt-24 pb-4 px-5 md:px-8 max-w-7xl mx-auto overflow-x-visible font-sans">
       {/* Asymmetric Header */}
-      <div className="w-full md:w-2/3 mb-10 z-20 relative">
-        <p className="text-[0.7rem] md:text-[0.8rem] font-bold tracking-[0.08em] uppercase text-[#2563EB] mb-4">The Precision Editor</p>
-        <h1 className="text-[2.75rem] md:text-[4rem] font-bold leading-[1.05] tracking-[-0.04em] text-[#0A0A0A] mb-8">
+      <div className="w-full md:w-2/3 mb-6 md:mb-10 z-20 relative">
+        <p className="text-[0.7rem] md:text-[0.8rem] font-bold tracking-[0.08em] uppercase text-[#3B82F6] mb-2 md:mb-4">The Precision Editor</p>
+        <h1 className="text-[3rem] md:text-[4.5rem] font-bold leading-[1] tracking-[-0.05em] text-[#0A0A0A] mb-4 md:mb-8">
           Resumes aren't broken. <br/>
-          <span className="text-[#888888]">The process is.</span>
+          <span className="text-[#737373]">The process is.</span>
         </h1>
       </div>
 
       {/* Chaos-to-Grid Floating Cards Engine */}
       <div className="relative w-full h-[400px] flex items-center justify-center -mt-8">
         {/* Card 1: Top Left Chaos */}
-        <motion.div 
+        <m.div 
           className="hidden md:block absolute z-10 w-64 p-8 rounded-[16px] overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.1)]"
-          style={{ background: 'linear-gradient(135deg, #3B82F6 0%, #0058BE 100%)' }}
-          animate={{
-            top: gridValue > 0.5 ? "20px" : "-20px",
-            left: gridValue > 0.5 ? "0px" : "-20px",
-            rotate: gridValue > 0.5 ? 0 : -8,
-            scale: gridValue > 0.5 ? 0.9 : 1,
-            opacity: gridValue > 0.8 ? 0 : 1,
+          style={{ 
+            background: 'linear-gradient(135deg, #3B82F6 0%, #0058BE 100%)',
+            top: card1Top,
+            left: card1Left,
+            rotate: card1Rotate,
+            scale: card1Scale,
+            opacity: card1Opacity,
           }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
         >
-          <div className="absolute inset-0 opacity-[0.06] bg-[url('data:image/svg+xml,%3Csvg%20viewBox=%220%200%20200%20200%22%20xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter%20id=%22noiseFilter%22%3E%3CfeTurbulence%20type=%22fractalNoise%22%20baseFrequency=%220.65%22%20numOctaves=%223%22%20stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect%20width=%22100%25%22%20height=%22100%25%22%20filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E')]" />
+          <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
+               style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }} />
           <p className="relative text-[0.7rem] font-bold tracking-[0.08em] uppercase text-white/60 mb-5">Query 01</p>
           <p className="relative text-[1rem] font-bold leading-[1.3] text-white">WHY DO RESUMES GET IGNORED?</p>
-        </motion.div>
+        </m.div>
 
         {/* Card 2: Top Right Chaos */}
-        <motion.div 
+        <m.div 
           className="hidden md:block absolute z-10 w-72 p-8 rounded-[16px] overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.1)]"
-          style={{ background: 'linear-gradient(135deg, #3B82F6 0%, #0058BE 100%)' }}
-          animate={{
-            top: gridValue > 0.5 ? "20px" : "40px",
-            right: gridValue > 0.5 ? "0px" : "20px",
-            rotate: gridValue > 0.5 ? 0 : 6,
-            scale: gridValue > 0.5 ? 0.9 : 1,
-            opacity: gridValue > 0.8 ? 0 : 1,
+          style={{ 
+            background: 'linear-gradient(135deg, #3B82F6 0%, #0058BE 100%)',
+            top: card2Top,
+            right: card2Right,
+            rotate: card2Rotate,
+            scale: card2Scale,
+            opacity: card2Opacity,
           }}
-          transition={{ duration: 0.6, ease: "easeOut", delay: 0.05 }}
         >
-          <div className="absolute inset-0 opacity-[0.06] bg-[url('data:image/svg+xml,%3Csvg%20viewBox=%220%200%20200%20200%22%20xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter%20id=%22noiseFilter%22%3E%3CfeTurbulence%20type=%22fractalNoise%22%20baseFrequency=%220.65%22%20numOctaves=%223%22%20stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect%20width=%22100%25%22%20height=%22100%25%22%20filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E')]" />
+          <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
+               style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }} />
           <p className="relative text-[0.7rem] font-bold tracking-[0.08em] uppercase text-white/60 mb-5">Query 02</p>
           <p className="relative text-[1rem] font-bold leading-[1.3] text-white">AM I WRITING FOR HUMANS OR MACHINES?</p>
-        </motion.div>
+        </m.div>
 
         {/* Card 3: Bottom Left Chaos */}
-        <motion.div 
+        <m.div 
           className="hidden md:block absolute z-10 w-64 p-8 rounded-[16px] overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.1)]"
-          style={{ background: 'linear-gradient(135deg, #3B82F6 0%, #0058BE 100%)' }}
-          animate={{
-            bottom: gridValue > 0.5 ? "20px" : "10px",
-            left: gridValue > 0.5 ? "0px" : "60px",
-            rotate: gridValue > 0.5 ? 0 : -3,
-            scale: gridValue > 0.5 ? 0.9 : 1,
-            opacity: gridValue > 0.8 ? 0 : 1,
+          style={{ 
+            background: 'linear-gradient(135deg, #3B82F6 0%, #0058BE 100%)',
+            bottom: card3Bottom,
+            left: card3Left,
+            rotate: card3Rotate,
+            scale: card3Scale,
+            opacity: card3Opacity,
           }}
-          transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
         >
-          <div className="absolute inset-0 opacity-[0.06] bg-[url('data:image/svg+xml,%3Csvg%20viewBox=%220%200%20200%20200%22%20xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter%20id=%22noiseFilter%22%3E%3CfeTurbulence%20type=%22fractalNoise%22%20baseFrequency=%220.65%22%20numOctaves=%223%22%20stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect%20width=%22100%25%22%20height=%22100%25%22%20filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E')]" />
+          <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
+               style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }} />
           <p className="relative text-[0.7rem] font-bold tracking-[0.08em] uppercase text-white/60 mb-5">Query 03</p>
           <p className="relative text-[1rem] font-bold leading-[1.3] text-white">1,000 APPLICANTS. 1 ROLE. REALLY?</p>
-        </motion.div>
+        </m.div>
 
         {/* Centered Focus Card - This handles the Scratch Layer */}
-        <motion.div 
+        <m.div 
           className="absolute inset-0 flex items-center justify-center z-40 pointer-events-none"
-          animate={{
-            scale: gridValue > 0.5 ? 1.05 : 0.95,
+          style={{
+            scale: focusScale,
           }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
         >
           <div className="w-full px-4 md:px-0 pointer-events-auto group mt-8">
             <ScratchCard 
-              className="w-full min-h-[320px] transition-transform duration-500 ease-out group-hover:scale-[1.02]"
+              className="w-full min-h-[300px] md:min-h-[320px] transition-transform duration-500 ease-out group-hover:scale-[1.01]"
               frontContent={
                 <div className="relative h-full z-10 p-2">
-                  <div className="absolute inset-0 opacity-[0.06] bg-[url('data:image/svg+xml,%3Csvg%20viewBox=%220%200%20200%20200%22%20xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter%20id=%22noiseFilter%22%3E%3CfeTurbulence%20type=%22fractalNoise%22%20baseFrequency=%220.65%22%20numOctaves=%223%22%20stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect%20width=%22100%25%22%20height=%22100%25%22%20filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E')]" />
+                  <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
+                       style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }} />
                   <p className="text-[0.65rem] md:text-[0.75rem] font-bold tracking-[0.08em] uppercase text-white/70 mb-2 md:mb-4">The True Insight</p>
                   <h2 className="text-[1.5rem] md:text-[2rem] font-bold leading-[1.1] max-w-xs mt-2">Scratch to reveal reality.</h2>
                   <div className="absolute bottom-2 left-2 flex items-center gap-2 md:gap-3">
@@ -108,8 +130,8 @@ export function Hero({ isLoggedIn }: { isLoggedIn?: boolean }) {
               backContent={
                 <div className="flex flex-col justify-between h-full space-y-4">
                   <div className="space-y-1">
-                    <p className="text-[0.6rem] md:text-[0.65rem] font-bold tracking-[0.08em] uppercase text-[#6B6B6B]">Applicant</p>
-                    <p className="text-[1rem] md:text-[1.25rem] font-normal leading-[1.3] italic text-[#0A0A0A]">
+                    <p className="text-[0.6rem] md:text-[0.65rem] font-bold tracking-[0.08em] uppercase text-[#737373]">Applicant</p>
+                    <p className="text-[1rem] md:text-[1.25rem] font-medium leading-[1.3] text-[#0A0A0A]">
                       "I applied everywhere... nothing."
                     </p>
                   </div>
@@ -140,7 +162,7 @@ export function Hero({ isLoggedIn }: { isLoggedIn?: boolean }) {
               }
             />
           </div>
-        </motion.div>
+        </m.div>
 
       </div>
     </section>

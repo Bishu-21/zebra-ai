@@ -78,6 +78,8 @@ export const resumes = pgTable("resumes", {
     title: text("title").notNull(),
     content: text("content"), // Can store raw text or serialized JSON
     status: text("status").notNull().default("Draft"),
+    isPublic: boolean("is_public").notNull().default(false),
+    shareToken: text("share_token"), // Unique token for public sharing
     createdAt: timestamp("created_at").notNull(),
     updatedAt: timestamp("updated_at").notNull(),
 });

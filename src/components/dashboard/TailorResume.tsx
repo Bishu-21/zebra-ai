@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { 
     RiProfileLine, 
     RiCloseCircleLine, 
@@ -15,7 +15,9 @@ import {
     RiLoader4Line,
     RiArrowRightLine,
     RiFileTextLine,
-    RiFocus3Line
+    RiFocus3Line,
+    RiArrowRightSLine,
+    RiTerminalBoxLine
 } from "react-icons/ri";
 import { useRouter } from "next/navigation";
 
@@ -80,55 +82,66 @@ export function TailorResume({ resumes }: { resumes: any[] }) {
             {/* Launcher Card */}
             <div 
                 onClick={() => setIsOpen(true)}
-                className="flex items-center justify-between w-full h-full cursor-pointer hover:opacity-90 transition-all p-10 bg-white border border-black/5 rounded-[2.5rem] shadow-sm group/card hover:shadow-xl hover:shadow-black/5 active:scale-[0.99]"
+                className="group/card relative overflow-hidden flex flex-col justify-between w-full h-full cursor-pointer transition-all p-10 bg-white border border-black/[0.04] rounded-[2.5rem] hover:shadow-2xl hover:shadow-black/[0.03] active:scale-[0.99] group"
             >
-                <div className="flex items-center gap-6">
-                    <div className="w-16 h-16 bg-black/[0.02] border border-black/5 rounded-2xl flex items-center justify-center text-black/[0.12] shadow-inner group-hover/card:scale-110 group-hover/card:bg-black group-hover/card:text-white transition-all duration-500">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-black/[0.01] rounded-bl-[4rem] group-hover/card:scale-110 transition-transform" />
+                
+                <div className="flex items-start justify-between mb-8">
+                    <div className="w-14 h-14 bg-black/[0.03] rounded-2xl flex items-center justify-center text-[#737373]/40 group-hover/card:bg-[#3B82F6] group-hover/card:text-white transition-all duration-500">
                         <RiFocus3Line size={24} />
                     </div>
-                    <div>
-                        <h3 className="font-black text-xl mb-1 text-black tracking-tight group-hover/card:translate-x-1 transition-transform duration-300">Strategic Match</h3>
-                        <p className="text-sm text-black/40 font-bold uppercase tracking-wider">
-                            Synthesize your profile to match job requirements with precision.
-                        </p>
+                    <div className="flex items-center gap-1 opacity-0 group-hover/card:opacity-100 transition-opacity">
+                        <span className="text-[0.6rem] font-bold uppercase tracking-widest text-[#737373]">Match Protocol</span>
+                        <RiArrowRightSLine size={14} className="text-[#3B82F6]" />
                     </div>
                 </div>
-                <button className="px-6 py-3 bg-black text-white rounded-xl text-[0.7rem] font-black uppercase tracking-[0.2em] hover:scale-105 active:scale-95 transition-all shadow-xl shadow-black/10">
-                    Open Protocol
-                </button>
+
+                <div>
+                    <h3 className="font-bold text-2xl mb-2 text-[#0A0A0A] tracking-tighter">Strategic Match</h3>
+                    <p className="text-[0.65rem] text-[#737373] font-bold uppercase tracking-[0.1em] leading-relaxed">
+                        Cross-Reference Semantic Profile <br/> with Recruitment Matrix v2.4
+                    </p>
+                </div>
             </div>
 
             {/* Tool Modal */}
             <AnimatePresence>
                 {isOpen && (
                     <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 sm:p-10">
-                        <motion.div 
+                        <m.div 
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             className="absolute inset-0 bg-black/60 backdrop-blur-sm" 
                             onClick={() => !loading && setIsOpen(false)}
-                        ></motion.div>
+                        ></m.div>
                         
-                        <motion.div 
+                        <m.div 
                             initial={{ scale: 0.95, opacity: 0, y: 20 }}
                             animate={{ scale: 1, opacity: 1, y: 0 }}
                             exit={{ scale: 0.95, opacity: 0, y: 20 }}
                             className="relative bg-white/90 backdrop-blur-xl w-full max-w-5xl max-h-[90vh] rounded-[2.5rem] shadow-2xl border border-white/50 flex flex-col overflow-hidden"
                         >
                             {/* Header */}
-                            <div className="p-8 border-b border-black/5 flex items-center justify-between bg-white/30 backdrop-blur-md sticky top-0 z-20">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-black/5 rounded-2xl flex items-center justify-center text-black/60">
-                                        <RiFlashlightLine size={24} />
+                            <div className="p-10 border-b border-black/[0.03] flex items-center justify-between bg-white/40 backdrop-blur-3xl sticky top-0 z-20">
+                                <div className="flex items-center gap-6">
+                                    <div className="w-16 h-16 bg-[#3B82F6] rounded-[1.5rem] flex items-center justify-center text-white shadow-2xl shadow-blue-500/20">
+                                        <RiFlashlightLine size={28} />
                                     </div>
                                     <div>
-                                        <h2 className="text-xl font-black text-black uppercase tracking-tight">Alpha Tailoring Protocol</h2>
-                                        <p className="text-sm font-medium text-black/50">Align your semantic profile with employer expectations.</p>
+                                        <div className="flex items-center gap-3 mb-1.5">
+                                            <h2 className="text-2xl font-bold text-[#0A0A0A] tracking-tighter uppercase leading-none">Strategic Match Protocol</h2>
+                                            <span className="px-2.5 py-1 bg-[#3B82F6]/10 text-[#3B82F6] border border-[#3B82F6]/10 rounded text-[0.45rem] font-bold uppercase tracking-widest">
+                                                ALPHA-V2.4
+                                            </span>
+                                        </div>
+                                        <p className="text-[0.7rem] font-bold text-black/30 uppercase tracking-widest">
+                                            Synthesizing Profile <span className="mx-2 opacity-50">&</span> Recruitment Strategy
+                                        </p>
                                     </div>
                                 </div>
-                                <button onClick={() => !loading && setIsOpen(false)} className="text-black/30 hover:text-black transition-colors" disabled={loading}>
-                                    <RiCloseCircleLine size={28} />
+                                <button onClick={() => !loading && setIsOpen(false)} className="w-12 h-12 flex items-center justify-center text-black/20 hover:text-black hover:bg-black/[0.03] rounded-full transition-all disabled:opacity-30" disabled={loading}>
+                                    <RiCloseCircleLine size={24} />
                                 </button>
                             </div>
 
@@ -168,7 +181,7 @@ export function TailorResume({ resumes }: { resumes: any[] }) {
                                                 {/* Cinematic Scan Animation Overlay */}
                                                 <AnimatePresence>
                                                     {loading && (
-                                                        <motion.div 
+                                                        <m.div 
                                                             initial={{ opacity: 0 }}
                                                             animate={{ opacity: 1 }}
                                                             exit={{ opacity: 0 }}
@@ -181,10 +194,10 @@ export function TailorResume({ resumes }: { resumes: any[] }) {
                                                                     <RiLoader4Line className="animate-spin" size={40} />
                                                                 </div>
                                                                 <div className="flex flex-col items-center gap-2">
-                                                                    <span className="text-sm font-black uppercase tracking-[0.2em] text-black animate-pulse">{scanStep}</span>
-                                                                    <div className="w-48 h-1 bg-black/5 rounded-full overflow-hidden">
-                                                                        <motion.div 
-                                                                            className="h-full bg-black"
+                                                                    <span className="text-sm font-bold uppercase tracking-[0.2em] text-[#0A0A0A] animate-pulse">{scanStep}</span>
+                                                                    <div className="w-48 h-2 bg-black/[0.05] rounded-full overflow-hidden">
+                                                                        <m.div 
+                                                                            className="h-full bg-[#3B82F6]"
                                                                             initial={{ width: "0%" }}
                                                                             animate={{ width: "100%" }}
                                                                             transition={{ duration: 6, ease: "linear" }}
@@ -192,7 +205,7 @@ export function TailorResume({ resumes }: { resumes: any[] }) {
                                                                     </div>
                                                                 </div>
                                                             </div>
-                                                        </motion.div>
+                                                        </m.div>
                                                     )}
                                                 </AnimatePresence>
 
@@ -207,24 +220,24 @@ export function TailorResume({ resumes }: { resumes: any[] }) {
                                         </div>
 
                                         {error && (
-                                            <motion.div 
+                                            <m.div 
                                                 initial={{ opacity: 0, y: 10 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 className="bg-red-500 text-white p-6 rounded-2xl flex items-center gap-3 text-sm font-black uppercase tracking-wider shadow-xl"
                                             >
                                                 <RiErrorWarningLine size={24} />
                                                 {error}
-                                            </motion.div>
+                                            </m.div>
                                         )}
                                     </div>
                                 ) : (
                                     <div className="space-y-10 animate-in slide-in-from-bottom-8 duration-500 max-w-4xl mx-auto">
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                            <div className="bg-black text-white p-8 rounded-[2.5rem] flex flex-col justify-between aspect-square md:aspect-auto shadow-2xl shadow-black/20">
+                                            <div className="bg-[#0A0A0A] text-white p-8 rounded-[2.5rem] flex flex-col justify-between aspect-square md:aspect-auto shadow-2xl shadow-black/20">
                                                 <p className="text-[0.65rem] font-bold uppercase tracking-widest text-white/40 mb-2 text-center">Match Potential</p>
-                                                <h3 className="text-7xl font-black italic text-center">{analysis.matchScore}%</h3>
+                                                <h3 className="text-7xl font-bold text-[#3B82F6] text-center">{analysis.matchScore}%</h3>
                                                 <div className="mt-4 w-full h-1 bg-white/10 rounded-full overflow-hidden">
-                                                    <motion.div 
+                                                    <m.div 
                                                         initial={{ width: 0 }}
                                                         animate={{ width: `${analysis.matchScore}%` }}
                                                         transition={{ duration: 1.5, ease: "easeOut" }}
@@ -263,7 +276,7 @@ export function TailorResume({ resumes }: { resumes: any[] }) {
                                                 </h4>
                                                 <div className="flex flex-wrap gap-2">
                                                     {analysis.keywordsMissing.map((kw: string, i: number) => (
-                                                        <span key={i} className="px-5 py-2.5 bg-orange-500/5 text-orange-700 rounded-xl text-[0.7rem] font-black uppercase tracking-wider border border-orange-500/10 italic">
+                                                        <span key={i} className="px-5 py-2.5 bg-orange-500/5 text-orange-700 rounded-xl text-[0.7rem] font-bold uppercase tracking-wider border border-orange-500/10">
                                                             {kw}
                                                         </span>
                                                     ))}
@@ -279,10 +292,10 @@ export function TailorResume({ resumes }: { resumes: any[] }) {
                                             <div className="grid grid-cols-1 gap-4">
                                                 {analysis.tailoringSuggestions.map((tip: string, i: number) => (
                                                     <div key={i} className="flex items-start gap-6 p-6 bg-white rounded-2xl border border-black/5 hover:border-black/20 transition-all group">
-                                                        <span className="w-10 h-10 bg-black text-white rounded-xl flex items-center justify-center text-xs font-black shadow-lg flex-shrink-0">
+                                                        <span className="w-10 h-10 bg-[#3B82F6] text-white rounded-xl flex items-center justify-center text-xs font-bold shadow-lg flex-shrink-0">
                                                             0{i + 1}
                                                         </span>
-                                                        <p className="text-[0.9rem] font-bold text-black/70 leading-relaxed pt-1">
+                                                        <p className="text-[0.9rem] font-bold text-[#0A0A0A]/70 leading-relaxed pt-1">
                                                             {tip}
                                                         </p>
                                                     </div>
@@ -312,7 +325,7 @@ export function TailorResume({ resumes }: { resumes: any[] }) {
                                             <button 
                                                 onClick={handleTailor}
                                                 disabled={loading || !formData.jobDescription.trim()}
-                                                className="bg-black text-white px-10 py-5 rounded-[1.25rem] font-black text-sm hover:scale-[1.02] active:scale-[0.98] transition-all shadow-2xl shadow-black/20 disabled:opacity-30 flex items-center gap-3"
+                                                className="bg-[#3B82F6] text-white px-10 py-5 rounded-[1.25rem] font-bold text-sm hover:bg-[#2563EB] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-2xl shadow-blue-500/20 disabled:opacity-30 flex items-center gap-3"
                                             >
                                                 {loading ? "Matching Matrix..." : "Execute Alpha Match"}
                                                 {!loading && <RiArrowRightLine size={18} />}
@@ -324,14 +337,14 @@ export function TailorResume({ resumes }: { resumes: any[] }) {
                                                 setAnalysis(null);
                                                 setIsOpen(false);
                                             }}
-                                            className="bg-black text-white px-12 py-5 rounded-[1.25rem] font-black text-sm hover:scale-[1.02] transition-all shadow-2xl shadow-black/20 uppercase tracking-widest"
+                                            className="bg-[#3B82F6] text-white px-12 py-5 rounded-[1.25rem] font-bold text-sm hover:bg-[#2563EB] hover:scale-[1.02] transition-all shadow-2xl shadow-blue-500/20 uppercase tracking-widest"
                                         >
                                             Protocol Secure
                                         </button>
                                     )}
                                 </div>
                             </div>
-                        </motion.div>
+                        </m.div>
                     </div>
                 )}
             </AnimatePresence>

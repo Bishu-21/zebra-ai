@@ -18,8 +18,10 @@ import {
     RiRadarLine,
     RiArticleLine
 } from "react-icons/ri";
+import Link from "next/link";
 import { AnalyzeResume } from "@/components/dashboard/AnalyzeResume";
 import { TailorResume } from "@/components/dashboard/TailorResume";
+import { ImportResume } from "@/components/dashboard/ImportResume";
 import { InsightsFeed } from "@/components/dashboard/InsightsFeed";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -43,9 +45,20 @@ function formatTimeAgo(date: Date) {
 }
 
 export default async function DashboardPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  let session;
+  try {
+      session = await auth.api.getSession({
+          headers: await headers(),
+      });
+  } catch (error) {
+      console.error("Dashboard Session Check Failed:", error);
+      return (
+        <div className="p-12 text-center">
+            <h1 className="text-2xl font-bold mb-4">Connection Issue</h1>
+            <p className="text-sm text-[#737373]">Connecting to the terminal. Please wait or refresh.</p>
+        </div>
+      );
+  }
 
   if (!session) return null;
 
@@ -112,7 +125,14 @@ export default async function DashboardPage() {
     { label: "AI Credits", icon: RiRadarLine, customValue: credits },
   ];
 
-  const unifiedInsights = [
+  const vaultItems = userResumes.map(r => ({
+      id: r.id,
+      title: r.title || "Untitled Strategic Asset",
+      date: r.updatedAt,
+      hasAnalysis: r.analyses.length > 0,
+  }));
+
+  const intelligenceReports = [
       ...allAnalyses.map(a => ({
           id: a.id,
           type: "analysis" as const,
@@ -120,7 +140,7 @@ export default async function DashboardPage() {
           subtext: `${a.score > 80 ? 'Excellent' : 'Average'} Quality`,
           date: a.createdAt,
           score: a.score,
-          fullData: a.feedback, // Pass full feedback for the modal
+          fullData: a.feedback,
       })),
       ...atsResults.map(r => ({
           id: r.id,
@@ -129,104 +149,146 @@ export default async function DashboardPage() {
           subtext: `Tailored for Job`,
           date: r.createdAt,
           score: r.matchScore,
-          fullData: r.feedback, // Pass full feedback for the modal
-      }))
+          fullData: r.feedback,
+      })),
   ].sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 10);
 
   return (
-    <div className="p-6 md:p-10 pb-24 max-w-7xl mx-auto">
-      {/* Welcome Section */}
-      <div className="mb-20 relative">
-        <div className="absolute -left-6 top-2 w-1.5 h-16 bg-black rounded-full opacity-10 hidden md:block"></div>
-        <h1 className="text-[2.5rem] md:text-[3.5rem] font-bold tracking-tighter leading-[1.1] mb-6 text-black">
-            Command Center
+    <div className="p-6 md:p-10 pb-32 max-w-[90rem] mx-auto overflow-x-hidden">
+      {/* Welcome Section - Compact */}
+      <div className="mb-10 relative">
+        <div className="flex items-center gap-3 mb-4">
+            <span className="text-[0.55rem] font-bold uppercase tracking-[0.3em] text-[#737373]/40">System Terminal</span>
+            <div className="h-px w-8 bg-black/5" />
+            <span className="text-[0.55rem] font-bold uppercase tracking-[0.3em] text-[#737373]/60">Zebra AI / Node_01</span>
+        </div>
+        <h1 className="text-4xl md:text-5xl font-bold tracking-[-0.04em] leading-[0.95] mb-4 text-[#0A0A0A]">
+            Welcome back{session.user.name ? `, ${session.user.name.split(' ')[0]}` : ''}.
         </h1>
-        <p className="text-black/60 text-sm md:text-md max-w-2xl leading-relaxed font-bold uppercase tracking-wider">
-          Precision editing powered by <span className="text-black">Zebra AI</span>. Refine your professional identity with <span className="text-black">stealth and accuracy</span>.
+        <p className="text-black/35 text-[0.65rem] max-w-lg leading-relaxed font-bold uppercase tracking-widest">
+          High-Fidelity Document Intelligence <span className="mx-2 text-black/10">|</span> 
+          Precision Layer <span className="text-black/70">v4.2.0-STABLE</span>
         </p>
       </div>
 
       {/* Quick Stats Ribbon */}
-      <div className="flex md:grid md:grid-cols-4 gap-6 mb-16 overflow-x-auto pb-4 md:pb-0 scrollbar-hide no-scrollbar">
+      <div className="flex md:grid md:grid-cols-4 gap-4 mb-10 overflow-x-auto pb-2 md:pb-0 scrollbar-hide no-scrollbar">
         {stats.map((stat, i) => (
-          <div key={i} className="min-w-[180px] md:min-w-0 flex-shrink-0 bg-white/30 backdrop-blur-md border border-white/50 rounded-[2.5rem] p-8 flex flex-col hover:bg-white/50 transition-all group shadow-sm">
-            <div className={`w-12 h-12 bg-white rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-sm border border-black/5`}>
-              <stat.icon size={22} className="text-black/70" />
+          <div key={i} className={`min-w-[160px] md:min-w-0 flex-shrink-0 bg-white border border-black/[0.04] rounded-2xl p-6 flex flex-col transition-all duration-300 hover:shadow-lg active:scale-[0.98] cursor-default ${
+            stat.label === "AI Credits" 
+              ? "hover:border-[#3B82F6]/40 hover:shadow-blue-500/5 group/stat" 
+              : "hover:border-[#0A0A0A]/15 hover:shadow-black/5 group/stat"
+          }`}>
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-all duration-300 ${
+              stat.label === "AI Credits" 
+                ? "bg-[#3B82F6]/10 text-[#3B82F6]" 
+                : "bg-black/[0.03] text-[#737373]/50 group-hover/stat:bg-[#0A0A0A] group-hover/stat:text-white"
+            }`}>
+              <stat.icon size={18} />
             </div>
-            <p className="text-[0.65rem] font-bold uppercase tracking-[0.15em] text-black/60 mb-1">{stat.label}</p>
-            <p className="text-3xl font-black text-black">{stat.customValue !== undefined ? stat.customValue : stat.value}</p>
+            <p className="text-[0.55rem] font-bold uppercase tracking-[0.2em] text-[#737373] mb-1">{stat.label}</p>
+            <p className={`text-3xl font-bold tracking-tighter transition-colors ${
+              stat.label === "AI Credits" ? "text-[#3B82F6]" : "text-[#0A0A0A]"
+            }`}>{stat.customValue !== undefined ? stat.customValue : stat.value}</p>
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mb-16 px-1">
-        {/* Row 1: The Two Main AI Tools */}
+      {/* Action Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-10">
         <div className="col-span-12 md:col-span-6 h-full">
           <AnalyzeResume />
         </div>
-
         <div className="col-span-12 md:col-span-6 h-full">
           <TailorResume resumes={userResumes} />
         </div>
-
-        {/* Row 2: Creation & Management */}
-        <div className="col-span-12 md:col-span-6 bg-white border border-black/5 rounded-[2.5rem] p-10 flex flex-col justify-between hover:bg-white transition-all group cursor-pointer shadow-sm hover:shadow-xl hover:shadow-black/5 active:scale-[0.99] group/card">
-          <div className="flex items-center gap-6">
-            <div className="w-16 h-16 bg-black/[0.02] border border-black/5 rounded-2xl flex items-center justify-center text-black/40 shadow-inner group-hover:scale-110 group-hover:bg-black group-hover:text-white transition-all duration-500">
-              <RiAddLine size={32} />
+        <Link 
+          href="/dashboard/resumes/new"
+          className="col-span-12 md:col-span-6 group/card relative overflow-hidden flex flex-col justify-between h-full cursor-pointer transition-all p-8 bg-white border border-black/[0.04] rounded-2xl hover:shadow-xl hover:shadow-black/[0.03] active:scale-[0.99]"
+        >
+          <div className="absolute top-0 right-0 w-24 h-24 bg-black/[0.01] rounded-bl-[3rem] group-hover/card:scale-110 transition-transform" />
+          <div className="flex items-start justify-between mb-6">
+            <div className="w-12 h-12 bg-black/[0.03] rounded-xl flex items-center justify-center text-[#737373]/40 group-hover/card:bg-[#3B82F6] group-hover/card:text-white transition-all duration-300">
+              <RiAddLine size={28} />
             </div>
-            <div>
-              <h3 className="font-black text-xl mb-1 text-black tracking-tight group-hover:translate-x-1 transition-transform duration-300">Build New</h3>
-              <p className="text-sm text-black/40 font-bold uppercase tracking-wider leading-relaxed">
-                Start from a blank canvas with guided AI prompts.
-              </p>
-            </div>
-          </div>
-          <button className="px-6 py-3 bg-black text-white rounded-xl text-[0.7rem] font-black uppercase tracking-[0.2em] hover:scale-105 active:scale-95 transition-all shadow-xl shadow-black/10 mt-10 w-fit">
-            Create Now
-          </button>
-        </div>
-
-        <div className="col-span-12 md:col-span-6 bg-white border border-black/5 rounded-[2.5rem] p-10 hover:bg-white transition-all group cursor-pointer shadow-sm hover:shadow-xl hover:shadow-black/5 active:scale-[0.99] flex flex-col justify-between group/card">
-          <div className="flex items-center gap-6">
-            <div className="w-16 h-16 bg-black/[0.02] border border-black/5 rounded-2xl flex items-center justify-center text-black/40 shadow-inner group-hover:scale-110 group-hover:bg-black group-hover:text-white transition-all duration-500">
-              <RiUploadCloud2Line size={28} />
-            </div>
-            <div>
-              <h3 className="font-black text-xl mb-1 text-black tracking-tight group-hover:translate-x-1 transition-transform duration-300">Import Resume</h3>
-              <p className="text-sm text-black/40 font-bold uppercase tracking-wider leading-relaxed">
-                PDF, DOCX, or LinkedIn source.
-              </p>
+            <div className="flex items-center gap-1 opacity-0 group-hover/card:opacity-100 transition-opacity">
+                <span className="text-[0.55rem] font-bold uppercase tracking-widest text-[#737373]">Initialize</span>
+                <RiArrowRightSLine size={14} className="text-[#3B82F6]" />
             </div>
           </div>
-          <div className="flex items-center justify-between mt-10">
-             <button className="px-6 py-3 bg-black text-white rounded-xl text-[0.7rem] font-black uppercase tracking-[0.2em] hover:scale-105 active:scale-95 transition-all shadow-xl shadow-black/10 w-fit">
-                Import Source
-             </button>
-             <RiArrowRightSLine size={18} className="text-black/40 translate-x-0 group-hover:translate-x-1 transition-transform" />
+          <div>
+            <h3 className="font-bold text-xl mb-1.5 text-[#0A0A0A] tracking-tight">Build New Resume</h3>
+            <p className="text-[0.6rem] text-[#737373] font-bold uppercase tracking-[0.1em] leading-relaxed">
+              Start from a blank canvas with guided AI prompts.
+            </p>
           </div>
+        </Link>
+        <div className="col-span-12 md:col-span-6 h-full">
+          <ImportResume />
         </div>
       </div>
 
-      {/* Unified Feed Section */}
-      <div className="mt-24">
-        <div className="flex items-center justify-between mb-12 pb-6 border-b border-black/5">
-           <div className="flex items-center gap-4">
-              <div className="w-2 h-8 bg-black rounded-full opacity-10"></div>
-              <p className="text-[0.7rem] font-bold tracking-[0.2em] uppercase text-black/60">Intelligence Insights</p>
+      {/* Strategic Document Vault */}
+      <div className="mt-12">
+        <div className="flex items-center justify-between mb-6 pb-4 border-b border-black/5">
+           <div className="flex items-center gap-3">
+              <div className="w-1.5 h-6 bg-[#3B82F6] rounded-full opacity-40"></div>
+              <p className="text-[0.65rem] font-bold tracking-[0.2em] uppercase text-black/60">Strategic Document Vault</p>
+           </div>
+           <span className="text-[0.55rem] font-black text-black/10 uppercase tracking-widest">{vaultItems.length} OBJECTS</span>
+        </div>
+        
+        {vaultItems.length === 0 ? (
+            <Link href="/dashboard/resumes/new" className="block py-16 bg-white rounded-2xl border-2 border-dashed border-black/[0.06] flex flex-col items-center justify-center text-center hover:border-[#3B82F6]/30 hover:bg-blue-50/30 transition-all group cursor-pointer">
+                 <div className="w-14 h-14 rounded-2xl bg-black/[0.03] flex items-center justify-center mb-4 group-hover:bg-[#3B82F6]/10 transition-colors">
+                    <RiAddLine size={24} className="text-black/15 group-hover:text-[#3B82F6] transition-colors" />
+                 </div>
+                 <p className="text-black/50 text-sm font-bold mb-1">No resumes yet</p>
+                 <p className="text-black/30 text-[0.6rem] font-bold uppercase tracking-widest">Click to create your first strategic asset</p>
+            </Link>
+        ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {vaultItems.slice(0, 4).map((item) => (
+                    <Link 
+                        key={item.id}
+                        href={`/dashboard/resumes/${item.id}`}
+                        className="bg-white border border-black/[0.04] p-6 rounded-2xl hover:shadow-lg transition-all cursor-pointer group"
+                    >
+                        <div className="w-10 h-10 bg-black/[0.03] rounded-xl flex items-center justify-center text-[#737373]/40 group-hover:bg-[#3B82F6] group-hover:text-white transition-all mb-4">
+                            <RiFileTextLine size={20} />
+                        </div>
+                        <h4 className="font-bold text-[#0A0A0A] tracking-tight mb-1.5 truncate group-hover:text-[#3B82F6] transition-colors text-sm">{item.title}</h4>
+                        <div className="flex items-center justify-between">
+                            <p className="text-[0.55rem] font-bold text-[#737373]/40 uppercase tracking-widest">{formatTimeAgo(item.date)}</p>
+                            {item.hasAnalysis && (
+                                <span className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]"></span>
+                            )}
+                        </div>
+                    </Link>
+                ))}
+            </div>
+        )}
+      </div>
+
+      {/* Intelligence Insights Section */}
+      <div className="mt-12">
+        <div className="flex items-center justify-between mb-6 pb-4 border-b border-black/5">
+           <div className="flex items-center gap-3">
+              <div className="w-1.5 h-6 bg-black rounded-full opacity-10"></div>
+              <p className="text-[0.65rem] font-bold tracking-[0.2em] uppercase text-black/60">Intelligence Diagnostic Reports</p>
            </div>
         </div>
         
-        {unifiedInsights.length === 0 ? (
-            <div className="py-24 bg-white/10 backdrop-blur-sm rounded-[3rem] border-2 border-dashed border-black/5 flex flex-col items-center justify-center text-center">
-                <div className="w-20 h-20 bg-black/5 rounded-3xl flex items-center justify-center text-black/10 mb-8">
-                    <RiArticleLine size={40} />
+        {intelligenceReports.length === 0 ? (
+            <div className="py-16 bg-white/50 rounded-2xl border-2 border-dashed border-black/[0.06] flex flex-col items-center justify-center text-center">
+                <div className="w-14 h-14 bg-black/[0.03] rounded-2xl flex items-center justify-center text-black/10 mb-4">
+                    <RiArticleLine size={24} />
                 </div>
-                <p className="text-black/60 font-bold text-xl mb-3 tracking-tight uppercase">Clean Slate</p>
-                <p className="text-black/60 text-xs font-bold uppercase tracking-widest max-w-xs">Start optimizing to see AI insights.</p>
+                <p className="text-black/50 text-sm font-bold mb-1">Clean Slate</p>
+                <p className="text-black/30 text-[0.6rem] font-bold uppercase tracking-widest max-w-xs">Analyze a resume to see AI diagnostic reports here</p>
             </div>
         ) : (
-            <InsightsFeed data={unifiedInsights} />
+            <InsightsFeed data={intelligenceReports} />
         )}
       </div>
     </div>

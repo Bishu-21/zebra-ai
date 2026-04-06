@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { signIn, signUp } from "@/lib/auth-client";
 
 export function AuthModal() {
@@ -87,7 +87,7 @@ export function AuthModal() {
       {isOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 font-sans">
           {/* Backdrop */}
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -96,7 +96,7 @@ export function AuthModal() {
           />
 
           {/* Modal Container */}
-          <motion.div
+          <m.div
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -222,7 +222,7 @@ export function AuthModal() {
                 </button>
               </p>
             </div>
-          </motion.div>
+          </m.div>
         </div>
       )}
     </AnimatePresence>

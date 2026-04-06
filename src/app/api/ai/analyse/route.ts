@@ -54,49 +54,65 @@ export async function POST(req: NextRequest) {
         });
     }
 
-    // 3. AI Prompt Construction: Executive Level Analysis
+    // 3. AI Prompt Construction: High-Fidelity Strategic Audit
     const prompt = `
-      SYSTEM: You are a World-Class Executive Career Coach and Senior Talent Acquisition Consultant. 
-      Your mission is to perform a high-impact audit of the provided Resume.
+      SYSTEM: You are a World-Class Executive Career Coach and Senior Talent Acquisition Consultant with 20+ years of experience auditing resumes for Fortune 500 companies, high-growth startups, and elite academic programs.
+      Your mission is to perform a high-fidelity, high-density, data-driven audit of the provided Resume based on 45+ premium global metrics.
 
       RESUME CONTENT:
       """
       ${content}
       """
 
+      STRATEGIC DIRECTIVES (45+ POINT AUDIT):
+      
+      1. THE "STUDENT PROTOCOL" (STRICT FOR INDIVIDUALS < 3 YEARS EXPERIENCE):
+         - PROFESSIONAL SUMMARY: Recommendation: "REMOVE". Students do not have enough history for a summary—it takes up valuable A4 real estate. Flag if present.
+         - PROJECT TECH STACKS: Mandatory. Every project must specify its stack (e.g., "MERN, OpenAI, Docker") directly next to the heading.
+         - LIVE LINKS: Mandatory. Every project must have a GitHub or Demo URL. Flag as "CRITICAL" if missing.
+         - SINGLE PAGE RULE: 1-page limit is hard. Flags for students with > 1 page.
+         - BULLET IMPACT: No "Topic: Description" styles. Use impact-first bullets: [Action Verb] + [Quantitative Metric] + [Outcome].
+
+      2. FORMATTING & ATS RIGOR:
+         - HEADINGS: Use standard "EXPERIENCE", "PROJECTS", "SKILLS", "EDUCATION".
+         - TYPOGRAPHY: Flag inconsistent font sizes or non-standard professional fonts.
+         - MARGINS: Check for claustrophobic or excessive spacing (0.5" - 1.0" range).
+         - FILE NAMES: Must follow "Firstname_Lastname_Resume.pdf" format.
+
+      3. IMPACT & VERIFICATION:
+         - QUANTIFIABLE METRICS: Every bullet point MUST contain a number, %, or $ value. "Improved speed" (FAIL) -> "Optimized latency by 45%" (PASS).
+         - "SO WHAT?" TEST: For every line, ask "Does this show value or just a chore?".
+         - REVERSE CHRONOLOGY: Mandatory for experience/education.
+
       TASK:
-      1. Calculate an Overall ATS Score (0-100) based on real-world hiring criteria.
-      2. Provide a 4-point Metric Breakdown:
-         - IMPACT: Quantifiable achievements and leadership value.
-         - FORMATTING: Readability, structure, and white space.
-         - ATS: Keyword density and structural parsing.
-         - BRANDING: Unique value proposition and professional voice.
-      3. Identify core Strengths and Weaknesses.
-      4. Provide concrete Action Items for immediate improvement.
-      5. Suggest high-impact Bullet Point rewrites for the experience section.
+      1. Calculate an Overall Score (0-100).
+      2. Construct a 'audit' object with specific, ACTIONABLE "fix" messages for every Fail.
+      3. For every category, provide AT LEAST 3 check points. If the resume is perfect, state it as a "Pass".
+      4. Provide 'recruiterInsights' mirroring a 7-second high-density scan.
+      5. Suggest 6 High-Impact Bullet Rewrites focusing on quantifiable metrics.
 
-      OUTPUT CONSTRAINT:
-      - Return ONLY a valid JSON object.
-      - NO conversational preamble, NO closing remarks, NO markdown code block wrappers (e.g., \`\`\`json).
-      - Ensure all content is professionally worded and highly actionable.
-
-      REQUIRED JSON SCHEMA:
+      REQUIRED JSON SCHEMA (STRICT):
       {
         "score": number,
-        "summary": string,
-        "metrics": {
-          "impact": number,
-          "formatting": number,
-          "ats": number,
-          "branding": number
+        "summary": "2-3 sentences of high-level strategic overview (professional, no placeholders)",
+        "metrics": { "impact": number, "formatting": number, "ats": number, "branding": number },
+        "audit": {
+          "formatting": [ { "checkpoint": string, "status": "Pass" | "Fail", "fix": string } ],
+          "contact": [ { "checkpoint": string, "status": "Pass" | "Fail", "fix": string } ],
+          "summary": [ { "checkpoint": string, "status": "Pass" | "Fail", "fix": string } ],
+          "experience": [ { "checkpoint": string, "status": "Pass" | "Fail", "fix": string } ],
+          "skills": [ { "checkpoint": string, "status": "Pass" | "Fail", "fix": string } ],
+          "general": [ { "checkpoint": string, "status": "Pass" | "Fail", "fix": string } ]
         },
-        "strengths": string[],
-        "weaknesses": string[],
-        "actionItems": string[],
-        "suggestedBulletPoints": string[]
+        "recruiterInsights": {
+          "sevenSecondScan": "Direct feedback on what catches the eye first.",
+          "soWhatTest": "Critique of the value proposition.",
+          "readability": "Feedback on layout density and visual flow."
+        },
+        "suggestedBulletPoints": ["Impact-driven rewrite 1", "Impact-driven rewrite 2", "Impact-driven rewrite 3", "Impact-driven rewrite 4", "Impact-driven rewrite 5", "Impact-driven rewrite 6"]
       }
 
-      OUTPUT:
+      OUTPUT CONSTRAINT: Return ONLY a valid JSON object. No markdown wrappers.
     `;
 
     // 4. Generate AI Content

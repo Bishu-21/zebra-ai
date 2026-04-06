@@ -15,19 +15,24 @@ export default async function ResumeEditorPage({ params: paramsPromise }: { para
 
     if (!session) redirect("/login");
 
-    const resume = await db.query.resumes.findFirst({
-        where: eq(resumesTable.id, params.id),
-    });
-
-    // If "new", we can handle that by seeding or just rendering an empty editor
-    // For now, if not found and not "new", redirect
-    if (!resume && params.id !== "new") {
-        redirect("/dashboard");
+    // Skip DB query for "new" — only fetch existing resumes
+    let resume = null;
+    if (params.id !== "new") {
+        resume = await db.query.resumes.findFirst({
+            where: eq(resumesTable.id, params.id),
+        });
+        if (!resume) redirect("/dashboard");
     }
 
     return (
         <div className="h-screen overflow-hidden bg-[#F8F9FA]">
-            <ResumeEditor initialData={resume} />
+            <ResumeEditor 
+                initialData={resume ? {
+                    id: resume.id,
+                    title: resume.title,
+                    content: resume.content || ""
+                } : undefined} 
+            />
         </div>
     );
 }

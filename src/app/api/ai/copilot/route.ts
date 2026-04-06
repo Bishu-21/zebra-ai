@@ -17,33 +17,36 @@ export async function POST(req: NextRequest) {
     try {
         const { section, context, currentText } = await req.json();
 
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+        const model = genAI.getGenerativeModel({ model: process.env.COPILOT_MODEL || "gemini-2.5-flash-lite" });
 
         const prompt = `
-            You are a world-class ATS-optimization expert and professional resume writer (Zebra AI Copilot).
+            SYSTEM: You are Zebra (ZE-AI), a hyper-focused AI Resume Strategist.
+            STYLE: Silicon Valley / High-Performance Minimalism.
+            STRATEGY: Action -> Quantifiable Impact -> Technical Tooling.
             
-            TASK: Suggest improvements for the following resume section: "${section}".
+            SECTION: "${section}"
             CURRENT CONTENT: "${currentText || "Empty"}"
-            OVERALL CONTEXT: ${JSON.stringify(context)}
+            USER CONTEXT: ${JSON.stringify(context)}
 
-            GUIDELINES:
-            1. Use high-impact action verbs (Engineered, Orchestrated, Spearheaded).
-            2. Quantify achievements where possible (%, $, Time).
-            3. Keep it minimalist and stealthy.
-            4. Return a list of 3 concise, powerful bullet point suggestions.
+            INSTRUCTIONS:
+            1. Suggest 3 high-impact, ATS-optimized bullet points specifically for this section.
+            2. For EXPERIENCE: Use the formula [Action Verb] + [Quantifiable Result] + [Tech Used].
+            3. For PROJECTS: Highlight the "Problem Solved" and "Tech Stack" integration.
+            4. For SKILLS: Group by category (e.g., "Languages", "Frameworks") and ensure modern tooling is prioritized.
+            5. ELIMINATE FLUFF: No "Responsible for", no "Assisted in". Use "Spearheaded", "Architected", "Optimized".
+            6. ONE-PAGE RULE: Keep each suggestion under 120 characters including spaces.
             
-            FORMAT: Just the bullet points, no preamble.
+            OUTPUT: Exactly 3 bullet points, one per line. No markdown formatting, no headers.
         `;
 
         const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text();
+        const text = result.response.text();
 
-        // Parse bullet points
+        // Robust parsing of bullet points
         const suggestions = text
             .split('\n')
-            .map(s => s.replace(/^[*-•\d.]\s*/, '').trim())
-            .filter(s => s.length > 0)
+            .map(s => s.replace(/^[-*•\d.\s]+/, '').trim())
+            .filter(s => s.length > 5)
             .slice(0, 3);
 
         return NextResponse.json({ suggestions });

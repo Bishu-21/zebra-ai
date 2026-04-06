@@ -1,126 +1,94 @@
-import React from "react";
 import { Hero } from "@/components/landing/Hero";
+import { About } from "@/components/landing/About";
+import { Pricing } from "@/components/landing/Pricing";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { AuthModal } from "@/components/auth/AuthModal";
-import { AuthTrigger } from "@/components/auth/AuthTrigger";
-// Let's use standard Next.js Image for the testimonial portrait
-import Image from "next/image";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { NavAuth } from "@/components/auth/NavAuth";
 import type { WebSite } from "schema-dts";
+import Link from "next/link";
+import { Suspense } from "react";
 
-export default async function Home() {
-  const session = await auth.api.getSession({
-    headers: await headers()
-  });
-
+export default function Home() {
   const websiteSchema: WebSite = {
     "@type": "WebSite",
     name: "Zebra AI",
-    url: "http://localhost:3000"
+    url: "https://zebra-ai.app"
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#FFFFFF] text-[#0A0A0A] selection:bg-[#3B82F6] selection:text-white font-['Inter']">
+    <div className="flex flex-col min-h-screen bg-[#FFFFFF] text-[#0A0A0A] selection:bg-[#3B82F6] selection:text-white font-sans scroll-smooth">
       <JsonLd schema={websiteSchema} />
       <AuthModal />
       
       {/* TopNavBar */}
-      <nav className="fixed top-0 w-full z-50 bg-[#FFFFFF]/80 backdrop-blur-[4px]">
-        <div className="max-w-[1400px] mx-auto px-6 h-16 flex items-center justify-between border-b-[1.5px] border-[#EAEAEA]">
-          <div className="text-[1.1rem] font-extrabold tracking-[-0.04em] text-[#0A0A0A]">
+      <nav className="fixed top-0 w-full z-50 bg-[#FFFFFF]/80 backdrop-blur-[12px] border-b-[1px] border-[#0A0A0A]/5">
+        <div className="max-w-[1400px] mx-auto px-6 h-20 flex items-center justify-between">
+          <Link href="/" className="text-[1.25rem] font-bold tracking-[-0.05em] text-[#0A0A0A]">
             Zebra AI
+          </Link>
+          <div className="hidden md:flex items-center gap-10">
+            <Link className="text-[#737373] hover:text-[#0A0A0A] text-xs font-bold uppercase tracking-widest transition-all duration-200" href="#product">Product</Link>
+            <Link className="text-[#737373] hover:text-[#0A0A0A] text-xs font-bold uppercase tracking-widest transition-all duration-200" href="#about">Manifesto</Link>
+            <Link className="text-[#737373] hover:text-[#0A0A0A] text-xs font-bold uppercase tracking-widest transition-all duration-200" href="#pricing">Pricing</Link>
           </div>
-          <div className="hidden md:flex items-center gap-8">
-            <a className="text-[#6B6B6B] hover:text-[#0A0A0A] text-sm font-[500] tracking-wide transition-colors duration-200" href="#">Process</a>
-            <a className="text-[#6B6B6B] hover:text-[#0A0A0A] text-sm font-[500] tracking-wide transition-colors duration-200" href="#">Case Studies</a>
-            <a className="text-[#6B6B6B] hover:text-[#0A0A0A] text-sm font-[500] tracking-wide transition-colors duration-200" href="#">Pricing</a>
-          </div>
-          <AuthTrigger 
-            isLoggedIn={!!session}
-            className="bg-[#FFFFFF] border-[1.5px] border-[#EAEAEA] text-[#0A0A0A] font-bold text-sm px-6 py-2 rounded-full hover:bg-[#F6F3F2] active:scale-[0.98] transition-all duration-200 shadow-sm"
-          >
-            {session ? "Dashboard" : "Sign In"}
-          </AuthTrigger>
+          <Suspense fallback={
+            <div className="w-28 h-10 bg-black/5 animate-pulse rounded-xl" />
+          }>
+            <NavAuth />
+          </Suspense>
         </div>
       </nav>
 
-      {/* Main Hero with Framer Motion & Scratch Card */}
-      <main>
-        <Hero isLoggedIn={!!session} />
-        
-        {/* Tonal Layered Content Section */}
-        <section className="max-w-7xl mx-auto mt-24 mb-32 grid grid-cols-1 md:grid-cols-2 gap-20 items-start px-8">
-          <div className="space-y-12">
-            <h2 className="text-[1.75rem] font-bold leading-[1.2] tracking-[-0.02em]">The 1% Difference</h2>
-            <p className="text-[1rem] font-[400] text-[#6B6B6B] max-w-md">
-              We don't just generate text. We audit the technical metadata of your career. Zebra AI uses surgical precision to align your experience with algorithmic gatekeepers.
-            </p>
-            <div className="bg-[#F6F3F2] p-12 rounded-[16px]">
-              <p className="text-[0.75rem] font-bold tracking-[0.05em] uppercase text-[#2563EB] mb-4">Real-time Feedback</p>
-              <div className="space-y-4">
-                <div className="h-2 bg-[#3B82F6] w-3/4 rounded-full"></div>
-                <div className="h-2 bg-[#A3A3A3] w-1/2 rounded-full"></div>
-                <div className="h-2 bg-[#A3A3A3] w-2/3 rounded-full"></div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-[#FFFFFF] p-12 rounded-[16px] shadow-[0px_10px_30px_rgba(0,0,0,0.02)] mt-12 md:mt-0 relative overflow-hidden">
-            {/* The Intelligence Trace */}
-            <div className="border-l-2 border-[#3B82F6] pl-6 space-y-8">
-              <p className="text-[1rem] leading-relaxed italic text-[#6B6B6B]">
-                "Zebra identified 14 formatting errors that were making my resume unreadable to standard ATS software. Three days after the fix, I had two interviews."
-              </p>
-              <div className="flex items-center gap-4 mt-8">
-                <div className="w-10 h-10 bg-[#EAEAEA] rounded-full overflow-hidden shrink-0">
-                  {/* Replaced 350KB unoptimized image with tiny direct avatar API */}
-                  <Image 
-                    src="https://ui-avatars.com/api/?name=Marcus+Chen&background=EAEAEA&color=0A0A0A&size=80"
-                    alt="Marcus Chen" 
-                    width={40}
-                    height={40}
-                    unoptimized
-                    className="w-full h-full object-cover" 
-                  />
-                </div>
-                <div>
-                  <p className="font-bold text-sm text-[#0A0A0A]">Marcus Chen</p>
-                  <p className="text-[0.75rem] font-bold tracking-[0.05em] uppercase text-[#6B6B6B]">Senior Product Designer</p>
-                </div>
-              </div>
-            </div>
-          </div>
+      <main className="pt-20">
+        <section id="product">
+          <Hero />
         </section>
+        
+        <About />
+        <Pricing />
       </main>
 
       {/* Footer */}
-      <footer className="w-full bg-[#F6F3F2] mt-auto pb-20 md:pb-0">
-        <div className="flex flex-col md:flex-row justify-between items-center px-12 py-16 gap-8 max-w-7xl mx-auto">
+      <footer className="w-full bg-[#FFFFFF] border-t border-[#EAEAEA] pb-12 md:pb-0">
+        <div className="flex flex-col md:flex-row justify-between items-center px-12 py-16 gap-12 max-w-7xl mx-auto">
           <div className="space-y-4">
-            <div className="text-lg font-bold text-[#0A0A0A]">Zebra AI</div>
-            <p className="text-[#6B6B6B] font-[400] text-sm">© 2026 Zebra AI. All rights reserved.</p>
+            <div className="text-2xl font-bold tracking-tighter text-[#0A0A0A]">Zebra AI</div>
+            <p className="text-[#525252] font-medium text-sm max-w-xs leading-relaxed">
+              Advancing the integrity of human career metadata through surgical precision AI.
+            </p>
+            <p className="text-[#737373] text-xs font-bold uppercase tracking-widest pt-2">© 2026 Zebra. All rights reserved.</p>
           </div>
-          <div className="flex gap-8">
-            <a className="text-[#6B6B6B] hover:text-[#0A0A0A] text-sm transition-colors duration-200" href="#">Twitter</a>
-            <a className="text-[#6B6B6B] hover:text-[#0A0A0A] text-sm transition-colors duration-200" href="#">LinkedIn</a>
-            <a className="text-[#6B6B6B] hover:text-[#0A0A0A] text-sm transition-colors duration-200" href="#">Status</a>
-            <a className="text-[#6B6B6B] hover:text-[#0A0A0A] text-sm transition-colors duration-200" href="#">Privacy</a>
+          <div className="flex flex-wrap gap-x-12 gap-y-6">
+            <div className="flex flex-col gap-4">
+              <span className="text-[0.65rem] font-black uppercase tracking-widest text-[#737373]">Connect</span>
+              <a className="text-[#525252] hover:text-[#2563EB] text-sm font-bold transition-colors duration-200" href="#">Twitter</a>
+              <a className="text-[#525252] hover:text-[#2563EB] text-sm font-bold transition-colors duration-200" href="#">LinkedIn</a>
+            </div>
+            <div className="flex flex-col gap-4">
+              <span className="text-[0.65rem] font-black uppercase tracking-widest text-[#737373]">Legal</span>
+              <Link className="text-[#525252] hover:text-[#2563EB] text-sm font-bold transition-colors duration-200" href="/terms">Terms</Link>
+              <Link className="text-[#525252] hover:text-[#2563EB] text-sm font-bold transition-colors duration-200" href="/privacy">Privacy</Link>
+            </div>
           </div>
         </div>
       </footer>
 
-      {/* Mobile Bottom Navigation (Visible only on md:hidden) */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#FFFFFF]/90 backdrop-blur-[8px] border-t border-[#EAEAEA] flex items-center justify-around px-4 z-50 pb-safe">
-        <div className="flex flex-col flex-1 items-center justify-center text-[#2563EB] font-bold h-full">
-          <span className="text-[10px] uppercase tracking-wider mt-1">Product</span>
-        </div>
-        <div className="flex flex-col flex-1 items-center justify-center text-[#6B6B6B] hover:text-[#0A0A0A] transition-colors h-full">
-          <span className="text-[10px] uppercase tracking-wider mt-1">Pricing</span>
-        </div>
-        <div className="flex flex-col flex-1 items-center justify-center text-[#6B6B6B] hover:text-[#0A0A0A] transition-colors h-full">
-          <span className="text-[10px] uppercase tracking-wider mt-1">About</span>
-        </div>
+      {/* Mobile Bottom Navigation */}
+      <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-[400px] h-16 bg-white/70 backdrop-blur-[24px] rounded-2xl flex items-center justify-around px-2 z-50 border border-black/5 shadow-[0_8px_32px_rgba(0,0,0,0.08)]">
+        <Link href="#product" className="flex-1 flex flex-col items-center justify-center group">
+          <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#737373] group-hover:text-[#3B82F6] transition-all">Product</span>
+          <div className="w-1 h-1 rounded-full bg-[#3B82F6] mt-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+        </Link>
+        <div className="w-[1px] h-6 bg-black/5" />
+        <Link href="#about" className="flex-1 flex flex-col items-center justify-center group">
+          <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#737373] group-hover:text-[#3B82F6] transition-all">Manifesto</span>
+          <div className="w-1 h-1 rounded-full bg-[#3B82F6] mt-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+        </Link>
+        <div className="w-[1px] h-6 bg-black/5" />
+        <Link href="#pricing" className="flex-1 flex flex-col items-center justify-center group">
+          <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#737373] group-hover:text-[#3B82F6] transition-all">Pricing</span>
+          <div className="w-1 h-1 rounded-full bg-[#3B82F6] mt-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+        </Link>
       </div>
     </div>
   );

@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://zebra-ai.io/sitemap.xml

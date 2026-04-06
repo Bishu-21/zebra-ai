@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useRef, useEffect, useState, ReactNode } from "react";
-import { motion } from "framer-motion";
 
 interface ScratchCardProps {
   frontContent: ReactNode;
@@ -20,46 +19,59 @@ export function ScratchCard({
   const containerRef = useRef<HTMLDivElement>(null);
   const [isRevealed, setIsRevealed] = useState(false);
   const [isScratching, setIsScratching] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
   const isDrawing = useRef(false);
+
+  // Optimized noise background via CSS
+  const noiseBg = `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`;
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d", { willReadFrequently: true });
-    const container = containerRef.current;
-    if (!canvas || !ctx || !container) return;
+    if (!canvas) return;
 
-    const resize = () => {
-      const { width, height } = container.getBoundingClientRect();
-      
-      // Guard against 0 width/height during hydration or reflows
+    const paintCanvas = (width: number, height: number) => {
       if (width === 0 || height === 0) return;
 
       canvas.width = width;
       canvas.height = height;
 
-      ctx.fillStyle = "#3B82F6"; // The primary "Action" blue
+      const ctx = canvas.getContext("2d", { alpha: true });
+      if (!ctx) return;
+
+      // Fill with blue and simple pattern - NO more pixel loops
+      ctx.fillStyle = "#3B82F6"; 
       ctx.fillRect(0, 0, width, height);
 
-      // Add noise texture for premium feel
-      const imageData = ctx.getImageData(0, 0, width, height);
-      for (let i = 0; i < imageData.data.length; i += 4) {
-        if (Math.random() > 0.8) {
-          imageData.data[i] = Math.min(255, imageData.data[i] + 20);
-          imageData.data[i + 1] = Math.min(255, imageData.data[i + 1] + 20);
-          imageData.data[i + 2] = Math.min(255, imageData.data[i + 2] + 20);
-        }
+      // Add a simple subtle overlay instead of heavy noise loop
+      ctx.globalAlpha = 0.05;
+      ctx.fillStyle = "black";
+      for(let i=0; i<100; i++) {
+        ctx.fillRect(Math.random()*width, Math.random()*height, 2, 2);
       }
-      ctx.putImageData(imageData, 0, 0);
+      ctx.globalAlpha = 1.0;
 
       ctx.lineJoin = "round";
       ctx.lineCap = "round";
-      ctx.lineWidth = 120; // Increased for faster scratching
+      ctx.lineWidth = 120; // Increased for faster reveal
       ctx.globalCompositeOperation = "destination-out";
+      
+      setIsLoaded(true);
     };
 
-    resize();
-    window.addEventListener("resize", resize);
-    return () => window.removeEventListener("resize", resize);
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.contentRect) {
+          const { width, height } = entry.contentRect;
+          paintCanvas(width, height);
+        }
+      }
+    });
+
+    if (containerRef.current) observer.observe(containerRef.current);
+
+    return () => {
+      observer.disconnect();
+    };
   }, []);
 
   const getCoordinates = (e: React.MouseEvent | React.TouchEvent | MouseEvent | TouchEvent) => {
@@ -78,28 +90,35 @@ export function ScratchCard({
     };
   };
 
+  const lastCheckTime = useRef(0);
+  const rafId = useRef<number | null>(null);
+
   const checkRevealPercent = () => {
+    const now = Date.now();
+    if (now - lastCheckTime.current < 250) return; // Throttled check
+    lastCheckTime.current = now;
+
     const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d");
-    if (!canvas || !ctx || isRevealed) return;
-    if (canvas.width === 0 || canvas.height === 0) return;
+    if (!canvas || isRevealed) return;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) return;
 
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const pixels = imageData.data;
-    let transparentCount = 0;
+    try {
+      // Much more lightweight check - only sample 1/256th of the pixels
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const pixels = imageData.data;
+      let transparentCount = 0;
 
-    // Check transparency in chunks to save CPU
-    for (let i = 3; i < pixels.length; i += 32) {
-      if (pixels[i] === 0) transparentCount++;
-    }
+      for (let i = 3; i < pixels.length; i += 256) {
+        if (pixels[i] === 0) transparentCount++;
+      }
 
-    const totalCalculatedPixels = pixels.length / 32;
-    const percent = (transparentCount / totalCalculatedPixels) * 100;
-
-    // Reduced threshold to 35% so it auto-completes faster!
-    if (percent > 35) {
-      setIsRevealed(true);
-      if (onRevealComplete) onRevealComplete();
+      if ((transparentCount / (pixels.length / 256)) > 0.35) {
+        setIsRevealed(true);
+        if (onRevealComplete) onRevealComplete();
+      }
+    } catch (e) {
+      // Ignore errors for off-screen checks
     }
   };
 
@@ -116,13 +135,18 @@ export function ScratchCard({
 
   const handleMove = (e: React.MouseEvent | React.TouchEvent) => {
     if (!isDrawing.current) return;
-    const { x, y } = getCoordinates(e);
-    const ctx = canvasRef.current?.getContext("2d");
-    if (ctx) {
-      ctx.lineTo(x, y);
-      ctx.stroke();
-    }
-    checkRevealPercent();
+    
+    if (rafId.current) cancelAnimationFrame(rafId.current);
+
+    rafId.current = requestAnimationFrame(() => {
+      const { x, y } = getCoordinates(e);
+      const ctx = canvasRef.current?.getContext("2d");
+      if (ctx) {
+        ctx.lineTo(x, y);
+        ctx.stroke();
+      }
+      checkRevealPercent();
+    });
   };
 
   const handleEnd = () => {
@@ -132,14 +156,15 @@ export function ScratchCard({
   return (
     <div
       ref={containerRef}
-      className={`relative w-full h-[320px] max-w-xl mx-auto overflow-hidden rounded-[16px] shadow-[0px_10px_40px_rgba(0,0,0,0.06)] ${className}`}
+      className={`relative w-full h-[320px] max-w-xl mx-auto overflow-hidden rounded-[16px] shadow-[0px_10px_40px_rgba(0,0,0,0.06)] bg-[#3B82F6] ${className}`}
+      style={{ backgroundImage: isRevealed ? 'none' : noiseBg }}
     >
-      {/* Background (The Reveal) */}
+      {/* Revealed Content (Bottom Layer) */}
       <div className="absolute inset-0 p-8 bg-white text-[#0A0A0A] flex flex-col justify-between">
         {backContent}
       </div>
 
-      {/* Canvas Scratch Layer */}
+      {/* Surface Canvas (Interaction Layer) */}
       <canvas
         ref={canvasRef}
         onMouseDown={handleStart}
@@ -151,13 +176,13 @@ export function ScratchCard({
         onTouchEnd={handleEnd}
         className={`absolute inset-0 z-10 w-full h-full cursor-pointer transition-opacity duration-700 ease-out ${
           isRevealed ? "opacity-0 pointer-events-none" : "opacity-100"
-        }`}
+        } ${!isLoaded ? "invisible" : "visible"}`}
       />
 
-      {/* Front Content (Hidden immediately upon starting to scratch) */}
+      {/* Helper Text / Initial State (Top Layer) - No interaction to block */}
       <div
         className={`absolute inset-0 z-20 pointer-events-none p-10 text-white flex flex-col justify-between transition-opacity duration-300 ${
-          isScratching || isRevealed ? "opacity-0" : "opacity-100"
+          isScratching || isRevealed || !isLoaded ? "opacity-0" : "opacity-100"
         }`}
       >
         {frontContent}

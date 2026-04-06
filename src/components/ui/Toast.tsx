@@ -1,8 +1,29 @@
 "use client";
 
 import React, { useState, useEffect, createContext, useContext, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { RiCheckboxCircleLine, RiInformationLine, RiCloseLine } from "react-icons/ri";
+import { m, AnimatePresence } from "framer-motion";
+
+// Optimized, inlined SVGs for hydration consistency and zero weight
+const SuccessIcon = ({ size = 20, className = "" }: { size?: number, className?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+    <polyline points="22 4 12 14.01 9 11.01" />
+  </svg>
+);
+
+const InfoIcon = ({ size = 20, className = "" }: { size?: number, className?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <circle cx="12" cy="12" r="10" />
+    <line x1="12" y1="16" x2="12" y2="12" />
+    <line x1="12" y1="8" x2="12.01" y2="8" />
+  </svg>
+);
+
+const CloseIcon = ({ size = 18, className = "" }: { size?: number, className?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M18 6L6 18M6 6l12 12" />
+  </svg>
+);
 
 type ToastType = "success" | "info" | "error";
 
@@ -35,12 +56,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[200] flex flex-col gap-3 pointer-events-none">
                 <AnimatePresence mode="popLayout">
                     {toasts.map((toast) => (
-                        <motion.div
+                        <m.div
                             key={toast.id}
                             initial={{ opacity: 0, y: -20, scale: 0.9 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
-                            layout
+                            // Removed layout prop to maintain compatibility with domAnimation bundle and fix Error #418
                             className={`
                                 pointer-events-auto
                                 flex items-center gap-3 px-6 py-4 
@@ -51,9 +72,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                             `}
                         >
                             {toast.type === "success" ? (
-                                <RiCheckboxCircleLine size={20} className="text-green-400" />
+                                <SuccessIcon size={20} className="text-green-400" />
                             ) : (
-                                <RiInformationLine size={20} className="text-blue-400" />
+                                <InfoIcon size={20} className="text-blue-400" />
                             )}
                             <span className="text-sm font-black uppercase tracking-widest leading-none pt-0.5">
                                 {toast.message}
@@ -62,9 +83,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                                 onClick={() => setToasts(prev => prev.filter(t => t.id !== toast.id))}
                                 className="ml-2 hover:opacity-70 transition-opacity"
                             >
-                                <RiCloseLine size={18} />
+                                <CloseIcon size={18} />
                             </button>
-                        </motion.div>
+                        </m.div>
                     ))}
                 </AnimatePresence>
             </div>

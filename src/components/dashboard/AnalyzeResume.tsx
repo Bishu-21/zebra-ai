@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { 
     RiScanLine, 
     RiScan2Line, 
@@ -10,9 +10,12 @@ import {
     RiLoader4Line,
     RiFlashlightLine,
     RiArrowRightLine,
+    RiArrowRightSLine,
     RiCloseCircleLine,
     RiInformationLine,
-    RiBarChartLine
+    RiBarChartLine,
+    RiMagicLine,
+    RiFocus3Line
 } from "react-icons/ri";
 import { useRouter } from "next/navigation";
 import { ResumeResultsModal } from "./ResumeResultsModal";
@@ -25,6 +28,7 @@ export function AnalyzeResume() {
   const [scanStep, setScanStep] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<any | null>(null);
+  const [activeResumeId, setActiveResumeId] = useState<string | null>(null);
   const [isResultsModalOpen, setIsResultsModalOpen] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -66,14 +70,21 @@ export function AnalyzeResume() {
 
   const triggerAnalysis = async (textToAnalyze: string) => {
     setIsAnalyzing(true);
-    const steps = ["Initializing Neural Audit...", "Identifying Keywords...", "Benchmarking ATS Score...", "Finalizing Report..."];
+    const steps = [
+        "Initializing Neural Audit...", 
+        "Stress Testing 45+ ATS Benchmarks...", 
+        "Running 'So What?' Impact Check...", 
+        "Simulating 7-Second Recruiter Scan...", 
+        "Refining Strategic Rewrites...", 
+        "Finalizing Report..."
+    ];
     let stepIdx = 0;
     
     setScanStep(steps[0]);
     const stepInterval = setInterval(() => {
         stepIdx++;
         if (stepIdx < steps.length) setScanStep(steps[stepIdx]);
-    }, 1500);
+    }, 1200);
 
     setError(null);
 
@@ -92,6 +103,7 @@ export function AnalyzeResume() {
       
       setTimeout(() => {
         setAnalysisResult(data.analysis);
+        setActiveResumeId(data.resumeId);
         setIsResultsModalOpen(true);
         setIsAnalyzing(false);
         setIsUploading(false);
@@ -122,22 +134,26 @@ export function AnalyzeResume() {
       {/* Launcher Card */}
       <div 
         onClick={() => setIsOpen(true)}
-        className="flex items-center justify-between w-full h-full cursor-pointer hover:opacity-90 transition-all p-10 bg-white border border-black/5 rounded-[2.5rem] shadow-sm group/card hover:shadow-xl hover:shadow-black/5 active:scale-[0.99]"
+        className="group/card relative overflow-hidden flex flex-col justify-between w-full h-full cursor-pointer transition-all p-10 bg-white border border-black/[0.04] rounded-[2.5rem] hover:shadow-2xl hover:shadow-black/[0.03] active:scale-[0.99] group"
       >
-        <div className="flex items-center gap-6">
-            <div className="w-16 h-16 bg-black/[0.02] border border-black/5 rounded-2xl flex items-center justify-center text-black/[0.12] shadow-inner group-hover/card:scale-110 group-hover/card:bg-black group-hover/card:text-white transition-all duration-500">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-black/[0.01] rounded-bl-[4rem] group-hover/card:scale-110 transition-transform" />
+        
+        <div className="flex items-start justify-between mb-8">
+            <div className="w-14 h-14 bg-black/[0.03] rounded-2xl flex items-center justify-center text-[#737373]/40 group-hover/card:bg-[#3B82F6] group-hover/card:text-white transition-all duration-500">
                 <RiScanLine size={24} />
             </div>
-            <div>
-                <h3 className="font-black text-xl mb-1 text-black tracking-tight group-hover/card:translate-x-1 transition-transform duration-300">Intelligence Scan</h3>
-                <p className="text-sm text-black/40 font-bold uppercase tracking-wider">
-                    Execute a neural audit to detect structural deficits.
-                </p>
+            <div className="flex items-center gap-1 opacity-0 group-hover/card:opacity-100 transition-opacity">
+                <span className="text-[0.6rem] font-bold uppercase tracking-widest text-[#737373]">Launch Protocol</span>
+                <RiArrowRightSLine size={14} className="text-[#3B82F6]" />
             </div>
         </div>
-        <button className="px-6 py-3 bg-black text-white rounded-xl text-[0.7rem] font-black uppercase tracking-[0.2em] hover:scale-105 active:scale-95 transition-all shadow-xl shadow-black/10">
-            Execute Protocol
-        </button>
+
+        <div>
+            <h3 className="font-bold text-2xl mb-2 text-[#0A0A0A] tracking-tighter">Neural Audit</h3>
+            <p className="text-[0.65rem] text-[#737373] font-bold uppercase tracking-[0.1em] leading-relaxed">
+                45+ Point Strategic Intelligence <br/> Execution Layer v4.0
+            </p>
+        </div>
       </div>
 
       {/* Tool Modal */}
@@ -147,18 +163,25 @@ export function AnalyzeResume() {
             <div className="relative bg-white/90 backdrop-blur-xl w-full max-w-5xl max-h-[90vh] rounded-[2.5rem] shadow-2xl border border-white/50 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                 
                 {/* Header */}
-                <div className="p-8 border-b border-black/5 flex items-center justify-between bg-white/30 backdrop-blur-md sticky top-0 z-20">
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-black/5 rounded-2xl flex items-center justify-center text-black/60">
-                            <RiFlashlightLine size={24} />
+                <div className="p-10 border-b border-black/[0.03] flex items-center justify-between bg-white/40 backdrop-blur-3xl sticky top-0 z-20">
+                    <div className="flex items-center gap-6">
+                        <div className="w-16 h-16 bg-[#3B82F6] rounded-[1.5rem] flex items-center justify-center text-white shadow-2xl shadow-blue-500/20">
+                            <RiFlashlightLine size={28} />
                         </div>
                         <div>
-                            <h2 className="text-xl font-black text-black uppercase tracking-tight">Intelligence Audit Protocol</h2>
-                            <p className="text-sm font-medium text-black/50">Benchmark your resume against 45+ global ATS metrics.</p>
+                            <div className="flex items-center gap-3 mb-1.5">
+                                <h2 className="text-2xl font-bold text-[#0A0A0A] tracking-tighter uppercase leading-none">Neural Audit Engine</h2>
+                                <span className="px-2.5 py-1 bg-[#3B82F6]/10 text-[#3B82F6] border border-[#3B82F6]/10 rounded text-[0.45rem] font-bold uppercase tracking-widest">
+                                    STABLE-V4
+                                </span>
+                            </div>
+                            <p className="text-[0.7rem] font-bold text-black/30 uppercase tracking-widest">
+                                Simulating Recruiter Scan <span className="mx-2 opacity-50">&</span> Impact Logic
+                            </p>
                         </div>
                     </div>
-                    <button onClick={() => !isProcessing && setIsOpen(false)} className="text-black/30 hover:text-black transition-colors disabled:opacity-30" disabled={isProcessing}>
-                        <RiCloseCircleLine size={28} />
+                    <button onClick={() => !isProcessing && setIsOpen(false)} className="w-12 h-12 flex items-center justify-center text-black/20 hover:text-black hover:bg-black/[0.03] rounded-full transition-all disabled:opacity-30" disabled={isProcessing}>
+                        <RiCloseCircleLine size={24} />
                     </button>
                 </div>
 
@@ -197,7 +220,7 @@ export function AnalyzeResume() {
                             {/* Cinematic Scan Animation Overlay */}
                             <AnimatePresence>
                                 {isProcessing && (
-                                    <motion.div 
+                                    <m.div 
                                         initial={{ opacity: 0 }}
                                         animate={{ opacity: 1 }}
                                         exit={{ opacity: 0 }}
@@ -210,10 +233,10 @@ export function AnalyzeResume() {
                                                 <RiLoader4Line className="animate-spin" size={40} />
                                             </div>
                                             <div className="flex flex-col items-center gap-2">
-                                                <span className="text-sm font-black uppercase tracking-[0.2em] text-black animate-pulse">{scanStep}</span>
-                                                <div className="w-48 h-1 bg-black/5 rounded-full overflow-hidden">
-                                                    <motion.div 
-                                                        className="h-full bg-black"
+                                                <span className="text-sm font-bold uppercase tracking-[0.2em] text-[#0A0A0A] animate-pulse">{scanStep}</span>
+                                                <div className="w-48 h-2 bg-black/[0.05] rounded-full overflow-hidden">
+                                                    <m.div 
+                                                        className="h-full bg-[#3B82F6]"
                                                         initial={{ width: "0%" }}
                                                         animate={{ width: "100%" }}
                                                         transition={{ duration: 6, ease: "linear" }}
@@ -223,12 +246,12 @@ export function AnalyzeResume() {
                                         </div>
 
                                         {/* Laser Audit Line */}
-                                        <motion.div 
+                                        <m.div 
                                             animate={{ top: ["0%", "100%", "0%"] }}
                                             transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
-                                            className="absolute left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-black to-transparent shadow-[0_0_30px_rgba(0,0,0,0.8)] z-40 opacity-30"
+                                            className="absolute left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#3B82F6] to-transparent shadow-[0_0_30px_rgba(59,130,246,0.6)] z-40 opacity-50"
                                         />
-                                    </motion.div>
+                                    </m.div>
                                 )}
                             </AnimatePresence>
 
@@ -241,14 +264,14 @@ export function AnalyzeResume() {
                             />
                             
                             {error && (
-                                <motion.div 
+                                <m.div 
                                     initial={{ opacity: 0, scale: 0.95 }}
                                     animate={{ opacity: 1, scale: 1 }}
                                     className="absolute bottom-10 left-10 right-10 flex items-center gap-3 text-white text-[0.75rem] font-black uppercase tracking-widest bg-red-500 p-6 rounded-2xl shadow-2xl z-40"
                                 >
                                     <RiInformationLine size={20} />
                                     {error}
-                                </motion.div>
+                                </m.div>
                             )}
                         </div>
                     </div>
@@ -272,7 +295,7 @@ export function AnalyzeResume() {
                         <button 
                             onClick={handleManualAnalyze}
                             disabled={isProcessing || !content.trim()}
-                            className="bg-black text-white px-12 py-5 rounded-[1.25rem] font-black text-sm hover:scale-[1.02] active:scale-[0.98] transition-all shadow-2xl shadow-black/20 disabled:opacity-30 flex items-center gap-3 group"
+                            className="bg-[#3B82F6] text-white px-12 py-5 rounded-[1.25rem] font-bold text-sm hover:bg-[#2563EB] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-2xl shadow-blue-500/20 disabled:opacity-30 flex items-center gap-3 group"
                         >
                             {isAnalyzing ? "Processing Matrix..." : "Execute Neural Audit"}
                             {!isAnalyzing && <RiArrowRightLine size={18} className="group-hover:translate-x-1 transition-transform" />}
@@ -287,6 +310,7 @@ export function AnalyzeResume() {
          isOpen={isResultsModalOpen}
          onCloseAction={() => setIsResultsModalOpen(false)}
          data={analysisResult}
+         resumeId={activeResumeId || undefined}
       />
     </>
   );

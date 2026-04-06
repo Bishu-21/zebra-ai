@@ -1,0 +1,76 @@
+/* Zebra Compiler Stylings */
+.neural-resume-paper {
+  background: white;
+  width: 210mm;
+  min-height: 297mm;
+  padding: 20mm;
+  margin: 0 auto;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+  transform-origin: top center;
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  color: #0A0A0A;
+  font-family: 'Inter', system-ui, sans-serif;
+  line-height: 1.5;
+  font-size: 10pt;
+}
+
+.neural-resume-paper h1 {
+  font-size: 24pt;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 0.9;
+  text-transform: uppercase;
+  margin-bottom: 4pt;
+}
+
+.neural-section-title {
+  font-size: 11pt;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border-bottom: 1.5pt solid #0A0A0A;
+  margin-top: 16pt;
+  margin-bottom: 8pt;
+  padding-bottom: 2pt;
+}
+
+.neural-item-title {
+  font-weight: 800;
+  font-size: 10.5pt;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.neural-bullet {
+  position: relative;
+  padding-left: 12pt;
+  margin-bottom: 2pt;
+}
+
+.neural-bullet::before {
+  content: "■";
+  position: absolute;
+  left: 0;
+  font-size: 6pt;
+  top: 4pt;
+  opacity: 0.8;
+}
+
+/* Watermark for Locked Templates */
+.locked-watermark {
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(115, 115, 115, 0.03),
+    rgba(115, 115, 115, 0.03) 10px,
+    rgba(115, 115, 115, 0.05) 10px,
+    rgba(115, 115, 115, 0.05) 20px
+  );
+  pointer-events: none;
+}
+
+.premium-blur {
+  filter: blur(4px);
+  user-select: none;
+  pointer-events: none;
+}

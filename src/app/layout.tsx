@@ -68,6 +68,7 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${inter.variable} h-full antialiased font-sans`}
+      data-scroll-behavior="smooth"
     >
       <head>
         <JsonLd schema={softwareSchema} />

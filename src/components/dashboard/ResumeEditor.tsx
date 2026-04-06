@@ -1,828 +1,460 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useState, useCallback } from "react";
+import { useDebounce } from "@/hooks/useDebounce";
+import { m, AnimatePresence } from "framer-motion";
 import { 
-    RiArrowLeftLine, 
-    RiSave3Line, 
-    RiMagicLine, 
-    RiLayout4Line, 
-    RiEyeLine, 
-    RiCodeSSlashLine, 
-    RiMore2Line,
-    RiArrowRightSLine,
-    RiCheckLine,
-    RiLoader4Line,
-    RiCloseCircleLine,
-    RiAddLine,
-    RiSubtractLine,
-    RiRobot2Line,
-    RiCloseLine,
-    RiSparklingLine,
-    RiUser6Line,
-    RiBriefcaseLine,
-    RiGraduationCapLine,
-    RiToolsLine,
-    RiClipboardLine,
-    RiFileDownloadLine,
-    RiExternalLinkLine,
-    RiCheckboxCircleFill,
-    RiDragMove2Fill,
-    RiCalendarLine
+    RiArrowLeftLine, RiSave3Line, RiMagicLine, RiCodeSSlashLine,
+    RiLoader4Line, RiCloseCircleLine, RiAddLine, RiRobot2Line,
+    RiCloseLine, RiSparklingLine, RiUser6Line, RiBriefcaseLine,
+    RiGraduationCapLine, RiToolsLine, RiClipboardLine, RiFileDownloadLine,
+    RiCheckboxCircleFill, RiStackLine, RiBallPenLine, RiDeleteBinLine,
+    RiAwardLine, RiShareLine
 } from "react-icons/ri";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/Toast";
+import { PreviewPane } from "@/components/compiler/PreviewPane";
+import { FieldInput, FieldTextarea } from "@/components/compiler/FieldInput";
+import { parseResumeData } from "@/components/compiler/parseResume";
+import { ShareModal } from "@/components/compiler/ShareModal";
+import type { ResumeData, ResumeContent, Experience, Project, Education, SkillCategory, Achievement, SectionId, TemplateType } from "@/components/compiler/types";
 
 interface ResumeEditorProps {
-    initialData?: any;
+    initialData?: { id: string; title: string; content: string; };
 }
 
 export function ResumeEditor({ initialData }: ResumeEditorProps) {
-    const [resume, setResume] = useState(() => {
-        if (initialData) {
-            try {
-                const parsed = JSON.parse(initialData.content || "{}");
-                return {
-                    id: initialData.id,
-                    title: initialData.title || "Untitled Resume",
-                    content: {
-                        basics: parsed.basics || { name: "", email: "", phone: "", summary: "", location: "" },
-                        experience: parsed.experience || [],
-                        education: parsed.education || [],
-                        skills: parsed.skills || []
-                    }
-                };
-            } catch (e) {
-                console.error("Failed to parse resume content", e);
-            }
-        }
-        return {
-            id: initialData?.id || "new",
-            title: initialData?.title || "Untitled Resume",
-            content: {
-                basics: { name: "", email: "", phone: "", summary: "", location: "" },
-                experience: [],
-                education: [],
-                skills: []
-            }
-        };
-    });
+    const [resume, setResume] = useState<ResumeData>(() => parseResumeData(initialData));
+    const [selectedTemplate, setSelectedTemplate] = useState<TemplateType>('modern');
     const [isSaving, setIsSaving] = useState(false);
-    const [activeSection, setActiveSection] = useState("basics");
+    const [activeSection, setActiveSection] = useState<SectionId>("basics");
+    const [viewMode, setViewMode] = useState<"sheet" | "source">("sheet");
+    const [jsonError, setJsonError] = useState<string | null>(null);
     const [isAiLoading, setIsAiLoading] = useState(false);
     const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
     const [showAiPanel, setShowAiPanel] = useState(false);
     const [aiContext, setAiContext] = useState<any>(null);
     const [copying, setCopying] = useState<string | null>(null);
+    const [showShareModal, setShowShareModal] = useState(false);
     const router = useRouter();
     const { showToast } = useToast();
 
-    const getAiSuggestions = async (section: string, currentText: string, itemContext?: any) => {
-        setIsAiLoading(true);
-        setShowAiPanel(true);
-        setAiContext({ section, currentText, itemContext });
-        
-        try {
-            const res = await fetch("/api/ai/copilot", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    section,
-                    currentText,
-                    context: resume.content
-                })
-            });
-            const data = await res.json();
-            if (data.suggestions) {
-                setAiSuggestions(data.suggestions);
-            }
-        } catch (error) {
-            showToast("AI Assistant failed to connect", "error");
-        } finally {
-            setIsAiLoading(false);
+    const debouncedContent = useDebounce(resume.content, 300);
+
+    const jumpToSource = useCallback((path: string) => {
+        const field = document.querySelector(`[name="${path}"]`) as HTMLElement;
+        if (field) {
+            field.focus();
+            field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            field.style.boxShadow = '0 0 0 2px rgba(59,130,246,0.4)';
+            setTimeout(() => { field.style.boxShadow = ''; }, 1200);
         }
-    };
+        const section = path.split('.')[0] as SectionId;
+        if (section) setActiveSection(section);
+    }, []);
 
     const sections = [
-        { id: "basics", label: "Basics", icon: RiUser6Line },
-        { id: "experience", label: "Experience", icon: RiBriefcaseLine },
-        { id: "education", label: "Education", icon: RiGraduationCapLine },
-        { id: "skills", label: "Skills", icon: RiToolsLine },
+        { id: "basics" as SectionId, label: "Basics", icon: RiUser6Line },
+        { id: "education" as SectionId, label: "Education", icon: RiGraduationCapLine },
+        { id: "skills" as SectionId, label: "Skills", icon: RiToolsLine },
+        { id: "projects" as SectionId, label: "Projects", icon: RiStackLine },
+        { id: "experience" as SectionId, label: "Experience", icon: RiBriefcaseLine },
+        { id: "certifications" as SectionId, label: "Certs", icon: RiAwardLine },
     ];
 
-    const handleSave = async () => {
-        if (resume.id === "new") {
-            showToast("Global Save for NEW resumes in development", "info");
-            return;
-        }
+    // ── Handlers ──────────────────────────────────────────────
 
+    const getAiSuggestions = async (section: string, currentText: string, itemContext?: any) => {
+        setIsAiLoading(true); setShowAiPanel(true); setAiContext({ section, currentText, itemContext });
+        try {
+            const res = await fetch("/api/ai/copilot", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ section, currentText, context: resume.content }) });
+            const data = await res.json();
+            if (data.suggestions) setAiSuggestions(data.suggestions);
+        } catch { showToast("AI connection failed", "error"); }
+        finally { setIsAiLoading(false); }
+    };
+
+    const handleSave = async () => {
         setIsSaving(true);
         try {
-            const res = await fetch(`/api/resumes/${resume.id}/update`, {
-                method: "PATCH",
+            const isNew = resume.id === "new";
+            const res = await fetch("/api/resumes", {
+                method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    title: resume.title,
-                    content: JSON.stringify(resume.content)
+                body: JSON.stringify({ 
+                    id: isNew ? null : resume.id,
+                    title: resume.title, 
+                    content: JSON.stringify(resume.content) 
                 })
             });
 
+            const contentType = res.headers.get("content-type");
+            if (!res.ok || !contentType?.includes("application/json")) {
+                const text = await res.text();
+                console.error("Save failed response:", text);
+                throw new Error(res.status === 404 ? "API route not found" : "Server returned an invalid response");
+            }
+
             const data = await res.json();
-            if (!res.ok) throw new Error(data.error || "Save failed");
-
-            showToast("Resume State Synchronized", "success");
-        } catch (error: any) {
-            showToast(error.message, "error");
-        } finally {
-            setIsSaving(false);
+            if (isNew && data.id) {
+                router.replace(`/dashboard/resumes/${data.id}`);
+                setResume((p: ResumeData) => ({ ...p, id: data.id }));
+                showToast("Resume created", "success");
+            } else { 
+                showToast("Saved", "success"); 
+            }
+        } catch (error: any) { 
+            showToast(error.message || "Save failed", "error"); 
+        } finally { 
+            setIsSaving(false); 
         }
     };
 
-    const copyToClipboard = async (type: 'json' | 'text') => {
-        setCopying(type);
+    const handleSourceChange = (value: string) => {
+        try { setResume((p: ResumeData) => ({ ...p, content: JSON.parse(value) })); setJsonError(null); }
+        catch (e: any) { setJsonError(e.message); }
+    };
+
+    const copyToClipboard = async () => {
+        setCopying('text');
         try {
-            let content = "";
-            if (type === 'json') {
-                content = JSON.stringify(resume.content, null, 2);
-            } else {
-                const { basics, experience, education, skills } = resume.content;
-                content = `${basics.name.toUpperCase()}\n${basics.location} | ${basics.email}\n\n`;
-                content += `SUMMARY\n${basics.summary}\n\n`;
-                content += `EXPERIENCE\n`;
-                experience.forEach((exp: any) => {
-                    content += `${exp.role} @ ${exp.company}\n`;
-                    exp.highlights.forEach((h: string) => content += `- ${h}\n`);
-                    content += `\n`;
-                });
-                content += `SKILLS\n${skills.join(', ')}`;
-            }
-            await navigator.clipboard.writeText(content);
-            showToast(`Copied ${type.toUpperCase()} to clipboard`, "success");
-            setTimeout(() => setCopying(null), 2000);
-        } catch (err) {
-            showToast("Failed to copy", "error");
-            setCopying(null);
-        }
+            const { basics, experience, skills } = resume.content;
+            let t = `${basics.name}\n${basics.phone} | ${basics.email} | ${basics.location}\n\n`;
+            if (basics.summary) t += `SUMMARY\n${basics.summary}\n\n`;
+            experience.forEach(exp => { t += `${exp.role} | ${exp.company} | ${exp.period}\n`; exp.highlights.filter(h => h.trim()).forEach(h => { t += `- ${h}\n`; }); t += '\n'; });
+            if (skills.length) { t += 'SKILLS\n'; skills.forEach(s => { t += `${s.category}: ${s.items}\n`; }); }
+            await navigator.clipboard.writeText(t);
+            showToast("Copied", "success");
+            setTimeout(() => setCopying(null), 1500);
+        } catch { showToast("Copy failed", "error"); setCopying(null); }
     };
 
-    const updateBasics = (field: string, value: string) => {
-        setResume(prev => ({
-            ...prev,
-            content: {
-                ...prev.content,
-                basics: { ...prev.content.basics, [field]: value }
-            }
-        }));
-    };
+    const updateBasics = (field: string, value: string) => setResume((p: ResumeData) => ({ ...p, content: { ...p.content, basics: { ...p.content.basics, [field]: value } } }));
 
-    const addExperience = () => {
-        const newItem = { id: Date.now(), company: "", role: "", period: "", highlights: [""] };
-        setResume(prev => ({
-            ...prev,
-            content: { ...prev.content, experience: [...prev.content.experience, newItem] }
-        }));
-    };
+    const updateExperience = (id: number, field: string, value: any) => setResume((p: ResumeData) => ({ ...p, content: { ...p.content, experience: p.content.experience.map(i => i.id === id ? { ...i, [field]: value } : i) } }));
+    const updateProject = (id: number, field: string, value: any) => setResume((p: ResumeData) => ({ ...p, content: { ...p.content, projects: (p.content.projects || []).map(i => i.id === id ? { ...i, [field]: value } : i) } }));
+    const updateEducation = (id: number, field: string, value: any) => setResume((p: ResumeData) => ({ ...p, content: { ...p.content, education: p.content.education.map(i => i.id === id ? { ...i, [field]: value } : i) } }));
+    const updateSkill = (id: number, field: string, value: string) => setResume((p: ResumeData) => ({ ...p, content: { ...p.content, skills: p.content.skills.map(i => i.id === id ? { ...i, [field]: value } : i) } }));
+    const updateCert = (id: number, field: string, value: string) => setResume((p: ResumeData) => ({ ...p, content: { ...p.content, certifications: (p.content.certifications || []).map(i => i.id === id ? { ...i, [field]: value } : i) } }));
 
-    const addEducation = () => {
-        const newItem = { id: Date.now(), school: "", degree: "", period: "" };
-        setResume(prev => ({
-            ...prev,
-            content: { ...prev.content, education: [...prev.content.education, newItem] }
-        }));
-    };
+    const removeItem = (section: 'experience' | 'education' | 'projects' | 'skills' | 'certifications', id: number) => setResume((p: ResumeData) => ({ ...p, content: { ...p.content, [section]: (p.content[section] as any[]).filter(i => i.id !== id) } }));
 
-    const updateExperience = (id: number, field: string, value: any) => {
-        setResume(prev => ({
-            ...prev,
-            content: {
-                ...prev.content,
-                experience: prev.content.experience.map((item: any) => 
-                    item.id === id ? { ...item, [field]: value } : item
-                )
-            }
-        }));
-    };
+    const addExperience = () => setResume((p: ResumeData) => ({ ...p, content: { ...p.content, experience: [...p.content.experience, { id: Date.now(), company: "", location: "", role: "", period: "", highlights: [""], techStack: "", link: "" }] } }));
+    const addProject = () => setResume((p: ResumeData) => ({ ...p, content: { ...p.content, projects: [...(p.content.projects || []), { id: Date.now(), title: "", techStack: "", link: "", highlights: [""] }] } }));
+    const addEducation = () => setResume((p: ResumeData) => ({ ...p, content: { ...p.content, education: [...p.content.education, { id: Date.now(), school: "", location: "", degree: "", gpa: "", period: "", highlights: [] }] } }));
+    const addSkill = () => setResume((p: ResumeData) => ({ ...p, content: { ...p.content, skills: [...p.content.skills, { id: Date.now(), category: "", items: "" }] } }));
+    const addCert = () => setResume((p: ResumeData) => ({ ...p, content: { ...p.content, certifications: [...(p.content.certifications || []), { id: Date.now(), category: "", items: "" }] } }));
 
-    const removeitem = (section: 'experience' | 'education' | 'skills', id: number) => {
-        setResume(prev => ({
-            ...prev,
-            content: {
-                ...prev.content,
-                [section]: (prev.content as any)[section].filter((item: any) => item.id !== id)
-            }
-        }));
-    };
-
-    const updateEducation = (id: number, field: string, value: string) => {
-        setResume(prev => ({
-            ...prev,
-            content: {
-                ...prev.content,
-                education: prev.content.education.map((item: any) => 
-                    item.id === id ? { ...item, [field]: value } : item
-                )
-            }
-        }));
-    };
-
-    const applySuggestion = (suggestion: string) => {
+    const applySuggestion = (text: string) => {
         if (!aiContext) return;
-
         const { section, itemContext } = aiContext;
-
-        if (section === "Summary") {
-            updateBasics("summary", suggestion);
-        } else if (section === "Experience Bullet Point") {
-            const { expId, highlightIdx } = itemContext;
-            const exp = resume.content.experience.find((e: any) => e.id === expId);
-            if (exp) {
-                const newH = [...exp.highlights];
-                newH[highlightIdx] = suggestion;
-                updateExperience(expId, "highlights", newH);
-            }
+        if (section === 'Summary') updateBasics('summary', text);
+        else if (section === 'experience' && itemContext) {
+            const exp = resume.content.experience.find(e => e.id === itemContext.id);
+            if (exp) { const nh = [...exp.highlights]; nh[itemContext.idx] = text; updateExperience(itemContext.id, 'highlights', nh); }
         }
-        
-        setShowAiPanel(false);
-        showToast("AI Intelligence Applied", "success");
+        setShowAiPanel(false); showToast("Applied", "success");
     };
+
+    // ── JSX ───────────────────────────────────────────────────
 
     return (
-        <div className="flex h-screen bg-[#F8F9FA] overflow-hidden relative">
-            {/* Sidebar Navigation */}
-            {/* ... (sidebar code) */}
-            <aside className="w-20 md:w-64 bg-white border-r border-black/5 flex flex-col items-center py-8">
-                <button 
-                    onClick={() => router.push('/dashboard')}
-                    className="mb-12 w-12 h-12 rounded-2xl bg-black/5 flex items-center justify-center text-black/40 hover:bg-black hover:text-white transition-all shadow-sm"
-                >
-                    <RiArrowLeftLine size={24} />
-                </button>
-                
-                <nav className="flex-grow w-full px-4 space-y-4">
-                    {sections.map((section) => (
-                        <button
-                            key={section.id}
-                            onClick={() => setActiveSection(section.id)}
-                            className={`
-                                w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all group
-                                ${activeSection === section.id 
-                                    ? "bg-black text-white shadow-xl shadow-black/10" 
-                                    : "text-black/40 hover:bg-black/5 hover:text-black"}
-                            `}
-                        >
-                            <section.icon size={20} className={`${activeSection === section.id ? "text-white" : "group-hover:scale-110 transition-transform"}`} />
-                            <span className="hidden md:block font-black text-[0.7rem] uppercase tracking-widest">{section.label}</span>
-                            {activeSection === section.id && (
-                                <motion.div layoutId="active-nav" className="ml-auto hidden md:block">
-                                    <RiArrowRightSLine size={16} />
-                                </motion.div>
-                            )}
+        <div className="fixed inset-0 z-[100] flex flex-col bg-white font-sans text-[#0A0A0A]">
+            {/* ── TOOLBAR (44px) ── */}
+            <header className="h-11 bg-white border-b border-black/6 flex items-center justify-between px-3 shrink-0 select-none">
+                <div className="flex items-center gap-3">
+                    <button onClick={() => router.push('/dashboard')} className="w-7 h-7 rounded-md bg-[#F5F5F5] flex items-center justify-center text-[#737373] hover:bg-[#0A0A0A] hover:text-white transition-all">
+                        <RiArrowLeftLine size={14} />
+                    </button>
+                    <div className="w-px h-5 bg-black/8" />
+                    <input type="text" value={resume.title} onChange={(e) => setResume({...resume, title: e.target.value})} className="bg-transparent text-sm font-semibold text-[#0A0A0A] outline-none w-48 border-b border-transparent focus:border-[#3B82F6] transition-colors" />
+                    <span className="px-2 py-0.5 bg-[#3B82F6]/10 text-[#3B82F6] rounded text-[10px] font-semibold tracking-wide">DRAFT</span>
+                </div>
+                <div className="flex items-center gap-2">
+                    <div className="bg-[#F5F5F5] p-0.5 rounded-md flex items-center gap-0.5 border border-black/5">
+                        <button onClick={() => setViewMode("sheet")} className={`px-3 py-1 rounded text-[10px] font-semibold tracking-wide transition-all ${viewMode === "sheet" ? "bg-white text-[#0A0A0A] shadow-sm" : "text-[#737373] hover:text-[#0A0A0A]"}`}>
+                            <span className="flex items-center gap-1"><RiBallPenLine size={11} /> Editor</span>
                         </button>
-                    ))}
-                </nav>
-
-                <div className="mt-auto px-4 w-full">
-                    <button 
-                        onClick={() => setShowAiPanel(!showAiPanel)}
-                        className="bg-blue-500/5 border border-blue-500/10 rounded-2xl p-6 flex flex-col gap-4 w-full text-left hover:bg-blue-500/10 transition-all group"
-                    >
-                        <RiRobot2Line size={24} className="text-blue-500 group-hover:scale-110 transition-transform" />
-                        <p className="text-[0.6rem] font-black uppercase tracking-widest text-blue-500 leading-relaxed">
-                            Open Copilot
-                        </p>
+                        <button onClick={() => setViewMode("source")} className={`px-3 py-1 rounded text-[10px] font-semibold tracking-wide transition-all ${viewMode === "source" ? "bg-white text-[#0A0A0A] shadow-sm" : "text-[#737373] hover:text-[#0A0A0A]"}`}>
+                            <span className="flex items-center gap-1"><RiCodeSSlashLine size={11} /> Source</span>
+                        </button>
+                    </div>
+                    <div className="w-px h-5 bg-black/8" />
+                    <button onClick={copyToClipboard} className="h-7 px-3 rounded-md text-[10px] font-semibold text-[#737373] hover:bg-[#F5F5F5] hover:text-[#0A0A0A] transition-all flex items-center gap-1.5">
+                        {copying ? <RiCheckboxCircleFill className="text-emerald-500" size={12} /> : <RiClipboardLine size={12} />}
+                        Copy
+                    </button>
+                    <button onClick={async () => {
+                        try {
+                            const res = await fetch("/api/export/hardened", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ resumeData: resume.content, template: selectedTemplate }) });
+                            const data = await res.json();
+                            if (!res.ok) { if (data.error === "PREMIUM_REQUIRED") { showToast("Pro plan required", "error"); return; } throw new Error(data.error); }
+                            const pw = window.open("", "_blank"); if (pw) { pw.document.write(data.html); pw.document.close(); pw.focus(); setTimeout(() => pw.print(), 500); }
+                        } catch (err: any) { showToast(err.message || "Export failed", "error"); }
+                    }} className="h-7 px-3 rounded-md text-[10px] font-semibold text-[#737373] hover:bg-[#F5F5F5] hover:text-[#0A0A0A] transition-all flex items-center gap-1.5">
+                        <RiFileDownloadLine size={12} /> Export
+                    </button>
+                    <button onClick={() => setShowShareModal(true)} className="h-7 px-3 rounded-md text-[10px] font-semibold text-[#737373] hover:bg-[#F5F5F5] hover:text-[#0A0A0A] transition-all flex items-center gap-1.5">
+                        <RiShareLine size={12} /> Share
+                    </button>
+                    <div className="w-px h-5 bg-black/8" />
+                    <button onClick={handleSave} disabled={isSaving} className="h-7 px-4 bg-[#3B82F6] hover:bg-[#2563EB] rounded-md text-[10px] font-bold tracking-wide text-white transition-all flex items-center gap-1.5 disabled:opacity-40 active:scale-95">
+                        {isSaving ? <RiLoader4Line size={12} className="animate-spin" /> : <RiSave3Line size={12} />}
+                        {isSaving ? "Saving..." : "Save"}
                     </button>
                 </div>
-            </aside>
+            </header>
 
-            {/* Main Editor Surface */}
-            <main className="flex-grow flex flex-col relative">
-                {/* Editor Header */}
-                <header className="h-24 bg-white border-b border-black/5 flex items-center justify-between px-10">
-                    <div className="flex items-center gap-4">
-                        <input 
-                            type="text" 
-                            value={resume.title}
-                            onChange={(e) => setResume({...resume, title: e.target.value})}
-                            className="text-xl font-black text-black outline-none bg-transparent w-48 md:w-64 focus:border-b-2 border-black/10 transition-all uppercase tracking-tight"
-                        />
-                        <span className="px-3 py-1 bg-green-500/10 text-green-600 rounded-full text-[0.6rem] font-black uppercase tracking-widest">Draft</span>
-                    </div>
+            {/* ── MAIN 3-COLUMN LAYOUT ── */}
+            <div className="flex-grow flex overflow-hidden">
 
-                    <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2 mr-2">
-                            <button 
-                                onClick={() => copyToClipboard('text')}
-                                className="h-12 px-5 bg-white border border-black/5 rounded-xl text-[0.6rem] font-black uppercase tracking-widest text-black/60 hover:bg-black hover:text-white transition-all flex items-center gap-2 active:scale-95"
-                            >
-                                {copying === 'text' ? <RiCheckboxCircleFill className="text-green-500" /> : <RiClipboardLine />}
-                                {copying === 'text' ? "Copied Text" : "Copy Text"}
-                            </button>
-                            <button 
-                                onClick={() => copyToClipboard('json')}
-                                className="h-12 px-5 bg-white border border-black/5 rounded-xl text-[0.6rem] font-black uppercase tracking-widest text-black/60 hover:bg-black hover:text-white transition-all flex items-center gap-2 active:scale-95"
-                            >
-                                {copying === 'json' ? <RiCheckboxCircleFill className="text-green-500" /> : <RiCodeSSlashLine />}
-                                {copying === 'json' ? "Copied JSON" : "Copy JSON"}
-                            </button>
-                            <button 
-                                onClick={() => window.print()}
-                                className="h-12 px-5 bg-white border border-black/5 rounded-xl text-[0.6rem] font-black uppercase tracking-widest text-black/40 hover:text-black transition-all flex items-center gap-2 group italic"
-                            >
-                                <RiFileDownloadLine className="group-hover:scale-110 transition-transform" />
-                                Export PDF
-                            </button>
-                        </div>
-
-                        <button 
-                            onClick={handleSave}
-                            disabled={isSaving}
-                            className="bg-black text-white px-10 h-12 rounded-xl font-black text-[0.75rem] uppercase tracking-[0.2em] shadow-xl shadow-black/10 hover:scale-105 active:scale-95 transition-all flex items-center gap-3 disabled:opacity-30"
-                        >
-                            {isSaving ? <RiLoader4Line size={18} className="animate-spin" /> : <RiSave3Line size={18} />}
-                            {isSaving ? "Saving..." : "Save State"}
+                {/* COL 1: Section Nav (48px) */}
+                <aside className="w-12 bg-white border-r border-black/6 flex flex-col items-center py-3 gap-1 shrink-0">
+                    {sections.map((s) => (
+                        <button key={s.id} onClick={() => setActiveSection(s.id)} title={s.label}
+                            className={`w-9 h-9 rounded-md flex items-center justify-center transition-all relative ${activeSection === s.id ? "bg-[#0A0A0A] text-white" : "text-[#A3A3A3] hover:bg-[#F5F5F5] hover:text-[#0A0A0A]"}`}>
+                            <s.icon size={16} />
                         </button>
-                    </div>
-                </header>
+                    ))}
+                    <div className="flex-grow" />
+                    <button onClick={() => setShowAiPanel(!showAiPanel)} title="AI Copilot"
+                        className={`w-9 h-9 rounded-md flex items-center justify-center transition-all ${showAiPanel ? "bg-[#3B82F6]/10 text-[#3B82F6]" : "text-[#A3A3A3] hover:bg-[#F5F5F5] hover:text-[#3B82F6]"}`}>
+                        <RiRobot2Line size={16} />
+                    </button>
+                </aside>
 
-                {/* Split Pane Layer */}
-                <div className="flex-grow flex overflow-hidden">
-                    {/* Left: Input Form */}
-                    <div className="flex-1 overflow-y-auto no-scrollbar bg-white p-16">
-                        <div className="max-w-3xl mx-auto space-y-12 pb-24">
-                            <div className="flex items-center justify-between pb-8 border-b border-black/5">
+                {/* COL 2: Editor Pane (~38%) */}
+                <div className="w-[38%] min-w-[300px] bg-white border-r border-black/6 flex flex-col overflow-hidden">
+                    <div className="h-8 bg-[#FAFAFA] border-b border-black/5 flex items-center px-4 shrink-0">
+                        <span className="text-[10px] font-semibold text-[#737373] tracking-wide uppercase">{viewMode === "source" ? "JSON Source" : sections.find(s => s.id === activeSection)?.label}</span>
+                    </div>
+                    <div className="flex-grow overflow-y-auto custom-scrollbar">
+                        <div className="p-5 space-y-4 pb-20">
+                            {viewMode === "source" ? (
                                 <div>
-                                    <h2 className="text-4xl font-black text-black tracking-tighter mb-2">{activeSection.toUpperCase()}</h2>
-                                    <p className="text-black/60 text-sm font-medium italic">Refine your strategic assets for maximum professional leverage.</p>
+                                    <textarea value={JSON.stringify(resume.content, null, 2)} onChange={(e) => handleSourceChange(e.target.value)}
+                                        className={`w-full h-[calc(100vh-140px)] bg-[#1e1e1e] text-emerald-400 font-mono text-xs p-4 rounded-lg outline-none border transition-all resize-none ${jsonError ? "border-red-400" : "border-[#333] focus:border-[#3B82F6]"}`} spellCheck={false} />
+                                    {jsonError && <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-red-600 text-[10px] font-semibold flex items-center gap-1.5"><RiCloseCircleLine size={12} />{jsonError}</div>}
                                 </div>
-                                <RiCodeSSlashLine size={48} className="text-black/[0.03]" />
-                            </div>
-
-                            {/* Forms rendered here... */}
-                            {/* ... (Basics, Experience, Education, Skills) */}
-
-                            {/* SECTION BASICS */}
-                            {activeSection === "basics" && (
-                                <div className="space-y-8">
-                                    <div className="grid grid-cols-2 gap-8">
-                                        <div className="space-y-3">
-                                            <label className="text-[0.6rem] font-black uppercase tracking-[0.2em] text-black/70 ml-1">Full Identity</label>
-                                            <input 
-                                                type="text" 
-                                                value={resume.content.basics.name}
-                                                onChange={(e) => updateBasics("name", e.target.value)}
-                                                placeholder="John Wick" 
-                                                className="w-full h-16 bg-[#F8F9FA] rounded-2xl px-6 font-bold text-black border-2 border-black/[0.02] focus:border-black/10 focus:bg-white outline-none transition-all" 
-                                            />
-                                        </div>
-                                        <div className="space-y-3">
-                                            <label className="text-[0.6rem] font-black uppercase tracking-[0.2em] text-black/70 ml-1">Location</label>
-                                            <input 
-                                                type="text" 
-                                                value={resume.content.basics.location}
-                                                onChange={(e) => updateBasics("location", e.target.value)}
-                                                placeholder="San Francisco, CA" 
-                                                className="w-full h-16 bg-[#F8F9FA] rounded-2xl px-6 font-bold text-black border-2 border-black/[0.02] focus:border-black/10 focus:bg-white outline-none transition-all" 
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-8">
-                                        <div className="space-y-3">
-                                            <label className="text-[0.6rem] font-black uppercase tracking-[0.2em] text-black/70 ml-1">Secure Contact</label>
-                                            <input 
-                                                type="email" 
-                                                value={resume.content.basics.email}
-                                                onChange={(e) => updateBasics("email", e.target.value)}
-                                                placeholder="john@continental.com" 
-                                                className="w-full h-16 bg-[#F8F9FA] rounded-2xl px-6 font-bold text-black border-2 border-black/[0.02] focus:border-black/10 focus:bg-white outline-none transition-all" 
-                                            />
-                                        </div>
-                                        <div className="space-y-3">
-                                            <label className="text-[0.6rem] font-black uppercase tracking-[0.2em] text-black/70 ml-1">Phone</label>
-                                            <input 
-                                                type="text" 
-                                                value={resume.content.basics.phone}
-                                                onChange={(e) => updateBasics("phone", e.target.value)}
-                                                placeholder="+1 (555) 000-0000" 
-                                                className="w-full h-16 bg-[#F8F9FA] rounded-2xl px-6 font-bold text-black border-2 border-black/[0.02] focus:border-black/10 focus:bg-white outline-none transition-all" 
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="space-y-3 relative group">
-                                        <label className="text-[0.6rem] font-black uppercase tracking-[0.2em] text-black/70 ml-1">Professional Narrative</label>
-                                        <div className="relative">
-                                            <textarea 
-                                                value={resume.content.basics.summary}
-                                                onChange={(e) => updateBasics("summary", e.target.value)}
-                                                placeholder="Briefly describe your high-level achievements..."
-                                                className="w-full min-h-[220px] bg-[#F8F9FA] rounded-[2rem] p-8 font-bold text-black border-2 border-black/[0.02] focus:border-black/10 focus:bg-white outline-none transition-all resize-none leading-relaxed shadow-inner"
-                                            />
-                                            <button 
-                                                onClick={() => getAiSuggestions("Summary", resume.content.basics.summary)}
-                                                className="absolute bottom-4 right-4 p-3 bg-black text-white rounded-xl shadow-lg opacity-0 group-hover:opacity-100 transition-all hover:scale-110 active:scale-95"
-                                            >
-                                                <RiMagicLine size={20} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
+                            ) : (
+                                <>
+                                    {activeSection === "basics" && <BasicsEditor content={resume.content} updateBasics={updateBasics} getAiSuggestions={getAiSuggestions} />}
+                                    {activeSection === "education" && <EducationEditor content={resume.content} updateEducation={updateEducation} addEducation={addEducation} removeItem={removeItem} />}
+                                    {activeSection === "skills" && <SkillsEditor content={resume.content} updateSkill={updateSkill} addSkill={addSkill} removeItem={removeItem} />}
+                                    {activeSection === "projects" && <ProjectsEditor content={resume.content} updateProject={updateProject} addProject={addProject} removeItem={removeItem} />}
+                                    {activeSection === "experience" && <ExperienceEditor content={resume.content} updateExperience={updateExperience} addExperience={addExperience} removeItem={removeItem} />}
+                                    {activeSection === "certifications" && <CertsEditor content={resume.content} updateCert={updateCert} addCert={addCert} removeItem={removeItem} />}
+                                </>
                             )}
-
-                            {/* SECTION EXPERIENCE */}
-                            {activeSection === "experience" && (
-                                <div className="space-y-12">
-                                    {resume.content.experience.map((exp: any) => (
-                                        <div key={exp.id} className="p-12 border border-black/5 rounded-[3rem] space-y-10 relative group hover:border-black/10 transition-all bg-white shadow-sm hover:shadow-xl hover:shadow-black/5">
-                                            {/* Drag Handle Aesthetic */}
-                                            <div className="absolute left-6 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all cursor-move text-black/10">
-                                                <RiDragMove2Fill size={20} />
-                                            </div>
-
-                                            <button 
-                                                onClick={() => removeitem('experience', exp.id)}
-                                                className="absolute -top-4 -right-4 w-12 h-12 bg-white border border-black/5 rounded-full flex items-center justify-center text-black/20 hover:text-red-500 hover:border-red-100 transition-all shadow-lg active:scale-95"
-                                            >
-                                                <RiCloseCircleLine size={24} />
-                                            </button>
-                                            
-                                            <div className="grid grid-cols-2 gap-8">
-                                                <div className="space-y-3">
-                                                    <label className="text-[0.6rem] font-black uppercase tracking-[0.2em] text-black/40 ml-1">Company</label>
-                                                    <input 
-                                                        type="text" 
-                                                        value={exp.company}
-                                                        onChange={(e) => updateExperience(exp.id, "company", e.target.value)}
-                                                        placeholder="Continental Hotels" 
-                                                        className="w-full h-16 bg-[#F8F9FA] rounded-2xl px-6 font-bold text-black border-2 border-black/[0.02] focus:border-black/10 focus:bg-white outline-none transition-all placeholder:text-black/20" 
-                                                    />
-                                                </div>
-                                                <div className="space-y-3">
-                                                    <label className="text-[0.6rem] font-black uppercase tracking-[0.2em] text-black/40 ml-1">Role/Title</label>
-                                                    <input 
-                                                        type="text" 
-                                                        value={exp.role}
-                                                        onChange={(e) => updateExperience(exp.id, "role", e.target.value)}
-                                                        placeholder="Senior Executive" 
-                                                        className="w-full h-16 bg-[#F8F9FA] rounded-2xl px-6 font-bold text-black border-2 border-black/[0.02] focus:border-black/10 focus:bg-white outline-none transition-all placeholder:text-black/20" 
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <div className="space-y-3">
-                                                <label className="text-[0.6rem] font-black uppercase tracking-[0.2em] text-black/40 ml-1">Active Duration</label>
-                                                <div className="relative">
-                                                    <RiCalendarLine className="absolute left-6 top-1/2 -translate-y-1/2 text-black/20" />
-                                                    <input 
-                                                        type="text" 
-                                                        value={exp.period}
-                                                        onChange={(e) => updateExperience(exp.id, "period", e.target.value)}
-                                                        placeholder="JAN 2020 — PRESENT" 
-                                                        className="w-full h-16 bg-[#F8F9FA] rounded-2xl pl-14 pr-6 font-bold text-black border-2 border-black/[0.02] focus:border-black/10 focus:bg-white outline-none transition-all placeholder:text-black/20" 
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <div className="space-y-3">
-                                                <label className="text-[0.6rem] font-black uppercase tracking-[0.2em] text-black/40 ml-1">Key Achievements (Bullet points)</label>
-                                                <div className="space-y-4">
-                                                    {exp.highlights.map((h: string, idx: number) => (
-                                                        <div key={idx} className="flex gap-4 group/bullet relative">
-                                                            <div className="w-2 h-2 rounded-full bg-black/10 mt-6 shrink-0" />
-                                                            <textarea 
-                                                                value={h}
-                                                                onChange={(e) => {
-                                                                    const newH = [...exp.highlights];
-                                                                    newH[idx] = e.target.value;
-                                                                    updateExperience(exp.id, "highlights", newH);
-                                                                }}
-                                                                placeholder="Quantify your impact..."
-                                                                className="flex-grow min-h-[80px] bg-black/5 rounded-xl p-4 font-bold text-sm border-2 border-transparent focus:border-black/5 outline-none resize-none placeholder:text-black/20"
-                                                            />
-                                                            <div className="flex flex-col gap-2 opacity-0 group-hover/bullet:opacity-100 transition-all">
-                                                                <button 
-                                                                    onClick={() => getAiSuggestions("Experience Bullet Point", h, { expId: exp.id, highlightIdx: idx })}
-                                                                    className="w-10 h-10 bg-black text-white rounded-lg flex items-center justify-center hover:scale-110 transition-transform shadow-lg"
-                                                                >
-                                                                    <RiMagicLine size={16} />
-                                                                </button>
-                                                                <button 
-                                                                    onClick={() => {
-                                                                        const newH = exp.highlights.filter((_: any, i: number) => i !== idx);
-                                                                        updateExperience(exp.id, "highlights", newH);
-                                                                    }}
-                                                                    className="w-10 h-10 bg-black/5 text-black/20 rounded-lg flex items-center justify-center hover:text-red-500 transition-colors"
-                                                                >
-                                                                    <RiSubtractLine size={16} />
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                    <button 
-                                                        onClick={() => {
-                                                            const newH = [...exp.highlights, ""];
-                                                            updateExperience(exp.id, "highlights", newH);
-                                                        }}
-                                                        className="w-full py-4 border-2 border-dashed border-black/5 rounded-2xl text-[0.6rem] font-black uppercase tracking-widest text-black/20 hover:text-black hover:border-black/20 transition-all flex items-center justify-center gap-2"
-                                                    >
-                                                        <RiAddLine size={16} />
-                                                        Add Bullet Point
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                    <button 
-                                        onClick={addExperience}
-                                        className="w-full h-20 border-2 border-dashed border-black/10 rounded-[2rem] flex items-center justify-center gap-4 text-black/30 font-black uppercase tracking-[0.2em] hover:border-black/50 hover:text-black transition-all bg-black/[0.01]"
-                                    >
-                                        <RiAddLine size={24} />
-                                        Add Strategic Experience
-                                    </button>
-                                </div>
-                            )}
-
-                            {/* SECTION EDUCATION */}
-                            {activeSection === "education" && (
-                                <div className="space-y-12">
-                                    {resume.content.education.map((edu: any) => (
-                                        <div key={edu.id} className="p-12 border border-black/5 rounded-[3rem] space-y-10 relative group hover:border-black/10 transition-all bg-white shadow-sm hover:shadow-xl hover:shadow-black/5">
-                                            {/* Drag Handle Aesthetic */}
-                                            <div className="absolute left-6 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all cursor-move text-black/10">
-                                                <RiDragMove2Fill size={20} />
-                                            </div>
-
-                                            <button 
-                                                onClick={() => removeitem('education', edu.id)}
-                                                className="absolute -top-4 -right-4 w-12 h-12 bg-white border border-black/5 rounded-full flex items-center justify-center text-black/20 hover:text-red-500 hover:border-red-100 transition-all shadow-lg active:scale-95"
-                                            >
-                                                <RiCloseCircleLine size={24} />
-                                            </button>
-                                            
-                                            <div className="grid grid-cols-2 gap-8">
-                                                <div className="space-y-3">
-                                                    <label className="text-[0.6rem] font-black uppercase tracking-[0.2em] text-black/40 ml-1">Institution</label>
-                                                    <input 
-                                                        type="text" 
-                                                        value={edu.school}
-                                                        onChange={(e) => updateEducation(edu.id, "school", e.target.value)}
-                                                        placeholder="High Table Academy" 
-                                                        className="w-full h-16 bg-[#F8F9FA] rounded-2xl px-6 font-bold text-black border-2 border-black/[0.02] focus:border-black/10 focus:bg-white outline-none transition-all placeholder:text-black/20" 
-                                                    />
-                                                </div>
-                                                <div className="space-y-3">
-                                                    <label className="text-[0.6rem] font-black uppercase tracking-[0.2em] text-black/40 ml-1">Degree/Level</label>
-                                                    <input 
-                                                        type="text" 
-                                                        value={edu.degree}
-                                                        onChange={(e) => updateEducation(edu.id, "degree", e.target.value)}
-                                                        placeholder="Master of Strategy" 
-                                                        className="w-full h-16 bg-[#F8F9FA] rounded-2xl px-6 font-bold text-black border-2 border-black/[0.02] focus:border-black/10 focus:bg-white outline-none transition-all placeholder:text-black/20" 
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <div className="space-y-3">
-                                                <label className="text-[0.6rem] font-black uppercase tracking-[0.2em] text-black/40 ml-1">Period</label>
-                                                <div className="relative">
-                                                    <RiCalendarLine className="absolute left-6 top-1/2 -translate-y-1/2 text-black/20" />
-                                                    <input 
-                                                        type="text" 
-                                                        value={edu.period}
-                                                        onChange={(e) => updateEducation(edu.id, "period", e.target.value)}
-                                                        placeholder="2016 — 2020" 
-                                                        className="w-full h-16 bg-[#F8F9FA] rounded-2xl pl-14 pr-6 font-bold text-black border-2 border-black/[0.02] focus:border-black/10 focus:bg-white outline-none transition-all placeholder:text-black/20" 
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                    <button 
-                                        onClick={addEducation}
-                                        className="w-full h-20 border-2 border-dashed border-black/10 rounded-[2rem] flex items-center justify-center gap-4 text-black/30 font-black uppercase tracking-[0.2em] hover:border-black/50 hover:text-black transition-all bg-black/[0.01]"
-                                    >
-                                        <RiAddLine size={24} />
-                                        Add Strategic Credential
-                                    </button>
-                                </div>
-                            )}
-
-                            {/* SECTION SKILLS */}
-                            {activeSection === "skills" && (
-                                <div className="space-y-8">
-                                    <div className="space-y-3">
-                                        <label className="text-[0.6rem] font-black uppercase tracking-[0.2em] text-black/70 ml-1">Technical Stack (Comma separated)</label>
-                                        <textarea 
-                                            value={resume.content.skills?.join(', ')}
-                                            onChange={(e) => {
-                                                setResume(prev => ({
-                                                    ...prev,
-                                                    content: { ...prev.content, skills: e.target.value.split(',').map(s => s.trim()) }
-                                                }));
-                                            }}
-                                            placeholder="Next.js, Python, AWS, neural-audit..."
-                                            className="w-full min-h-[150px] bg-[#F8F9FA] rounded-2xl p-8 font-bold text-black border-2 border-transparent focus:border-black/5 outline-none transition-all resize-none leading-relaxed"
-                                        />
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Right: Live Preview Sheet */}
-                    <div className="hidden xl:flex flex-1 bg-[#EBEEF2] overflow-y-auto p-16 items-start justify-center no-scrollbar preview-container">
-                        <div className="w-full max-w-[800px] aspect-[1/1.41] bg-white shadow-2xl rounded-sm p-16 relative overflow-hidden preview-sheet">
-                            {/* Watermark/Grid Background */}
-                            <div className="absolute inset-0 opacity-[0.03] pointer-events-none select-none">
-                                <div className="h-full w-full bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:20px_20px]" />
-                            </div>
-
-                            {/* Preview Header */}
-                            <div className="relative border-b-2 border-black pb-8 mb-12">
-                                <h1 className="text-4xl font-black tracking-tighter text-black mb-2 uppercase">{resume.content.basics.name || "UNIDENTIFIED"}</h1>
-                                <div className="flex gap-4 text-[0.7rem] font-bold text-black/60 uppercase tracking-widest">
-                                    <span>{resume.content.basics.location || "GLOBAL AGNOSTIC"}</span>
-                                    <span>•</span>
-                                    <span>{resume.content.basics.email || "NO SECURE CONTACT"}</span>
-                                    {resume.content.basics.phone && (
-                                        <>
-                                            <span>•</span>
-                                            <span>{resume.content.basics.phone}</span>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Preview Body Shell */}
-                            <div className="space-y-12">
-                                {resume.content.basics.summary && (
-                                    <section>
-                                        <h2 className="text-[0.65rem] font-black uppercase tracking-[0.3em] text-black/40 mb-4 border-b border-black/5 pb-2">Mission Statement</h2>
-                                        <p className="text-[0.8rem] text-black/80 leading-relaxed font-medium">
-                                            {resume.content.basics.summary}
-                                        </p>
-                                    </section>
-                                )}
-
-                                {resume.content.experience.length > 0 && (
-                                    <section>
-                                        <h2 className="text-[0.65rem] font-black uppercase tracking-[0.3em] text-black/40 mb-6 border-b border-black/5 pb-2">Experience Portfolio</h2>
-                                        <div className="space-y-8">
-                                            {resume.content.experience.map((exp: any) => (
-                                                <div key={exp.id} className="space-y-2">
-                                                    <div className="flex justify-between items-baseline">
-                                                        <h3 className="text-md font-black text-black uppercase">{exp.role || "OPERATIVE"} @ {exp.company || "AGENCY"}</h3>
-                                                        <span className="text-[0.7rem] font-bold text-black/40 uppercase">{exp.period || "20XX — PRESENT"}</span>
-                                                    </div>
-                                                    {exp.highlights?.length > 0 && (
-                                                        <ul className="space-y-2 list-disc pl-4">
-                                                            {exp.highlights.filter((h: string) => h.trim()).map((h: string, idx: number) => (
-                                                                <li key={idx} className="text-[0.8rem] text-black/70 leading-relaxed font-medium">{h}</li>
-                                                            ))}
-                                                        </ul>
-                                                    )}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </section>
-                                )}
-
-                                {(resume.content.education || []).length > 0 && (
-                                    <section>
-                                        <h2 className="text-[0.65rem] font-black uppercase tracking-[0.3em] text-black/40 mb-6 border-b border-black/5 pb-2">Academic Foundation</h2>
-                                        <div className="space-y-6">
-                                            {resume.content.education.map((edu: any) => (
-                                                <div key={edu.id} className="space-y-1">
-                                                    <div className="flex justify-between items-baseline">
-                                                        <h3 className="text-md font-black text-black uppercase">{edu.degree || "CREDENTIAL"}</h3>
-                                                        <span className="text-[0.7rem] font-bold text-black/40 uppercase">{edu.period || "20XX — 20XX"}</span>
-                                                    </div>
-                                                    <p className="text-[0.8rem] font-bold text-black/60 uppercase tracking-wide">{edu.school || "INSTITUTION"}</p>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </section>
-                                )}
-
-                                {resume.content.skills.length > 0 && (
-                                    <section>
-                                        <h2 className="text-[0.65rem] font-black uppercase tracking-[0.3em] text-black/40 mb-6 border-b border-black/5 pb-2">Technical Core</h2>
-                                        <div className="flex flex-wrap gap-2 text-[0.7rem] font-black uppercase tracking-wider text-black">
-                                            {resume.content.skills.map((s: string, i: number) => (
-                                                <React.Fragment key={i}>
-                                                    <span>{s}</span>
-                                                    {i < resume.content.skills.length - 1 && <span className="text-black/20">•</span>}
-                                                </React.Fragment>
-                                            ))}
-                                        </div>
-                                    </section>
-                                )}
-                            </div>
                         </div>
                     </div>
                 </div>
 
-                {/* AI Assistant Overlay */}
-                <AnimatePresence>
-                    {showAiPanel && (
-                        <>
-                            <motion.div 
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                onClick={() => setShowAiPanel(false)}
-                                className="absolute inset-0 bg-black/20 backdrop-blur-sm z-40"
-                            />
-                            <motion.div 
-                                initial={{ x: "100%" }}
-                                animate={{ x: 0 }}
-                                exit={{ x: "100%" }}
-                                transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                                className="absolute top-0 right-0 h-full w-[400px] bg-white shadow-[-20px_0_50px_rgba(0,0,0,0.1)] z-50 flex flex-col pt-12"
-                            >
-                                <div className="px-10 flex items-center justify-between mb-12">
-                                    <div>
-                                        <h3 className="text-2xl font-black text-black tracking-tighter uppercase italic">AI Copilot</h3>
-                                        <p className="text-[0.6rem] font-black uppercase tracking-widest text-blue-500">Intelligent Optimization</p>
-                                    </div>
-                                    <button 
-                                        onClick={() => setShowAiPanel(false)}
-                                        className="w-12 h-12 bg-black/5 rounded-2xl flex items-center justify-center text-black/40 hover:bg-black hover:text-white transition-all shadow-sm"
-                                    >
-                                        <RiCloseLine size={24} />
-                                    </button>
-                                </div>
+                {/* COL 3: Preview (~62%) */}
+                <PreviewPane content={debouncedContent} onJumpToSource={jumpToSource} />
+            </div>
 
-                                <div className="flex-grow overflow-y-auto px-10 no-scrollbar pb-12 space-y-8">
-                                    {isAiLoading ? (
-                                        <div className="flex flex-col items-center justify-center h-64 gap-6">
-                                            <RiLoader4Line size={48} className="text-black/10 animate-spin" />
-                                            <p className="text-[0.6rem] font-black uppercase tracking-[0.3em] text-black/20 animate-pulse text-center">
-                                                Analyzing Strategic Context...<br/>
-                                                Synthesizing Impact Vectors
-                                            </p>
-                                        </div>
-                                    ) : aiSuggestions.length > 0 ? (
-                                        <>
-                                            <div className="p-8 bg-blue-500/5 border border-blue-500/10 rounded-3xl space-y-4">
-                                                <RiSparklingLine size={24} className="text-blue-500" />
-                                                <h4 className="text-[0.7rem] font-black uppercase tracking-[0.2em] text-blue-600">Contextual Refinement</h4>
-                                                <p className="text-xs font-bold text-black/60 leading-relaxed italic">
-                                                    "Optimized based on ATS patterns and competitive high-frequency professional standards."
-                                                </p>
-                                            </div>
+            {/* ── AI PANEL ── */}
+            <AnimatePresence>
+                {showAiPanel && (
+                    <>
+                        <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowAiPanel(false)} className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[110]" />
+                        <m.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                            className="fixed top-0 right-0 h-full w-[360px] bg-white border-l border-black/8 shadow-[-10px_0_30px_rgba(0,0,0,0.06)] z-[120] flex flex-col">
+                            <div className="h-11 border-b border-black/6 flex items-center justify-between px-4 shrink-0">
+                                <div className="flex items-center gap-2"><RiRobot2Line size={14} className="text-[#3B82F6]" /><span className="text-xs font-semibold text-[#0A0A0A]">AI Copilot</span></div>
+                                <button onClick={() => setShowAiPanel(false)} className="w-6 h-6 rounded flex items-center justify-center text-[#737373] hover:bg-[#F5F5F5] transition-all"><RiCloseLine size={14} /></button>
+                            </div>
+                            <div className="flex-grow overflow-y-auto p-4 space-y-3 custom-scrollbar">
+                                {isAiLoading ? (
+                                    <div className="flex flex-col items-center justify-center h-48 gap-3"><RiLoader4Line size={28} className="text-black/10 animate-spin" /><p className="text-[10px] font-semibold text-[#737373]">Analyzing...</p></div>
+                                ) : aiSuggestions.length > 0 ? (
+                                    <>
+                                        <div className="p-3 bg-[#3B82F6]/5 border border-[#3B82F6]/15 rounded-lg"><p className="text-[10px] font-semibold text-[#3B82F6]">Suggestions based on ATS patterns.</p></div>
+                                        {aiSuggestions.map((s, idx) => (
+                                            <m.div key={idx} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.08 }} className="p-3 border border-black/8 rounded-lg space-y-2 hover:border-[#3B82F6]/30 transition-all group">
+                                                <p className="text-xs text-[#333] leading-relaxed">{s}</p>
+                                                <button onClick={() => applySuggestion(s)} className="w-full h-7 bg-[#3B82F6] text-white rounded text-[10px] font-semibold opacity-0 group-hover:opacity-100 transition-all hover:bg-[#2563EB]">Apply</button>
+                                            </m.div>
+                                        ))}
+                                        <button onClick={() => getAiSuggestions(aiContext.section, aiContext.currentText, aiContext.itemContext)} className="w-full h-8 border border-dashed border-black/15 rounded-lg flex items-center justify-center gap-1.5 text-[#737373] text-[10px] font-semibold hover:text-[#0A0A0A] hover:border-black/30 transition-all"><RiMagicLine size={10} /> Regenerate</button>
+                                    </>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center h-48 gap-3 opacity-30"><RiRobot2Line size={36} /><p className="text-[10px] font-semibold text-center">Hover a field and click ✨ to get suggestions.</p></div>
+                                )}
+                            </div>
+                        </m.div>
+                    </>
+                )}
+            </AnimatePresence>
 
-                                            <div className="space-y-6">
-                                                {aiSuggestions.map((suggestion, idx) => (
-                                                    <motion.div 
-                                                        key={idx}
-                                                        initial={{ opacity: 0, y: 10 }}
-                                                        animate={{ opacity: 1, y: 0 }}
-                                                        transition={{ delay: idx * 0.1 }}
-                                                        className="p-6 border-2 border-black/5 rounded-2xl space-y-4 hover:border-black/20 transition-all group relative overflow-hidden"
-                                                    >
-                                                        <div className="absolute top-0 right-0 w-16 h-16 bg-black/[0.02] -mr-8 -mt-8 rounded-full" />
-                                                        <p className="text-sm font-bold text-black/80 leading-relaxed">
-                                                            {suggestion}
-                                                        </p>
-                                                        <button 
-                                                            onClick={() => applySuggestion(suggestion)}
-                                                            className="w-full h-12 bg-black text-white rounded-xl font-black text-[0.65rem] uppercase tracking-[0.2em] opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0"
-                                                        >
-                                                            Apply Vector
-                                                        </button>
-                                                    </motion.div>
-                                                ))}
-                                            </div>
+            {/* ── STATUS BAR ── */}
+            <footer className="h-6 bg-[#3B82F6] flex items-center justify-between px-3 shrink-0 select-none">
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-white/70" /><span className="text-[9px] font-semibold text-white/80">Ready</span></div>
+                    <span className="text-[9px] font-semibold text-white/50">{isSaving ? "Saving..." : "Synced"}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                    <span className="text-[9px] font-semibold text-white/50">A4</span>
+                    <span className="text-[9px] font-semibold text-white/50">UTF-8</span>
+                </div>
+            </footer>
 
-                                            <button 
-                                                onClick={() => getAiSuggestions(aiContext.section, aiContext.currentText, aiContext.itemContext)}
-                                                className="w-full h-16 border-2 border-dashed border-black/10 rounded-2xl flex items-center justify-center gap-3 text-black/20 font-bold uppercase tracking-widest hover:text-black hover:border-black/30 transition-all"
-                                            >
-                                                <RiMagicLine size={18} />
-                                                Regenerate
-                                            </button>
-                                        </>
-                                    ) : (
-                                        <div className="flex flex-col items-center justify-center h-64 gap-6 opacity-20">
-                                            <RiRobot2Line size={64} />
-                                            <p className="text-[0.65rem] font-black uppercase tracking-widest text-center">
-                                                System Idle.<br/>
-                                                Select a section to optimize.
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-                                
-                                <div className="p-10 border-t border-black/5 bg-black/[0.01]">
-                                    <div className="flex items-center gap-4 text-[0.6rem] font-black uppercase tracking-widest text-black/30">
-                                        <RiCheckLine size={16} className="text-green-500" />
-                                        <span>Neural Audit Verified</span>
-                                    </div>
-                                </div>
-                            </motion.div>
-                        </>
-                    )}
-                </AnimatePresence>
-            </main>
+            {/* ── SHARE MODAL ── */}
+            <ShareModal isOpen={showShareModal} onClose={() => setShowShareModal(false)} resumeId={resume.id} resumeTitle={resume.title} />
         </div>
+    );
+}
+
+// ── SECTION EDITORS (inline for Phase 0, extract in Phase 2) ──
+
+function BasicsEditor({ content, updateBasics, getAiSuggestions }: { content: ResumeContent; updateBasics: (f: string, v: string) => void; getAiSuggestions: (s: string, t: string) => void }) {
+    return (
+        <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+                <FieldInput name="basics.name" label="Full Name" value={content.basics.name} onChange={(v) => updateBasics("name", v)} placeholder="Alex Webb" />
+                <FieldInput name="basics.location" label="Location" value={content.basics.location} onChange={(v) => updateBasics("location", v)} placeholder="Howrah, West Bengal" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+                <FieldInput name="basics.email" label="Email" value={content.basics.email} onChange={(v) => updateBasics("email", v)} placeholder="alex@email.com" />
+                <FieldInput name="basics.phone" label="Phone" value={content.basics.phone} onChange={(v) => updateBasics("phone", v)} placeholder="+91-9330199312" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+                <FieldInput name="basics.linkedin" label="LinkedIn" value={content.basics.linkedin || ""} onChange={(v) => updateBasics("linkedin", v)} placeholder="linkedin.com/in/..." />
+                <FieldInput name="basics.portfolio" label="Portfolio" value={content.basics.portfolio || ""} onChange={(v) => updateBasics("portfolio", v)} placeholder="yoursite.com" />
+            </div>
+            <div className="relative group">
+                <FieldTextarea name="basics.summary" label="Summary" value={content.basics.summary} onChange={(v) => updateBasics("summary", v)} placeholder="Brief professional summary..." rows={4} />
+                <button onClick={() => getAiSuggestions("Summary", content.basics.summary)} className="absolute bottom-2 right-2 p-1.5 bg-[#3B82F6]/10 text-[#3B82F6] rounded opacity-0 group-hover:opacity-100 transition-all hover:bg-[#3B82F6]/20"><RiMagicLine size={14} /></button>
+            </div>
+        </div>
+    );
+}
+
+function EducationEditor({ content, updateEducation, addEducation, removeItem }: { content: ResumeContent; updateEducation: (id: number, f: string, v: any) => void; addEducation: () => void; removeItem: (s: any, id: number) => void }) {
+    return (
+        <div className="space-y-4">
+            {content.education.map((edu) => (
+                <div key={edu.id} className="p-4 border border-black/8 rounded-lg space-y-3 relative group bg-[#FAFAFA] hover:border-black/12 transition-all">
+                    <button onClick={() => removeItem('education', edu.id)} className="absolute top-2 right-2 w-6 h-6 rounded flex items-center justify-center text-black/15 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"><RiDeleteBinLine size={12} /></button>
+                    <div className="grid grid-cols-2 gap-3">
+                        <FieldInput label="Institution" value={edu.school} onChange={(v) => updateEducation(edu.id, "school", v)} placeholder="Brainware University" />
+                        <FieldInput label="Location" value={edu.location || ""} onChange={(v) => updateEducation(edu.id, "location", v)} placeholder="Kolkata, India" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                        <FieldInput label="Degree" value={edu.degree} onChange={(v) => updateEducation(edu.id, "degree", v)} placeholder="B.Tech in CSE (AIML)" />
+                        <FieldInput label="CGPA/GPA" value={edu.gpa || ""} onChange={(v) => updateEducation(edu.id, "gpa", v)} placeholder="CGPA: 9.21 / 10.0" />
+                    </div>
+                    <FieldInput label="Period" value={edu.period} onChange={(v) => updateEducation(edu.id, "period", v)} placeholder="Expected 2026" />
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-semibold text-[#737373] tracking-wide uppercase">Highlights</label>
+                        {(edu.highlights || []).map((h, idx) => (
+                            <div key={idx} className="flex gap-2 items-start">
+                                <span className="text-[#A3A3A3] text-xs mt-2 shrink-0">•</span>
+                                <textarea value={h} onChange={(e) => { const nh = [...(edu.highlights || [])]; nh[idx] = e.target.value; updateEducation(edu.id, "highlights", nh); }} placeholder="Key achievement..." className="flex-grow min-h-[36px] bg-[#F5F5F5] rounded-md p-2 text-xs text-[#0A0A0A] border border-[#E5E5E5] focus:border-[#3B82F6] outline-none resize-none placeholder:text-black/20" />
+                            </div>
+                        ))}
+                        <button onClick={() => updateEducation(edu.id, "highlights", [...(edu.highlights || []), ""])} className="text-[10px] font-semibold text-[#737373] hover:text-[#3B82F6] transition-colors flex items-center gap-1 ml-4"><RiAddLine size={10} /> Add</button>
+                    </div>
+                </div>
+            ))}
+            <AddButton label="Add Education" onClick={addEducation} />
+        </div>
+    );
+}
+
+function SkillsEditor({ content, updateSkill, addSkill, removeItem }: { content: ResumeContent; updateSkill: (id: number, f: string, v: string) => void; addSkill: () => void; removeItem: (s: any, id: number) => void }) {
+    return (
+        <div className="space-y-4">
+            <p className="text-[10px] text-[#737373]">Group your skills by category (e.g., Languages, Core Concepts, Web & Tools).</p>
+            {content.skills.map((skill) => (
+                <div key={skill.id} className="p-4 border border-black/8 rounded-lg space-y-3 relative group bg-[#FAFAFA] hover:border-black/12 transition-all">
+                    <button onClick={() => removeItem('skills', skill.id)} className="absolute top-2 right-2 w-6 h-6 rounded flex items-center justify-center text-black/15 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"><RiDeleteBinLine size={12} /></button>
+                    <FieldInput label="Category" value={skill.category} onChange={(v) => updateSkill(skill.id, "category", v)} placeholder="Languages" />
+                    <FieldTextarea label="Items (comma separated)" value={skill.items} onChange={(v) => updateSkill(skill.id, "items", v)} placeholder="Java, Python, C, SQL" rows={2} />
+                </div>
+            ))}
+            <AddButton label="Add Skill Category" onClick={addSkill} />
+        </div>
+    );
+}
+
+function ProjectsEditor({ content, updateProject, addProject, removeItem }: { content: ResumeContent; updateProject: (id: number, f: string, v: any) => void; addProject: () => void; removeItem: (s: any, id: number) => void }) {
+    return (
+        <div className="space-y-4">
+            {(content.projects || []).map((proj) => (
+                <div key={proj.id} className="p-4 border border-black/8 rounded-lg space-y-3 relative group bg-[#FAFAFA] hover:border-black/12 transition-all">
+                    <button onClick={() => removeItem('projects', proj.id)} className="absolute top-2 right-2 w-6 h-6 rounded flex items-center justify-center text-black/15 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"><RiDeleteBinLine size={12} /></button>
+                    <div className="grid grid-cols-2 gap-3">
+                        <FieldInput label="Project" value={proj.title} onChange={(v) => updateProject(proj.id, "title", v)} placeholder="StoreIt" />
+                        <FieldInput label="Link" value={proj.link || ""} onChange={(v) => updateProject(proj.id, "link", v)} placeholder="https://..." />
+                    </div>
+                    <FieldInput label="Tech Stack" value={proj.techStack} onChange={(v) => updateProject(proj.id, "techStack", v)} placeholder="Python, SQL, React" />
+                    <BulletEditor highlights={proj.highlights || []} onUpdate={(nh) => updateProject(proj.id, "highlights", nh)} />
+                </div>
+            ))}
+            <AddButton label="Add Project" onClick={addProject} />
+        </div>
+    );
+}
+
+function ExperienceEditor({ content, updateExperience, addExperience, removeItem }: { content: ResumeContent; updateExperience: (id: number, f: string, v: any) => void; addExperience: () => void; removeItem: (s: any, id: number) => void }) {
+    return (
+        <div className="space-y-4">
+            {content.experience.map((exp) => (
+                <div key={exp.id} className="p-4 border border-black/8 rounded-lg space-y-3 relative group bg-[#FAFAFA] hover:border-black/12 transition-all">
+                    <button onClick={() => removeItem('experience', exp.id)} className="absolute top-2 right-2 w-6 h-6 rounded flex items-center justify-center text-black/15 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"><RiDeleteBinLine size={12} /></button>
+                    <div className="grid grid-cols-2 gap-3">
+                        <FieldInput label="Company" value={exp.company} onChange={(v) => updateExperience(exp.id, "company", v)} placeholder="Perplexity" />
+                        <FieldInput label="Location" value={exp.location || ""} onChange={(v) => updateExperience(exp.id, "location", v)} placeholder="Remote" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                        <FieldInput label="Role" value={exp.role} onChange={(v) => updateExperience(exp.id, "role", v)} placeholder="Campus Partner" />
+                        <FieldInput label="Period" value={exp.period} onChange={(v) => updateExperience(exp.id, "period", v)} placeholder="Sep 2025 - Nov 2025" />
+                    </div>
+                    <BulletEditor highlights={exp.highlights} onUpdate={(nh) => updateExperience(exp.id, "highlights", nh)} />
+                </div>
+            ))}
+            <AddButton label="Add Experience" onClick={addExperience} />
+        </div>
+    );
+}
+
+function CertsEditor({ content, updateCert, addCert, removeItem }: { content: ResumeContent; updateCert: (id: number, f: string, v: string) => void; addCert: () => void; removeItem: (s: any, id: number) => void }) {
+    return (
+        <div className="space-y-4">
+            <p className="text-[10px] text-[#737373]">Group by type (e.g., Certifications, Hackathons).</p>
+            {(content.certifications || []).map((cert) => (
+                <div key={cert.id} className="p-4 border border-black/8 rounded-lg space-y-3 relative group bg-[#FAFAFA] hover:border-black/12 transition-all">
+                    <button onClick={() => removeItem('certifications', cert.id)} className="absolute top-2 right-2 w-6 h-6 rounded flex items-center justify-center text-black/15 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"><RiDeleteBinLine size={12} /></button>
+                    <FieldInput label="Category" value={cert.category} onChange={(v) => updateCert(cert.id, "category", v)} placeholder="Certifications" />
+                    <FieldTextarea label="Items (semicolon separated)" value={cert.items} onChange={(v) => updateCert(cert.id, "items", v)} placeholder="IBM Data Science Professional Certificate; Oracle OCI Foundations" rows={3} />
+                </div>
+            ))}
+            <AddButton label="Add Category" onClick={addCert} />
+        </div>
+    );
+}
+
+function BulletEditor({ highlights, onUpdate }: { highlights: string[]; onUpdate: (nh: string[]) => void }) {
+    return (
+        <div className="space-y-1.5">
+            <label className="text-[10px] font-semibold text-[#737373] tracking-wide uppercase">Highlights</label>
+            {highlights.map((h, idx) => (
+                <div key={idx} className="flex gap-2 items-start">
+                    <span className="text-[#A3A3A3] text-xs mt-2 shrink-0">•</span>
+                    <textarea value={h} onChange={(e) => { const nh = [...highlights]; nh[idx] = e.target.value; onUpdate(nh); }} placeholder="Quantify your impact..." className="flex-grow min-h-[36px] bg-[#F5F5F5] rounded-md p-2 text-xs text-[#0A0A0A] border border-[#E5E5E5] focus:border-[#3B82F6] outline-none resize-none placeholder:text-black/20" />
+                </div>
+            ))}
+            <button onClick={() => onUpdate([...highlights, ""])} className="text-[10px] font-semibold text-[#737373] hover:text-[#3B82F6] transition-colors flex items-center gap-1 ml-4"><RiAddLine size={10} /> Add bullet</button>
+        </div>
+    );
+}
+
+function AddButton({ label, onClick }: { label: string; onClick: () => void }) {
+    return (
+        <button onClick={onClick} className="w-full h-10 border border-dashed border-black/12 rounded-lg flex items-center justify-center gap-2 text-[#737373] text-[10px] font-semibold hover:border-[#3B82F6]/30 hover:text-[#3B82F6] transition-all">
+            <RiAddLine size={12} /> {label}
+        </button>
     );
 }
