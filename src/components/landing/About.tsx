@@ -51,7 +51,7 @@ export function About() {
           </h2>
           <p className="text-[#525252] text-[1.15rem] leading-relaxed">
             In nature, no two zebras share the same stripe pattern. They are unique by design. 
-            In the modern recruitment industry, most applicants are forced into generic templates, resulting in "artificial" applications that recruiters find off-putting. 
+            In the modern recruitment industry, most applicants are forced into generic templates, resulting in &quot;artificial&quot; applications that recruiters find off-putting. 
             We are here to end the era of the generic horse.
           </p>
         </div>
@@ -85,7 +85,7 @@ export function About() {
             </div>
             <h3 className="text-xl font-bold tracking-tight">Integrity Assured</h3>
             <p className="text-[#737373] text-[0.95rem] leading-relaxed">
-              Recruiters are seeing a "quiet funeral" of integrity due to low-effort AI copy. Zebra provides transparency logs, ensuring your intelligence is reflected, not replaced.
+              Recruiters are seeing a &quot;quiet funeral&quot; of integrity due to low-effort AI copy. Zebra provides transparency logs, ensuring your intelligence is reflected, not replaced.
             </p>
           </m.div>
 

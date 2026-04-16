@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { m, AnimatePresence } from "framer-motion";
 import { 
-    RiProfileLine, 
     RiCloseCircleLine, 
     RiCheckboxCircleLine, 
     RiErrorWarningLine, 
@@ -16,12 +15,25 @@ import {
     RiArrowRightLine,
     RiFileTextLine,
     RiFocus3Line,
-    RiArrowRightSLine,
-    RiTerminalBoxLine
+    RiArrowRightSLine
 } from "react-icons/ri";
 import { useRouter } from "next/navigation";
 
-export function TailorResume({ resumes }: { resumes: any[] }) {
+interface Resume {
+    id: string;
+    title: string;
+    [key: string]: unknown;
+}
+
+interface TailorAnalysis {
+    matchScore: number;
+    roleFit: string;
+    keywordsFound: string[];
+    keywordsMissing: string[];
+    tailoringSuggestions: string[];
+}
+
+export function TailorResume({ resumes }: { resumes: Resume[] }) {
     const [isOpen, setIsOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -30,7 +42,7 @@ export function TailorResume({ resumes }: { resumes: any[] }) {
         jobDescription: "",
     });
     const [scanStep, setScanStep] = useState("");
-    const [analysis, setAnalysis] = useState<any | null>(null);
+    const [analysis, setAnalysis] = useState<TailorAnalysis | null>(null);
     const router = useRouter();
 
     const handleTailor = async () => {
@@ -69,7 +81,7 @@ export function TailorResume({ resumes }: { resumes: any[] }) {
                 setError(data.error || "Tailoring failed.");
                 clearInterval(stepInterval);
             }
-        } catch (err) {
+        } catch {
             setError("Network error. Please try again.");
             clearInterval(stepInterval);
         } finally {
@@ -136,7 +148,7 @@ export function TailorResume({ resumes }: { resumes: any[] }) {
                                             </span>
                                         </div>
                                         <p className="text-[0.7rem] font-bold text-black/30 uppercase tracking-widest">
-                                            Synthesizing Profile <span className="mx-2 opacity-50">&</span> Recruitment Strategy
+                                            Synthesizing Profile <span className="mx-2 opacity-50">&amp;</span> Recruitment Strategy
                                         </p>
                                     </div>
                                 </div>

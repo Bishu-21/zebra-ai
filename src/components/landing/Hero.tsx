@@ -42,7 +42,7 @@ export function Hero() {
       <div className="w-full md:w-2/3 mb-6 md:mb-10 z-20 relative">
         <p className="text-[0.7rem] md:text-[0.8rem] font-bold tracking-[0.08em] uppercase text-[#3B82F6] mb-2 md:mb-4">The Precision Editor</p>
         <h1 className="text-[3rem] md:text-[4.5rem] font-bold leading-[1] tracking-[-0.05em] text-[#0A0A0A] mb-4 md:mb-8">
-          Resumes aren't broken. <br/>
+          Resumes aren&apos;t broken. <br/>
           <span className="text-[#737373]">The process is.</span>
         </h1>
       </div>
@@ -132,13 +132,13 @@ export function Hero() {
                   <div className="space-y-1">
                     <p className="text-[0.6rem] md:text-[0.65rem] font-bold tracking-[0.08em] uppercase text-[#737373]">Applicant</p>
                     <p className="text-[1rem] md:text-[1.25rem] font-medium leading-[1.3] text-[#0A0A0A]">
-                      "I applied everywhere... nothing."
+                      &quot;I applied everywhere... nothing.&quot;
                     </p>
                   </div>
                   <div className="space-y-1 border-l-[3px] border-[#3B82F6] pl-4 md:pl-5 ml-1 md:ml-2">
                     <p className="text-[0.6rem] md:text-[0.65rem] font-bold tracking-[0.08em] uppercase text-[#3B82F6]">Zebra Intelligence</p>
                     <p className="text-[1.25rem] md:text-[1.5rem] font-bold leading-[1.1] tracking-[-0.02em] text-[#0A0A0A]">
-                      Your resume didn't fail. <br/><span className="text-[#3B82F6]">ATS rejected it.</span>
+                      Your resume didn&apos;t fail. <br/><span className="text-[#3B82F6]">ATS rejected it.</span>
                     </p>
                   </div>
                   <div className="pt-2 md:pt-4 flex justify-start">

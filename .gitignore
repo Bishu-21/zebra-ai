@@ -39,3 +39,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# logs
+*.txt
+*.json
+
+# legacy landing
+stitch_landing.html
+stitch_mobile.html

@@ -117,7 +117,7 @@ export function ScratchCard({
         setIsRevealed(true);
         if (onRevealComplete) onRevealComplete();
       }
-    } catch (e) {
+    } catch {
       // Ignore errors for off-screen checks
     }
   };
