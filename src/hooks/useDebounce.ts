@@ -20,14 +20,14 @@ export function useDebounce<T>(value: T, delay: number = 300): T {
 /**
  * Returns a debounced callback function.
  */
-export function useDebouncedCallback<T extends (...args: any[]) => void>(
+export function useDebouncedCallback<T extends (...args: unknown[]) => unknown>(
     callback: T,
     delay: number = 300
 ): (...args: Parameters<T>) => void {
     const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     return useCallback(
-        ((...args: Parameters<T>) => {
+        ((...args: any[]) => {
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
             timeoutRef.current = setTimeout(() => callback(...args), delay);
         }),

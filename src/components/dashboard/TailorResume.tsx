@@ -20,12 +20,21 @@ import {
 import { useRouter } from "next/navigation";
 import { ResumeAnalysisData } from "@/components/compiler/types";
 
-interface ResumeSummary {
+interface Resume {
     id: string;
-    title?: string;
+    title: string;
+    [key: string]: unknown;
 }
 
-export function TailorResume({ resumes }: { resumes: ResumeSummary[] }) {
+interface TailorAnalysis {
+    matchScore: number;
+    roleFit: string;
+    keywordsFound: string[];
+    keywordsMissing: string[];
+    tailoringSuggestions: string[];
+}
+
+export function TailorResume({ resumes }: { resumes: Resume[] }) {
     const [isOpen, setIsOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -34,7 +43,7 @@ export function TailorResume({ resumes }: { resumes: ResumeSummary[] }) {
         jobDescription: "",
     });
     const [scanStep, setScanStep] = useState("");
-    const [analysis, setAnalysis] = useState<ResumeAnalysisData | null>(null);
+    const [analysis, setAnalysis] = useState<TailorAnalysis | null>(null);
     const router = useRouter();
 
     const handleTailor = async () => {
@@ -75,6 +84,7 @@ export function TailorResume({ resumes }: { resumes: ResumeSummary[] }) {
             }
         } catch (_err) {
             setError("Analysis failed. High traffic or invalid job description detected.");
+            clearInterval(stepInterval);
         } finally {
             setLoading(false);
         }
@@ -135,8 +145,8 @@ export function TailorResume({ resumes }: { resumes: ResumeSummary[] }) {
                                         <div className="flex items-center gap-3 mb-1.5">
                                             <h2 className="text-2xl font-bold text-foreground tracking-tighter uppercase leading-none">Strategic Match Analysis</h2>
                                         </div>
-                                        <p className="text-[0.7rem] font-bold text-accent-gray uppercase tracking-widest">
-                                            Synthesizing Profile <span className="mx-2 opacity-50">&</span> Targeting Logic
+                                        <p className="text-[0.7rem] font-bold text-accent-gray uppercase tracking-widest text-black/30">
+                                            Synthesizing Profile <span className="mx-2 opacity-50">&amp;</span> Targeting Logic
                                         </p>
                                     </div>
                                 </div>

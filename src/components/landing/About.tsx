@@ -84,7 +84,7 @@ export function About() {
               <ShieldIcon />
             </div>
             <h3 className="text-xl font-bold tracking-tight">Integrity Assured</h3>
-            <p className="text-[#4A4A4A] text-[0.95rem] leading-relaxed">
+            <p className="text-[#737373] text-[0.95rem] leading-relaxed">
               Recruiters are seeing a &quot;quiet funeral&quot; of integrity due to low-effort AI copy. Zebra provides transparency logs, ensuring your intelligence is reflected, not replaced.
             </p>
           </m.div>

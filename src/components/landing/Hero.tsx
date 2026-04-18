@@ -39,7 +39,7 @@ export function Hero() {
   return (
     <section className="relative min-h-[70vh] flex flex-col pt-20 md:pt-28 pb-12 px-5 md:px-8 max-w-7xl mx-auto overflow-x-visible font-sans">
       {/* Asymmetric Header */}
-      <div className="w-full md:w-2/3 mb-2 md:mb-0 z-20 relative">
+      <div className="w-full md:w-2/3 mb-6 md:mb-10 z-20 relative">
         <p className="text-[0.75rem] md:text-[0.8rem] font-bold tracking-[0.12em] uppercase text-primary mb-4 md:mb-6">The Precision Editor</p>
         <h1 className="text-[3.5rem] md:text-[5.5rem] font-bold leading-[0.95] tracking-[-0.06em] text-foreground mb-4 md:mb-6">
           Resumes aren&apos;t broken. <br/>
@@ -123,7 +123,7 @@ export function Hero() {
                   <div className="space-y-1">
                     <p className="text-[0.6rem] md:text-[0.65rem] font-bold tracking-[0.08em] uppercase text-[#737373]">Applicant</p>
                     <p className="text-[1.1rem] md:text-[1.3rem] font-bold leading-[1.2] text-primary">
-                      1,000 applicants for one role? That&apos;s a black hole.
+                      &quot;I applied everywhere... nothing.&quot;
                     </p>
                   </div>
                   <div className="space-y-1 border-l-[3px] border-[#3B82F6] pl-4 md:pl-5 ml-1 md:ml-2">
