@@ -167,7 +167,7 @@ export default async function DashboardPage() {
         </h1>
         <p className="text-black/35 text-[0.65rem] max-w-lg leading-relaxed font-bold uppercase tracking-widest">
           High-Fidelity Document Intelligence <span className="mx-2 text-black/10">|</span> 
-          Precision Layer <span className="text-black/70">v4.2.0-STABLE</span>
+          Precision Layer
         </p>
       </div>
 

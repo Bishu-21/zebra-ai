@@ -5,9 +5,7 @@ import { m, AnimatePresence } from "framer-motion";
 import { 
     RiUploadCloud2Line, 
     RiArrowRightSLine, 
-    RiLoader4Line,
-    RiCheckLine,
-    RiErrorWarningLine
+    RiLoader4Line
 } from "react-icons/ri";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/Toast";
@@ -30,7 +28,7 @@ export function ImportResume() {
         }
 
         setIsUploading(true);
-        setUploadStep("Establishing Neural Link...");
+        setUploadStep("Establishing Secure Connection...");
         
         const formData = new FormData();
         formData.append("file", file);
@@ -47,7 +45,7 @@ export function ImportResume() {
             if (!res.ok) throw new Error(data.error || "Neural extraction failed");
 
             // 3. Success Workflow
-            setUploadStep("Syncing Content Matrix...");
+            setUploadStep("Mapping Document Structure...");
             showToast("Resume imported successfully", "success");
             
             // Artificial delay for premium feel
@@ -55,8 +53,9 @@ export function ImportResume() {
                 router.push(`/dashboard/resumes/${data.id}`);
             }, 800);
 
-        } catch (err: any) {
-            showToast(err.message, "error");
+        } catch (err) {
+            const error = err as Error;
+            showToast(error.message, "error");
             setIsUploading(false);
             setUploadStep("");
         } finally {

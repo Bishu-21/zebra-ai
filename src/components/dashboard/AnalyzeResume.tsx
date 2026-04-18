@@ -4,21 +4,18 @@ import React, { useState, useRef } from "react";
 import { m, AnimatePresence } from "framer-motion";
 import { 
     RiScanLine, 
-    RiScan2Line, 
     RiUploadCloud2Line, 
     RiFileTextLine,
     RiLoader4Line,
-    RiFlashlightLine,
     RiArrowRightLine,
     RiArrowRightSLine,
     RiCloseCircleLine,
     RiInformationLine,
-    RiBarChartLine,
-    RiMagicLine,
-    RiFocus3Line
+    RiRadarLine
 } from "react-icons/ri";
 import { useRouter } from "next/navigation";
 import { ResumeResultsModal } from "./ResumeResultsModal";
+import { ResumeAnalysisData } from "@/components/compiler/types";
 
 export function AnalyzeResume() {
   const [isOpen, setIsOpen] = useState(false);
@@ -27,7 +24,7 @@ export function AnalyzeResume() {
   const [isUploading, setIsUploading] = useState(false);
   const [scanStep, setScanStep] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
-  const [analysisResult, setAnalysisResult] = useState<any | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<ResumeAnalysisData | null>(null);
   const [activeResumeId, setActiveResumeId] = useState<string | null>(null);
   const [isResultsModalOpen, setIsResultsModalOpen] = useState(false);
   
@@ -60,8 +57,9 @@ export function AnalyzeResume() {
       // Auto-trigger analysis
       setTimeout(() => triggerAnalysis(data.content), 800);
 
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const error = err as Error;
+      setError(error.message);
       setIsUploading(false);
     } finally {
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -111,8 +109,9 @@ export function AnalyzeResume() {
         router.refresh();
       }, 500);
 
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const error = err as Error;
+      setError(error.message);
       setIsAnalyzing(false);
       setIsUploading(false);
       clearInterval(stepInterval);
@@ -143,15 +142,15 @@ export function AnalyzeResume() {
                 <RiScanLine size={24} />
             </div>
             <div className="flex items-center gap-1 opacity-0 group-hover/card:opacity-100 transition-opacity">
-                <span className="text-[0.6rem] font-bold uppercase tracking-widest text-[#737373]">Launch Protocol</span>
-                <RiArrowRightSLine size={14} className="text-[#3B82F6]" />
+                <span className="text-[0.6rem] font-bold uppercase tracking-widest text-accent-gray">System Status</span>
+                <RiArrowRightSLine size={14} className="text-primary" />
             </div>
         </div>
 
         <div>
-            <h3 className="font-bold text-2xl mb-2 text-[#0A0A0A] tracking-tighter">Neural Audit</h3>
-            <p className="text-[0.65rem] text-[#737373] font-bold uppercase tracking-[0.1em] leading-relaxed">
-                45+ Point Strategic Intelligence <br/> Execution Layer v4.0
+            <h3 className="font-bold text-2xl mb-2 text-foreground tracking-tighter">Analysis Engine</h3>
+            <p className="text-[0.65rem] text-accent-gray font-bold uppercase tracking-[0.1em] leading-relaxed">
+                Precision Audit & <br/> Integrity Verification
             </p>
         </div>
       </div>
@@ -165,18 +164,15 @@ export function AnalyzeResume() {
                 {/* Header */}
                 <div className="p-10 border-b border-black/[0.03] flex items-center justify-between bg-white/40 backdrop-blur-3xl sticky top-0 z-20">
                     <div className="flex items-center gap-6">
-                        <div className="w-16 h-16 bg-[#3B82F6] rounded-[1.5rem] flex items-center justify-center text-white shadow-2xl shadow-blue-500/20">
-                            <RiFlashlightLine size={28} />
+                        <div className="w-16 h-16 bg-primary rounded-[1.5rem] flex items-center justify-center text-white shadow-2xl shadow-blue-500/20">
+                            <RiRadarLine size={28} />
                         </div>
                         <div>
                             <div className="flex items-center gap-3 mb-1.5">
-                                <h2 className="text-2xl font-bold text-[#0A0A0A] tracking-tighter uppercase leading-none">Neural Audit Engine</h2>
-                                <span className="px-2.5 py-1 bg-[#3B82F6]/10 text-[#3B82F6] border border-[#3B82F6]/10 rounded text-[0.45rem] font-bold uppercase tracking-widest">
-                                    STABLE-V4
-                                </span>
+                                <h2 className="text-2xl font-bold text-foreground tracking-tighter uppercase leading-none">Audit Analysis Log</h2>
                             </div>
-                            <p className="text-[0.7rem] font-bold text-black/30 uppercase tracking-widest">
-                                Simulating Recruiter Scan <span className="mx-2 opacity-50">&</span> Impact Logic
+                            <p className="text-[0.7rem] font-bold text-accent-gray uppercase tracking-widest">
+                                Integrity Verification <span className="mx-2 opacity-50">&</span> Semantic Audit
                             </p>
                         </div>
                     </div>
@@ -279,9 +275,9 @@ export function AnalyzeResume() {
 
                 {/* Footer */}
                 <div className="p-8 border-t border-black/5 flex items-center justify-between bg-white/30 backdrop-blur-xl sticky bottom-0">
-                    <div className="flex items-center gap-3 px-6 py-3 bg-black/5 rounded-2xl border border-black/5 shadow-inner">
-                        <RiBarChartLine size={18} className="text-black/60" />
-                        <span className="text-[0.65rem] font-black uppercase tracking-widest text-black/50">Neural Audit Engine v2.0</span>
+                    <div className="flex items-center gap-3 px-6 py-3 bg-black/5 rounded-2xl border border-black/5">
+                        <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                        <span className="text-[0.65rem] font-black uppercase tracking-widest text-accent-gray">Audit Engine Active</span>
                     </div>
                     
                     <div className="flex items-center gap-4">
@@ -297,7 +293,7 @@ export function AnalyzeResume() {
                             disabled={isProcessing || !content.trim()}
                             className="bg-[#3B82F6] text-white px-12 py-5 rounded-[1.25rem] font-bold text-sm hover:bg-[#2563EB] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-2xl shadow-blue-500/20 disabled:opacity-30 flex items-center gap-3 group"
                         >
-                            {isAnalyzing ? "Processing Matrix..." : "Execute Neural Audit"}
+                            {isAnalyzing ? "Processing Analysis..." : "Run Analysis"}
                             {!isAnalyzing && <RiArrowRightLine size={18} className="group-hover:translate-x-1 transition-transform" />}
                         </button>
                     </div>
@@ -306,12 +302,14 @@ export function AnalyzeResume() {
         </div>
       )}
 
-      <ResumeResultsModal 
-         isOpen={isResultsModalOpen}
-         onCloseAction={() => setIsResultsModalOpen(false)}
-         data={analysisResult}
-         resumeId={activeResumeId || undefined}
-      />
+      {isResultsModalOpen && analysisResult && (
+        <ResumeResultsModal 
+          isOpen={isResultsModalOpen}
+          onCloseAction={() => setIsResultsModalOpen(false)}
+          data={analysisResult}
+          resumeId={activeResumeId || undefined}
+        />
+      )}
     </>
   );
 }

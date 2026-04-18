@@ -1,18 +1,17 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { 
     RiAddLine, 
     RiMagicLine, 
     RiCloseCircleLine, 
     RiCheckboxCircleLine, 
     RiAlertLine, 
-    RiFileTextLine,
     RiArrowDropDownLine
 } from "react-icons/ri";
 import { useRouter } from "next/navigation";
 
-export function GenerateCoverLetter({ resumes }: { resumes: any[] }) {
+export function GenerateCoverLetter({ resumes }: { resumes: { id: string; title: string }[] }) {
     const [isOpen, setIsOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
@@ -48,7 +47,7 @@ export function GenerateCoverLetter({ resumes }: { resumes: any[] }) {
             } else {
                 setError(data.error || "Generation failed.");
             }
-        } catch (err) {
+        } catch {
             setError("Network error. Please try again.");
         } finally {
             setLoading(false);

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, createContext, useContext, useCallback } from "react";
+import React, { useState, createContext, useContext, useCallback } from "react";
 import { m, AnimatePresence } from "framer-motion";
 
 // Optimized, inlined SVGs for hydration consistency and zero weight

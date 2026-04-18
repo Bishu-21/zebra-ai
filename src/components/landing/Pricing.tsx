@@ -64,21 +64,21 @@ export function Pricing() {
   ];
 
   return (
-    <section id="pricing" className="py-20 px-5 md:px-8 bg-[#FDFDFD]">
+    <section id="pricing" className="pt-[100px] pb-24 px-5 md:px-8 bg-background">
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-12 md:mb-20 max-w-2xl mx-auto">
+        <div className="text-center mb-10 md:mb-16 max-w-2xl mx-auto">
           <m.div
             initial={{ opacity: 0, y: -10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="flex items-center justify-center gap-2 mb-6"
+            className="flex items-center justify-center gap-2 mb-5"
           >
-            <span className="text-[0.65rem] font-bold tracking-[0.2em] uppercase text-[#2563EB]">The Economic Model</span>
+            <span className="text-[0.7rem] font-bold tracking-[0.2em] uppercase text-primary">The Economic Model</span>
           </m.div>
-          <h2 className="text-[2.5rem] md:text-[3.5rem] font-bold tracking-[-0.04em] leading-[1.1] mb-6 md:mb-8 text-[#0A0A0A]">
-            Built on <span className="text-[#3B82F6]">XaaS</span> Principles
+          <h2 className="text-[2.5rem] md:text-[3.5rem] font-bold tracking-[-0.04em] leading-[1.1] mb-5 md:mb-6 text-[#0A0A0A]">
+            Built on <span className="text-primary">XaaS</span> Principles
           </h2>
-          <p className="text-[#525252] text-[1.1rem] leading-relaxed">
+          <p className="text-[#4A4A4A] text-[1.1rem] leading-relaxed">
             In an era where <span className="font-bold text-[#0A0A0A]">68% of companies</span> are transitioning to service-driven 
             operations, Zebra provides career agility through an everything-as-a-service economic model.
           </p>
@@ -92,19 +92,19 @@ export function Pricing() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
-              className={`p-10 rounded-[28px] border-[1.5px] transition-all duration-300 relative ${
+              className={`p-10 pt-14 rounded-[28px] border-[1.5px] transition-all duration-300 relative ${
                 plan.featured 
-                ? "bg-white border-[#3B82F6] shadow-[0px_24px_60px_-15px_rgba(59,130,246,0.15)] scale-105 z-10" 
-                : "bg-white/60 border-black/5 hover:border-[#3B82F6]/30"
+                ? "bg-white border-primary shadow-[0px_24px_60px_-15px_rgba(59,130,246,0.15)] scale-105 z-10" 
+                : "bg-white/60 border-black/5 hover:border-primary/30"
               }`}
             >
               {plan.featured && (
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 px-4 py-1 bg-[#3B82F6] text-white text-[0.6rem] font-bold uppercase tracking-wider rounded-b-xl">
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-primary text-white text-[0.65rem] font-bold uppercase tracking-wider rounded-full shadow-lg shadow-blue-500/20">
                   Most Popular
                 </div>
               )}
-              <div className="flex items-center justify-between mb-8">
-                <div className="w-12 h-12 bg-[#3B82F6]/10 rounded-2xl flex items-center justify-center text-[#3B82F6]">
+              <div className="flex items-center justify-between mb-8 mt-2">
+                <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
                   {plan.icon}
                 </div>
               </div>
@@ -113,7 +113,7 @@ export function Pricing() {
                 <span className="text-4xl font-extrabold tracking-tighter">{plan.price}</span>
                 <span className="text-[#737373] text-sm font-medium">{plan.name !== "Enterprise" ? "/ month" : ""}</span>
               </div>
-              <p className="text-[#737373] text-sm mb-10">{plan.description}</p>
+              <p className="text-[#4A4A4A] text-sm mb-10">{plan.description}</p>
               
               <div className="space-y-4 mb-10">
                 {plan.features.map((feature) => (
@@ -129,7 +129,7 @@ export function Pricing() {
               <button className={`w-full py-4 rounded-xl font-bold text-sm tracking-wide transition-all active:scale-[0.98] ${
                 plan.featured 
                 ? "bg-[#3B82F6] text-white hover:bg-[#2563EB] shadow-lg shadow-blue-500/20" 
-                : "bg-white border border-[#EAEAEA] text-[#0A0A0A] hover:border-[#3B82F6] hover:text-[#3B82F6]"
+                : "bg-[#0A0A0A] text-white border-2 border-[#0A0A0A] hover:bg-transparent hover:text-[#0A0A0A]"
               }`}>
                 {plan.cta}
               </button>

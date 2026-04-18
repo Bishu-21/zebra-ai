@@ -13,9 +13,36 @@ import { useRouter } from "next/navigation";
 
 import { PLANS, PlanId } from "@/lib/constants/plans";
 
+interface RazorpayResponse {
+    razorpay_order_id: string;
+    razorpay_payment_id: string;
+    razorpay_signature: string;
+}
+
+interface RazorpayOptions {
+    key: string;
+    amount: number;
+    currency: string;
+    name: string;
+    description: string;
+    image?: string;
+    order_id: string;
+    handler: (response: RazorpayResponse) => Promise<void>;
+    prefill: {
+        name: string;
+        email: string;
+    };
+    theme: {
+        color: string;
+    };
+}
+
 declare global {
     interface Window {
-        Razorpay: any;
+        Razorpay: new (options: RazorpayOptions) => {
+            open: () => void;
+            on: (event: string, callback: (response: { error: { description: string } }) => void) => void;
+        };
     }
 }
 
@@ -60,14 +87,22 @@ export function CreditTopUp() {
             const orderData = await orderRes.json();
 
             // 2. Open Razorpay Checkout Modal
-            const options = {
+            const options: RazorpayOptions = {
                 key: orderData.key,
                 amount: orderData.amount,
                 currency: orderData.currency,
                 name: "Zebra AI",
                 description: `Purchase ${PLANS[planId as PlanId].credits} Credits`,
+                image: typeof window !== "undefined" ? `${window.location.origin}/zebra_star.svg` : "",
                 order_id: orderData.id,
-                handler: async function (response: any) {
+                prefill: {
+                    name: "",
+                    email: "",
+                },
+                theme: {
+                    color: "#000000",
+                },
+                handler: async function (response: RazorpayResponse) {
                     // 3. Verify Payment on Server
                     const verifyRes = await fetch("/api/payments/verify", {
                         method: "POST",
@@ -91,17 +126,10 @@ export function CreditTopUp() {
                         alert("Payment verification failed. Please contact support.");
                     }
                 },
-                prefill: {
-                    name: "", // Will be filled if user name is in session, but keeping it simple for now
-                    email: ""
-                },
-                theme: {
-                    color: "#000000"
-                }
             };
 
             const rzp = new window.Razorpay(options);
-            rzp.on('payment.failed', function (response: any) {
+            rzp.on('payment.failed', function (response: { error: { description: string } }) {
                 alert(`Provisioning failed: ${response.error.description}`);
             });
             rzp.open();
@@ -174,9 +202,9 @@ export function CreditTopUp() {
                                             </div>
                                             <h4 className="font-bold text-black mb-2 tracking-tight text-[0.65rem] uppercase tracking-[0.2em]">{p.name}</h4>
                                             <div className="mb-8">
-                                                <div className="flex flex-col items-center">
-                                                    <span className="text-4xl font-black text-black tracking-tighter">{p.displayPrice}</span>
-                                                    <div className="flex items-center gap-2 mt-2 px-3 py-1 bg-black/5 rounded-full">
+                                                 <div className="flex flex-col items-center">
+                                                     <span className="text-4xl font-black text-black tracking-tighter">{p.displayPrice}</span>
+                                                     <div className="flex items-center gap-2 mt-2 px-3 py-1 bg-black/5 rounded-full">
                                                         <div className="w-1.5 h-1.5 bg-black/40 rounded-full animate-pulse" />
                                                         <p className="text-[0.6rem] text-black/50 font-bold uppercase tracking-widest">{p.credits} Intelligence Units</p>
                                                     </div>
@@ -197,7 +225,7 @@ export function CreditTopUp() {
 
                         <div className="p-8 bg-black/[0.02] border-t border-black/5 flex items-center justify-center gap-2">
                              <div className="w-1.5 h-1.5 bg-black/10 rounded-full" />
-                             <p className="text-[0.6rem] text-black/20 font-bold uppercase tracking-[0.4em]">Terminal: Secure Provisioning Layer • Zebra v2.0</p>
+                             <p className="text-[0.6rem] text-black/20 font-bold uppercase tracking-[0.4em]">Terminal: Secure Provisioning Layer</p>
                         </div>
                     </div>
                 </div>,

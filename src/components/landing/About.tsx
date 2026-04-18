@@ -26,7 +26,7 @@ const GlobalIcon = ({ size = 28 }: { size?: number }) => (
 
 export function About() {
   return (
-    <section id="about" className="py-20 px-5 md:px-8 bg-white overflow-hidden relative">
+    <section id="about" className="pt-[120px] pb-24 px-5 md:px-8 bg-white overflow-hidden relative">
       {/* Background Subtle Stripe Pattern */}
       <div className="absolute inset-0 opacity-[0.02] pointer-events-none">
         <div className="h-full w-full" style={{ 
@@ -44,14 +44,14 @@ export function About() {
             className="flex items-center gap-2 mb-6"
           >
             <span className="w-1.5 h-6 bg-black rounded-full" />
-            <span className="text-[0.65rem] font-bold tracking-[0.2em] uppercase text-[#737373]">The Manifesto</span>
+            <span className="text-[0.7rem] font-bold tracking-[0.2em] uppercase text-black">The Manifesto</span>
           </m.div>
           <h2 className="text-[2.5rem] md:text-[3.5rem] font-bold tracking-[-0.04em] leading-[1.1] mb-6 md:mb-8 text-[#0A0A0A]">
             Why <span className="text-[#3B82F6]">Zebra</span>?
           </h2>
-          <p className="text-[#525252] text-[1.15rem] leading-relaxed">
+          <p className="text-[#4A4A4A] text-[1.1rem] leading-relaxed">
             In nature, no two zebras share the same stripe pattern. They are unique by design. 
-            In the modern recruitment industry, most applicants are forced into generic templates, resulting in "artificial" applications that recruiters find off-putting. 
+            In the modern recruitment industry, most applicants are forced into generic templates, resulting in &quot;artificial&quot; applications that recruiters find off-putting. 
             We are here to end the era of the generic horse.
           </p>
         </div>
@@ -84,8 +84,8 @@ export function About() {
               <ShieldIcon />
             </div>
             <h3 className="text-xl font-bold tracking-tight">Integrity Assured</h3>
-            <p className="text-[#737373] text-[0.95rem] leading-relaxed">
-              Recruiters are seeing a "quiet funeral" of integrity due to low-effort AI copy. Zebra provides transparency logs, ensuring your intelligence is reflected, not replaced.
+            <p className="text-[#4A4A4A] text-[0.95rem] leading-relaxed">
+              Recruiters are seeing a &quot;quiet funeral&quot; of integrity due to low-effort AI copy. Zebra provides transparency logs, ensuring your intelligence is reflected, not replaced.
             </p>
           </m.div>
 

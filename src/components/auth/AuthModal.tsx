@@ -62,8 +62,9 @@ export function AuthModal() {
         if (error) throw new Error(error.message || "Failed to sign in");
       }
       // Successful auth - modal will likely be closed by redirect or state
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      const error = err as Error;
+      setError(error.message);
     } finally {
       setIsLoading(false);
     }
@@ -76,8 +77,9 @@ export function AuthModal() {
         provider,
         callbackURL: "/dashboard",
       });
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      const error = err as Error;
+      setError(error.message);
       setIsLoading(false);
     }
   };
@@ -115,18 +117,14 @@ export function AuthModal() {
 
             {/* Content Header */}
             <div className="mb-10 mt-2">
-              <div className="flex items-center gap-2 mb-6">
-                <span className="w-1 h-6 bg-[#3B82F6]"></span>
-                <span className="text-[0.65rem] font-bold tracking-[0.08em] uppercase text-[#6B6B6B]">Zebra Platform</span>
+              <div className="flex items-center gap-2 mb-1">
+                <img src="/zebra_star.png" alt="Zebra" className="w-6 h-6 object-contain" />
+                <span className="text-[0.65rem] font-black uppercase tracking-[0.25em] text-accent-gray">Access Terminal</span>
               </div>
-              <h2 className="text-[1.75rem] font-bold tracking-[-0.02em] text-[#0A0A0A] leading-tight mb-2">
-                {mode === "signin" ? "Welcome back" : "Create account"}
+              <h2 className="text-3xl font-bold tracking-tighter text-foreground">
+                Secure Login
               </h2>
-              <p className="text-[#6B6B6B] text-[0.95rem]">
-                {mode === "signin" 
-                  ? "Precision editing for high-end digital experiences." 
-                  : "Join the next generation of job acquisition."}
-              </p>
+              <p className="text-[0.7rem] font-bold text-accent-gray uppercase tracking-widest mt-1">Authorized Entry Only</p>
             </div>
 
             {/* Auth Form */}

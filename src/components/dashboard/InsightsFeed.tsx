@@ -19,7 +19,7 @@ interface InsightItem {
     subtext: string;
     date: Date;
     score: number;
-    fullData: any; // The raw feedback from DB
+    fullData: any; // Raw feedback from DB
 }
 
 interface InsightsFeedProps {
@@ -92,7 +92,7 @@ export function InsightsFeed({ data }: InsightsFeedProps) {
                                     <span className={`text-[0.75rem] font-bold px-3 py-1 rounded-full uppercase tracking-wider ${
                                         item.type === "import" ? "bg-[#3B82F6]/10 text-[#3B82F6]" : "bg-black/[0.03] text-[#737373]"
                                     }`}>
-                                        {item.type === "analysis" ? "Direct Analysis" : item.type === "tailoring" ? "Role Matching" : "New Import"}
+                                        {item.type === "analysis" ? "Diagnostic Report" : item.type === "tailoring" ? "Targeted Alignment" : "New Import"}
                                     </span>
                                     <p className="text-[0.7rem] font-bold text-[#737373]/50 items-center gap-1.5 flex uppercase tracking-widest">
                                         <RiTimer2Line size={14} />
@@ -124,11 +124,13 @@ export function InsightsFeed({ data }: InsightsFeedProps) {
                 ))}
             </div>
 
-            <ResumeResultsModal 
-                isOpen={isModalOpen}
-                onCloseAction={() => setIsModalOpen(false)}
-                data={selectedInsight}
-            />
+            {isModalOpen && selectedInsight && (
+                <ResumeResultsModal 
+                    isOpen={isModalOpen}
+                    onCloseAction={() => setIsModalOpen(false)}
+                    data={selectedInsight}
+                />
+            )}
         </>
     );
 }

@@ -37,9 +37,14 @@ export const metadata: Metadata = {
   alternates: {
     canonical: '/',
   },
+  icons: {
+    icon: '/zebra_star.png',
+    apple: '/zebra_star.png',
+  },
 };
 
-const softwareSchema: SoftwareApplication = {
+const softwareSchema: WithContext<SoftwareApplication> = {
+  '@context': 'https://schema.org',
   '@type': 'SoftwareApplication',
   name: 'Zebra AI',
   operatingSystem: 'Web',
@@ -51,7 +56,8 @@ const softwareSchema: SoftwareApplication = {
   },
 };
 
-const webAppSchema: WebApplication = {
+const webAppSchema: WithContext<WebApplication> = {
+  '@context': 'https://schema.org',
   '@type': 'WebApplication',
   name: 'Zebra AI',
   browserRequirements: 'Requires JavaScript. Works in all modern browsers.',

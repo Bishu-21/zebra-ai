@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { m, AnimatePresence } from "framer-motion";
 import { 
-    RiProfileLine, 
     RiCloseCircleLine, 
     RiCheckboxCircleLine, 
     RiErrorWarningLine, 
@@ -16,12 +15,17 @@ import {
     RiArrowRightLine,
     RiFileTextLine,
     RiFocus3Line,
-    RiArrowRightSLine,
-    RiTerminalBoxLine
+    RiArrowRightSLine
 } from "react-icons/ri";
 import { useRouter } from "next/navigation";
+import { ResumeAnalysisData } from "@/components/compiler/types";
 
-export function TailorResume({ resumes }: { resumes: any[] }) {
+interface ResumeSummary {
+    id: string;
+    title?: string;
+}
+
+export function TailorResume({ resumes }: { resumes: ResumeSummary[] }) {
     const [isOpen, setIsOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -30,7 +34,7 @@ export function TailorResume({ resumes }: { resumes: any[] }) {
         jobDescription: "",
     });
     const [scanStep, setScanStep] = useState("");
-    const [analysis, setAnalysis] = useState<any | null>(null);
+    const [analysis, setAnalysis] = useState<ResumeAnalysisData | null>(null);
     const router = useRouter();
 
     const handleTailor = async () => {
@@ -42,7 +46,7 @@ export function TailorResume({ resumes }: { resumes: any[] }) {
         setLoading(true);
         setError(null);
         
-        const steps = ["Parsing Job Requirements...", "Extracting Semantic Gaps...", "Cross-Referencing Skills...", "Generating Alpha Recommendations..."];
+        const steps = ["Parsing Job Requirements...", "Identifying Skill Gaps...", "Cross-Referencing Experience...", "Generating Strategic Recommendations..."];
         let stepIdx = 0;
         setScanStep(steps[0]);
         const stepInterval = setInterval(() => {
@@ -69,9 +73,8 @@ export function TailorResume({ resumes }: { resumes: any[] }) {
                 setError(data.error || "Tailoring failed.");
                 clearInterval(stepInterval);
             }
-        } catch (err) {
-            setError("Network error. Please try again.");
-            clearInterval(stepInterval);
+        } catch (_err) {
+            setError("Analysis failed. High traffic or invalid job description detected.");
         } finally {
             setLoading(false);
         }
@@ -91,15 +94,15 @@ export function TailorResume({ resumes }: { resumes: any[] }) {
                         <RiFocus3Line size={24} />
                     </div>
                     <div className="flex items-center gap-1 opacity-0 group-hover/card:opacity-100 transition-opacity">
-                        <span className="text-[0.6rem] font-bold uppercase tracking-widest text-[#737373]">Match Protocol</span>
-                        <RiArrowRightSLine size={14} className="text-[#3B82F6]" />
+                        <span className="text-[0.6rem] font-bold uppercase tracking-widest text-accent-gray">Resume Optimization</span>
+                        <RiArrowRightSLine size={14} className="text-primary" />
                     </div>
                 </div>
 
                 <div>
-                    <h3 className="font-bold text-2xl mb-2 text-[#0A0A0A] tracking-tighter">Strategic Match</h3>
-                    <p className="text-[0.65rem] text-[#737373] font-bold uppercase tracking-[0.1em] leading-relaxed">
-                        Cross-Reference Semantic Profile <br/> with Recruitment Matrix v2.4
+                    <h3 className="font-bold text-2xl mb-2 text-foreground tracking-tighter">Strategic Match</h3>
+                    <p className="text-[0.65rem] text-accent-gray font-bold uppercase tracking-[0.1em] leading-relaxed">
+                        Cross-Reference Semantic Profile <br/> with Targeting Engine
                     </p>
                 </div>
             </div>
@@ -125,18 +128,15 @@ export function TailorResume({ resumes }: { resumes: any[] }) {
                             {/* Header */}
                             <div className="p-10 border-b border-black/[0.03] flex items-center justify-between bg-white/40 backdrop-blur-3xl sticky top-0 z-20">
                                 <div className="flex items-center gap-6">
-                                    <div className="w-16 h-16 bg-[#3B82F6] rounded-[1.5rem] flex items-center justify-center text-white shadow-2xl shadow-blue-500/20">
+                                    <div className="w-16 h-16 bg-primary rounded-[1.5rem] flex items-center justify-center text-white shadow-2xl shadow-blue-500/20">
                                         <RiFlashlightLine size={28} />
                                     </div>
                                     <div>
                                         <div className="flex items-center gap-3 mb-1.5">
-                                            <h2 className="text-2xl font-bold text-[#0A0A0A] tracking-tighter uppercase leading-none">Strategic Match Protocol</h2>
-                                            <span className="px-2.5 py-1 bg-[#3B82F6]/10 text-[#3B82F6] border border-[#3B82F6]/10 rounded text-[0.45rem] font-bold uppercase tracking-widest">
-                                                ALPHA-V2.4
-                                            </span>
+                                            <h2 className="text-2xl font-bold text-foreground tracking-tighter uppercase leading-none">Strategic Match Analysis</h2>
                                         </div>
-                                        <p className="text-[0.7rem] font-bold text-black/30 uppercase tracking-widest">
-                                            Synthesizing Profile <span className="mx-2 opacity-50">&</span> Recruitment Strategy
+                                        <p className="text-[0.7rem] font-bold text-accent-gray uppercase tracking-widest">
+                                            Synthesizing Profile <span className="mx-2 opacity-50">&</span> Targeting Logic
                                         </p>
                                     </div>
                                 </div>
@@ -261,7 +261,7 @@ export function TailorResume({ resumes }: { resumes: any[] }) {
                                                     Target Keywords Found
                                                 </h4>
                                                 <div className="flex flex-wrap gap-2">
-                                                    {analysis.keywordsFound.map((kw: string, i: number) => (
+                                                    {(analysis.keywordsFound || []).map((kw: string, i: number) => (
                                                         <span key={i} className="px-5 py-2.5 bg-green-500/5 text-green-700 rounded-xl text-[0.7rem] font-black uppercase tracking-wider border border-green-500/10">
                                                             {kw}
                                                         </span>
@@ -275,7 +275,7 @@ export function TailorResume({ resumes }: { resumes: any[] }) {
                                                     Critical Profile Gaps
                                                 </h4>
                                                 <div className="flex flex-wrap gap-2">
-                                                    {analysis.keywordsMissing.map((kw: string, i: number) => (
+                                                    {(analysis.keywordsMissing || []).map((kw: string, i: number) => (
                                                         <span key={i} className="px-5 py-2.5 bg-orange-500/5 text-orange-700 rounded-xl text-[0.7rem] font-bold uppercase tracking-wider border border-orange-500/10">
                                                             {kw}
                                                         </span>
@@ -290,7 +290,7 @@ export function TailorResume({ resumes }: { resumes: any[] }) {
                                                 Alpha Recommendations
                                             </h4>
                                             <div className="grid grid-cols-1 gap-4">
-                                                {analysis.tailoringSuggestions.map((tip: string, i: number) => (
+                                                {(analysis.tailoringSuggestions || []).map((tip: string, i: number) => (
                                                     <div key={i} className="flex items-start gap-6 p-6 bg-white rounded-2xl border border-black/5 hover:border-black/20 transition-all group">
                                                         <span className="w-10 h-10 bg-[#3B82F6] text-white rounded-xl flex items-center justify-center text-xs font-bold shadow-lg flex-shrink-0">
                                                             0{i + 1}
@@ -310,7 +310,7 @@ export function TailorResume({ resumes }: { resumes: any[] }) {
                             <div className="p-8 border-t border-black/5 flex items-center justify-between bg-white/30 backdrop-blur-xl sticky bottom-0">
                                 <div className="flex items-center gap-3 px-6 py-3 bg-black/5 rounded-2xl border border-black/5">
                                     <RiBarChartLine size={18} className="text-black/60 theme-pulse" />
-                                    <span className="text-[0.65rem] font-black uppercase tracking-widest text-black/50">Semantic Engine v2.4</span>
+                                    <span className="text-[0.65rem] font-black uppercase tracking-widest text-[#737373]">Analysis Hub</span>
                                 </div>
 
                                 <div className="flex items-center gap-4">
@@ -327,7 +327,7 @@ export function TailorResume({ resumes }: { resumes: any[] }) {
                                                 disabled={loading || !formData.jobDescription.trim()}
                                                 className="bg-[#3B82F6] text-white px-10 py-5 rounded-[1.25rem] font-bold text-sm hover:bg-[#2563EB] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-2xl shadow-blue-500/20 disabled:opacity-30 flex items-center gap-3"
                                             >
-                                                {loading ? "Matching Matrix..." : "Execute Alpha Match"}
+                                                {loading ? "Analyzing Alignment..." : "Run Analysis"}
                                                 {!loading && <RiArrowRightLine size={18} />}
                                             </button>
                                         </>
@@ -339,7 +339,7 @@ export function TailorResume({ resumes }: { resumes: any[] }) {
                                             }}
                                             className="bg-[#3B82F6] text-white px-12 py-5 rounded-[1.25rem] font-bold text-sm hover:bg-[#2563EB] hover:scale-[1.02] transition-all shadow-2xl shadow-blue-500/20 uppercase tracking-widest"
                                         >
-                                            Protocol Secure
+                                            Close Report
                                         </button>
                                     )}
                                 </div>

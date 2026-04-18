@@ -1,18 +1,21 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { m, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 import { RiCloseLine, RiFileCopyLine, RiCheckboxCircleFill, RiLoader4Line, RiShareLine, RiLinkM, RiDeleteBinLine } from "react-icons/ri";
 import QRCode from "qrcode";
+import { useToast } from "@/components/ui/Toast";
 
 interface ShareModalProps {
     isOpen: boolean;
-    onClose: () => void;
+    onCloseAction: () => void;
     resumeId: string;
     resumeTitle: string;
 }
 
-export function ShareModal({ isOpen, onClose, resumeId, resumeTitle }: ShareModalProps) {
+export function ShareModal({ isOpen, onCloseAction, resumeId, resumeTitle }: ShareModalProps) {
+    const { showToast } = useToast();
     const [loading, setLoading] = useState(false);
     const [shareUrl, setShareUrl] = useState<string | null>(null);
     const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
@@ -21,13 +24,7 @@ export function ShareModal({ isOpen, onClose, resumeId, resumeTitle }: ShareModa
     const [revoking, setRevoking] = useState(false);
     const [toggling, setToggling] = useState(false);
 
-    // Fetch existing share status on open
-    useEffect(() => {
-        if (!isOpen || resumeId === "new") return;
-        fetchShareStatus();
-    }, [isOpen, resumeId]);
-
-    const fetchShareStatus = async () => {
+    const fetchShareStatus = useCallback(async () => {
         try {
             const res = await fetch(`/api/resumes/${resumeId}/share`);
             const data = await res.json();
@@ -37,7 +34,13 @@ export function ShareModal({ isOpen, onClose, resumeId, resumeTitle }: ShareModa
                 if (data.isPublic) generateQR(data.shareUrl);
             }
         } catch {}
-    };
+    }, [resumeId]);
+
+    // Fetch existing share status on open
+    useEffect(() => {
+        if (!isOpen || resumeId === "new") return;
+        fetchShareStatus();
+    }, [isOpen, resumeId, fetchShareStatus]);
 
     const generateShareLink = async () => {
         if (resumeId === "new") return;
@@ -45,6 +48,7 @@ export function ShareModal({ isOpen, onClose, resumeId, resumeTitle }: ShareModa
         try {
             const res = await fetch(`/api/resumes/${resumeId}/share`, { 
                 method: "POST",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ isPublic: true })
             });
             const data = await res.json();
@@ -52,9 +56,11 @@ export function ShareModal({ isOpen, onClose, resumeId, resumeTitle }: ShareModa
                 setShareUrl(data.shareUrl);
                 setIsPublic(true);
                 generateQR(data.shareUrl);
+                showToast("Link generated!", "success");
             }
         } catch (err) {
             console.error("Failed to generate share link:", err);
+            showToast("Failed to generate link", "error");
         } finally {
             setLoading(false);
         }
@@ -66,13 +72,16 @@ export function ShareModal({ isOpen, onClose, resumeId, resumeTitle }: ShareModa
             const nextStatus = !isPublic;
             const res = await fetch(`/api/resumes/${resumeId}/share`, {
                 method: "POST",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ isPublic: nextStatus })
             });
             const data = await res.json();
             setIsPublic(data.isPublic);
             if (data.isPublic) generateQR(data.shareUrl);
+            showToast(data.isPublic ? "Visibility set to Public" : "Visibility set to Private", "success");
         } catch (err) {
             console.error("Toggle failed:", err);
+            showToast("Failed to update visibility", "error");
         } finally {
             setToggling(false);
         }
@@ -85,8 +94,10 @@ export function ShareModal({ isOpen, onClose, resumeId, resumeTitle }: ShareModa
             setShareUrl(null);
             setIsPublic(false);
             setQrDataUrl(null);
+            showToast("Share link revoked", "success");
         } catch (err) {
             console.error("Failed to revoke:", err);
+            showToast("Failed to revoke link", "error");
         } finally {
             setRevoking(false);
         }
@@ -117,7 +128,7 @@ export function ShareModal({ isOpen, onClose, resumeId, resumeTitle }: ShareModa
 
     return (
         <AnimatePresence>
-            <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="fixed inset-0 bg-black/30 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+            <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onCloseAction} className="fixed inset-0 bg-black/30 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
                 <m.div 
                     initial={{ opacity: 0, scale: 0.95, y: 10 }} 
                     animate={{ opacity: 1, scale: 1, y: 0 }} 
@@ -132,7 +143,7 @@ export function ShareModal({ isOpen, onClose, resumeId, resumeTitle }: ShareModa
                             <RiShareLine size={14} className="text-[#3B82F6]" />
                             <span className="text-sm font-semibold text-[#0A0A0A]">Share Resume</span>
                         </div>
-                        <button onClick={onClose} className="w-7 h-7 rounded-md flex items-center justify-center text-[#737373] hover:bg-[#F5F5F5] transition-all">
+                        <button onClick={onCloseAction} className="w-7 h-7 rounded-md flex items-center justify-center text-[#737373] hover:bg-[#F5F5F5] transition-all">
                             <RiCloseLine size={16} />
                         </button>
                     </div>
@@ -169,7 +180,7 @@ export function ShareModal({ isOpen, onClose, resumeId, resumeTitle }: ShareModa
                                 {isPublic && qrDataUrl && (
                                     <m.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center gap-3">
                                         <div className="p-3 bg-white border-2 border-black/8 rounded-xl shadow-sm">
-                                            <img src={qrDataUrl} alt="QR Code" width={140} height={140} className="rounded" />
+                                            <Image src={qrDataUrl} alt="QR Code" width={140} height={140} className="rounded" />
                                         </div>
                                         <p className="text-[10px] text-[#737373] font-medium">Scan to view resume</p>
                                     </m.div>

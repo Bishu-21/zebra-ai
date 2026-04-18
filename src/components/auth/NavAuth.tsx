@@ -2,11 +2,18 @@
 
 import { useSession } from "@/lib/auth-client";
 import { AuthTrigger } from "./AuthTrigger";
+import { useState, useEffect } from "react";
 
 export function NavAuth() {
-  const { data: session, isPending, error } = useSession();
+  const { data: session, isPending } = useSession();
+  const [mounted, setMounted] = useState(false);
 
-  if (isPending) {
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Use skeleton during hydration or while session is pending
+  if (!mounted || isPending) {
     return <div className="w-28 h-10 bg-black/5 animate-pulse rounded-xl" />;
   }
 

@@ -11,13 +11,9 @@ import {
     RiInboxArchiveLine, 
     RiChat3Line, 
     RiCloseCircleLine, 
-    RiFileAddLine,
-    RiInformationLine,
-    RiMagicLine,
-    RiBookOpenLine,
-    RiFileTextLine
+    RiFileTextLine,
+    RiArrowDropDownLine
 } from "react-icons/ri";
-import { useRouter } from "next/navigation";
 import { formatRelativeTime } from "@/lib/utils";
 
 type Job = {
@@ -33,7 +29,7 @@ type Job = {
 
 const STATUSES = ["Applied", "Interviewing", "Offers", "Rejected"] as const;
 
-export function JobBoard({ initialJobs, resumes = [] }: { initialJobs: Job[], resumes?: any[] }) {
+export function JobBoard({ initialJobs, resumes = [] }: { initialJobs: Job[], resumes?: { id: string; title: string }[] }) {
     const [jobs, setJobs] = useState<Job[]>(initialJobs);
     const [isAdding, setIsAdding] = useState(false);
     const [newJob, setNewJob] = useState({ 
@@ -45,7 +41,6 @@ export function JobBoard({ initialJobs, resumes = [] }: { initialJobs: Job[], re
         resumeId: ""
     });
     const [loading, setLoading] = useState(false);
-    const router = useRouter();
 
     const handleAddJob = async () => {
         if (!newJob.company || !newJob.position) return;

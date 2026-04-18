@@ -3,9 +3,9 @@
 import React from "react";
 import { m, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { useToast } from "@/components/ui/Toast";
+import { RewriteItem, AuditItem, ResumeAnalysisData } from "@/components/compiler/types";
 
-// --- INLINED NEURAL ICONS (Performance & Hydration Safe) ---
+// --- STRATEGIC DIAGNOSTIC ICONS (Performance & Hydration Safe) ---
 const IconBox = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
     {children}
@@ -44,9 +44,7 @@ const RocketIcon = ({ className = "" }) => (
     <IconBox className={className}><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.39 1.43-.78 2-1.5.57-.72 1.5-2 1.5-2.5s-1.33-1.5-2-1.5-1.78.93-2.5 1.5c-.72.57-1.4 1.11-2 1.5z" /><path d="M12 12s5.5-5.5 10.5-10.5" /><path d="m5 8 3-3" /><path d="m16 19 3-3" /></IconBox>
 );
 
-// --- COMPONENTS ---
-
-const CircularGauge = ({ value, label, icon: Icon }: { value: number; label: string; icon: any }) => {
+const CircularGauge = ({ value, label, icon: Icon }: { value: number; label: string; icon: React.ComponentType<{ className?: string }> }) => {
     const radius = 24;
     const circumference = 2 * Math.PI * radius;
     const strokeDashoffset = circumference - (value / 100) * circumference;
@@ -76,12 +74,17 @@ const CircularGauge = ({ value, label, icon: Icon }: { value: number; label: str
     );
 };
 
-export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: any) {
+export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: { 
+    isOpen: boolean; 
+    onCloseAction: () => void; 
+    resumeId?: string; 
+    data: ResumeAnalysisData; 
+}) {
     const router = useRouter();
 
     if (!isOpen || !data) return null;
 
-    // --- COMPREHENSIVE NEURAL NORMALIZER ---
+    // --- STRATEGIC DATA NORMALIZER ---
     const score = data.score ?? data.overallScore ?? 0;
     const summary = data.summary ?? data.executiveSummary ?? "Analysis complete.";
     
@@ -92,9 +95,9 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: an
 
     if (data.audit && !strengths.length && !weaknesses.length) {
         // Flatten the categorized audit object { formatting: [...], experience: [...] }
-        Object.values(data.audit).forEach((category: any) => {
+        Object.values(data.audit).forEach((category) => {
             if (Array.isArray(category)) {
-                category.forEach((item: any) => {
+                category.forEach((item) => {
                     const message = item.checkpoint || item.message || "Undefined check";
                     if (item.status === "Pass") {
                         strengths.push(message);
@@ -147,7 +150,7 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: an
                                     <PulseIcon />
                                     <span className="text-[0.55rem] font-bold uppercase tracking-widest">Full Diagnostic Report</span>
                                 </div>
-                                <span className="text-[0.55rem] font-bold uppercase tracking-[0.3em] text-[#A3A3A3]">Zebra Core v2.4</span>
+                                <span className="text-[0.55rem] font-bold uppercase tracking-[0.3em] text-[#A3A3A3]">Zebra Core</span>
                             </div>
                             <h2 className="text-xl font-bold text-[#171717] tracking-tight">Intelligence Audit Output</h2>
                         </div>
@@ -176,22 +179,21 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: an
                                             <ShieldIcon className="text-[#3B82F6] opacity-60" />
                                         </div>
                                         <div className="pt-4 border-t border-white/10">
-                                            <p className="text-[0.85rem] font-medium text-white/80 leading-relaxed italic">
-                                                "{summary}"
+                                            <p className="text-[0.85rem] font-medium text-white/80 leading-relaxed">
+                                                &quot;{summary}&quot;
                                             </p>
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* NEW: Priority Fixes Section (Mapped from actionItems) */}
                                 {actionItems.length > 0 && (
                                     <div className="bg-white border border-[#F5F5F5] p-8 rounded-[2.2rem] space-y-5">
-                                        <div className="flex items-center gap-3">
-                                            <RocketIcon className="text-[#3B82F6]" />
-                                            <h4 className="text-[0.6rem] font-bold uppercase tracking-[0.22em] text-[#171717]">Critical Next Steps</h4>
+                                        <div className="flex items-center gap-3 px-6 py-3 bg-black/5 rounded-2xl border border-black/5">
+                                            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                                            <span className="text-[0.65rem] font-black uppercase tracking-widest text-accent-gray">Audit Analysis Log</span>
                                         </div>
                                         <div className="space-y-3">
-                                            {actionItems.slice(0, 3).map((item: any, i: number) => (
+                                            {actionItems.slice(0, 3).map((item: string, i: number) => (
                                                 <div key={i} className="flex items-start gap-4 p-4 bg-[#FAFAFA] rounded-xl border border-transparent hover:border-[#F5F5F5] transition-all">
                                                     <span className="text-[0.6rem] font-bold text-[#3B82F6] bg-[#3B82F6]/10 w-5 h-5 flex items-center justify-center rounded-md">0{i+1}</span>
                                                     <p className="text-[0.7rem] font-semibold text-[#171717] leading-tight">{item}</p>
@@ -202,7 +204,6 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: an
                                 )}
                             </div>
 
-                            {/* Gauges & Basic Audit Breakdown (Right) */}
                             <div className="lg:col-span-7 space-y-8">
                                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                                     <CircularGauge value={data?.metrics?.impact ?? 0} label="Impact" icon={FlashIcon} />
@@ -211,16 +212,14 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: an
                                     <CircularGauge value={data?.metrics?.branding ?? 0} label="Identity" icon={ShieldIcon} />
                                 </div>
 
-                                {/* Key Diagnostic Pillars (Strengths & Weaknesses) */}
                                 <div className="grid grid-cols-1 gap-6">
-                                    {/* Optimization Areas */}
                                     <div className="space-y-4">
                                         <div className="flex items-center gap-3 ml-2">
                                             <AlertIcon className="text-red-500 scale-75" />
                                             <h4 className="text-[0.6rem] font-bold uppercase tracking-[0.15em] text-[#171717]/60">Required Optimizations</h4>
                                         </div>
                                         <div className="grid grid-cols-1 gap-3">
-                                            {weaknesses.map((item: any, i: number) => (
+                                            {weaknesses.map((item: string, i: number) => (
                                                 <div key={i} className="p-4 bg-white border border-[#F5F5F5] rounded-xl flex items-center gap-4 group">
                                                     <div className="w-1.5 h-1.5 bg-red-500 rounded-full" />
                                                     <p className="text-[0.7rem] font-medium text-[#171717]">{item}</p>
@@ -228,14 +227,13 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: an
                                             ))}
                                         </div>
                                     </div>
-                                    {/* Strengths */}
                                     <div className="space-y-4 pt-4 border-t border-[#F5F5F5]">
                                         <div className="flex items-center gap-3 ml-2">
                                             <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
                                             <h4 className="text-[0.6rem] font-bold uppercase tracking-[0.15em] text-[#171717]/60">Current Strengths</h4>
                                         </div>
                                         <div className="grid grid-cols-2 gap-3">
-                                            {strengths.map((item: any, i: number) => (
+                                            {strengths.map((item: string, i: number) => (
                                                 <div key={i} className="p-4 bg-[#FAFAFA] rounded-xl flex items-center gap-3">
                                                     <div className="w-1 h-1 bg-green-500/40 rounded-full" />
                                                     <p className="text-[0.65rem] font-medium text-[#737373]">{item}</p>
@@ -247,33 +245,32 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: an
                             </div>
                         </div>
 
-                        {/* Implementation Logic & Neural Rewrites (Full Width Bottom) */}
                         {rewrites.length > 0 && (
                             <div className="pt-10 border-t border-[#F5F5F5] space-y-8">
                                 <div className="flex items-center justify-between">
                                     <div className="space-y-1">
-                                        <h4 className="text-[0.6rem] font-bold uppercase tracking-[0.25em] text-[#171717]">Neural Implementation Logic</h4>
+                                        <h4 className="text-[0.6rem] font-bold uppercase tracking-[0.25em] text-[#171717]">Implementation Logic</h4>
                                         <p className="text-[0.55rem] text-[#A3A3A3] font-medium tracking-wide">Context-aware restructuring and rationale</p>
                                     </div>
                                     <div className="px-3 py-1.5 bg-[#3B82F6]/5 text-[#3B82F6] rounded-lg border border-[#3B82F6]/10 text-[0.5rem] font-bold uppercase tracking-widest flex items-center gap-2">
                                         <PulseIcon />
-                                        <span>Matrix Synthesis Active</span>
+                                        <span>Synthesis Active</span>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-1 gap-6">
-                                    {rewrites.map((item: any, i: number) => (
+                                    {rewrites.map((item: RewriteItem, i: number) => (
                                         <div key={i} className="grid grid-cols-1 lg:grid-cols-12 gap-6 bg-white border border-[#F5F5F5] rounded-[2rem] overflow-hidden p-8 hover:border-[#3B82F6]/20 transition-all shadow-sm">
                                             <div className="lg:col-span-4 space-y-4">
                                                 <span className="text-[0.5rem] font-bold uppercase tracking-[0.2em] text-[#A3A3A3] block">Strategic Rationale</span>
                                                 <p className="text-[0.7rem] font-medium text-[#171717]/80 leading-relaxed border-l border-[#F5F5F5] pl-4">
-                                                    {item.rationale ?? "Neural optimization for clarity and impact."}
+                                                    {item.rationale ?? "Optimization for clarity and impact."}
                                                 </p>
                                             </div>
                                             <div className="lg:col-span-8 p-6 bg-[#3B82F6]/[0.02] rounded-2xl border border-[#3B82F6]/5 space-y-3 relative overflow-hidden">
                                                 <div className="absolute top-0 right-0 p-4 opacity-[0.03] rotate-12"><RocketIcon /></div>
-                                                <span className="text-[0.5rem] font-bold uppercase tracking-[0.2em] text-[#3B82F6] block">Neural Rewrite Output</span>
+                                                <span className="text-[0.5rem] font-bold uppercase tracking-[0.2em] text-[#3B82F6] block">Rewrite Output</span>
                                                 <p className="text-[0.75rem] font-medium text-[#171717] leading-relaxed tracking-tight">
-                                                    {item.after ?? item.suggestion ?? item}
+                                                    {item.after ?? item.suggestion ?? ""}
                                                 </p>
                                             </div>
                                         </div>
@@ -283,16 +280,13 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: an
                         )}
                     </div>
 
-                    {/* Footer */}
-                    <div className="px-10 py-6 border-t border-[#F5F5F5] flex items-center justify-between bg-white z-20">
-                        <div className="flex items-center gap-3">
-                            <div className="w-1.5 h-1.5 rounded-full bg-[#3B82F6] animate-pulse" />
-                            <span className="text-[0.55rem] font-bold uppercase tracking-widest text-[#A3A3A3]">Ready for Precision Editing</span>
+                    <div className="p-8 border-t border-black/5 flex items-center justify-between bg-white/30 backdrop-blur-xl sticky bottom-0">
+                        <div className="flex items-center gap-3 px-6 py-3 bg-black/5 rounded-2xl border border-black/5">
+                            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                            <span className="text-[0.65rem] font-black uppercase tracking-widest text-accent-gray">Credit Management System</span>
                         </div>
-                        <div className="flex items-center gap-6">
-                            <button onClick={onCloseAction} className="text-[0.65rem] font-bold uppercase tracking-widest text-[#A3A3A3] hover:text-[#171717] transition-all">
-                                Dismiss Report
-                            </button>
+                        
+                        <div className="flex items-center gap-4">
                             <button 
                                 onClick={() => {
                                     router.push(`/dashboard/resumes/${resumeId || "new"}`);
@@ -301,6 +295,12 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: an
                                 className="px-10 py-4 bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-2xl shadow-xl shadow-blue-500/10 font-bold text-[0.65rem] uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-[0.98]"
                             >
                                 Refine Resume
+                            </button>
+                            <button 
+                                onClick={onCloseAction}
+                                className="px-8 py-3.5 bg-black text-white text-xs font-bold uppercase tracking-widest rounded-2xl hover:bg-neutral-800 transition-all active:scale-[0.98]"
+                            >
+                                Done
                             </button>
                         </div>
                     </div>

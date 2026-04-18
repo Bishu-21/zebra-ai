@@ -4,7 +4,9 @@ import { resumes } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { SharePageActions } from "@/components/compiler/SharePageActions";
 import Link from "next/link";
+import type { ResumeContent, Experience, Education, SkillCategory, Project, Achievement } from "@/components/compiler/types";
 
 export async function generateMetadata({ params: paramsPromise }: { params: Promise<{ token: string }> }): Promise<Metadata> {
     const params = await paramsPromise;
@@ -35,27 +37,26 @@ export default async function SharedResumePage({ params: paramsPromise }: { para
 
     if (!resume || !resume.shareToken || !resume.isPublic) notFound();
 
-    let content: any = {};
-    try { content = JSON.parse(resume.content || "{}"); } catch { content = {}; }
+    let content: ResumeContent = {} as ResumeContent;
+    try { content = JSON.parse(resume.content || "{}"); } catch { content = {} as ResumeContent; }
 
     const basics = content.basics || {};
-    const education = content.education || [];
-    const skills = content.skills || [];
-    const projects = content.projects || [];
-    const experience = content.experience || [];
-    const certifications = content.certifications || [];
+    const education = (content.education || []) as Education[];
+    const skills = (content.skills || []) as (string | SkillCategory)[];
+    const projects = (content.projects || []) as Project[];
+    const experience = (content.experience || []) as Experience[];
+    const certifications = (content.certifications || []) as Achievement[];
 
     return (
         <div className="min-h-screen bg-[#EBEEF2] font-sans flex flex-col">
             {/* Top bar */}
             <header className="h-12 bg-white border-b border-black/6 flex items-center justify-between px-6 shrink-0 print:hidden">
                 <Link href="/" className="text-sm font-bold tracking-[-0.04em] text-[#0A0A0A]">Zebra AI</Link>
-                <div className="flex items-center gap-3">
-                    <span className="text-[10px] font-semibold text-[#737373]">Shared Resume</span>
-                    <button onClick={undefined} className="h-7 px-4 bg-[#3B82F6] text-white text-[10px] font-bold rounded-md hover:bg-[#2563EB] transition-all">
-                        <Link href="/">Build Yours →</Link>
-                    </button>
-                </div>
+                <SharePageActions 
+                    token={params.token} 
+                    resumeTitle={resume.title || "Resume"} 
+                    resumeData={content} 
+                />
             </header>
 
             {/* Resume paper */}
@@ -77,14 +78,14 @@ export default async function SharedResumePage({ params: paramsPromise }: { para
                         {/* Education */}
                         {education.length > 0 && (
                             <Section title="Education">
-                                {education.map((edu: any, idx: number) => (
+                                {education.map((edu, idx) => (
                                     <div key={idx} className="mb-2">
                                         <div className="flex justify-between items-baseline">
                                             <span className="text-[12px] font-bold">{edu.school}</span>
                                             <span className="text-[11px] text-[#444]">{edu.location}</span>
                                         </div>
                                         <div className="flex justify-between items-baseline">
-                                            <span className="text-[11px] italic text-[#333]">{edu.degree}{edu.gpa ? ` | ${edu.gpa}` : ""}</span>
+                                            <span className="text-[11px] text-[#333]">{edu.degree}{edu.gpa ? ` | ${edu.gpa}` : ""}</span>
                                             <span className="text-[11px] text-[#444]">{edu.period}</span>
                                         </div>
                                         <Bullets items={edu.highlights} />
@@ -97,9 +98,9 @@ export default async function SharedResumePage({ params: paramsPromise }: { para
                         {skills.length > 0 && (
                             <Section title="Skills">
                                 <ul className="ml-5 list-disc space-y-0.5">
-                                    {skills.filter((s: any) => typeof s === 'string' ? s.trim() : s?.items?.trim()).map((s: any, idx: number) => (
+                                    {skills.filter((s) => typeof s === 'string' ? s.trim() : (s as SkillCategory)?.items?.trim()).map((s, idx) => (
                                         <li key={idx} className="text-[11px] text-[#333] leading-snug">
-                                            {typeof s === 'string' ? s : <><span className="font-bold">{s.category}:</span> {s.items}</>}
+                                            {typeof s === 'string' ? s : <><span className="font-bold">{(s as SkillCategory).category}:</span> {(s as SkillCategory).items}</>}
                                         </li>
                                     ))}
                                 </ul>
@@ -109,13 +110,13 @@ export default async function SharedResumePage({ params: paramsPromise }: { para
                         {/* Projects */}
                         {projects.length > 0 && (
                             <Section title="Projects">
-                                {projects.map((proj: any, idx: number) => (
+                                {projects.map((proj, idx) => (
                                     <div key={idx} className="mb-2">
                                         <div className="flex justify-between items-baseline gap-2">
                                             <span className="text-[12px] font-bold">{proj.title}</span>
-                                            <span className="text-[11px] italic text-[#555] shrink-0">
+                                            <span className="text-[11px] text-[#555] shrink-0">
                                                 {proj.techStack}
-                                                {proj.link && <> · <a href={proj.link} target="_blank" rel="noopener noreferrer" className="font-bold not-italic text-[#1a1a1a] hover:text-[#3B82F6]">Live Demo</a></>}
+                                                {proj.link && <> · <a href={proj.link} target="_blank" rel="noopener noreferrer" className="font-bold text-[#1a1a1a] hover:text-[#3B82F6]">Live Demo</a></>}
                                             </span>
                                         </div>
                                         <Bullets items={proj.highlights} />
@@ -127,14 +128,14 @@ export default async function SharedResumePage({ params: paramsPromise }: { para
                         {/* Experience */}
                         {experience.length > 0 && (
                             <Section title="Experience">
-                                {experience.map((exp: any, idx: number) => (
+                                {experience.map((exp, idx) => (
                                     <div key={idx} className="mb-2">
                                         <div className="flex justify-between items-baseline">
                                             <span className="text-[12px] font-bold">{exp.company}</span>
                                             <span className="text-[11px] text-[#444]">{exp.location}</span>
                                         </div>
                                         <div className="flex justify-between items-baseline">
-                                            <span className="text-[11px] italic text-[#333]">{exp.role}</span>
+                                            <span className="text-[11px] text-[#333]">{exp.role}</span>
                                             <span className="text-[11px] text-[#444]">{exp.period}</span>
                                         </div>
                                         <Bullets items={exp.highlights} />
@@ -144,12 +145,12 @@ export default async function SharedResumePage({ params: paramsPromise }: { para
                         )}
 
                         {/* Certifications */}
-                        {certifications.length > 0 && certifications.some((c: any) => c?.items?.trim()) && (
+                        {certifications.length > 0 && certifications.some((c) => (c as Achievement)?.items?.trim()) && (
                             <Section title="Certifications & Achievements">
                                 <ul className="ml-5 list-disc space-y-0.5">
-                                    {certifications.filter((c: any) => c?.items?.trim()).map((c: any, idx: number) => (
+                                    {certifications.filter((c) => (c as Achievement)?.items?.trim()).map((c, idx) => (
                                         <li key={idx} className="text-[11px] text-[#333] leading-snug">
-                                            <span className="font-bold">{c.category}:</span> {c.items}
+                                            <span className="font-bold">{(c as Achievement).category}:</span> {(c as Achievement).items}
                                         </li>
                                     ))}
                                 </ul>

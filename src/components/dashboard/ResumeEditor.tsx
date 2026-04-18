@@ -6,13 +6,14 @@ import { m, AnimatePresence } from "framer-motion";
 import { 
     RiArrowLeftLine, RiSave3Line, RiMagicLine, RiCodeSSlashLine,
     RiLoader4Line, RiCloseCircleLine, RiAddLine, RiRobot2Line,
-    RiCloseLine, RiSparklingLine, RiUser6Line, RiBriefcaseLine,
+    RiCloseLine, RiUser6Line, RiBriefcaseLine,
     RiGraduationCapLine, RiToolsLine, RiClipboardLine, RiFileDownloadLine,
     RiCheckboxCircleFill, RiStackLine, RiBallPenLine, RiDeleteBinLine,
     RiAwardLine, RiShareLine
 } from "react-icons/ri";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/components/ui/Toast";
+import { useEffect } from "react";
 import { PreviewPane } from "@/components/compiler/PreviewPane";
 import { FieldInput, FieldTextarea } from "@/components/compiler/FieldInput";
 import { parseResumeData } from "@/components/compiler/parseResume";
@@ -25,7 +26,7 @@ interface ResumeEditorProps {
 
 export function ResumeEditor({ initialData }: ResumeEditorProps) {
     const [resume, setResume] = useState<ResumeData>(() => parseResumeData(initialData));
-    const [selectedTemplate, setSelectedTemplate] = useState<TemplateType>('modern');
+    const selectedTemplate = 'modern' as TemplateType;
     const [isSaving, setIsSaving] = useState(false);
     const [activeSection, setActiveSection] = useState<SectionId>("basics");
     const [viewMode, setViewMode] = useState<"sheet" | "source">("sheet");
@@ -33,11 +34,37 @@ export function ResumeEditor({ initialData }: ResumeEditorProps) {
     const [isAiLoading, setIsAiLoading] = useState(false);
     const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
     const [showAiPanel, setShowAiPanel] = useState(false);
-    const [aiContext, setAiContext] = useState<any>(null);
+    const [aiContext, setAiContext] = useState<{ section: string; currentText: string; itemContext?: { id: number; idx: number } } | null>(null);
     const [copying, setCopying] = useState<string | null>(null);
     const [showShareModal, setShowShareModal] = useState(false);
+    const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { showToast } = useToast();
+
+    useEffect(() => {
+        const importToken = searchParams.get("import");
+        if (importToken && resume.id === "new") {
+            const fetchImport = async () => {
+                try {
+                    const res = await fetch(`/api/resumes/share?token=${importToken}`);
+                    if (!res.ok) throw new Error("Failed to fetch shared resume");
+                    const data = await res.json();
+                    if (data.content) {
+                        setResume(p => ({
+                            ...p,
+                            title: `${data.title} (Copy)`,
+                            content: JSON.parse(data.content)
+                        }));
+                        showToast("Resume imported! Don't forget to save.", "success");
+                    }
+                } catch (err) {
+                    showToast("Could not import resume", "error");
+                }
+            };
+            fetchImport();
+        }
+    }, [searchParams, resume.id, showToast]);
 
     const debouncedContent = useDebounce(resume.content, 300);
 
@@ -64,7 +91,7 @@ export function ResumeEditor({ initialData }: ResumeEditorProps) {
 
     // ── Handlers ──────────────────────────────────────────────
 
-    const getAiSuggestions = async (section: string, currentText: string, itemContext?: any) => {
+    const getAiSuggestions = async (section: string, currentText: string, itemContext?: { id: number; idx: number }) => {
         setIsAiLoading(true); setShowAiPanel(true); setAiContext({ section, currentText, itemContext });
         try {
             const res = await fetch("/api/ai/copilot", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ section, currentText, context: resume.content }) });
@@ -103,8 +130,9 @@ export function ResumeEditor({ initialData }: ResumeEditorProps) {
             } else { 
                 showToast("Saved", "success"); 
             }
-        } catch (error: any) { 
-            showToast(error.message || "Save failed", "error"); 
+        } catch (error) { 
+            const err = error as Error;
+            showToast(err.message || "Save failed", "error"); 
         } finally { 
             setIsSaving(false); 
         }
@@ -112,7 +140,7 @@ export function ResumeEditor({ initialData }: ResumeEditorProps) {
 
     const handleSourceChange = (value: string) => {
         try { setResume((p: ResumeData) => ({ ...p, content: JSON.parse(value) })); setJsonError(null); }
-        catch (e: any) { setJsonError(e.message); }
+        catch (e) { const err = e as Error; setJsonError(err.message); }
     };
 
     const copyToClipboard = async () => {
@@ -131,13 +159,13 @@ export function ResumeEditor({ initialData }: ResumeEditorProps) {
 
     const updateBasics = (field: string, value: string) => setResume((p: ResumeData) => ({ ...p, content: { ...p.content, basics: { ...p.content.basics, [field]: value } } }));
 
-    const updateExperience = (id: number, field: string, value: any) => setResume((p: ResumeData) => ({ ...p, content: { ...p.content, experience: p.content.experience.map(i => i.id === id ? { ...i, [field]: value } : i) } }));
-    const updateProject = (id: number, field: string, value: any) => setResume((p: ResumeData) => ({ ...p, content: { ...p.content, projects: (p.content.projects || []).map(i => i.id === id ? { ...i, [field]: value } : i) } }));
-    const updateEducation = (id: number, field: string, value: any) => setResume((p: ResumeData) => ({ ...p, content: { ...p.content, education: p.content.education.map(i => i.id === id ? { ...i, [field]: value } : i) } }));
+    const updateExperience = (id: number, field: string, value: string | string[]) => setResume((p: ResumeData) => ({ ...p, content: { ...p.content, experience: p.content.experience.map(i => i.id === id ? { ...i, [field]: value } : i) } }));
+    const updateProject = (id: number, field: string, value: string | string[]) => setResume((p: ResumeData) => ({ ...p, content: { ...p.content, projects: (p.content.projects || []).map(i => i.id === id ? { ...i, [field]: value } : i) } }));
+    const updateEducation = (id: number, field: string, value: string | string[]) => setResume((p: ResumeData) => ({ ...p, content: { ...p.content, education: p.content.education.map(i => i.id === id ? { ...i, [field]: value } : i) } }));
     const updateSkill = (id: number, field: string, value: string) => setResume((p: ResumeData) => ({ ...p, content: { ...p.content, skills: p.content.skills.map(i => i.id === id ? { ...i, [field]: value } : i) } }));
     const updateCert = (id: number, field: string, value: string) => setResume((p: ResumeData) => ({ ...p, content: { ...p.content, certifications: (p.content.certifications || []).map(i => i.id === id ? { ...i, [field]: value } : i) } }));
 
-    const removeItem = (section: 'experience' | 'education' | 'projects' | 'skills' | 'certifications', id: number) => setResume((p: ResumeData) => ({ ...p, content: { ...p.content, [section]: (p.content[section] as any[]).filter(i => i.id !== id) } }));
+    const removeItem = (section: 'experience' | 'education' | 'projects' | 'skills' | 'certifications', id: number) => setResume((p: ResumeData) => ({ ...p, content: { ...p.content, [section]: (p.content[section] as { id: number }[]).filter(i => i.id !== id) } }));
 
     const addExperience = () => setResume((p: ResumeData) => ({ ...p, content: { ...p.content, experience: [...p.content.experience, { id: Date.now(), company: "", location: "", role: "", period: "", highlights: [""], techStack: "", link: "" }] } }));
     const addProject = () => setResume((p: ResumeData) => ({ ...p, content: { ...p.content, projects: [...(p.content.projects || []), { id: Date.now(), title: "", techStack: "", link: "", highlights: [""] }] } }));
@@ -184,15 +212,51 @@ export function ResumeEditor({ initialData }: ResumeEditorProps) {
                         {copying ? <RiCheckboxCircleFill className="text-emerald-500" size={12} /> : <RiClipboardLine size={12} />}
                         Copy
                     </button>
-                    <button onClick={async () => {
-                        try {
-                            const res = await fetch("/api/export/hardened", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ resumeData: resume.content, template: selectedTemplate }) });
-                            const data = await res.json();
-                            if (!res.ok) { if (data.error === "PREMIUM_REQUIRED") { showToast("Pro plan required", "error"); return; } throw new Error(data.error); }
-                            const pw = window.open("", "_blank"); if (pw) { pw.document.write(data.html); pw.document.close(); pw.focus(); setTimeout(() => pw.print(), 500); }
-                        } catch (err: any) { showToast(err.message || "Export failed", "error"); }
-                    }} className="h-7 px-3 rounded-md text-[10px] font-semibold text-[#737373] hover:bg-[#F5F5F5] hover:text-[#0A0A0A] transition-all flex items-center gap-1.5">
-                        <RiFileDownloadLine size={12} /> Export
+                    <button 
+                        onClick={async () => {
+                            setIsGeneratingPdf(true);
+                            try {
+                                const res = await fetch("/api/export/pdf", { 
+                                    method: "POST", 
+                                    headers: { "Content-Type": "application/json" }, 
+                                    body: JSON.stringify({ 
+                                        resumeData: resume.content, 
+                                        template: selectedTemplate,
+                                        title: resume.title 
+                                    }) 
+                                });
+                                
+                                if (!res.ok) {
+                                    const data = await res.json();
+                                    if (data.error === "PREMIUM_REQUIRED") { 
+                                        showToast("Pro plan required", "error"); 
+                                        return; 
+                                    }
+                                    throw new Error(data.error);
+                                }
+
+                                // Handle direct blob download
+                                const blob = await res.blob();
+                                const url = window.URL.createObjectURL(blob);
+                                const a = document.createElement("a");
+                                a.href = url;
+                                a.download = `${resume.title || "resume"}.pdf`;
+                                document.body.appendChild(a);
+                                a.click();
+                                window.URL.revokeObjectURL(url);
+                                showToast("PDF Downloaded!", "success");
+                            } catch (err) { 
+                                const error = err as Error;
+                                showToast(error.message || "Export failed", "error"); 
+                            } finally {
+                                setIsGeneratingPdf(false);
+                            }
+                        }} 
+                        disabled={isGeneratingPdf}
+                        className="h-7 px-3 rounded-md text-[10px] font-semibold text-[#737373] hover:bg-[#F5F5F5] hover:text-[#0A0A0A] transition-all flex items-center gap-1.5 disabled:opacity-50"
+                    >
+                        {isGeneratingPdf ? <RiLoader4Line size={12} className="animate-spin" /> : <RiFileDownloadLine size={12} />}
+                        {isGeneratingPdf ? "Exporting..." : "Export"}
                     </button>
                     <button onClick={() => setShowShareModal(true)} className="h-7 px-3 rounded-md text-[10px] font-semibold text-[#737373] hover:bg-[#F5F5F5] hover:text-[#0A0A0A] transition-all flex items-center gap-1.5">
                         <RiShareLine size={12} /> Share
@@ -251,7 +315,7 @@ export function ResumeEditor({ initialData }: ResumeEditorProps) {
                 </div>
 
                 {/* COL 3: Preview (~62%) */}
-                <PreviewPane content={debouncedContent} onJumpToSource={jumpToSource} />
+                <PreviewPane content={debouncedContent} onJumpToSourceAction={jumpToSource} />
             </div>
 
             {/* ── AI PANEL ── */}
@@ -277,7 +341,12 @@ export function ResumeEditor({ initialData }: ResumeEditorProps) {
                                                 <button onClick={() => applySuggestion(s)} className="w-full h-7 bg-[#3B82F6] text-white rounded text-[10px] font-semibold opacity-0 group-hover:opacity-100 transition-all hover:bg-[#2563EB]">Apply</button>
                                             </m.div>
                                         ))}
-                                        <button onClick={() => getAiSuggestions(aiContext.section, aiContext.currentText, aiContext.itemContext)} className="w-full h-8 border border-dashed border-black/15 rounded-lg flex items-center justify-center gap-1.5 text-[#737373] text-[10px] font-semibold hover:text-[#0A0A0A] hover:border-black/30 transition-all"><RiMagicLine size={10} /> Regenerate</button>
+                                        <button 
+                                            onClick={() => aiContext && getAiSuggestions(aiContext.section, aiContext.currentText, aiContext.itemContext)} 
+                                            className="w-full h-8 border border-dashed border-black/15 rounded-lg flex items-center justify-center gap-1.5 text-[#737373] text-[10px] font-semibold hover:text-[#0A0A0A] hover:border-black/30 transition-all"
+                                        >
+                                            <RiMagicLine size={10} /> Regenerate
+                                        </button>
                                     </>
                                 ) : (
                                     <div className="flex flex-col items-center justify-center h-48 gap-3 opacity-30"><RiRobot2Line size={36} /><p className="text-[10px] font-semibold text-center">Hover a field and click ✨ to get suggestions.</p></div>
@@ -301,7 +370,12 @@ export function ResumeEditor({ initialData }: ResumeEditorProps) {
             </footer>
 
             {/* ── SHARE MODAL ── */}
-            <ShareModal isOpen={showShareModal} onClose={() => setShowShareModal(false)} resumeId={resume.id} resumeTitle={resume.title} />
+            <ShareModal 
+                isOpen={showShareModal} 
+                onCloseAction={() => setShowShareModal(false)} 
+                resumeId={resume.id} 
+                resumeTitle={resume.title} 
+            />
         </div>
     );
 }
@@ -331,10 +405,10 @@ function BasicsEditor({ content, updateBasics, getAiSuggestions }: { content: Re
     );
 }
 
-function EducationEditor({ content, updateEducation, addEducation, removeItem }: { content: ResumeContent; updateEducation: (id: number, f: string, v: any) => void; addEducation: () => void; removeItem: (s: any, id: number) => void }) {
+function EducationEditor({ content, updateEducation, addEducation, removeItem }: { content: ResumeContent; updateEducation: (id: number, f: string, v: string | string[]) => void; addEducation: () => void; removeItem: (s: 'education', id: number) => void }) {
     return (
         <div className="space-y-4">
-            {content.education.map((edu) => (
+            {content.education.map((edu: Education) => (
                 <div key={edu.id} className="p-4 border border-black/8 rounded-lg space-y-3 relative group bg-[#FAFAFA] hover:border-black/12 transition-all">
                     <button onClick={() => removeItem('education', edu.id)} className="absolute top-2 right-2 w-6 h-6 rounded flex items-center justify-center text-black/15 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"><RiDeleteBinLine size={12} /></button>
                     <div className="grid grid-cols-2 gap-3">
@@ -348,7 +422,7 @@ function EducationEditor({ content, updateEducation, addEducation, removeItem }:
                     <FieldInput label="Period" value={edu.period} onChange={(v) => updateEducation(edu.id, "period", v)} placeholder="Expected 2026" />
                     <div className="space-y-1.5">
                         <label className="text-[10px] font-semibold text-[#737373] tracking-wide uppercase">Highlights</label>
-                        {(edu.highlights || []).map((h, idx) => (
+                        {(edu.highlights || []).map((h: string, idx: number) => (
                             <div key={idx} className="flex gap-2 items-start">
                                 <span className="text-[#A3A3A3] text-xs mt-2 shrink-0">•</span>
                                 <textarea value={h} onChange={(e) => { const nh = [...(edu.highlights || [])]; nh[idx] = e.target.value; updateEducation(edu.id, "highlights", nh); }} placeholder="Key achievement..." className="flex-grow min-h-[36px] bg-[#F5F5F5] rounded-md p-2 text-xs text-[#0A0A0A] border border-[#E5E5E5] focus:border-[#3B82F6] outline-none resize-none placeholder:text-black/20" />
@@ -363,11 +437,11 @@ function EducationEditor({ content, updateEducation, addEducation, removeItem }:
     );
 }
 
-function SkillsEditor({ content, updateSkill, addSkill, removeItem }: { content: ResumeContent; updateSkill: (id: number, f: string, v: string) => void; addSkill: () => void; removeItem: (s: any, id: number) => void }) {
+function SkillsEditor({ content, updateSkill, addSkill, removeItem }: { content: ResumeContent; updateSkill: (id: number, f: string, v: string) => void; addSkill: () => void; removeItem: (s: 'skills', id: number) => void }) {
     return (
         <div className="space-y-4">
             <p className="text-[10px] text-[#737373]">Group your skills by category (e.g., Languages, Core Concepts, Web & Tools).</p>
-            {content.skills.map((skill) => (
+            {content.skills.map((skill: SkillCategory) => (
                 <div key={skill.id} className="p-4 border border-black/8 rounded-lg space-y-3 relative group bg-[#FAFAFA] hover:border-black/12 transition-all">
                     <button onClick={() => removeItem('skills', skill.id)} className="absolute top-2 right-2 w-6 h-6 rounded flex items-center justify-center text-black/15 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"><RiDeleteBinLine size={12} /></button>
                     <FieldInput label="Category" value={skill.category} onChange={(v) => updateSkill(skill.id, "category", v)} placeholder="Languages" />
@@ -379,10 +453,10 @@ function SkillsEditor({ content, updateSkill, addSkill, removeItem }: { content:
     );
 }
 
-function ProjectsEditor({ content, updateProject, addProject, removeItem }: { content: ResumeContent; updateProject: (id: number, f: string, v: any) => void; addProject: () => void; removeItem: (s: any, id: number) => void }) {
+function ProjectsEditor({ content, updateProject, addProject, removeItem }: { content: ResumeContent; updateProject: (id: number, f: string, v: string | string[]) => void; addProject: () => void; removeItem: (s: 'projects', id: number) => void }) {
     return (
         <div className="space-y-4">
-            {(content.projects || []).map((proj) => (
+            {(content.projects || []).map((proj: Project) => (
                 <div key={proj.id} className="p-4 border border-black/8 rounded-lg space-y-3 relative group bg-[#FAFAFA] hover:border-black/12 transition-all">
                     <button onClick={() => removeItem('projects', proj.id)} className="absolute top-2 right-2 w-6 h-6 rounded flex items-center justify-center text-black/15 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"><RiDeleteBinLine size={12} /></button>
                     <div className="grid grid-cols-2 gap-3">
@@ -398,10 +472,10 @@ function ProjectsEditor({ content, updateProject, addProject, removeItem }: { co
     );
 }
 
-function ExperienceEditor({ content, updateExperience, addExperience, removeItem }: { content: ResumeContent; updateExperience: (id: number, f: string, v: any) => void; addExperience: () => void; removeItem: (s: any, id: number) => void }) {
+function ExperienceEditor({ content, updateExperience, addExperience, removeItem }: { content: ResumeContent; updateExperience: (id: number, f: string, v: string | string[]) => void; addExperience: () => void; removeItem: (s: 'experience', id: number) => void }) {
     return (
         <div className="space-y-4">
-            {content.experience.map((exp) => (
+            {content.experience.map((exp: Experience) => (
                 <div key={exp.id} className="p-4 border border-black/8 rounded-lg space-y-3 relative group bg-[#FAFAFA] hover:border-black/12 transition-all">
                     <button onClick={() => removeItem('experience', exp.id)} className="absolute top-2 right-2 w-6 h-6 rounded flex items-center justify-center text-black/15 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"><RiDeleteBinLine size={12} /></button>
                     <div className="grid grid-cols-2 gap-3">
@@ -420,11 +494,11 @@ function ExperienceEditor({ content, updateExperience, addExperience, removeItem
     );
 }
 
-function CertsEditor({ content, updateCert, addCert, removeItem }: { content: ResumeContent; updateCert: (id: number, f: string, v: string) => void; addCert: () => void; removeItem: (s: any, id: number) => void }) {
+function CertsEditor({ content, updateCert, addCert, removeItem }: { content: ResumeContent; updateCert: (id: number, f: string, v: string) => void; addCert: () => void; removeItem: (s: 'certifications', id: number) => void }) {
     return (
         <div className="space-y-4">
             <p className="text-[10px] text-[#737373]">Group by type (e.g., Certifications, Hackathons).</p>
-            {(content.certifications || []).map((cert) => (
+            {(content.certifications || []).map((cert: Achievement) => (
                 <div key={cert.id} className="p-4 border border-black/8 rounded-lg space-y-3 relative group bg-[#FAFAFA] hover:border-black/12 transition-all">
                     <button onClick={() => removeItem('certifications', cert.id)} className="absolute top-2 right-2 w-6 h-6 rounded flex items-center justify-center text-black/15 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"><RiDeleteBinLine size={12} /></button>
                     <FieldInput label="Category" value={cert.category} onChange={(v) => updateCert(cert.id, "category", v)} placeholder="Certifications" />
