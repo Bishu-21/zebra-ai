@@ -21,8 +21,6 @@ const HomeIcon = () => (
 const DocsIcon = () => (
     <SidebarIcon><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" /><polyline points="14 2 14 8 20 8" /></SidebarIcon>
 );
-
-
 const BriefcaseIcon = () => (
     <SidebarIcon><rect x="2" y="7" width="20" height="14" rx="2" ry="2" /><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" /></SidebarIcon>
 );
@@ -32,9 +30,6 @@ const AnalyticsIcon = () => (
 const SettingsIcon = () => (
     <SidebarIcon><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></SidebarIcon>
 );
-const AddIcon = () => (
-    <SidebarIcon><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></SidebarIcon>
-);
 const LogoutIcon = () => (
     <SidebarIcon><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></SidebarIcon>
 );
@@ -42,15 +37,22 @@ const MenuIcon = () => (
     <SidebarIcon><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" /></SidebarIcon>
 );
 const CloseIcon = () => (
-    <SidebarIcon><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="12" y2="12" /><line x1="12" y1="12" x2="18" y2="18" /></SidebarIcon>
+    <SidebarIcon>
+        <line x1="18" y1="6" x2="6" y2="18" />
+        <line x1="6" y1="6" x2="18" y2="18" />
+    </SidebarIcon>
 );
 
 interface SidebarProps {
     plan: string;
     credits: number;
+    userName: string;
+    userImage?: string | null;
+    onOpenSettingsAction: () => void;
+    onOpenProfileAction: () => void;
 }
 
-export function Sidebar({ plan, credits }: SidebarProps) {
+export function Sidebar({ plan, credits, userName, userImage, onOpenSettingsAction, onOpenProfileAction }: SidebarProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [isMobile, setIsMobile] = React.useState(false);
     const router = useRouter();
@@ -64,7 +66,8 @@ export function Sidebar({ plan, credits }: SidebarProps) {
 
     const toggleSidebar = () => setIsOpen(!isOpen);
 
-    const handleSignOut = async () => {
+    const handleSignOut = async (e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent opening profile when clicking logout
         await signOut({
             fetchOptions: {
                 onSuccess: () => {
@@ -77,13 +80,15 @@ export function Sidebar({ plan, credits }: SidebarProps) {
     return (
         <>
             {/* Mobile Toggle Button */}
-            <button 
-                onClick={toggleSidebar}
-                className="lg:hidden fixed top-5 left-6 z-[70] w-10 h-10 bg-white/60 backdrop-blur-md border border-[#F5F5F5] rounded-xl flex items-center justify-center text-[#171717] shadow-sm"
-                aria-label="Toggle Menu"
-            >
-                {isOpen ? <CloseIcon /> : <MenuIcon />}
-            </button>
+            {!isOpen && (
+                <button 
+                    onClick={toggleSidebar}
+                    className="lg:hidden fixed top-5 left-6 z-[70] w-10 h-10 bg-white/80 backdrop-blur-md border border-[#F5F5F5] rounded-xl flex items-center justify-center text-[#171717] shadow-sm hover:bg-white transition-colors"
+                    aria-label="Open Menu"
+                >
+                    <MenuIcon />
+                </button>
+            )}
 
             {/* Mobile Overlay */}
             <AnimatePresence>
@@ -92,7 +97,7 @@ export function Sidebar({ plan, credits }: SidebarProps) {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="lg:hidden fixed inset-0 bg-white/20 backdrop-blur-sm z-[60]"
+                        className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-md z-[60]"
                         onClick={() => setIsOpen(false)}
                     />
                 )}
@@ -103,25 +108,41 @@ export function Sidebar({ plan, credits }: SidebarProps) {
                 initial={false}
                 animate={{ 
                     x: isMobile ? (isOpen ? 0 : "-100%") : 0,
-                    width: 280
                 }}
-                className="fixed lg:sticky top-0 left-0 h-screen bg-[#FAFAFA] border-r border-[#F5F5F5] flex flex-col z-[50] overflow-y-auto no-scrollbar"
-                transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                className="fixed lg:sticky top-0 left-0 h-screen w-[280px] bg-[#FAFAFA] border-r border-[#F5F5F5] flex flex-col z-[70] overflow-hidden shadow-2xl lg:shadow-none"
+                transition={{ type: "spring", damping: 30, stiffness: 300 }}
             >
-                <div className="pt-12 px-10 flex flex-col h-full">
-                    <Link href="/dashboard" className="flex items-center gap-3 mb-16 group" onClick={() => setIsOpen(false)}>
-                        <img 
-                            src="/zebra_star.svg" 
-                            alt="Zebra AI" 
-                            className="w-10 h-10 object-contain group-hover:rotate-12 transition-transform duration-300"
-                        />
-                        <span className="text-2xl font-bold tracking-tight text-[#171717]">Zebra AI</span>
-                    </Link>
-
-                    <div className="space-y-1 flex-grow">
-                        <p className="text-[0.6rem] font-bold tracking-[0.2em] uppercase text-[#A3A3A3] mb-8 ml-4">Command Menu</p>
+                <div className="pt-10 px-8 flex flex-col h-full">
+                    <div className="flex flex-col items-center justify-center mb-10 text-center relative">
+                        <Link href="/dashboard" className="flex flex-col items-center gap-3 group" onClick={() => setIsOpen(false)}>
+                            <div className="relative">
+                                <div className="absolute inset-0 bg-[#3B82F6]/30 blur-3xl rounded-full scale-150 opacity-0 group-hover:opacity-100 transition-all duration-700" />
+                                <img 
+                                    src="/zebra_star.svg" 
+                                    alt="Zebra AI" 
+                                    className="w-16 h-16 object-contain relative z-10 group-hover:scale-110 group-hover:rotate-[5deg] transition-all duration-500 ease-out"
+                                />
+                            </div>
+                            <div className="flex flex-col items-center relative z-10">
+                                <h1 className="text-2xl font-black tracking-[-0.06em] text-[#0A0A0A] leading-none">Zebra AI</h1>
+                                <div className="h-1 w-6 bg-[#3B82F6] rounded-full mt-2 transform origin-center scale-x-0 group-hover:scale-x-100 transition-all duration-500 ease-out" />
+                            </div>
+                        </Link>
                         
-                        <div className="space-y-2">
+                        {isMobile && (
+                            <button 
+                                onClick={() => setIsOpen(false)}
+                                className="absolute -top-2 -right-4 w-10 h-10 bg-black/5 rounded-xl flex items-center justify-center text-[#171717]/40 hover:text-[#171717] hover:bg-black/10 transition-all"
+                            >
+                                <CloseIcon />
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="space-y-1 flex-grow overflow-y-auto custom-scrollbar pr-1">
+                        <p className="text-[0.6rem] font-bold tracking-[0.2em] uppercase text-[#A3A3A3] mb-4 ml-4">Navigation</p>
+                        
+                        <div className="space-y-1">
                             <DashboardLink href="/dashboard" icon={<HomeIcon />}>
                                 Resumes
                             </DashboardLink>
@@ -134,48 +155,74 @@ export function Sidebar({ plan, credits }: SidebarProps) {
                             <DashboardLink href="/dashboard/analytics" icon={<AnalyticsIcon />}>
                                 Analytics
                             </DashboardLink>
-                            <DashboardLink href="/dashboard/settings" icon={<SettingsIcon />}>
-                                Settings
-                            </DashboardLink>
+                             <button 
+                                onClick={onOpenSettingsAction}
+                                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all hover:bg-black/5 text-[#737373] hover:text-[#171717] font-bold text-sm group"
+                            >
+                                <SettingsIcon />
+                                <span>Settings</span>
+                            </button>
                         </div>
 
-                        <div className="mt-12 pt-10 border-t border-[#F5F5F5]">
-                             <p className="text-[0.6rem] font-bold tracking-[0.2em] uppercase text-[#A3A3A3] mb-6 ml-4">Subscription</p>
-                             <div className="bg-white border border-[#F5F5F5] rounded-[2rem] p-6 group/card shadow-sm hover:shadow-md transition-all">
-                                <div className="flex items-center justify-between mb-8">
+                        <div className="mt-8 pt-8 border-t border-[#F5F5F5]">
+                             <p className="text-[0.6rem] font-bold tracking-[0.2em] uppercase text-[#A3A3A3] mb-4 ml-4">Subscription</p>
+                             <div className="relative bg-white border border-[#F5F5F5] rounded-[1.5rem] p-5 group/card shadow-sm hover:shadow-md transition-all overflow-hidden">
+                                <div className="absolute top-0 right-0 w-16 h-16 bg-[#3B82F6]/5 rounded-bl-[2rem] -mr-4 -mt-4 transition-transform group-hover/card:scale-110" />
+                                <div className="flex items-center justify-between mb-4">
                                     <div className="flex flex-col">
                                         <span className="text-[0.6rem] font-bold text-[#A3A3A3] uppercase tracking-[0.1em] mb-1">Tier</span>
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-1.5 h-1.5 bg-[#3B82F6] rounded-full animate-pulse" />
-                                            <span className="text-base font-bold text-[#171717] tracking-tight">{plan}</span>
+                                        <div className="flex items-center gap-1.5">
+                                            <div className="w-1.5 h-1.5 bg-[#3B82F6] rounded-full animate-pulse shadow-[0_0_8px_#3B82F6]" />
+                                            <span className="text-xs font-black text-[#171717] tracking-tight">{plan} Plan</span>
                                         </div>
                                     </div>
                                     <div className="flex flex-col items-end">
-                                        <span className="text-xl font-bold text-[#3B82F6] tracking-tight leading-none mb-1">{credits}</span>
-                                        <span className="text-[0.6rem] font-bold text-[#A3A3A3] uppercase tracking-[0.1em]">Units</span>
+                                        <span className="text-base font-black text-[#3B82F6] tracking-tighter leading-none mb-0.5">{credits}</span>
+                                        <span className="text-[0.55rem] font-black text-[#A3A3A3] uppercase tracking-[0.1em]">Credits</span>
                                     </div>
                                 </div>
-                                <div className="w-full bg-[#3B82F6]/5 h-1.5 rounded-full overflow-hidden mb-6">
-                                     <div className="bg-[#3B82F6] h-full transition-all duration-1000" style={{ width: plan === "Pro" ? "100%" : "20%" }}></div>
+                                <div className="w-full bg-[#F5F5F5] h-1.5 rounded-full overflow-hidden mb-5">
+                                     <m.div 
+                                        className="bg-[#3B82F6] h-full" 
+                                        initial={{ width: 0 }}
+                                        animate={{ width: plan === "Pro" ? "100%" : `${Math.min((credits / 10) * 100, 100)}%` }}
+                                        transition={{ duration: 1.5, ease: "easeOut" }}
+                                     />
                                 </div>
                                 <CreditTopUp />
                              </div>
                         </div>
                     </div>
 
-                    <div className="pt-8 pb-12 lg:pb-12 border-t border-[#F5F5F5] space-y-5 text-center">
-                        <Link href="/dashboard/resumes/new" onClick={() => setIsOpen(false)} className="w-full bg-[#3B82F6] text-white py-4 rounded-2xl font-bold text-[0.7rem] uppercase tracking-widest transition-all shadow-lg shadow-blue-500/10 hover:bg-[#2563EB] active:scale-95 flex items-center justify-center gap-2">
-                            <AddIcon />
-                            Provision
-                        </Link>
-                        
-                        <button 
-                            onClick={handleSignOut}
-                            className="w-full flex items-center justify-center gap-3 px-5 py-3 text-[#A3A3A3] hover:text-red-500 transition-all font-bold text-[0.6rem] uppercase tracking-widest"
+                    {/* Bottom Section: Integrated Profile & Logout */}
+                    <div className="pt-6 pb-8 mt-auto border-t border-[#F5F5F5]">
+                        <div 
+                            onClick={onOpenProfileAction}
+                            className="group flex items-center gap-3 p-2 pr-4 rounded-2xl bg-white border border-[#F5F5F5] hover:border-[#3B82F6]/20 hover:shadow-lg hover:shadow-black/5 transition-all cursor-pointer"
                         >
-                            <LogoutIcon />
-                            Log Out
-                        </button>
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#3B82F6] to-[#6366F1] p-0.5 shadow-md group-hover:scale-105 transition-transform">
+                                <div className="w-full h-full rounded-[0.55rem] bg-white overflow-hidden flex items-center justify-center">
+                                    {userImage ? (
+                                        <img src={userImage} alt={userName} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <span className="text-xs font-black text-[#3B82F6]">{userName.charAt(0).toUpperCase()}</span>
+                                    )}
+                                </div>
+                            </div>
+                            
+                            <div className="flex-grow min-w-0">
+                                <p className="text-[0.7rem] font-black text-[#171717] truncate tracking-tight">{userName}</p>
+                                <p className="text-[0.55rem] font-bold text-[#A3A3A3] uppercase tracking-widest">{plan} Member</p>
+                            </div>
+
+                            <button 
+                                onClick={handleSignOut}
+                                className="w-8 h-8 rounded-lg bg-[#FAFAFA] flex items-center justify-center text-[#D4D4D4] hover:text-red-500 hover:bg-red-50 transition-all shadow-sm active:scale-95"
+                                title="Sign Out"
+                            >
+                                <LogoutIcon />
+                            </button>
+                        </div>
                     </div>
                 </div>
             </m.aside>

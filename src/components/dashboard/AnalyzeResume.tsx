@@ -69,19 +69,19 @@ export function AnalyzeResume() {
   const triggerAnalysis = async (textToAnalyze: string) => {
     setIsAnalyzing(true);
     const steps = [
-        "Initializing Neural Audit...", 
-        "Stress Testing 45+ ATS Benchmarks...", 
-        "Running 'So What?' Impact Check...", 
-        "Simulating 7-Second Recruiter Scan...", 
-        "Refining Strategic Rewrites...", 
-        "Finalizing Report..."
+      "Initializing Analysis...",
+      "Evaluating ATS benchmarks...",
+      "Analyzing content impact...",
+      "Performing readability check...",
+      "Generating improvement suggestions...",
+      "Finalizing Report..."
     ];
     let stepIdx = 0;
     
     setScanStep(steps[0]);
     const stepInterval = setInterval(() => {
-        stepIdx++;
-        if (stepIdx < steps.length) setScanStep(steps[stepIdx]);
+      stepIdx++;
+      if (stepIdx < steps.length) setScanStep(steps[stepIdx]);
     }, 1200);
 
     setError(null);
@@ -105,13 +105,12 @@ export function AnalyzeResume() {
         setIsResultsModalOpen(true);
         setIsAnalyzing(false);
         setIsUploading(false);
-        setIsOpen(false); // Close the launcher modal
+        setIsOpen(false);
         router.refresh();
       }, 500);
 
-    } catch (err: unknown) {
-      const error = err as Error;
-      setError(error.message);
+    } catch (err: any) {
+      setError(err.message || "Analysis failed");
       setIsAnalyzing(false);
       setIsUploading(false);
       clearInterval(stepInterval);
@@ -148,9 +147,9 @@ export function AnalyzeResume() {
         </div>
 
         <div>
-            <h3 className="font-bold text-2xl mb-2 text-foreground tracking-tighter">Analysis Engine</h3>
+            <h3 className="font-bold text-2xl mb-2 text-foreground tracking-tighter">Resume Analyzer</h3>
             <p className="text-[0.65rem] text-accent-gray font-bold uppercase tracking-[0.1em] leading-relaxed">
-                Precision Audit & <br/> Integrity Verification
+                Detailed Content Review & <br/> Optimization
             </p>
         </div>
       </div>
@@ -169,10 +168,10 @@ export function AnalyzeResume() {
                         </div>
                         <div>
                             <div className="flex items-center gap-3 mb-1.5">
-                                <h2 className="text-2xl font-bold text-foreground tracking-tighter uppercase leading-none">Audit Analysis Log</h2>
+                                <h2 className="text-2xl font-bold text-foreground tracking-tighter uppercase leading-none">Resume Analysis</h2>
                             </div>
                             <p className="text-[0.7rem] font-bold text-accent-gray uppercase tracking-widest">
-                                Integrity Verification <span className="mx-2 opacity-50">&</span> Semantic Audit
+                                Content Review <span className="mx-2 opacity-50">&</span> Optimization
                             </p>
                         </div>
                     </div>
@@ -185,7 +184,7 @@ export function AnalyzeResume() {
                     <div className="max-w-4xl mx-auto space-y-8">
                         <div className="flex items-center justify-between">
                             <div className="space-y-1">
-                                <h4 className="text-sm font-black uppercase tracking-widest text-black/60">Source Material</h4>
+                                <h4 className="text-sm font-black uppercase tracking-widest text-black/60">Resume Content</h4>
                                 <p className="text-xs font-bold text-black/40 italic">Paste plain text or import a document below.</p>
                             </div>
                             <div className="flex items-center gap-3">
@@ -277,7 +276,7 @@ export function AnalyzeResume() {
                 <div className="p-8 border-t border-black/5 flex items-center justify-between bg-white/30 backdrop-blur-xl sticky bottom-0">
                     <div className="flex items-center gap-3 px-6 py-3 bg-black/5 rounded-2xl border border-black/5">
                         <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                        <span className="text-[0.65rem] font-black uppercase tracking-widest text-accent-gray">Audit Engine Active</span>
+                        <span className="text-[0.65rem] font-black uppercase tracking-widest text-accent-gray">Analyzer Ready</span>
                     </div>
                     
                     <div className="flex items-center gap-4">

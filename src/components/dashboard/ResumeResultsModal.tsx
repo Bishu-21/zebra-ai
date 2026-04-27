@@ -110,16 +110,15 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
         });
     }
 
-    // 2. Map Intelligence Rewrites & Logic
-    let rewrites = data.suggestedBulletPoints ?? data.intelligenceRewrites ?? [];
+    let rewrites = data.suggestedBulletPoints ?? data.aiRewrites ?? [];
     
-    // Fallback: If no rewrites but we have recruiter insights, synthesize a 'Strategic Logic'
+    // Fallback: If no rewrites but we have recruiter insights, synthesize a 'Improvement Logic'
     if (!rewrites.length && data.recruiterInsights) {
         const insights = data.recruiterInsights;
         rewrites = [
-            { rationale: "Impact Logic Check", after: insights.soWhatTest ?? "Enhance value proposition quantification." },
-            { rationale: "7-Second Scan Optimization", after: insights.sevenSecondScan ?? "Improve visual hierarchy for top-fold reading." },
-            { rationale: "Aesthetic & Density Audit", after: insights.readability ?? "Refine layout density and typeface consistency." }
+            { rationale: "Content Clarity", after: insights.soWhatTest ?? "Enhance value proposition quantification." },
+            { rationale: "Readability Optimization", after: insights.sevenSecondScan ?? "Improve visual hierarchy for top-fold reading." },
+            { rationale: "Aesthetic & Consistency", after: insights.readability ?? "Refine layout density and typeface consistency." }
         ];
     }
 
@@ -148,11 +147,11 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
                             <div className="flex items-center gap-3">
                                 <div className="flex items-center gap-2 px-2.5 py-1 bg-[#3B82F6]/10 text-[#3B82F6] rounded-full">
                                     <PulseIcon />
-                                    <span className="text-[0.55rem] font-bold uppercase tracking-widest">Full Diagnostic Report</span>
+                                    <span className="text-[0.55rem] font-bold uppercase tracking-widest">Complete Analysis Report</span>
                                 </div>
-                                <span className="text-[0.55rem] font-bold uppercase tracking-[0.3em] text-[#A3A3A3]">Zebra Core</span>
+                                <span className="text-[0.55rem] font-bold uppercase tracking-[0.3em] text-[#A3A3A3]">AI Engine</span>
                             </div>
-                            <h2 className="text-xl font-bold text-[#171717] tracking-tight">Intelligence Audit Output</h2>
+                            <h2 className="text-xl font-bold text-[#171717] tracking-tight">Analysis Results</h2>
                         </div>
                         <button onClick={onCloseAction} className="w-10 h-10 hover:bg-[#F5F5F5] rounded-xl flex items-center justify-center text-[#A3A3A3] transition-colors">
                             <CloseIcon />
@@ -170,7 +169,7 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
                                     <div className="relative z-10 space-y-6">
                                         <div className="flex justify-between items-start">
                                             <div>
-                                                <p className="text-[0.55rem] font-bold uppercase tracking-[0.3em] text-white/40 mb-3">Strategic Score</p>
+                                                <p className="text-[0.55rem] font-bold uppercase tracking-[0.3em] text-white/40 mb-3">Resume Score</p>
                                                 <div className="flex items-baseline gap-2">
                                                     <h3 className="text-6xl font-bold text-white tracking-tighter leading-none">{score}</h3>
                                                     <span className="text-white/20 text-xl font-bold">/100</span>
@@ -190,7 +189,7 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
                                     <div className="bg-white border border-[#F5F5F5] p-8 rounded-[2.2rem] space-y-5">
                                         <div className="flex items-center gap-3 px-6 py-3 bg-black/5 rounded-2xl border border-black/5">
                                             <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                                            <span className="text-[0.65rem] font-black uppercase tracking-widest text-accent-gray">Audit Analysis Log</span>
+                                            <span className="text-[0.65rem] font-black uppercase tracking-widest text-accent-gray">Action Items</span>
                                         </div>
                                         <div className="space-y-3">
                                             {actionItems.slice(0, 3).map((item: string, i: number) => (
@@ -208,7 +207,7 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
                                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                                     <CircularGauge value={data?.metrics?.impact ?? 0} label="Impact" icon={FlashIcon} />
                                     <CircularGauge value={data?.metrics?.formatting ?? 0} label="Format" icon={ChartIcon} />
-                                    <CircularGauge value={data?.metrics?.ats ?? 0} label="ATS Sync" icon={RocketIcon} />
+                                    <CircularGauge value={data?.metrics?.ats ?? 0} label="ATS Match" icon={RocketIcon} />
                                     <CircularGauge value={data?.metrics?.branding ?? 0} label="Identity" icon={ShieldIcon} />
                                 </div>
 
@@ -249,26 +248,26 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
                             <div className="pt-10 border-t border-[#F5F5F5] space-y-8">
                                 <div className="flex items-center justify-between">
                                     <div className="space-y-1">
-                                        <h4 className="text-[0.6rem] font-bold uppercase tracking-[0.25em] text-[#171717]">Implementation Logic</h4>
+                                        <h4 className="text-[0.6rem] font-bold uppercase tracking-[0.25em] text-[#171717]">Improvement Suggestions</h4>
                                         <p className="text-[0.55rem] text-[#A3A3A3] font-medium tracking-wide">Context-aware restructuring and rationale</p>
                                     </div>
                                     <div className="px-3 py-1.5 bg-[#3B82F6]/5 text-[#3B82F6] rounded-lg border border-[#3B82F6]/10 text-[0.5rem] font-bold uppercase tracking-widest flex items-center gap-2">
                                         <PulseIcon />
-                                        <span>Synthesis Active</span>
+                                        <span>Analysis Complete</span>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-1 gap-6">
                                     {rewrites.map((item: RewriteItem, i: number) => (
                                         <div key={i} className="grid grid-cols-1 lg:grid-cols-12 gap-6 bg-white border border-[#F5F5F5] rounded-[2rem] overflow-hidden p-8 hover:border-[#3B82F6]/20 transition-all shadow-sm">
                                             <div className="lg:col-span-4 space-y-4">
-                                                <span className="text-[0.5rem] font-bold uppercase tracking-[0.2em] text-[#A3A3A3] block">Strategic Rationale</span>
+                                                <span className="text-[0.5rem] font-bold uppercase tracking-[0.2em] text-[#A3A3A3] block">Improvement Logic</span>
                                                 <p className="text-[0.7rem] font-medium text-[#171717]/80 leading-relaxed border-l border-[#F5F5F5] pl-4">
                                                     {item.rationale ?? "Optimization for clarity and impact."}
                                                 </p>
                                             </div>
                                             <div className="lg:col-span-8 p-6 bg-[#3B82F6]/[0.02] rounded-2xl border border-[#3B82F6]/5 space-y-3 relative overflow-hidden">
                                                 <div className="absolute top-0 right-0 p-4 opacity-[0.03] rotate-12"><RocketIcon /></div>
-                                                <span className="text-[0.5rem] font-bold uppercase tracking-[0.2em] text-[#3B82F6] block">Rewrite Output</span>
+                                                <span className="text-[0.5rem] font-bold uppercase tracking-[0.2em] text-[#3B82F6] block">Suggested Content</span>
                                                 <p className="text-[0.75rem] font-medium text-[#171717] leading-relaxed tracking-tight">
                                                     {item.after ?? item.suggestion ?? ""}
                                                 </p>
@@ -283,7 +282,7 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
                     <div className="p-8 border-t border-black/5 flex items-center justify-between bg-white/30 backdrop-blur-xl sticky bottom-0">
                         <div className="flex items-center gap-3 px-6 py-3 bg-black/5 rounded-2xl border border-black/5">
                             <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                            <span className="text-[0.65rem] font-black uppercase tracking-widest text-accent-gray">Credit Management System</span>
+                            <span className="text-[0.65rem] font-black uppercase tracking-widest text-accent-gray">Analyzer Active</span>
                         </div>
                         
                         <div className="flex items-center gap-4">

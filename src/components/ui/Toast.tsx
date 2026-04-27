@@ -96,7 +96,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 export function useToast() {
     const context = useContext(ToastContext);
     if (!context) {
-        throw new Error("useToast must be used within a ToastProvider");
+        // Fallback to avoid crashing the app if provider is missing in some contexts
+        return { showToast: (message: string, type?: ToastType) => console.warn("Toast used outside provider:", message, type) };
     }
     return context;
 }

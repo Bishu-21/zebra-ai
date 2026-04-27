@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { JsonLd } from '@/components/seo/JsonLd';
 import type { WithContext, WebApplication, SoftwareApplication } from 'schema-dts';
+import Script from 'next/script';
 
 const inter = Inter({
   variable: '--font-inter',
@@ -51,8 +52,8 @@ const softwareSchema: WithContext<SoftwareApplication> = {
   applicationCategory: 'BusinessApplication',
   offers: {
     '@type': 'Offer',
-    price: '5.00',
-    priceCurrency: 'USD',
+    price: '99.00',
+    priceCurrency: 'INR',
   },
 };
 
@@ -84,7 +85,13 @@ export default function RootLayout({
         <Providers>
           {children}
         </Providers>
+        <Script
+          id="razorpay-checkout-js"
+          src="https://checkout.razorpay.com/v1/checkout.js"
+          strategy="lazyOnload"
+        />
       </body>
     </html>
   );
 }
+

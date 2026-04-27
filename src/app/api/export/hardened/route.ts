@@ -20,7 +20,7 @@ import { generateResumeHtml } from "@/lib/resume-renderer";
  */
 
 // Template tier definitions
-const PREMIUM_TEMPLATES = ["executive", "neural-pro", "fortune500"];
+const PREMIUM_TEMPLATES = ["executive", "advanced-pro", "fortune500"];
 const FREE_TEMPLATES = ["modern", "minimal"];
 
 export async function POST(req: NextRequest) {

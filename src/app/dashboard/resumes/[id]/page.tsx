@@ -5,7 +5,7 @@ import { resumes as resumesTable } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { redirect, unstable_rethrow } from "next/navigation";
 
 export default async function ResumeEditorPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
     const params = await paramsPromise;
@@ -18,10 +18,15 @@ export default async function ResumeEditorPage({ params: paramsPromise }: { para
     // Skip DB query for "new" — only fetch existing resumes
     let resume = null;
     if (params.id !== "new") {
-        resume = await db.query.resumes.findFirst({
-            where: eq(resumesTable.id, params.id),
-        });
-        if (!resume) redirect("/dashboard");
+        try {
+            resume = await db.query.resumes.findFirst({
+                where: eq(resumesTable.id, params.id),
+            });
+            if (!resume) redirect("/dashboard");
+        } catch (error) {
+            unstable_rethrow(error);
+            redirect("/dashboard");
+        }
     }
 
     return (

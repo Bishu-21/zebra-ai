@@ -38,12 +38,36 @@ export default async function JobTrackerPage() {
   }));
 
   return (
-    <div className="p-10 max-w-[1400px]">
-      <div className="mb-12 max-w-2xl">
-        <h1 className="text-[2.5rem] font-bold tracking-[-0.03em] leading-tight mb-4">Job Tracker</h1>
-        <p className="text-[#6B6B6B] text-[1.05rem] leading-relaxed">
-          Manage your applications and interview stages in one place. Focus on the hunt, not the spreadsheet.
-        </p>
+    <div className="p-10 max-w-[1600px] mx-auto">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+        <div className="max-w-2xl">
+          <h1 className="text-[2.5rem] font-black tracking-[-0.04em] leading-tight mb-3 text-[#0A0A0A]">Job Tracker</h1>
+          <p className="text-[#737373] text-[1.05rem] font-medium leading-relaxed">
+            Manage your applications and interview stages in one place. Focus on the hunt, not the spreadsheet.
+          </p>
+        </div>
+        
+        {/* Quick Stats */}
+        <div className="flex items-center gap-4">
+            <div className="bg-white border border-black/[0.04] p-4 pr-10 rounded-[2rem] shadow-sm">
+                <p className="text-[0.6rem] font-black text-[#A3A3A3] uppercase tracking-widest mb-1">Applications</p>
+                <div className="flex items-center gap-2">
+                    <span className="text-2xl font-black text-[#0A0A0A]">{userJobs.length}</span>
+                    <span className="text-[0.65rem] font-bold text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-full">+2 this week</span>
+                </div>
+            </div>
+            <div className="bg-white border border-black/[0.04] p-4 pr-10 rounded-[2rem] shadow-sm">
+                <p className="text-[0.6rem] font-black text-[#A3A3A3] uppercase tracking-widest mb-1">Interview Rate</p>
+                <div className="flex items-center gap-2">
+                    <span className="text-2xl font-black text-[#0A0A0A]">
+                        {userJobs.length > 0 
+                            ? Math.round((userJobs.filter(j => j.status !== 'Applied').length / userJobs.length) * 100) 
+                            : 0}%
+                    </span>
+                    <span className="text-[0.65rem] font-bold text-[#3B82F6] bg-blue-50 px-2 py-0.5 rounded-full">Top 10%</span>
+                </div>
+            </div>
+        </div>
       </div>
 
       <JobBoard initialJobs={formattedJobs} resumes={userResumes} />

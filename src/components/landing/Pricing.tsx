@@ -1,7 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { m } from "framer-motion";
+import { PLANS, PlanId } from "@/lib/constants/plans";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/components/ui/Toast";
 
 const CheckIcon = ({ size = 14, className = "" }: { size?: number, className?: string }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -33,32 +36,87 @@ const EnterpriseIcon = ({ size = 24 }: { size?: number }) => (
 );
 
 export function Pricing() {
-  const plans = [
+  const router = useRouter();
+  const { showToast } = useToast();
+  const [loading, setLoading] = useState<string | null>(null);
+
+  const handleSubscription = async (planId: PlanId) => {
+    setLoading(planId);
+    try {
+      const response = await fetch("/api/payments/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ planId }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          router.push("/sign-in");
+          return;
+        }
+        throw new Error(data.error || "Failed to initiate payment");
+      }
+
+      const options = {
+        key: data.key,
+        amount: data.amount,
+        currency: data.currency,
+        name: "Zebra AI",
+        description: `Upgrade to ${PLANS[planId].name}`,
+        order_id: data.id,
+        handler: function (response: any) {
+          showToast("Payment successful! Credits added.");
+          router.push("/dashboard");
+        },
+        prefill: {
+          name: "",
+          email: "",
+        },
+        theme: {
+          color: "#3B82F6",
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
+    } catch (error: any) {
+      showToast(error.message, "error");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const planCards = [
     {
-      name: "Free",
+      id: "starter" as PlanId,
+      name: PLANS.starter.name,
       icon: <FlashIcon />,
-      price: "$0",
-      description: "Basic audit for aspiring talents.",
-      features: ["10 Trial Credits", "Standard Optimization", "Single Language", "Community Support"],
+      price: PLANS.starter.displayPrice,
+      description: "Perfect for students & single applications.",
+      features: [`${PLANS.starter.credits} AI Scan Credits`, "ATS Score Optimization", "Resume Templates", "Community Support"],
       cta: "Get Started",
       featured: false
     },
     {
-      name: "Pro",
+      id: "pro" as PlanId,
+      name: PLANS.pro.name,
       icon: <CrownIcon />,
-      price: "$19",
-      description: "Surgical precision for career growth.",
-      features: ["100 Monthly Credits", "Technical AI Audit", "Universal Translate", "Priority Support"],
-      cta: "Upgrade to Pro",
+      price: PLANS.pro.displayPrice,
+      description: "Strategic edge for active job seekers.",
+      features: [`${PLANS.pro.credits} Monthly Credits`, "Deep AI Resume Audit", "Job Description Matching", "Priority Support"],
+      cta: "Go Pro",
       featured: true
     },
     {
-      name: "Enterprise",
+      id: "enterprise" as PlanId,
+      name: PLANS.enterprise.name,
       icon: <EnterpriseIcon />,
-      price: "Custom",
-      description: "XaaS solutions for global teams.",
-      features: ["Unlimited Credits", "API Integration", "Full White Label", "Dedicated Concierge"],
-      cta: "Contact Sales",
+      price: PLANS.enterprise.displayPrice,
+      description: "Full suite for career excellence.",
+      features: [`${PLANS.enterprise.credits} Bulk Credits`, "All Pro Features", "Universal Translate", "Dedicated Mentorship"],
+      cta: "Get Elite",
       featured: false
     }
   ];
@@ -73,19 +131,18 @@ export function Pricing() {
             viewport={{ once: true }}
             className="flex items-center justify-center gap-2 mb-5"
           >
-            <span className="text-[0.7rem] font-bold tracking-[0.2em] uppercase text-primary">The Economic Model</span>
+            <span className="text-[0.7rem] font-bold tracking-[0.2em] uppercase text-primary">Student-First Model</span>
           </m.div>
           <h2 className="text-[2.5rem] md:text-[3.5rem] font-bold tracking-[-0.04em] leading-[1.1] mb-5 md:mb-6 text-[#0A0A0A]">
-            Built on <span className="text-primary">XaaS</span> Principles
+            Premium Career Tools, <span className="text-primary">Localized</span>
           </h2>
           <p className="text-[#4A4A4A] text-[1.1rem] leading-relaxed">
-            In an era where <span className="font-bold text-[#0A0A0A]">68% of companies</span> are transitioning to service-driven 
-            operations, Zebra provides career agility through an everything-as-a-service economic model.
+            We believe career growth shouldn't break the bank. Our pricing is tailored for the <span className="font-bold text-[#0A0A0A]">Indian job market</span>, starting at just the price of a coffee.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {plans.map((plan, index) => (
+          {planCards.map((plan, index) => (
             <m.div
               key={plan.name}
               initial={{ opacity: 0, y: 20 }}
@@ -111,7 +168,7 @@ export function Pricing() {
               <h3 className="text-2xl font-bold mb-2 tracking-tight">{plan.name}</h3>
               <div className="flex items-baseline gap-1 mb-4">
                 <span className="text-4xl font-extrabold tracking-tighter">{plan.price}</span>
-                <span className="text-[#737373] text-sm font-medium">{plan.name !== "Enterprise" ? "/ month" : ""}</span>
+                <span className="text-[#737373] text-sm font-medium">/ pack</span>
               </div>
               <p className="text-[#4A4A4A] text-sm mb-10">{plan.description}</p>
               
@@ -126,12 +183,15 @@ export function Pricing() {
                 ))}
               </div>
 
-              <button className={`w-full py-4 rounded-xl font-bold text-sm tracking-wide transition-all active:scale-[0.98] ${
+              <button 
+                onClick={() => handleSubscription(plan.id)}
+                disabled={loading !== null}
+                className={`w-full py-4 rounded-xl font-bold text-sm tracking-wide transition-all active:scale-[0.98] disabled:opacity-50 ${
                 plan.featured 
                 ? "bg-[#3B82F6] text-white hover:bg-[#2563EB] shadow-lg shadow-blue-500/20" 
                 : "bg-[#0A0A0A] text-white border-2 border-[#0A0A0A] hover:bg-transparent hover:text-[#0A0A0A]"
               }`}>
-                {plan.cta}
+                {loading === plan.id ? "Processing..." : plan.cta}
               </button>
             </m.div>
           ))}
@@ -140,5 +200,7 @@ export function Pricing() {
     </section>
   );
 }
+
+
 
 

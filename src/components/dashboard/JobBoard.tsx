@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { m } from "framer-motion";
 import { 
     RiAddLine, 
     RiBriefcase4Line, 
@@ -12,7 +13,11 @@ import {
     RiChat3Line, 
     RiCloseCircleLine, 
     RiFileTextLine,
-    RiArrowDropDownLine
+    RiArrowDropDownLine,
+    RiMore2Fill,
+    RiMapPin2Line,
+    RiArrowRightSLine,
+    RiCalendarEventLine
 } from "react-icons/ri";
 import { formatRelativeTime } from "@/lib/utils";
 
@@ -100,165 +105,175 @@ export function JobBoard({ initialJobs, resumes = [] }: { initialJobs: Job[], re
         }
     };
 
+    const getStatusColor = (status: Job["status"]) => {
+        switch (status) {
+            case "Applied": return { bg: "bg-blue-500", text: "text-blue-500", border: "border-blue-500/20", light: "bg-blue-50" };
+            case "Interviewing": return { bg: "bg-amber-500", text: "text-amber-500", border: "border-amber-500/20", light: "bg-amber-50" };
+            case "Offers": return { bg: "bg-emerald-500", text: "text-emerald-500", border: "border-emerald-500/20", light: "bg-emerald-50" };
+            case "Rejected": return { bg: "bg-rose-500", text: "text-rose-500", border: "border-rose-500/20", light: "bg-rose-50" };
+        }
+    };
+
     return (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-            {STATUSES.map((status) => (
-                <div key={status} className="bg-white/30 backdrop-blur-md rounded-2xl border border-white/50 p-5 shadow-sm min-h-[500px] flex flex-col group/column transition-all hover:bg-white/40">
-                    <div className="flex items-center justify-between mb-6 pb-3 border-b border-black/5">
-                        <h3 className="font-bold text-[0.7rem] uppercase tracking-widest text-black/60 flex items-center gap-2">
-                            {status === 'Applied' && <RiInboxArchiveLine size={16} className="text-black/40" />}
-                            {status === 'Interviewing' && <RiChat3Line size={16} className="text-black/40" />}
-                            {status === 'Offers' && <RiCheckboxCircleLine size={16} className="text-black/40" />}
-                            {status === 'Rejected' && <RiCloseCircleLine size={16} className="text-black/40" />}
-                            {status}
-                        </h3>
-                        <span className="text-[0.65rem] font-bold text-black/40 bg-black/5 px-2 py-0.5 rounded-full">
-                            {jobs.filter(j => j.status === status).length}
-                        </span>
-                    </div>
-
-                    <div className="space-y-4 flex-grow overflow-y-auto pb-4 max-h-[600px] no-scrollbar">
-                        {jobs.filter(j => j.status === status).map((job) => (
-                            <div key={job.id} className="bg-white/60 backdrop-blur-sm p-5 rounded-xl border border-white/80 hover:border-black/10 hover:shadow-lg transition-all group relative">
-                                <div className="flex items-start justify-between mb-3">
-                                    <h4 className="font-black text-sm text-black/80 leading-tight tracking-tight">{job.position}</h4>
-                                    <button onClick={() => handleDeleteJob(job.id)} className="text-black/10 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
-                                        <RiDeleteBin6Line size={16} />
-                                    </button>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-24">
+            {STATUSES.map((status) => {
+                const colors = getStatusColor(status);
+                const columnJobs = jobs.filter(j => j.status === status);
+                
+                return (
+                    <div key={status} className="flex flex-col h-full min-h-[600px] group/column">
+                        {/* Column Header */}
+                        <div className="flex items-center justify-between mb-6 px-2">
+                            <div className="flex items-center gap-3">
+                                <div className={`w-8 h-8 rounded-xl ${colors.bg} flex items-center justify-center text-white shadow-lg shadow-black/5`}>
+                                    {status === 'Applied' && <RiInboxArchiveLine size={16} />}
+                                    {status === 'Interviewing' && <RiChat3Line size={16} />}
+                                    {status === 'Offers' && <RiCheckboxCircleLine size={16} />}
+                                    {status === 'Rejected' && <RiCloseCircleLine size={16} />}
                                 </div>
-                                <div className="flex items-center gap-2 mb-4">
-                                    <RiBriefcase4Line size={12} className="text-black/30" />
-                                    <p className="text-xs text-black/50 font-bold tracking-tight">{job.company}</p>
-                                </div>
-
-                                 {(job.salary || job.url) && (
-                                    <div className="flex flex-col gap-1.5 mb-4 px-3 py-3 bg-black/5 rounded-xl border border-white/20">
-                                        {job.salary && (
-                                            <div className="flex items-center gap-2 text-black/60">
-                                                <RiMoneyDollarCircleLine size={14} className="text-black/30" />
-                                                <span className="text-[0.7rem] font-black">{job.salary}</span>
-                                            </div>
-                                        )}
-                                        {job.url && (
-                                            <a 
-                                                href={job.url.startsWith('http') ? job.url : `https://${job.url}`} 
-                                                target="_blank" 
-                                                rel="noopener noreferrer" 
-                                                className="flex items-center gap-2 text-black/60 hover:text-black transition-colors group/link"
-                                            >
-                                                <RiExternalLinkLine size={14} className="text-black/30 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform" />
-                                                <span className="text-[0.7rem] font-black underline decoration-black/10 underline-offset-4">View Listing</span>
-                                            </a>
-                                        )}
-                                    </div>
-                                )}
-
-                                <div className="flex items-center justify-between mt-auto pt-3 border-t border-black/5">
-                                    <select 
-                                        value={job.status} 
-                                        onChange={(e) => handleUpdateStatus(job.id, e.target.value as Job["status"])}
-                                        className="text-[0.6rem] font-black uppercase tracking-wider bg-black/5 px-2 py-1.5 rounded-lg text-black/40 focus:outline-none cursor-pointer border-none hover:bg-black/10 transition-colors"
-                                    >
-                                        {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-                                    </select>
-                                    <p className="text-[0.6rem] text-black/30 font-black uppercase tracking-tighter">
-                                        {formatRelativeTime(job.updatedAt)}
-                                    </p>
+                                <div>
+                                    <h3 className="font-black text-[0.65rem] uppercase tracking-widest text-[#171717] leading-none mb-1">{status}</h3>
+                                    <p className="text-[10px] font-bold text-[#A3A3A3] uppercase tracking-tighter">{columnJobs.length} {columnJobs.length === 1 ? 'Entry' : 'Entries'}</p>
                                 </div>
                             </div>
-                        ))}
+                            <button className="p-1.5 rounded-lg text-[#A3A3A3] hover:bg-black/5 transition-all opacity-0 group-hover/column:opacity-100"><RiMore2Fill size={16} /></button>
+                        </div>
 
-                        {status === 'Applied' && (
-                            <div className="mt-2">
-                                {isAdding ? (
-                                    <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl border border-white shadow-xl animate-in fade-in zoom-in-95">
-                                        <input 
-                                            autoFocus
-                                            type="text" 
-                                            placeholder="Company name..."
-                                            className="w-full text-xs font-black mb-2 p-3 bg-black/5 rounded-xl border-none focus:ring-0 placeholder:text-black/20"
-                                            value={newJob.company}
-                                            onChange={(e) => setNewJob({...newJob, company: e.target.value})}
-                                        />
-                                        <input 
-                                            type="text" 
-                                            placeholder="Position / Role..."
-                                            className="w-full text-xs mb-2 p-3 bg-black/5 rounded-xl border-none focus:ring-0 text-black font-black placeholder:text-black/20"
-                                            value={newJob.position}
-                                            onChange={(e) => setNewJob({...newJob, position: e.target.value})}
-                                        />
-                                         <div className="grid grid-cols-2 gap-2 mb-3">
-                                            <div className="relative flex items-center">
-                                                <RiMoneyDollarCircleLine size={16} className="absolute left-3 text-black/20" />
-                                                <input 
-                                                    type="text" 
-                                                    placeholder="Salary..."
-                                                    className="w-full text-[0.7rem] pl-10 p-2.5 bg-black/5 rounded-xl border-none focus:ring-0 text-black font-black placeholder:text-black/20"
-                                                    value={newJob.salary}
-                                                    onChange={(e) => setNewJob({...newJob, salary: e.target.value})}
-                                                />
+                        {/* Column Content */}
+                        <div className={`flex-grow p-3 rounded-[2rem] bg-[#F5F5F5]/50 border-2 border-dashed border-black/[0.03] transition-all hover:bg-white/40 hover:border-black/5 group/board min-h-[400px]`}>
+                            <div className="space-y-4 h-full">
+                                {columnJobs.map((job) => (
+                                    <div key={job.id} className="bg-white p-5 rounded-3xl border border-black/[0.04] shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] hover:-translate-y-1 transition-all group relative cursor-grab active:cursor-grabbing">
+                                        <div className="flex items-start justify-between mb-4">
+                                            <div className="flex-grow">
+                                                <div className="flex items-center gap-2 mb-1.5">
+                                                    <span className={`w-2 h-2 rounded-full ${colors.bg}`} />
+                                                    <p className="text-[0.65rem] font-bold text-[#A3A3A3] uppercase tracking-widest leading-none">
+                                                        {job.company}
+                                                    </p>
+                                                </div>
+                                                <h4 className="font-black text-sm text-[#0A0A0A] leading-tight tracking-tight max-w-[80%]">{job.position}</h4>
                                             </div>
-                                            <div className="relative flex items-center">
-                                                <RiExternalLinkLine size={16} className="absolute left-3 text-black/20" />
-                                                <input 
-                                                    type="text" 
-                                                    placeholder="URL..."
-                                                    className="w-full text-[0.7rem] pl-10 p-2.5 bg-black/5 rounded-xl border-none focus:ring-0 text-black font-black placeholder:text-black/20"
-                                                    value={newJob.url}
-                                                    onChange={(e) => setNewJob({...newJob, url: e.target.value})}
-                                                />
-                                            </div>
+                                            <button 
+                                                onClick={() => handleDeleteJob(job.id)} 
+                                                className="w-8 h-8 rounded-xl bg-rose-50 text-rose-400 opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-500 hover:text-white flex items-center justify-center -mr-1"
+                                            >
+                                                <RiDeleteBin6Line size={14} />
+                                            </button>
                                         </div>
 
-                                        <div className="mb-4">
-                                            <label className="text-[0.6rem] font-black uppercase tracking-widest text-black/30 mb-2 block ml-1">
-                                                Linked Resume
-                                            </label>
+                                        {(job.salary || job.url || job.resumeId) && (
+                                            <div className="space-y-3 mb-5 p-3.5 bg-[#FAFAFA] rounded-2xl border border-black/[0.02]">
+                                                {job.salary && (
+                                                    <div className="flex items-center gap-2.5 text-[#171717]">
+                                                        <div className="w-5 h-5 rounded-md bg-white border border-black/5 flex items-center justify-center shadow-sm">
+                                                            <RiMoneyDollarCircleLine size={12} className="text-[#3B82F6]" />
+                                                        </div>
+                                                        <span className="text-[0.65rem] font-black tracking-tight">{job.salary}</span>
+                                                    </div>
+                                                )}
+                                                {job.resumeId && (
+                                                    <div className="flex items-center gap-2.5 text-[#171717]">
+                                                        <div className="w-5 h-5 rounded-md bg-white border border-black/5 flex items-center justify-center shadow-sm">
+                                                            <RiFileTextLine size={12} className="text-emerald-500" />
+                                                        </div>
+                                                        <span className="text-[0.65rem] font-black tracking-tight truncate max-w-[150px]">
+                                                            {resumes.find(r => r.id === job.resumeId)?.title || "Linked Resume"}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                {job.url && (
+                                                    <a href={job.url.startsWith('http') ? job.url : `https://${job.url}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between w-full p-2 bg-white rounded-xl border border-black/5 hover:border-[#3B82F6] transition-all group/link">
+                                                        <div className="flex items-center gap-2">
+                                                            <RiExternalLinkLine size={12} className="text-[#A3A3A3]" />
+                                                            <span className="text-[0.6rem] font-black text-[#737373] uppercase tracking-widest">Listing</span>
+                                                        </div>
+                                                        <RiArrowRightSLine size={14} className="text-[#A3A3A3] group-hover/link:text-[#3B82F6] group-hover/link:translate-x-0.5 transition-all" />
+                                                    </a>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        <div className="flex items-center justify-between pt-4 border-t border-black/[0.04]">
                                             <div className="relative">
                                                 <select 
-                                                    className="w-full bg-black/5 border-none rounded-xl px-4 py-3 pl-10 text-[0.7rem] font-black outline-none appearance-none cursor-pointer hover:bg-black/10 transition-colors"
-                                                    value={newJob.resumeId || ""}
-                                                    onChange={(e) => setNewJob({...newJob, resumeId: e.target.value})}
+                                                    value={job.status} 
+                                                    onChange={(e) => handleUpdateStatus(job.id, e.target.value as Job["status"])}
+                                                    className={`text-[0.6rem] font-black uppercase tracking-widest pl-2 pr-8 py-1.5 rounded-lg ${colors.light} ${colors.text} border border-transparent hover:border-current transition-all appearance-none outline-none cursor-pointer`}
                                                 >
-                                                    <option value="">No Resume Linked</option>
-                                                    {resumes.map((r: any) => (
-                                                        <option key={r.id} value={r.id}>{r.title}</option>
-                                                    ))}
+                                                    {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
                                                 </select>
-                                                <RiFileTextLine size={16} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-black/20" />
+                                                <RiArrowDropDownLine size={16} className={`absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none ${colors.text}`} />
+                                            </div>
+                                            <div className="flex items-center gap-1 text-[#A3A3A3]">
+                                                <RiCalendarEventLine size={10} />
+                                                <p className="text-[0.55rem] font-black uppercase tracking-tighter">
+                                                    {formatRelativeTime(job.updatedAt)}
+                                                </p>
                                             </div>
                                         </div>
-
-                                        <div className="flex items-center gap-2">
-                                            <button 
-                                                onClick={handleAddJob}
-                                                disabled={loading}
-                                                className="flex-grow bg-black text-white py-3 rounded-xl text-[0.75rem] font-black hover:bg-black/80 transition-all shadow-lg active:scale-[0.98]"
-                                            >
-                                                {loading ? "..." : "Create Job"}
-                                            </button>
-                                            <button 
-                                                onClick={() => setIsAdding(false)}
-                                                className="px-4 py-3 bg-black/5 rounded-xl text-[0.75rem] font-black text-black/40 hover:bg-black/10 transition-colors"
-                                            >
-                                                Cancel
-                                            </button>
-                                        </div>
                                     </div>
-                                ) : (
-                                    <button 
-                                        onClick={() => setIsAdding(true)}
-                                        className="w-full border-2 border-dashed border-black/5 rounded-2xl py-6 text-[0.7rem] font-black uppercase tracking-widest text-black/20 hover:bg-white/40 hover:border-black/10 hover:text-black/40 transition-all flex flex-col items-center justify-center gap-2 group/add"
-                                    >
-                                        <RiAddLine size={24} className="group-hover/add:rotate-90 transition-transform text-black/10 group-hover/add:text-black/20" />
-                                        <span>Add Job Entry</span>
-                                    </button>
+                                ))}
+
+                                {status === 'Applied' && (
+                                    <div className="px-1 pt-2">
+                                        {isAdding ? (
+                                            <m.div initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} className="bg-white p-5 rounded-[2rem] border border-[#3B82F6]/20 shadow-2xl shadow-blue-500/10 space-y-4">
+                                                <div className="space-y-2">
+                                                    <label className="text-[0.6rem] font-black text-[#A3A3A3] uppercase tracking-widest ml-1">Company & Role</label>
+                                                    <input autoFocus type="text" placeholder="Company..." className="w-full text-xs font-black p-3.5 bg-[#F5F5F5] rounded-2xl border-none focus:ring-2 focus:ring-[#3B82F6]/20 transition-all placeholder:text-[#A3A3A3]" value={newJob.company} onChange={(e) => setNewJob({...newJob, company: e.target.value})} />
+                                                    <input type="text" placeholder="Position..." className="w-full text-xs font-black p-3.5 bg-[#F5F5F5] rounded-2xl border-none focus:ring-2 focus:ring-[#3B82F6]/20 transition-all placeholder:text-[#A3A3A3]" value={newJob.position} onChange={(e) => setNewJob({...newJob, position: e.target.value})} />
+                                                </div>
+                                                
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div className="space-y-2">
+                                                        <label className="text-[0.6rem] font-black text-[#A3A3A3] uppercase tracking-widest ml-1">Salary</label>
+                                                        <input type="text" placeholder="$120k..." className="w-full text-xs font-black p-3.5 bg-[#F5F5F5] rounded-2xl border-none focus:ring-2 focus:ring-[#3B82F6]/20 transition-all placeholder:text-[#A3A3A3]" value={newJob.salary} onChange={(e) => setNewJob({...newJob, salary: e.target.value})} />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <label className="text-[0.6rem] font-black text-[#A3A3A3] uppercase tracking-widest ml-1">URL</label>
+                                                        <input type="text" placeholder="Listing..." className="w-full text-xs font-black p-3.5 bg-[#F5F5F5] rounded-2xl border-none focus:ring-2 focus:ring-[#3B82F6]/20 transition-all placeholder:text-[#A3A3A3]" value={newJob.url} onChange={(e) => setNewJob({...newJob, url: e.target.value})} />
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <label className="text-[0.6rem] font-black text-[#A3A3A3] uppercase tracking-widest ml-1">Attach Resume</label>
+                                                    <div className="relative">
+                                                        <select className="w-full bg-[#F5F5F5] border-none rounded-2xl p-3.5 pl-10 text-xs font-black appearance-none cursor-pointer hover:bg-black/5 transition-all" value={newJob.resumeId || ""} onChange={(e) => setNewJob({...newJob, resumeId: e.target.value})}>
+                                                            <option value="">No Resume Linked</option>
+                                                            {resumes.map((r: any) => (<option key={r.id} value={r.id}>{r.title}</option>))}
+                                                        </select>
+                                                        <RiFileTextLine size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#A3A3A3]" />
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex gap-2 pt-2">
+                                                    <button onClick={handleAddJob} disabled={loading} className="flex-grow h-12 bg-[#0A0A0A] text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-[#262626] transition-all disabled:opacity-50">
+                                                        {loading ? "..." : "Create Entry"}
+                                                    </button>
+                                                    <button onClick={() => setIsAdding(false)} className="h-12 px-5 bg-[#F5F5F5] text-[#A3A3A3] rounded-2xl text-xs font-black uppercase tracking-widest hover:text-[#0A0A0A] hover:bg-[#E5E5E5] transition-all">
+                                                        <RiCloseCircleLine size={20} />
+                                                    </button>
+                                                </div>
+                                            </m.div>
+                                        ) : (
+                                            <button 
+                                                onClick={() => setIsAdding(true)}
+                                                className="w-full py-10 border-2 border-dashed border-black/[0.06] rounded-[2rem] text-[0.65rem] font-black uppercase tracking-[0.2em] text-[#A3A3A3] hover:bg-white hover:border-[#3B82F6]/20 hover:text-[#3B82F6] transition-all flex flex-col items-center justify-center gap-4 group/add"
+                                            >
+                                                <div className="w-12 h-12 rounded-2xl bg-black/[0.02] group-hover/add:bg-[#3B82F6]/10 flex items-center justify-center transition-colors">
+                                                    <RiAddLine size={24} className="group-hover/add:rotate-90 transition-transform" />
+                                                </div>
+                                                <span>New Job Entry</span>
+                                            </button>
+                                        )}
+                                    </div>
                                 )}
                             </div>
-                        )}
+                        </div>
                     </div>
-                </div>
-            ))}
+                );
+            })}
         </div>
     );
 }

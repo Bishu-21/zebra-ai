@@ -54,17 +54,17 @@ export async function POST(req: NextRequest) {
         });
     }
 
-    // 3. AI Prompt Construction: High-Fidelity Strategic Audit
+    // 3. AI Prompt Construction: Detailed Content Analysis
     const prompt = `
       SYSTEM: You are a World-Class Executive Career Coach and Senior Talent Acquisition Consultant with 20+ years of experience auditing resumes for Fortune 500 companies, high-growth startups, and elite academic programs.
-      Your mission is to perform a high-fidelity, high-density, data-driven audit of the provided Resume based on 45+ premium global metrics.
+      Your mission is to perform a detailed, data-driven analysis of the provided Resume based on 45+ premium global metrics.
 
       RESUME CONTENT:
       """
       ${content}
       """
 
-      STRATEGIC DIRECTIVES (45+ POINT AUDIT):
+      ANALYSIS GUIDELINES (45+ POINT CHECKLIST):
       
       1. THE "STUDENT PROTOCOL" (STRICT FOR INDIVIDUALS < 3 YEARS EXPERIENCE):
          - PROFESSIONAL SUMMARY: Recommendation: "REMOVE". Students do not have enough history for a summary—it takes up valuable A4 real estate. Flag if present.
@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
       REQUIRED JSON SCHEMA (STRICT):
       {
         "score": number,
-        "summary": "2-3 sentences of high-level strategic overview (professional, no placeholders)",
+        "summary": "2-3 sentences of high-level professional overview (no placeholders)",
         "metrics": { "impact": number, "formatting": number, "ats": number, "branding": number },
         "audit": {
           "formatting": [ { "checkpoint": string, "status": "Pass" | "Fail", "fix": string } ],
@@ -136,7 +136,7 @@ export async function POST(req: NextRequest) {
     } catch (e) {
         console.error("AI returned malformed JSON or text:", text);
         return NextResponse.json({ 
-            error: "Analysis engine failed to generate structured data. Please try again.",
+            error: "Analyzer failed to generate structured data. Please try again.",
             details: text.slice(0, 500) 
         }, { status: 500 });
     }

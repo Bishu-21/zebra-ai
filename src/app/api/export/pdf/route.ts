@@ -12,11 +12,11 @@ import puppeteer from "puppeteer-core";
 
 export async function POST(req: NextRequest) {
     try {
-        const { resumeData, template = "modern", title } = await req.json();
+        const { resumeData, template = "modern", title, fontFamily } = await req.json();
         const safeTitle = (title || "resume").toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
         // 1. Generate the HTML content
-        const html = generateResumeHtml(resumeData, template);
+        const html = generateResumeHtml(resumeData, template, fontFamily);
 
         // 2. Launch headless browser
         const isLocal = process.env.NODE_ENV === 'development';
@@ -33,11 +33,13 @@ export async function POST(req: NextRequest) {
         const page = await browser.newPage();
         await page.setContent(html, { waitUntil: 'networkidle0' });
 
-        // 3. Generate PDF buffer
+        // 3. Generate PDF buffer with zero margin (renderer handles padding)
         const pdfBuffer = await page.pdf({
             format: 'A4',
             printBackground: true,
-            margin: { top: '0', right: '0', bottom: '0', left: '0' }
+            margin: { top: '0', right: '0', bottom: '0', left: '0' },
+            scale: 1,
+            preferCSSPageSize: true
         });
 
         await browser.close();

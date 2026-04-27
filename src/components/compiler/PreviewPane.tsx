@@ -1,7 +1,8 @@
 "use client";
 
-import React from "react";
-import { RiExternalLinkLine } from "react-icons/ri";
+import React, { useEffect, useRef, useState } from "react";
+import { RiExternalLinkLine, RiArrowDownSLine, RiFontSize } from "react-icons/ri";
+import { useSettings } from "@/context/SettingsContext";
 import type { ResumeContent } from "./types";
 
 interface PreviewPaneProps {
@@ -9,28 +10,169 @@ interface PreviewPaneProps {
     onJumpToSourceAction: (path: string) => void;
 }
 
+function ensureAbsoluteUrl(url: string): string {
+    if (!url) return "";
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('mailto:')) {
+        return url;
+    }
+    return `https://${url}`;
+}
+
 /** 
  * LaTeX-quality resume preview matching Overleaf output.
  * Uses serif font, centered header, underlined section titles, proper bullet indentation.
  */
 export function PreviewPane({ content, onJumpToSourceAction }: PreviewPaneProps) {
+    const { settings, updateSettingsAction } = useSettings();
+    const [autoScale, setAutoScale] = useState(1);
+    const [realPaperHeight, setRealPaperHeight] = useState(297); // in mm
+    const containerRef = useRef<HTMLDivElement>(null);
+    const paperRef = useRef<HTMLDivElement>(null);
+
+    const scaleOptions = [0.25, 0.5, 0.75, 1, 1.5, 2];
+    const fontOptions = [
+        { name: "Latin Modern Roman", family: "'Latin Modern Roman', serif" },
+        { name: "Times New Roman", family: "'Times New Roman', serif" },
+        { name: "Inter", family: "'Inter', sans-serif" },
+        { name: "Roboto", family: "'Roboto', sans-serif" },
+        { name: "Outfit", family: "'Outfit', sans-serif" },
+        { name: "STIX Two Text", family: "'STIX Two Text', serif" }
+    ];
+
+    useEffect(() => {
+        const resizeObserver = new ResizeObserver((entries) => {
+            for (const entry of entries) {
+                const containerWidth = entry.contentRect.width - 64; // Padding
+                const paperWidth = 794; 
+                const newScale = containerWidth / paperWidth;
+                setAutoScale(Math.min(newScale, 1.2));
+            }
+        });
+
+        if (containerRef.current) {
+            resizeObserver.observe(containerRef.current);
+        }
+
+        return () => resizeObserver.disconnect();
+    }, []);
+
+    useEffect(() => {
+        const handleWheel = (e: WheelEvent) => {
+            if (e.ctrlKey) {
+                e.preventDefault();
+                const delta = e.deltaY > 0 ? -0.1 : 0.1;
+                const baseScale = settings.previewScale === "auto" ? autoScale : (settings.previewScale as number);
+                const newScale = Math.min(Math.max(baseScale + delta, 0.25), 3);
+                updateSettingsAction({ previewScale: Number(newScale.toFixed(2)) });
+            }
+        };
+
+        const container = containerRef.current;
+        if (container) {
+            container.addEventListener('wheel', handleWheel, { passive: false });
+        }
+        return () => {
+            if (container) container.removeEventListener('wheel', handleWheel);
+        };
+    }, [settings.previewScale, autoScale, updateSettingsAction]);
+
+    const currentScale = settings.previewScale === "auto" ? autoScale : settings.previewScale;
+    const currentFont = fontOptions.find(f => f.name === settings.resumeFont) || fontOptions[0];
+
+    const [isFontOpen, setIsFontOpen] = useState(false);
+    const [isScaleOpen, setIsScaleOpen] = useState(false);
+
     const c = content;
     const hasContact = c.basics.phone || c.basics.email || c.basics.linkedin || c.basics.portfolio || c.basics.location;
 
     return (
-        <div className="flex-grow bg-[#EBEEF2] flex flex-col overflow-hidden">
+        <div ref={containerRef} className="flex-grow h-full bg-[#EBEEF2] flex flex-col overflow-hidden relative min-h-0">
             {/* Preview header bar */}
-            <div className="h-9 bg-[#E0E0E0] border-b border-black/8 flex items-center justify-between px-4 shrink-0">
-                <span className="text-[10px] font-semibold text-black/40 tracking-wide">Compiled Output</span>
+            <div className="h-9 bg-[#E0E0E0] border-b border-black/8 flex items-center justify-between px-3 shrink-0">
+                <div className="flex items-center gap-4">
+                    <span className="text-[10px] font-bold text-black/40 tracking-wider uppercase">Compiled Output</span>
+                    
+                    {/* FONT SELECT */}
+                    <div 
+                        onMouseEnter={() => setIsFontOpen(true)}
+                        onMouseLeave={() => setIsFontOpen(false)}
+                        className="flex items-center gap-1.5 px-2 py-1 rounded bg-black/5 hover:bg-black/10 transition-all cursor-pointer relative"
+                    >
+                        <RiFontSize size={11} className="text-black/40" />
+                        <span className="text-[9px] font-bold text-black/60 truncate max-w-[80px]">{settings.resumeFont}</span>
+                        <RiArrowDownSLine size={10} className="text-black/30" />
+                        
+                        {isFontOpen && (
+                            <div className="absolute top-full left-0 pt-1 w-40 z-[100]">
+                                <div className="bg-white shadow-xl border border-black/10 rounded-md py-1 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
+                                    {fontOptions.map(f => (
+                                        <button key={f.name} onClick={() => { updateSettingsAction({ resumeFont: f.name }); setIsFontOpen(false); }}
+                                            className={`w-full text-left px-3 py-1.5 text-[10px] hover:bg-[#F5F5F5] transition-all flex items-center justify-between ${settings.resumeFont === f.name ? "text-[#3B82F6] font-bold bg-[#3B82F6]/5" : "text-[#555]"}`}>
+                                            {f.name}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* SCALE SELECT */}
+                    <div 
+                        onMouseEnter={() => setIsScaleOpen(true)}
+                        onMouseLeave={() => setIsScaleOpen(false)}
+                        className="flex items-center gap-1.5 px-2 py-1 rounded bg-black/5 hover:bg-black/10 transition-all cursor-pointer relative"
+                    >
+                        <span className="text-[9px] font-bold text-black/60">{settings.previewScale === "auto" ? "Auto" : `${(settings.previewScale as number) * 100}%`}</span>
+                        <RiArrowDownSLine size={10} className="text-black/30" />
+                        
+                        {isScaleOpen && (
+                            <div className="absolute top-full left-0 pt-1 w-24 z-[100]">
+                                <div className="bg-white shadow-xl border border-black/10 rounded-md py-1 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
+                                    <button onClick={() => { updateSettingsAction({ previewScale: "auto" }); setIsScaleOpen(false); }}
+                                        className={`w-full text-left px-3 py-1.5 text-[10px] hover:bg-[#F5F5F5] transition-all ${settings.previewScale === "auto" ? "text-[#3B82F6] font-bold bg-[#3B82F6]/5" : "text-[#555]"}`}>
+                                        Auto-Fit
+                                    </button>
+                                    <div className="h-px bg-black/5 my-1" />
+                                    {scaleOptions.map(s => (
+                                        <button key={s} onClick={() => { updateSettingsAction({ previewScale: s }); setIsScaleOpen(false); }}
+                                            className={`w-full text-left px-3 py-1.5 text-[10px] hover:bg-[#F5F5F5] transition-all ${settings.previewScale === s ? "text-[#3B82F6] font-bold bg-[#3B82F6]/5" : "text-[#555]"}`}>
+                                            {s * 100}%
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
                 <span className="text-[10px] font-semibold text-black/30">A4 · 1 page</span>
             </div>
             {/* Paper scroll area */}
-            <div className="flex-grow overflow-y-auto flex justify-center p-6 custom-scrollbar">
+            <div className="flex-grow overflow-y-auto overflow-x-hidden custom-scrollbar scroll-smooth bg-[#EBEEF2]/50 p-8 sm:p-12 min-h-0">
+                {/* Visual Footprint Container (Centered via mx-auto) */}
                 <div 
-                    className="w-full max-w-[680px] bg-white shadow-[0_2px_20px_rgba(0,0,0,0.08)] rounded-[2px] shrink-0"
-                    style={{ aspectRatio: '1/1.414', fontFamily: "'Georgia', 'Times New Roman', 'CMU Serif', serif" }}
+                    style={{ 
+                        width: `${210 * (currentScale as number)}mm`,
+                        height: `${realPaperHeight * (currentScale as number)}mm` 
+                    }} 
+                    className="mx-auto shadow-[0_30px_70px_rgba(0,0,0,0.12)] relative"
                 >
-                    <div className="p-[48px_54px] overflow-y-auto h-full text-[#1a1a1a] leading-[1.45]">
+                    {/* High-Fidelity Transform Engine */}
+                    <div 
+                        ref={paperRef}
+                        className="bg-white shrink-0 origin-top-left transition-transform duration-300 ease-out"
+                        style={{ 
+                            width: '210mm', 
+                            minHeight: '297mm',
+                            transform: `scale(${currentScale})`,
+                            fontFamily: currentFont.family,
+                            WebkitFontSmoothing: 'antialiased',
+                            MozOsxFontSmoothing: 'grayscale',
+                            position: 'absolute',
+                            top: 0,
+                            left: 0
+                        }}
+                    >
+                        <div className="p-[48px_54px] text-[#1a1a1a] leading-[1.45]">
                         
                         {/* ── HEADER ── */}
                         <div 
@@ -60,15 +202,15 @@ export function PreviewPane({ content, onJumpToSourceAction }: PreviewPaneProps)
                                     {/* Row 2: linkedin · portfolio · location */}
                                     <div className="flex flex-wrap justify-center gap-x-1">
                                         {c.basics.linkedin && (
-                                            <span className="cursor-pointer hover:text-blue-600" onClick={(e) => { e.stopPropagation(); onJumpToSourceAction('basics.linkedin'); }}>
-                                                {c.basics.linkedin}
-                                            </span>
+                                            <a href={ensureAbsoluteUrl(c.basics.linkedin)} target="_blank" rel="noopener noreferrer" className="hover:text-blue-600" onClick={(e) => e.stopPropagation()}>
+                                                {c.basics.linkedin.replace(/^https?:\/\/(www\.)?/, "")}
+                                            </a>
                                         )}
                                         {c.basics.linkedin && c.basics.portfolio && <span className="text-black/30"> · </span>}
                                         {c.basics.portfolio && (
-                                            <span className="cursor-pointer hover:text-blue-600" onClick={(e) => { e.stopPropagation(); onJumpToSourceAction('basics.portfolio'); }}>
-                                                {c.basics.portfolio}
-                                            </span>
+                                            <a href={ensureAbsoluteUrl(c.basics.portfolio)} target="_blank" rel="noopener noreferrer" className="hover:text-blue-600" onClick={(e) => e.stopPropagation()}>
+                                                {c.basics.portfolio.replace(/^https?:\/\/(www\.)?/, "")}
+                                            </a>
                                         )}
                                         {(c.basics.linkedin || c.basics.portfolio) && c.basics.location && <span className="text-black/30"> · </span>}
                                         {c.basics.location && (
@@ -139,7 +281,7 @@ export function PreviewPane({ content, onJumpToSourceAction }: PreviewPaneProps)
                                             <span className="text-[10px] italic text-[#555] shrink-0">
                                                 {proj.techStack || ""}
                                                 {proj.techStack && proj.link && " · "}
-                                                {proj.link && <a href={proj.link} target="_blank" rel="noopener noreferrer" className="font-bold not-italic hover:text-blue-600" onClick={(e) => e.stopPropagation()}>Live Demo</a>}
+                                                {proj.link && <a href={ensureAbsoluteUrl(proj.link)} target="_blank" rel="noopener noreferrer" className="font-bold not-italic hover:text-blue-600" onClick={(e) => e.stopPropagation()}>Live Demo</a>}
                                             </span>
                                         </div>
                                         {proj.highlights?.length > 0 && proj.highlights.some(h => h.trim()) && (
@@ -203,6 +345,7 @@ export function PreviewPane({ content, onJumpToSourceAction }: PreviewPaneProps)
                     </div>
                 </div>
             </div>
+        </div>
         </div>
     );
 }

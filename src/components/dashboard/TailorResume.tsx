@@ -55,7 +55,7 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
         setLoading(true);
         setError(null);
         
-        const steps = ["Parsing Job Requirements...", "Identifying Skill Gaps...", "Cross-Referencing Experience...", "Generating Strategic Recommendations..."];
+        const steps = ["Parsing Job Requirements...", "Identifying Skill Gaps...", "Cross-Referencing Experience...", "Generating Tailoring Recommendations..."];
         let stepIdx = 0;
         setScanStep(steps[0]);
         const stepInterval = setInterval(() => {
@@ -110,9 +110,9 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                 </div>
 
                 <div>
-                    <h3 className="font-bold text-2xl mb-2 text-foreground tracking-tighter">Strategic Match</h3>
+                    <h3 className="font-bold text-2xl mb-2 text-foreground tracking-tighter">Role Match</h3>
                     <p className="text-[0.65rem] text-accent-gray font-bold uppercase tracking-[0.1em] leading-relaxed">
-                        Cross-Reference Semantic Profile <br/> with Targeting Engine
+                        Analyze Profile Alignment <br/> with Job Requirements
                     </p>
                 </div>
             </div>
@@ -143,10 +143,10 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                                     </div>
                                     <div>
                                         <div className="flex items-center gap-3 mb-1.5">
-                                            <h2 className="text-2xl font-bold text-foreground tracking-tighter uppercase leading-none">Strategic Match Analysis</h2>
+                                            <h2 className="text-2xl font-bold text-foreground tracking-tighter uppercase leading-none">Role Match Analysis</h2>
                                         </div>
                                         <p className="text-[0.7rem] font-bold text-accent-gray uppercase tracking-widest text-black/30">
-                                            Synthesizing Profile <span className="mx-2 opacity-50">&amp;</span> Targeting Logic
+                                            Analyzing Profile <span className="mx-2 opacity-50">&amp;</span> Job Alignment
                                         </p>
                                     </div>
                                 </div>
@@ -257,7 +257,7 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                                             </div>
                                             
                                             <div className="md:col-span-2 bg-white border border-black/5 p-10 rounded-[2.5rem] flex flex-col justify-center shadow-sm">
-                                                <h4 className="text-sm font-black uppercase tracking-widest mb-4 text-black/30">Strategic Fit Assessment</h4>
+                                                <h4 className="text-sm font-black uppercase tracking-widest mb-4 text-black/30">Role Fit Assessment</h4>
                                                 <p className="text-black/70 leading-relaxed font-bold text-lg">
                                                     {analysis.roleFit}
                                                 </p>
@@ -297,7 +297,7 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                                         <div className="bg-black/5 border border-black/5 p-10 rounded-[2.5rem]">
                                             <h4 className="font-black text-black flex items-center gap-3 mb-8 uppercase tracking-widest text-sm">
                                                 <RiMagicLine size={20} className="text-black/60" />
-                                                Alpha Recommendations
+                                                Priority Recommendations
                                             </h4>
                                             <div className="grid grid-cols-1 gap-4">
                                                 {(analysis.tailoringSuggestions || []).map((tip: string, i: number) => (

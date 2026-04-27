@@ -42,10 +42,10 @@ export function InsightsFeed({ data }: InsightsFeedProps) {
             score: insight.score,
             summary: feedback.summary || feedback.recommendations || "Analysis complete.",
             metrics: feedback.metrics || {
-                impact: insight.score,
-                formatting: insight.score,
-                ats: insight.score,
-                branding: insight.score
+                impact: feedback.impact || 0,
+                formatting: feedback.formatting || 0,
+                ats: feedback.ats || 0,
+                branding: feedback.branding || 0
             },
             strengths: feedback.strengths || [],
             weaknesses: feedback.weaknesses || [],
@@ -69,54 +69,91 @@ export function InsightsFeed({ data }: InsightsFeedProps) {
 
     return (
         <>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {data.map((item) => (
                     <m.div 
                         key={item.id} 
-                        whileHover={{ scale: 1.01 }}
-                        whileTap={{ scale: 0.99 }}
+                        whileHover={{ y: -3, boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)" }}
+                        whileTap={{ scale: 0.98 }}
                         onClick={() => handleOpenModal(item)}
-                        className="flex items-center justify-between p-8 bg-white/40 backdrop-blur-md rounded-2xl border border-black/5 hover:bg-white/60 hover:shadow-xl transition-all cursor-pointer group shadow-sm"
+                        className="flex flex-col p-8 bg-white border border-black/[0.04] rounded-[2.2rem] transition-all cursor-pointer group shadow-sm relative overflow-hidden"
                     >
-                        <div className="flex items-center gap-6">
-                            <div className={`w-14 h-14 rounded-xl border border-black/5 flex items-center justify-center transition-all ${
-                                item.type === "import" 
-                                    ? "bg-[#3B82F6]/5 text-[#3B82F6] border-[#3B82F6]/10" 
-                                    : "bg-black/[0.03] text-[#737373]/60 group-hover:bg-[#3B82F6] group-hover:text-white group-hover:border-[#3B82F6]"
-                            } shadow-sm`}>
-                                {item.type === "analysis" ? <RiBarChartGroupedLine size={22} /> : item.type === "tailoring" ? <RiFlashlightLine size={22} /> : <RiUploadCloud2Line size={22} />}
-                            </div>
-                            <div>
-                                <h4 className="font-bold text-[#0A0A0A] group-hover:translate-x-1 transition-transform tracking-tight text-lg">{item.title}</h4>
-                                <div className="flex items-center gap-4 mt-2">
-                                    <span className={`text-[0.75rem] font-bold px-3 py-1 rounded-full uppercase tracking-wider ${
-                                        item.type === "import" ? "bg-[#3B82F6]/10 text-[#3B82F6]" : "bg-black/[0.03] text-[#737373]"
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-black/[0.01] rounded-bl-[4rem] -mr-8 -mt-8 transition-transform group-hover:scale-110 group-hover:bg-[#3B82F6]/[0.02]" />
+                        
+                        <div className="flex items-start justify-between mb-8">
+                            <div className="flex items-center gap-5">
+                                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 shadow-sm ${
+                                    item.type === "import" 
+                                        ? "bg-[#3B82F6] text-white shadow-blue-500/20" 
+                                        : "bg-black/[0.03] text-[#737373]/40 group-hover:bg-[#3B82F6] group-hover:text-white group-hover:shadow-blue-500/20"
+                                }`}>
+                                    {item.type === "analysis" ? <RiBarChartGroupedLine size={24} /> : item.type === "tailoring" ? <RiFlashlightLine size={24} /> : <RiUploadCloud2Line size={24} />}
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                    <span className={`text-[0.6rem] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest w-fit shadow-sm border border-black/[0.02] ${
+                                        item.type === "import" ? "bg-[#3B82F6]/10 text-[#3B82F6]" : "bg-black/[0.04] text-[#737373]/60"
                                     }`}>
-                                        {item.type === "analysis" ? "Diagnostic Report" : item.type === "tailoring" ? "Targeted Alignment" : "New Import"}
+                                        {item.type === "analysis" ? "Analysis Report" : item.type === "tailoring" ? "Tailoring Analysis" : "New Import"}
                                     </span>
-                                    <p className="text-[0.7rem] font-bold text-[#737373]/50 items-center gap-1.5 flex uppercase tracking-widest">
-                                        <RiTimer2Line size={14} />
+                                    <p className="text-[0.55rem] font-bold text-[#737373]/40 flex items-center gap-1.5 uppercase tracking-widest">
+                                        <RiTimer2Line size={12} className="text-[#3B82F6]/40" />
                                         {formatTimeAgo(item.date)}
                                     </p>
                                 </div>
                             </div>
-                        </div>
-                        
-                        <div className="flex items-center gap-6">
-                            {item.type !== "import" ? (
-                                <div className="flex flex-col items-end">
-                                    <span className="text-2xl font-bold text-[#0A0A0A] tracking-tighter group-hover:text-[#3B82F6] transition-colors">{item.score}%</span>
-                                    <span className="text-[0.7rem] font-bold text-[#737373]/50 uppercase tracking-widest leading-none">Match Score</span>
-                                </div>
-                            ) : (
-                                <div className="flex flex-col items-end">
-                                    <span className="text-[0.65rem] font-bold text-[#3B82F6] uppercase tracking-[0.2em] mb-1">View Content</span>
-                                    <div className="h-1 w-12 bg-[#3B82F6]/20 rounded-full overflow-hidden">
-                                        <div className="h-full bg-[#3B82F6] w-full" />
+
+                            {item.type !== "import" && (
+                                <div className="flex flex-col items-end gap-2">
+                                    <div className="flex items-baseline gap-1">
+                                        <m.span 
+                                            initial={{ scale: 0.9 }}
+                                            animate={{ scale: 1 }}
+                                            className="text-4xl font-black text-[#0A0A0A] tracking-tighter group-hover:text-[#3B82F6] transition-colors leading-none"
+                                        >
+                                            {item.score}
+                                        </m.span>
+                                        <span className="text-[0.7rem] font-bold text-black/10 tracking-tighter uppercase">Pts</span>
+                                    </div>
+                                    <div className={`px-2 py-0.5 rounded-md text-[0.5rem] font-black uppercase tracking-widest border ${
+                                        item.score > 80 
+                                            ? "bg-emerald-500/5 text-emerald-600 border-emerald-500/10" 
+                                            : "bg-amber-500/5 text-amber-600 border-amber-500/10"
+                                    }`}>
+                                        {item.score > 80 ? "Optimized" : "Needs Review"}
                                     </div>
                                 </div>
                             )}
-                            <div className="w-10 h-10 rounded-2xl bg-black/[0.03] flex items-center justify-center text-[#737373]/60 group-hover:bg-[#3B82F6] group-hover:text-white transition-all shadow-sm">
+                        </div>
+
+                        <div className="flex-grow mb-6">
+                            <h4 className="font-bold text-[#0A0A0A] group-hover:text-[#3B82F6] transition-colors tracking-tight text-lg leading-tight line-clamp-1 mb-3">
+                                {item.title}
+                            </h4>
+                            
+                            {item.fullData?.actionItems && item.fullData.actionItems.length > 0 && (
+                                <div className="space-y-2">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-1 h-4 bg-[#3B82F6] rounded-full" />
+                                        <span className="text-[0.6rem] font-bold text-[#737373] uppercase tracking-widest">Priority Improvement:</span>
+                                    </div>
+                                    <p className="text-[0.7rem] font-medium text-black/60 line-clamp-1 italic">
+                                        "{item.fullData.actionItems[0].checkpoint || item.fullData.actionItems[0]}"
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex items-center justify-between pt-6 border-t border-black/[0.03]">
+                            <div className="flex items-center gap-4">
+                                <div className="flex -space-x-1">
+                                    {[1, 2, 3].map(i => (
+                                        <div key={i} className="w-5 h-5 rounded-full bg-black/[0.04] border-2 border-white flex items-center justify-center">
+                                            <div className={`w-1 h-1 rounded-full ${i === 1 ? 'bg-[#3B82F6]' : 'bg-black/20'}`} />
+                                        </div>
+                                    ))}
+                                </div>
+                                <span className="text-[0.55rem] font-bold text-[#737373]/40 uppercase tracking-widest">Analysis Insight Available</span>
+                            </div>
+                            <div className="w-10 h-10 rounded-xl bg-black/[0.03] flex items-center justify-center text-[#737373]/40 group-hover:bg-[#3B82F6] group-hover:text-white transition-all flex-shrink-0 shadow-sm">
                                 <RiArrowRightSLine size={18} />
                             </div>
                         </div>
