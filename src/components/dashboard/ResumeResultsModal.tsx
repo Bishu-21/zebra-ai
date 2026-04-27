@@ -257,23 +257,29 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-1 gap-6">
-                                    {rewrites.map((item: RewriteItem, i: number) => (
-                                        <div key={i} className="grid grid-cols-1 lg:grid-cols-12 gap-6 bg-white border border-[#F5F5F5] rounded-[2rem] overflow-hidden p-8 hover:border-[#3B82F6]/20 transition-all shadow-sm">
-                                            <div className="lg:col-span-4 space-y-4">
-                                                <span className="text-[0.5rem] font-bold uppercase tracking-[0.2em] text-[#A3A3A3] block">Improvement Logic</span>
-                                                <p className="text-[0.7rem] font-medium text-[#171717]/80 leading-relaxed border-l border-[#F5F5F5] pl-4">
-                                                    {item.rationale ?? "Optimization for clarity and impact."}
-                                                </p>
+                                    {rewrites.map((item: any, i: number) => {
+                                        const isString = typeof item === "string";
+                                        const rationale = isString ? "Optimization for clarity and impact." : (item.rationale ?? "Optimization for clarity and impact.");
+                                        const suggestion = isString ? item : (item.after ?? item.suggestion ?? "");
+
+                                        return (
+                                            <div key={i} className="grid grid-cols-1 lg:grid-cols-12 gap-6 bg-white border border-[#F5F5F5] rounded-[2rem] overflow-hidden p-8 hover:border-[#3B82F6]/20 transition-all shadow-sm">
+                                                <div className="lg:col-span-4 space-y-4">
+                                                    <span className="text-[0.5rem] font-bold uppercase tracking-[0.2em] text-[#A3A3A3] block">Improvement Logic</span>
+                                                    <p className="text-[0.7rem] font-medium text-[#171717]/80 leading-relaxed border-l border-[#F5F5F5] pl-4">
+                                                        {rationale}
+                                                    </p>
+                                                </div>
+                                                <div className="lg:col-span-8 p-6 bg-[#3B82F6]/[0.02] rounded-2xl border border-[#3B82F6]/5 space-y-3 relative overflow-hidden">
+                                                    <div className="absolute top-0 right-0 p-4 opacity-[0.03] rotate-12"><RocketIcon /></div>
+                                                    <span className="text-[0.5rem] font-bold uppercase tracking-[0.2em] text-[#3B82F6] block">Suggested Content</span>
+                                                    <p className="text-[0.75rem] font-medium text-[#171717] leading-relaxed tracking-tight">
+                                                        {suggestion}
+                                                    </p>
+                                                </div>
                                             </div>
-                                            <div className="lg:col-span-8 p-6 bg-[#3B82F6]/[0.02] rounded-2xl border border-[#3B82F6]/5 space-y-3 relative overflow-hidden">
-                                                <div className="absolute top-0 right-0 p-4 opacity-[0.03] rotate-12"><RocketIcon /></div>
-                                                <span className="text-[0.5rem] font-bold uppercase tracking-[0.2em] text-[#3B82F6] block">Suggested Content</span>
-                                                <p className="text-[0.75rem] font-medium text-[#171717] leading-relaxed tracking-tight">
-                                                    {item.after ?? item.suggestion ?? ""}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}

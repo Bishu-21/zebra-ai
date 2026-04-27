@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
       2. Construct a 'audit' object with specific, ACTIONABLE "fix" messages for every Fail.
       3. For every category, provide AT LEAST 3 check points. If the resume is perfect, state it as a "Pass".
       4. Provide 'recruiterInsights' mirroring a 7-second high-density scan.
-      5. Suggest 6 High-Impact Bullet Rewrites focusing on quantifiable metrics.
+      5. Suggest 6 High-Impact Bullet Rewrites. For each, provide a 'rationale' (why it's better) and the 'after' (the rewritten text). Focus on quantifiable metrics.
 
       REQUIRED JSON SCHEMA (STRICT):
       {
@@ -109,7 +109,10 @@ export async function POST(req: NextRequest) {
           "soWhatTest": "Critique of the value proposition.",
           "readability": "Feedback on layout density and visual flow."
         },
-        "suggestedBulletPoints": ["Impact-driven rewrite 1", "Impact-driven rewrite 2", "Impact-driven rewrite 3", "Impact-driven rewrite 4", "Impact-driven rewrite 5", "Impact-driven rewrite 6"]
+        "suggestedBulletPoints": [
+          { "rationale": "Quantification & Action", "after": "Optimized project delivery speed by 25% through..." },
+          { "rationale": "Value Proposition", "after": "Spearheaded integration of AI modules..." }
+        ]
       }
 
       OUTPUT CONSTRAINT: Return ONLY a valid JSON object. No markdown wrappers.

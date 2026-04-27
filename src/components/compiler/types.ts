@@ -89,6 +89,7 @@ export interface ResumeAnalysisData {
     audit?: Record<string, AuditItem[]>;
     suggestedBulletPoints?: RewriteItem[];
     intelligenceRewrites?: RewriteItem[];
+    aiRewrites?: RewriteItem[];
     recruiterInsights?: {
         soWhatTest?: string;
         sevenSecondScan?: string;
