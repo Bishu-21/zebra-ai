@@ -93,7 +93,11 @@ export async function GET(req: NextRequest, { params: paramsPromise }: { params:
 }
 
 function getBaseUrl(req: NextRequest): string {
-    const host = req.headers.get("host") || "zebra-ai-gamma.vercel.app";
+    const host = req.headers.get("host");
     const proto = req.headers.get("x-forwarded-proto") || "https";
-    return `${proto}://${host}`;
+    
+    if (host) return `${proto}://${host}`;
+    
+    // Fallback to env var or localhost
+    return process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 }
