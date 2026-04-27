@@ -15,9 +15,14 @@ import {
 } from "react-icons/ri";
 
 export default async function AnalyticsPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  let session = null;
+  try {
+    session = await auth.api.getSession({
+      headers: await headers(),
+    });
+  } catch (e) {
+    console.error("Session fetch failed in analytics:", e);
+  }
 
   if (!session) return null;
 

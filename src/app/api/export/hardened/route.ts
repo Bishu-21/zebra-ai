@@ -24,15 +24,15 @@ const PREMIUM_TEMPLATES = ["executive", "advanced-pro", "fortune500"];
 const FREE_TEMPLATES = ["modern", "minimal"];
 
 export async function POST(req: NextRequest) {
-    const session = await auth.api.getSession({
-        headers: await headers(),
-    });
-
-    if (!session) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     try {
+        const session = await auth.api.getSession({
+            headers: await headers(),
+        });
+
+        if (!session) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
         const { resumeData, template = "modern" } = await req.json();
         const user = session.user as any;
         const userPlan = user.plan || "Free";

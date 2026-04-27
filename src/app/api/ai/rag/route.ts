@@ -4,15 +4,15 @@ import { headers } from "next/headers";
 
 // Note: Using a professional prompt engineering approach for the RAG agent
 export async function POST(req: NextRequest) {
-    const session = await auth.api.getSession({
-        headers: await headers(),
-    });
-
-    if (!session) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     try {
+        const session = await auth.api.getSession({
+            headers: await headers(),
+        });
+
+        if (!session) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
         const { message, resumeContext, chatHistory } = await req.json();
 
         // Undercover Professional Prompt Engineering

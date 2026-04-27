@@ -8,6 +8,13 @@ export const auth = betterAuth({
 		provider: "pg",
 		schema: schema,
 	}),
+    secret: process.env.BETTER_AUTH_SECRET,
+    baseURL: process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "https://zebra-ai.app",
+    trustedOrigins: [
+        "https://zebra-ai.app",
+        "https://zebra-ai-gamma.vercel.app",
+        "http://localhost:3000"
+    ],
 	emailAndPassword: {
 		enabled: true,
 	},

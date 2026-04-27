@@ -14,10 +14,11 @@ import crypto from "crypto";
 
 export async function POST(req: NextRequest, { params: paramsPromise }: { params: Promise<{ id: string }> }) {
     const params = await paramsPromise;
-    const session = await auth.api.getSession({ headers: await headers() });
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
+    
     try {
+        const session = await auth.api.getSession({ headers: await headers() });
+        if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
         const body = await req.json();
         const { isPublic } = body;
 
@@ -51,10 +52,10 @@ export async function POST(req: NextRequest, { params: paramsPromise }: { params
 
 export async function DELETE(req: NextRequest, { params: paramsPromise }: { params: Promise<{ id: string }> }) {
     const params = await paramsPromise;
-    const session = await auth.api.getSession({ headers: await headers() });
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
     try {
+        const session = await auth.api.getSession({ headers: await headers() });
+        if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
         await db.update(resumes)
             .set({ shareToken: null, isPublic: false, updatedAt: new Date() })
             .where(and(eq(resumes.id, params.id), eq(resumes.userId, session.user.id)));
@@ -67,10 +68,10 @@ export async function DELETE(req: NextRequest, { params: paramsPromise }: { para
 
 export async function GET(req: NextRequest, { params: paramsPromise }: { params: Promise<{ id: string }> }) {
     const params = await paramsPromise;
-    const session = await auth.api.getSession({ headers: await headers() });
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
     try {
+        const session = await auth.api.getSession({ headers: await headers() });
+        if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
         const resume = await db.query.resumes.findFirst({
             where: and(eq(resumes.id, params.id), eq(resumes.userId, session.user.id)),
             columns: { shareToken: true, isPublic: true },

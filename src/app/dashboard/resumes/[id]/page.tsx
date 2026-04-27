@@ -9,9 +9,16 @@ import { redirect, unstable_rethrow } from "next/navigation";
 
 export default async function ResumeEditorPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
     const params = await paramsPromise;
-    const session = await auth.api.getSession({
-        headers: await headers(),
-    });
+    let session;
+    try {
+        session = await auth.api.getSession({
+            headers: await headers(),
+        });
+    } catch (error) {
+        unstable_rethrow(error);
+        console.error("Resume Editor Session Check Failed:", error);
+        return redirect("/dashboard");
+    }
 
     if (!session) redirect("/login");
 

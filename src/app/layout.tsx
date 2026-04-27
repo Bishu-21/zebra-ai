@@ -10,7 +10,7 @@ const inter = Inter({
   subsets: ['latin'],
 });
 
-const baseUrl = 'https://zebra-ai.dev';
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://zebra-ai.app';
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),

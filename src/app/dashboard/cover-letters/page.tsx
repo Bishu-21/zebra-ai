@@ -18,9 +18,14 @@ function formatTimeAgo(date: Date) {
 }
 
 export default async function CoverLettersPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  let session = null;
+  try {
+    session = await auth.api.getSession({
+      headers: await headers(),
+    });
+  } catch (e) {
+    console.error("Session fetch failed in cover-letters:", e);
+  }
 
   if (!session) return null;
 

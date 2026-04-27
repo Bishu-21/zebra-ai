@@ -4,9 +4,20 @@ import { headers } from "next/headers";
 import { User, Notification, Setting2, ShieldTick } from "iconsax-react";
 
 export default async function SettingsPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  let session;
+  try {
+      session = await auth.api.getSession({
+          headers: await headers(),
+      });
+  } catch (error) {
+      console.error("Settings Session Check Failed:", error);
+      return (
+        <div className="p-12 text-center">
+            <h1 className="text-2xl font-bold mb-4">Connection Issue</h1>
+            <p className="text-sm text-[#737373]">Connecting to the terminal. Please wait or refresh.</p>
+        </div>
+      );
+  }
 
   const user = session?.user;
 

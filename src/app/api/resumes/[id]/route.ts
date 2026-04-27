@@ -10,15 +10,15 @@ export async function DELETE(
     { params: paramsPromise }: { params: Promise<{ id: string }> }
 ) {
     const params = await paramsPromise;
-    const session = await auth.api.getSession({
-        headers: await headers(),
-    });
-
-    if (!session) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     try {
+        const session = await auth.api.getSession({
+            headers: await headers(),
+        });
+
+        if (!session) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
         const deleted = await db
             .delete(resumesTable)
             .where(
