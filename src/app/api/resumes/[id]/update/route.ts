@@ -4,6 +4,9 @@ import { headers } from "next/headers";
 import { db } from "@/lib/db";
 import { resumes as resumesTable } from "@/lib/schema";
 import { eq, and } from "drizzle-orm";
+import { handleApiError } from "@/lib/api-error";
+
+import { resumeSchema } from "@/lib/validation";
 
 export async function PATCH(
     req: NextRequest,
@@ -20,7 +23,13 @@ export async function PATCH(
         }
 
         const body = await req.json();
-        const { title, content, status } = body;
+        const validation = resumeSchema.safeParse(body);
+
+        if (!validation.success) {
+            return NextResponse.json({ error: validation.error.issues[0].message }, { status: 400 });
+        }
+
+        const { title, content, status } = validation.data;
 
         // Verify ownership and update
         const updated = await db
@@ -44,7 +53,7 @@ export async function PATCH(
         }
 
         return NextResponse.json({ success: true, data: updated[0] });
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error: unknown) {
+        return handleApiError(error, "Resume Update PATCH");
     }
 }

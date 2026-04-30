@@ -65,9 +65,11 @@ export interface ResumeData {
 }
 
 export interface RewriteItem {
-    rationale?: string;
+    original?: string;
+    problem?: string;
     after?: string;
-    suggestion?: string;
+    rationale?: string;
+    suggestion?: string; // Fallback for legacy
 }
 
 export interface AuditItem {
@@ -109,5 +111,5 @@ export interface ResumeAnalysisData {
     tailoringSuggestions?: string[];
 }
 
-export type TemplateType = 'modern' | 'executive';
+export type TemplateType = 'modern' | 'professional' | 'minimal' | 'executive';
 export type SectionId = 'basics' | 'education' | 'skills' | 'projects' | 'experience' | 'certifications';

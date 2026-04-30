@@ -9,11 +9,33 @@ html {
 :root {
   --background: #FDFDFD;
   --foreground: #0A0A0A;
-  --primary: #2563EB;
+  --primary: #3B82F6;
   --primary-dark: #1E40AF;
+  --secondary: #171717;
   --accent-gray: #64748B;
   --accent-dark: #334155;
+  --muted-foreground: #737373;
   --border-subtle: rgba(10, 10, 10, 0.05);
+  --muted: #F5F5F5;
+  --success: #10B981;
+  --warning: #F59E0B;
+  --error: #EF4444;
+  
+  /* Radius Scale */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-2xl: 32px;
+  --radius-3xl: 48px;
+  --radius-full: 9999px;
+
+  /* Shadow Scale */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
 }
 
 @theme inline {
@@ -21,8 +43,21 @@ html {
   --color-foreground: var(--foreground);
   --color-primary: var(--primary);
   --color-primary-dark: var(--primary-dark);
+  --color-secondary: var(--secondary);
   --color-accent-gray: var(--accent-gray);
   --color-accent-dark: var(--accent-dark);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-border-subtle: var(--border-subtle);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  
   --font-sans: var(--font-inter), "Inter Variable", Inter, ui-sans-serif, system-ui;
   --font-serif: "Cardo", "Playfair Display", Georgia, serif;
 }
@@ -37,9 +72,7 @@ html {
     font-style: normal !important;
   }
 
-  em, i, .italic {
-    font-style: normal !important;
-  }
+  /* Removed aggressive italic reset to allow icons and intentional italics */
 
   /* Consolidated Grain Texture Utility */
   .grain-overlay {

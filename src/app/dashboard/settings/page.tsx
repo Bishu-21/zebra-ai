@@ -1,7 +1,7 @@
 import React from "react";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { User, Notification, Setting2, ShieldTick } from "iconsax-react";
+import { User } from "iconsax-react";
 
 export default async function SettingsPage() {
   let session;
@@ -26,7 +26,7 @@ export default async function SettingsPage() {
       <div className="max-w-2xl">
         <h1 className="text-[2.5rem] font-bold tracking-[-0.03em] leading-tight mb-4">Settings</h1>
         <p className="text-[#6B6B6B] text-[1.05rem] leading-relaxed">
-          Manage your account, plan billing, and AI preferences.
+          Manage your account and profile information.
         </p>
       </div>
 
@@ -48,32 +48,6 @@ export default async function SettingsPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-[#EAEAEA] p-8">
-          <h3 className="text-xl font-bold mb-6 flex items-center gap-3">
-            <ShieldTick size={20} className="text-[#3B82F6]" />
-            Preferences
-          </h3>
-          <div className="space-y-6">
-            <div className="flex items-center justify-between py-4 border-b border-[#F9F9F9]">
-              <div>
-                <p className="font-bold text-sm">Automatic ATS Optimization</p>
-                <p className="text-xs text-[#6B6B6B]">Automatically adjust keywords for your resumes.</p>
-              </div>
-              <div className="w-12 h-6 bg-[#3B82F6] rounded-full relative">
-                <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full"></div>
-              </div>
-            </div>
-            <div className="flex items-center justify-between py-4">
-              <div>
-                <p className="font-bold text-sm">Marketing Emails</p>
-                <p className="text-xs text-[#6B6B6B]">Get tips on career growth and AI trends.</p>
-              </div>
-              <div className="w-12 h-6 bg-[#EAEAEA] rounded-full relative">
-                <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full"></div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

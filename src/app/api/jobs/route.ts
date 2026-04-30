@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { jobs as jobsTable } from "@/lib/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import { headers } from "next/headers";
+import { handleApiError } from "@/lib/api-error";
 import crypto from "crypto";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const session = await auth.api.getSession({
         headers: await headers(),
@@ -23,11 +24,12 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ success: true, jobs: userJobs });
 
-  } catch (error: any) {
-    console.error("Jobs Fetch Error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  } catch (error: unknown) {
+    return handleApiError(error, "GET /api/jobs");
   }
 }
+
+import { jobSchema } from "@/lib/validation";
 
 export async function POST(req: NextRequest) {
     try {
@@ -39,11 +41,15 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
   
-      const { company, position, status, salary, url, resumeId } = await req.json();
-  
-      if (!company || !position) {
-        return NextResponse.json({ error: "Company and Position are required" }, { status: 400 });
+      const body = await req.json();
+      const validation = jobSchema.safeParse(body);
+
+      if (!validation.success) {
+          return NextResponse.json({ error: validation.error.issues[0].message }, { status: 400 });
       }
+
+      const { company, position, status, salary, url, location, jobType, description } = validation.data;
+      const resumeId = body.resumeId; // resumeId is handled separately if needed
 
       const id = crypto.randomUUID();
       await db.insert(jobsTable).values({
@@ -54,6 +60,9 @@ export async function POST(req: NextRequest) {
           status: status || "Applied",
           salary,
           url,
+          location,
+          jobType,
+          description,
           resumeId: resumeId || null,
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -61,9 +70,8 @@ export async function POST(req: NextRequest) {
       
       return NextResponse.json({ success: true, id });
   
-    } catch (error: any) {
-      console.error("Job Save Error:", error);
-      return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    } catch (error: unknown) {
+      return handleApiError(error, "POST /api/jobs");
     }
 }
 
@@ -77,29 +85,44 @@ export async function PATCH(req: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
     
-        const { id, status, company, position, salary, url, resumeId } = await req.json();
-    
+        const body = await req.json();
+        const validation = jobSchema.safeParse(body);
+
+        if (!validation.success) {
+            return NextResponse.json({ error: validation.error.issues[0].message }, { status: 400 });
+        }
+
+        const { id, status, company, position, salary, url, location, jobType, description } = validation.data;
+        const resumeId = body.resumeId;
+
         if (!id) {
             return NextResponse.json({ error: "Job ID is required" }, { status: 400 });
         }
 
-        await db.update(jobsTable)
+        // Ownership check: only update if job belongs to this user
+        const result = await db.update(jobsTable)
             .set({ 
                 status,
                 company,
                 position,
                 salary,
                 url,
+                location,
+                jobType,
+                description,
                 resumeId,
                 updatedAt: new Date() 
             })
-            .where(eq(jobsTable.id, id));
+            .where(and(eq(jobsTable.id, id), eq(jobsTable.userId, session.user.id)));
         
+        if (result.rowCount === 0) {
+            return NextResponse.json({ error: "Job not found" }, { status: 404 });
+        }
+
         return NextResponse.json({ success: true });
     
-    } catch (error: any) {
-        console.error("Job Update Error:", error);
-        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    } catch (error: unknown) {
+        return handleApiError(error, "PATCH /api/jobs");
     }
 }
 
@@ -119,13 +142,17 @@ export async function DELETE(req: NextRequest) {
             return NextResponse.json({ error: "Job ID is required" }, { status: 400 });
         }
 
-        await db.delete(jobsTable)
-            .where(eq(jobsTable.id, id));
+        // Ownership check: only delete if job belongs to this user
+        const result = await db.delete(jobsTable)
+            .where(and(eq(jobsTable.id, id), eq(jobsTable.userId, session.user.id)));
         
+        if (result.rowCount === 0) {
+            return NextResponse.json({ error: "Job not found" }, { status: 404 });
+        }
+
         return NextResponse.json({ success: true });
     
-    } catch (error: any) {
-        console.error("Job Delete Error:", error);
-        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    } catch (error: unknown) {
+        return handleApiError(error, "DELETE /api/jobs");
     }
 }

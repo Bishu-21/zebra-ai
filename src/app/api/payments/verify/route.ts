@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { user as userTable } from "@/lib/schema";
+import { user as userTable, transactions as transactionsTable } from "@/lib/schema";
 import { PLANS, PlanId } from "@/lib/constants/plans";
-import { eq, sql } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import crypto from "crypto";
 import { headers } from "next/headers";
 
@@ -17,14 +17,13 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const { razorpay_order_id, razorpay_payment_id, razorpay_signature, planId } = await req.json();
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = await req.json();
 
-        if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !planId) {
+        if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
             return NextResponse.json({ error: "Missing verification parameters" }, { status: 400 });
         }
 
         // 1. Verify HMAC Signature
-        // Reference: https://razorpay.com/docs/payments/server-integration/nodejs/payment-gateway/generate-signature/
         const secret = process.env.RAZORPAY_KEY_SECRET!;
         const body = razorpay_order_id + "|" + razorpay_payment_id;
         
@@ -33,42 +32,72 @@ export async function POST(req: NextRequest) {
             .update(body.toString())
             .digest("hex");
 
-        const isAuthentic = expectedSignature === razorpay_signature;
-
-        if (!isAuthentic) {
-            console.error("Signature mismatch. Potentially fraudulent attempt detected.");
+        if (expectedSignature !== razorpay_signature) {
+            console.error("Signature mismatch detected.");
             return NextResponse.json({ error: "Payment verification failed" }, { status: 400 });
         }
 
-        // 2. Map plan and find credits to add
-        const currentPlan = PLANS[planId as PlanId];
-        if (!currentPlan) {
-            return NextResponse.json({ error: "Invalid plan provided" }, { status: 400 });
+        // 2. Lookup the transaction in our database
+        // We look up by orderId AND userId for extra security
+        const [transaction] = await db
+            .select()
+            .from(transactionsTable)
+            .where(
+                and(
+                    eq(transactionsTable.orderId, razorpay_order_id),
+                    eq(transactionsTable.userId, session.user.id)
+                )
+            );
+
+        if (!transaction) {
+            return NextResponse.json({ error: "Transaction record not found" }, { status: 404 });
         }
 
-        // 3. Atomically update credits in the user table
+        // 3. Idempotency Check: Ensure we don't process the same payment twice
+        if (transaction.status === "completed") {
+            return NextResponse.json({ 
+                success: true, 
+                message: "Credits already allocated for this payment" 
+            });
+        }
+
+        if (transaction.status !== "pending") {
+            return NextResponse.json({ error: "Invalid transaction status" }, { status: 400 });
+        }
+
+        // 4. Resolve Plan Details (Strictly from Server-Side Data)
+        const plan = PLANS[transaction.planId as PlanId];
+        if (!plan) {
+            return NextResponse.json({ error: "Unknown plan configuration" }, { status: 400 });
+        }
+
+        // 5. Atomic Update: Credits + Transaction Status
         await db.transaction(async (tx) => {
-            const userId = session.user.id;
-            
+            // Update User Credits
             await tx.update(userTable)
                 .set({ 
-                    credits: sql`${userTable.credits} + ${currentPlan.credits}`,
-                    // Optionally update plan tier if it's the professional/elite plan
-                    plan: currentPlan.id === "starter" ? "Starter" : (currentPlan.id === "pro" ? "Professional" : "Elite")
+                    credits: sql`${userTable.credits} + ${plan.credits}`,
+                    plan: plan.id === "starter" ? "Starter" : (plan.id === "pro" ? "Professional" : "Elite")
                 })
-                .where(eq(userTable.id, userId));
+                .where(eq(userTable.id, session.user.id));
                 
-            // Note: In a production app, we would log the payment details 
-            // in a separate `transactions` table here for audit trails.
+            // Update Transaction Status
+            await tx.update(transactionsTable)
+                .set({ 
+                    status: "completed",
+                    paymentId: razorpay_payment_id,
+                    updatedAt: new Date()
+                })
+                .where(eq(transactionsTable.id, transaction.id));
         });
 
         return NextResponse.json({ 
             success: true, 
             message: "Payment verified and credits added successfully",
-            addedCredits: currentPlan.credits 
+            addedCredits: plan.credits 
         });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Payment Verification Error:", error);
         return NextResponse.json({ error: "Internal verification error" }, { status: 500 });
     }

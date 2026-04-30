@@ -3,17 +3,18 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { user as userTable, resumes as resumesTable, coverLetters as coverLettersTable } from "@/lib/schema";
-import { eq, desc, sql } from "drizzle-orm";
+import { eq, desc, and, sql } from "drizzle-orm";
 import { headers } from "next/headers";
+import { handleApiError } from "@/lib/api-error";
 import crypto from "crypto";
 
 // Initialize Gemini
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 const model = genAI.getGenerativeModel({ 
-  model: process.env.GEMINI_MODEL || "gemma-4-31b-it" 
+  model: process.env.GEMINI_MODEL || "gemini-2.0-flash" 
 });
 
-export async function GET(req: NextRequest) {
+export async function GET() {
     try {
         const session = await auth.api.getSession({
             headers: await headers(),
@@ -29,10 +30,12 @@ export async function GET(req: NextRequest) {
         });
 
         return NextResponse.json({ success: true, data: letters });
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error: unknown) {
+        return handleApiError(error, "GET /api/cover-letters");
     }
 }
+
+import { generateCoverLetterSchema } from "@/lib/validation";
 
 export async function POST(req: NextRequest) {
     try {
@@ -44,11 +47,14 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const { resumeId, jobDescription, title } = await req.json();
+        const body = await req.json();
+        const validation = generateCoverLetterSchema.safeParse(body);
 
-        if (!jobDescription) {
-            return NextResponse.json({ error: "Job description is required" }, { status: 400 });
+        if (!validation.success) {
+            return NextResponse.json({ error: validation.error.issues[0].message }, { status: 400 });
         }
+
+        const { resumeId, jobDescription, title } = validation.data;
 
         // 1. Check credits
         const userData = await db.query.user.findFirst({
@@ -59,34 +65,36 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Insufficient credits" }, { status: 403 });
         }
 
-        // 2. Fetch Resume content if resumeId is provided
+        // 2. Fetch Resume content if resumeId is provided — ownership check
         let resumeText = "";
         if (resumeId) {
             const resume = await db.query.resumes.findFirst({
-                where: eq(resumesTable.id, resumeId)
+                where: and(eq(resumesTable.id, resumeId), eq(resumesTable.userId, session.user.id))
             });
             resumeText = resume?.content || "";
         }
 
         // 3. AI Prompt Construction
         const prompt = `
-          You are a professional career coach and expert copywriter.
-          Write a tailored, high-conversion cover letter based on the following information.
-          
-          RESUME CONTEXT:
+          You are a world-class Professional Career Coach and Expert Copywriter. 
+          Your goal is to write a tailored, high-conversion cover letter that secures an interview at a top-tier firm.
+
+          CANDIDATE PROFILE (RESUME):
           "${resumeText}"
           
-          JOB DESCRIPTION:
+          TARGET ROLE (JOB DESCRIPTION):
           "${jobDescription}"
           
-          GUIDELINES:
-          - Use a modern, professional tone.
-          - Focus on specific achievements from the resume that match the job description.
-          - Ensure the letter is concise (approx 300-400 words).
-          - Use standard business letter formatting.
-          - If resume context is missing, write a high-quality template based on the job description.
-          
-          Return ONLY the cover letter text. No markdown formatting like "Here is your letter".
+          STRICT EDITORIAL GUIDELINES (FAILURE TO FOLLOW REDUCES QUALITY):
+          1. STRUCTURE: Use the AIDA framework (Attention, Interest, Desire, Action).
+          2. HOOK: Start with a powerful, non-generic opening. Mention something specific about the role/company or a relevant high-impact achievement from the resume that matches the job needs.
+          3. QUANTIFICATION: You MUST prioritize and quantify achievements found in the resume (e.g., "reduced latency by 40%", "improved DB query efficiency by 30%", "98% OCR accuracy"). If the resume mentions specific projects like 'Mystic' or 'CivicOS', leverage them.
+          4. TONE: Confident, professional, and surgically precise. Eliminate all fluff, generic adjectives, and passive voice.
+          5. SKILL MAPPING: Directly map the candidate's technical skills (e.g., Python, Azure AI, Gemini LLMs, Power BI, SQL) to the specific requirements of the job. Show, don't just tell.
+          6. FORMATTING: Use professional business letter formatting. Include a placeholder for the hiring manager's name if not provided.
+          7. LENGTH: Maximum impact in 300-400 words.
+
+          Return ONLY the cover letter content. Do not include any meta-talk, markdown code blocks (unless for formatting bold text), or conversational filler.
         `;
 
         // 4. Generate AI Content
@@ -115,9 +123,8 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ success: true, id: newLetterId, content: letterContent });
 
-    } catch (error: any) {
-        console.error("Cover Letter Error:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error: unknown) {
+        return handleApiError(error, "POST /api/cover-letters");
     }
 }
 
@@ -134,10 +141,10 @@ export async function DELETE(req: NextRequest) {
         const { id } = await req.json();
 
         await db.delete(coverLettersTable)
-            .where(sql`${coverLettersTable.id} = ${id} AND ${coverLettersTable.userId} = ${session.user.id}`);
+            .where(and(eq(coverLettersTable.id, id), eq(coverLettersTable.userId, session.user.id)));
 
         return NextResponse.json({ success: true });
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error: unknown) {
+        return handleApiError(error, "DELETE /api/cover-letters");
     }
 }

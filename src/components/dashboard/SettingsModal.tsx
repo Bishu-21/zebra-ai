@@ -1,16 +1,11 @@
-import React, { useState } from "react";
+import React from "react";
 import { m, AnimatePresence } from "framer-motion";
 import { useSettings } from "@/context/SettingsContext";
 import { 
     RiCloseLine, 
     RiSettings4Line, 
-    RiCodeSSlashLine, 
-    RiFilePdfLine, 
     RiArrowRightSLine,
     RiFontSize,
-    RiTranslate2,
-    RiMagicLine,
-    RiLayout4Line
 } from "react-icons/ri";
 
 interface SettingsModalProps {
@@ -18,16 +13,8 @@ interface SettingsModalProps {
     onCloseAction: () => void;
 }
 
-type SettingsSection = "General" | "Display";
-
 export function SettingsModal({ isOpen, onCloseAction }: SettingsModalProps) {
-    const [activeSection, setActiveSection] = useState<SettingsSection>("General");
     const { settings, updateSettingsAction } = useSettings();
-
-    const sections: { id: SettingsSection; icon: any }[] = [
-        { id: "General", icon: RiCodeSSlashLine },
-        { id: "Display", icon: RiFilePdfLine },
-    ];
 
     if (!isOpen) return null;
 
@@ -38,7 +25,7 @@ export function SettingsModal({ isOpen, onCloseAction }: SettingsModalProps) {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                    className="absolute inset-0 bg-foreground/60 backdrop-blur-sm"
                     onClick={onCloseAction}
                 />
                 
@@ -46,102 +33,72 @@ export function SettingsModal({ isOpen, onCloseAction }: SettingsModalProps) {
                     initial={{ scale: 0.95, opacity: 0, y: 20 }}
                     animate={{ scale: 1, opacity: 1, y: 0 }}
                     exit={{ scale: 0.95, opacity: 0, y: 20 }}
-                    className="relative bg-white w-full max-w-4xl h-[70vh] rounded-[2.5rem] shadow-2xl border border-black/5 flex overflow-hidden"
+                    className="relative bg-[var(--background)] w-full max-w-2xl h-auto max-h-[85vh] rounded-[var(--radius-xl)] shadow-2xl border border-[var(--border-subtle)] flex flex-col overflow-hidden"
                 >
-                    {/* Settings Sidebar */}
-                    <div className="w-[240px] bg-[#FAFAFA] border-r border-[#F5F5F5] flex flex-col p-8">
-                        <div className="flex items-center gap-3 mb-10">
-                            <div className="w-10 h-10 bg-[#3B82F6]/10 rounded-xl flex items-center justify-center text-[#3B82F6]">
+                    {/* Header */}
+                    <div className="flex p-6 md:p-8 border-b border-[var(--border-subtle)] items-center justify-between shrink-0">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-[var(--primary)]/10 rounded-[var(--radius-md)] flex items-center justify-center text-[var(--primary)] shrink-0">
                                 <RiSettings4Line size={24} />
                             </div>
-                            <h2 className="text-xl font-bold tracking-tight text-[#171717]">Settings</h2>
+                            <h2 className="text-xl font-bold tracking-tight text-[var(--secondary)]">Editor Settings</h2>
                         </div>
-
-                        <div className="space-y-2 flex-grow">
-                            {sections.map((section) => (
-                                <button
-                                    key={section.id}
-                                    onClick={() => setActiveSection(section.id)}
-                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-sm ${
-                                        activeSection === section.id 
-                                            ? "bg-white border border-black/5 shadow-sm text-[#3B82F6]" 
-                                            : "text-[#737373] hover:text-[#171717] hover:bg-black/5"
-                                    }`}
-                                >
-                                    <section.icon size={20} className={activeSection === section.id ? "text-[#3B82F6]" : "text-[#A3A3A3]"} />
-                                    {section.id}
-                                </button>
-                            ))}
-                        </div>
+                        <button 
+                            onClick={onCloseAction}
+                            className="w-10 h-10 rounded-full hover:bg-muted flex items-center justify-center text-[var(--muted-foreground)] hover:text-[var(--secondary)] transition-all"
+                        >
+                            <RiCloseLine size={24} />
+                        </button>
                     </div>
 
                     {/* Content Area */}
-                    <div className="flex-grow flex flex-col min-w-0 bg-white">
-                        <div className="p-8 border-b border-[#F5F5F5] flex items-center justify-between">
-                            <h3 className="text-lg font-bold text-[#171717]">{activeSection} Preferences</h3>
-                            <button 
-                                onClick={onCloseAction}
-                                className="w-10 h-10 rounded-full hover:bg-black/5 flex items-center justify-center text-[#A3A3A3] hover:text-[#171717] transition-all"
-                            >
-                                <RiCloseLine size={24} />
-                            </button>
-                        </div>
+                    <div className="flex-grow overflow-y-auto p-6 md:p-10 custom-scrollbar">
+                        <div className="space-y-8 md:space-y-10">
+                            <SettingItem 
+                                icon={RiFontSize}
+                                title="Editor Font Size" 
+                                description="Adjust the size of text in the resume editor for comfortable writing."
+                                control={<Select options={["12px", "14px", "16px", "18px", "20px"]} value={settings.fontSize} onChange={(v) => updateSettingsAction({ fontSize: v })} />}
+                            />
+                            
+                            <div className="h-px bg-[var(--border-subtle)]" />
 
-                        <div className="flex-grow overflow-y-auto p-10 custom-scrollbar">
-                            <div className="max-w-2xl mx-auto space-y-10">
-                                {activeSection === "General" && (
-                                    <>
-                                        <SettingItem 
-                                            icon={RiTranslate2}
-                                            title="Interface Language" 
-                                            description="Choose the language for the Zebra AI dashboard and tools."
-                                            control={<Select options={["English (US)", "English (UK)", "Hindi", "Bengali"]} value={settings.interfaceLanguage} onChange={(v) => updateSettingsAction({ interfaceLanguage: v })} />}
-                                        />
-                                        <SettingItem 
-                                            icon={RiFontSize}
-                                            title="Editor Font Size" 
-                                            description="Adjust the size of text in the resume editor for comfortable writing."
-                                            control={<Select options={["12px", "14px", "16px", "18px", "20px"]} value={settings.fontSize} onChange={(v) => updateSettingsAction({ fontSize: v })} />}
-                                        />
-                                        <SettingToggle 
-                                            title="Enable Spellcheck" 
-                                            description="Toggle native browser spellcheck in all editor fields." 
-                                            checked={settings.spellcheck}
-                                            onChange={(v: boolean) => updateSettingsAction({ spellcheck: v })}
-                                        />
-                                        <SettingToggle 
-                                            title="Compact Interface" 
-                                            description="Optimize the layout for maximum visibility by reducing vertical spacing." 
-                                            checked={settings.compactView}
-                                            onChange={(v: boolean) => updateSettingsAction({ compactView: v })}
-                                        />
-                                        <SettingToggle 
-                                            title="Line Wrapping" 
-                                            description="Allow long lines of text to wrap to the next line in the editor." 
-                                            checked={settings.lineWrapping}
-                                            onChange={(v: boolean) => updateSettingsAction({ lineWrapping: v })}
-                                        />
-                                    </>
-                                )}
-
-                                {activeSection === "Display" && (
-                                    <>
-                                        <SettingItem 
-                                            icon={RiLayout4Line}
-                                            title="PDF Preview Theme" 
-                                            description="Switch between light and high-contrast dark themes for the document viewer."
-                                            control={<Select options={["light", "dark"]} value={settings.pdfTheme} onChange={(v) => updateSettingsAction({ pdfTheme: v as any })} />}
-                                        />
-                                        <SettingToggle 
-                                            title="Auto-Save Cloud Sync" 
-                                            description="Automatically persist changes to the cloud as you type." 
-                                            checked={settings.autoSave}
-                                            onChange={(v: boolean) => updateSettingsAction({ autoSave: v })}
-                                        />
-                                    </>
-                                )}
+                            <div className="space-y-6 md:space-y-8">
+                                <SettingToggle 
+                                    title="Auto-Save Cloud Sync" 
+                                    description="Automatically persist changes to the cloud as you type." 
+                                    checked={settings.autoSave}
+                                    onChange={(v: boolean) => updateSettingsAction({ autoSave: v })}
+                                />
+                                <SettingToggle 
+                                    title="Enable Spellcheck" 
+                                    description="Toggle native browser spellcheck in all editor fields." 
+                                    checked={settings.spellcheck}
+                                    onChange={(v: boolean) => updateSettingsAction({ spellcheck: v })}
+                                />
+                                <SettingToggle 
+                                    title="Compact Interface" 
+                                    description="Optimize the layout for maximum visibility by reducing vertical spacing." 
+                                    checked={settings.compactView}
+                                    onChange={(v: boolean) => updateSettingsAction({ compactView: v })}
+                                />
+                                <SettingToggle 
+                                    title="Line Wrapping" 
+                                    description="Allow long lines of text to wrap to the next line in the editor." 
+                                    checked={settings.lineWrapping}
+                                    onChange={(v: boolean) => updateSettingsAction({ lineWrapping: v })}
+                                />
                             </div>
                         </div>
+                    </div>
+
+                    <div className="p-6 bg-[var(--background)] border-t border-[var(--border-subtle)] flex justify-end">
+                        <button 
+                            onClick={onCloseAction}
+                            className="px-6 py-2 bg-[var(--foreground)] text-[var(--background)] text-sm font-bold rounded-[var(--radius-md)] hover:opacity-90 transition-all active:scale-95 shadow-lg shadow-foreground/10"
+                        >
+                            Done
+                        </button>
                     </div>
                 </m.div>
             </div>
@@ -149,39 +106,39 @@ export function SettingsModal({ isOpen, onCloseAction }: SettingsModalProps) {
     );
 }
 
-function SettingItem({ title, description, control, icon: Icon }: any) {
+function SettingItem({ title, description, control, icon: Icon }: { title: string; description: string; control: React.ReactNode; icon?: React.ComponentType<{ size?: number }> }) {
     return (
-        <div className="flex items-start justify-between gap-10">
-            <div className="flex gap-4">
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 md:gap-10">
+            <div className="flex gap-3 md:gap-4">
                 {Icon && (
-                    <div className="mt-1 text-black/20">
+                    <div className="mt-1 text-muted-foreground/20 shrink-0">
                         <Icon size={20} />
                     </div>
                 )}
                 <div className="space-y-1">
-                    <h4 className="text-sm font-black text-[#171717]">{title}</h4>
-                    <p className="text-[0.8rem] text-[#737373] leading-relaxed font-medium">{description}</p>
+                    <h4 className="text-sm font-black text-[var(--secondary)]">{title}</h4>
+                    <p className="text-[0.8rem] text-[var(--muted-foreground)] leading-relaxed font-medium">{description}</p>
                 </div>
             </div>
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0 w-full md:w-auto">
                 {control}
             </div>
         </div>
     );
 }
 
-function SettingToggle({ title, description, checked, onChange }: any) {
+function SettingToggle({ title, description, checked, onChange }: { title: string; description: string; checked: boolean; onChange: (v: boolean) => void }) {
     return (
         <div 
-            className="flex items-start justify-between gap-10 cursor-pointer group"
+            className="flex items-center justify-between gap-4 md:gap-10 cursor-pointer group"
             onClick={() => onChange(!checked)}
         >
-            <div className="space-y-1">
-                <h4 className="text-sm font-black text-[#171717] group-hover:text-[#3B82F6] transition-colors">{title}</h4>
-                <p className="text-[0.8rem] text-[#737373] leading-relaxed font-medium">{description}</p>
+            <div className="space-y-1 pr-4">
+                <h4 className="text-sm font-black text-[var(--secondary)] group-hover:text-[var(--primary)] transition-colors">{title}</h4>
+                <p className="text-[0.8rem] text-[var(--muted-foreground)] leading-relaxed font-medium">{description}</p>
             </div>
-            <button className={`relative w-12 h-6 rounded-full transition-all duration-300 ${checked ? "bg-[#3B82F6]" : "bg-black/10"}`}>
-                <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${checked ? "translate-x-6" : ""}`} />
+            <button className={`shrink-0 relative w-12 h-6 rounded-full transition-all duration-300 ${checked ? "bg-[var(--primary)]" : "bg-muted"}`}>
+                <div className={`absolute top-1 left-1 w-4 h-4 bg-background rounded-full transition-all duration-300 ${checked ? "translate-x-6" : ""}`} />
             </button>
         </div>
     );
@@ -189,15 +146,15 @@ function SettingToggle({ title, description, checked, onChange }: any) {
 
 function Select({ options, value, onChange }: { options: string[]; value: string; onChange: (v: string) => void }) {
     return (
-        <div className="relative">
+        <div className="relative w-full md:w-auto">
             <select 
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
-                className="bg-black/5 border border-black/5 rounded-xl px-4 py-2 text-sm font-black outline-none appearance-none pr-10 hover:bg-black/10 transition-all cursor-pointer text-[#171717]"
+                className="w-full bg-muted border border-[var(--border-subtle)] rounded-[var(--radius-md)] px-4 py-2 text-sm font-black outline-none appearance-none pr-10 hover:bg-muted/80 transition-all cursor-pointer text-[var(--secondary)]"
             >
                 {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
             </select>
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#A3A3A3]">
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground/40">
                 <RiArrowRightSLine className="rotate-90" />
             </div>
         </div>

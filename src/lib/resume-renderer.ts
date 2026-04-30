@@ -43,136 +43,171 @@ interface ResumeData {
     certifications?: Skill[];
 }
 
-export function generateResumeHtml(data: ResumeData, _template: string, fontFamily?: string): string {
+const ICONS = {
+    phone: `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4b5563" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>`,
+    mail: `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4b5563" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg>`,
+    linkedin: `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4b5563" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect width="4" height="12" x="2" y="9"></rect><circle cx="4" cy="4" r="2"></circle></svg>`,
+    globe: `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4b5563" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" x2="22" y1="12" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>`,
+    map: `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4b5563" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>`
+};
+
+export function generateResumeHtml(data: ResumeData, template: string = "modern", fontFamily?: string): string {
     const { basics, experience = [], education = [], skills = [], projects = [], certifications = [] } = data;
 
     const fontConfig = {
-        name: fontFamily || "Latin Modern Roman",
-        url: (fontFamily === "Latin Modern Roman" || !fontFamily) 
+        name: fontFamily || (template === "minimal" ? "Inter" : "Latin Modern Roman"),
+        url: (fontFamily === "Latin Modern Roman" || (!fontFamily && template !== "minimal")) 
             ? "https://cdn.jsdelivr.net/npm/@fontsource/latin-modern-roman@5.0.11/index.css"
-            : `https://fonts.googleapis.com/css2?family=${(fontFamily || "").replace(/\s+/g, '+')}:wght@400;700&display=swap`
+            : `https://fonts.googleapis.com/css2?family=${(fontFamily || (template === "minimal" ? "Inter" : "Outfit")).replace(/\s+/g, '+')}:wght@400;500;600;700&display=swap`
     };
 
     const experienceHtml = (experience as WorkExperience[]).map((exp: WorkExperience) => `
-        <div class="exp-item">
-            <div class="exp-header">
-                <div>
-                    <h3 class="exp-role">${escapeHtml(exp.company || "")}</h3>
-                    <span class="exp-company">${escapeHtml(exp.role || "")}</span>
-                </div>
-                <div style="text-align:right">
-                    <span class="exp-period">${escapeHtml(exp.location || "")}</span><br/>
-                    <span class="exp-period">${escapeHtml(exp.period || "")}</span>
-                </div>
+        <div class="item">
+            <div class="item-header">
+                <span class="item-title">${escapeHtml(exp.role || "")}</span>
+                <span class="item-date">${escapeHtml(exp.period || "")}</span>
             </div>
-            <ul>${(exp.highlights || []).filter((h: string) => h?.trim()).map((h: string) =>
-                `<li class="exp-bullet">${escapeHtml(h)}</li>`
+            <div class="item-header sub">
+                <span class="item-sub">${escapeHtml(exp.company || "")}${exp.location ? `, ${escapeHtml(exp.location)}` : ""}</span>
+            </div>
+            <ul class="item-list">${(exp.highlights || []).filter((h: string) => h?.trim()).map((h: string) =>
+                `<li>${escapeHtml(h)}</li>`
             ).join("")}</ul>
         </div>
     `).join("");
 
     const projectsHtml = (projects as Project[]).map((proj: Project) => `
-        <div class="proj-item">
-            <div class="proj-header">
-                <h3 class="proj-title">${escapeHtml(proj.title || "")}</h3>
-                <span class="proj-tech">${escapeHtml(proj.techStack || "")}${proj.link ? ` · <a href="${ensureAbsoluteUrl(proj.link)}" class="external-link">Live Demo</a>` : ""}</span>
+        <div class="item">
+            <div class="item-header">
+                <span class="item-title">${escapeHtml(proj.title || "")}</span>
+                <span class="item-sub italic">${escapeHtml(proj.techStack || "")}</span>
             </div>
-            <ul>${(proj.highlights || []).filter((h: string) => h?.trim()).map((h: string) =>
-                `<li class="proj-bullet">${escapeHtml(h)}</li>`
+            <ul class="item-list">${(proj.highlights || []).filter((h: string) => h?.trim()).map((h: string) =>
+                `<li>${escapeHtml(h)}</li>`
             ).join("")}</ul>
         </div>
     `).join("");
 
     const educationHtml = (education as Education[]).map((edu: Education) => `
-        <div class="edu-item">
-            <div class="exp-header">
-                <h3 class="edu-school">${escapeHtml(edu.school || "")}</h3>
-                <span class="exp-period">${escapeHtml(edu.location || "")}</span>
+        <div class="item">
+            <div class="item-header">
+                <span class="item-title">${escapeHtml(edu.school || "")}</span>
+                <span class="item-date">${escapeHtml(edu.period || "")}</span>
             </div>
-            <div class="exp-header">
-                <p class="edu-degree">${escapeHtml(edu.degree || "")}${edu.gpa ? ` | ${escapeHtml(edu.gpa)}` : ""}</p>
-                <span class="edu-period">${escapeHtml(edu.period || "")}</span>
+            <div class="item-header sub">
+                <span class="item-sub">${escapeHtml(edu.degree || "")}${edu.gpa ? ` (GPA: ${escapeHtml(edu.gpa)})` : ""}</span>
+                <span class="item-date">${escapeHtml(edu.location || "")}</span>
             </div>
-            ${(edu.highlights || []).filter((h: string) => h?.trim()).length > 0 ? `<ul>${(edu.highlights || []).filter((h: string) => h?.trim()).map((h: string) => `<li class="exp-bullet">${escapeHtml(h)}</li>`).join("")}</ul>` : ""}
         </div>
     `).join("");
 
     let skillsHtml = "";
     if (skills.length > 0) {
         if (typeof skills[0] === 'string') {
-            skillsHtml = `<ul>${(skills as string[]).filter((s: string) => s?.trim()).map((s: string) => `<li class="exp-bullet"><strong>Skills:</strong> ${escapeHtml(s)}</li>`).join("")}</ul>`;
+            skillsHtml = `<p class="skills-text"><strong>Skills:</strong> ${(skills as string[]).join(", ")}</p>`;
         } else {
-            skillsHtml = `<ul>${(skills as Skill[]).filter((s: Skill) => s.items?.trim()).map((s: Skill) => `<li class="exp-bullet"><strong>${escapeHtml(s.category || "")}:</strong> ${escapeHtml(s.items || "")}</li>`).join("")}</ul>`;
+            skillsHtml = (skills as Skill[]).map(s => `
+                <p class="skills-text"><strong>${escapeHtml(s.category || "")}:</strong> ${escapeHtml(s.items || "")}</p>
+            `).join("");
         }
     }
 
-    let certsHtml = "";
-    if (certifications && certifications.length > 0) {
-        certsHtml = `<ul>${(certifications as Skill[]).filter((c: Skill) => c.items?.trim()).map((c: Skill) => `<li class="exp-bullet"><strong>${escapeHtml(c.category || "")}:</strong> ${escapeHtml(c.items || "")}</li>`).join("")}</ul>`;
-    }
-
-    // Header Meta with Links
     const metaItems = [];
-    if (basics?.phone) metaItems.push(escapeHtml(basics.phone));
-    if (basics?.email) metaItems.push(`<a href="mailto:${escapeHtml(basics.email)}" class="header-link">${escapeHtml(basics.email)}</a>`);
-    if (basics?.linkedin) metaItems.push(`<a href="${ensureAbsoluteUrl(basics.linkedin)}" class="header-link">${escapeHtml(basics.linkedin.replace(/^https?:\/\/(www\.)?/, ""))}</a>`);
-    if (basics?.portfolio) metaItems.push(`<a href="${ensureAbsoluteUrl(basics.portfolio)}" class="header-link">${escapeHtml(basics.portfolio.replace(/^https?:\/\/(www\.)?/, ""))}</a>`);
-    if (basics?.location) metaItems.push(escapeHtml(basics.location));
+    if (basics?.phone) metaItems.push(`<div class="meta-item">${ICONS.phone} ${escapeHtml(basics.phone)}</div>`);
+    if (basics?.email) metaItems.push(`<div class="meta-item">${ICONS.mail} <a href="mailto:${escapeHtml(basics.email)}">${escapeHtml(basics.email)}</a></div>`);
+    if (basics?.linkedin) metaItems.push(`<div class="meta-item">${ICONS.linkedin} <a href="${ensureAbsoluteUrl(basics.linkedin)}">${escapeHtml(basics.linkedin.replace(/^https?:\/\/(www\.)?linkedin\.com\/in\//, ""))}</a></div>`);
+    if (basics?.portfolio) metaItems.push(`<div class="meta-item">${ICONS.globe} <a href="${ensureAbsoluteUrl(basics.portfolio)}">${escapeHtml(basics.portfolio.replace(/^https?:\/\/(www\.)?/, ""))}</a></div>`);
+    if (basics?.location) metaItems.push(`<div class="meta-item">${ICONS.map} ${escapeHtml(basics.location)}</div>`);
 
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${escapeHtml(basics?.name || "Resume")} - Resume</title>
     <link rel="stylesheet" href="${fontConfig.url}">
     <style>
-        @page {
-            size: A4;
-            margin: 0;
-        }
+        @page { size: A4; margin: 0; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: '${fontConfig.name}', serif;
-            font-size: 11pt;
-            line-height: 1.45;
-            color: #1a1a1a;
-            width: 210mm;
-            min-height: 297mm;
-            margin: 0 auto;
-            padding: 15mm 15mm;
+            font-family: '${fontConfig.name}', ${template === 'minimal' ? 'sans-serif' : 'serif'};
+            font-size: 10pt;
+            line-height: 1.4;
+            color: #1f2937;
+            padding: 15mm 20mm;
             background: white;
+            -webkit-font-smoothing: antialiased;
+        }
+        a { color: inherit; text-decoration: none; }
+        
+        .header { margin-bottom: 24px; }
+        .header h1 { 
+            font-size: 24pt; 
+            font-weight: 700; 
+            color: #111827; 
+            margin-bottom: 6px; 
+            letter-spacing: -0.03em;
+            line-height: 1;
+        }
+        .header-meta { 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 12px; 
+            font-size: 8.5pt; 
+            color: #4b5563;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+        }
+        .meta-item { display: flex; align-items: center; gap: 4px; }
+        .meta-item svg { flex-shrink: 0; }
+        
+        .section { margin-top: 18px; }
+        .section-title { 
+            font-size: 10pt; 
+            font-weight: 700; 
+            text-transform: uppercase; 
+            border-bottom: 1pt solid #e5e7eb; 
+            padding-bottom: 4px; 
+            margin-bottom: 8px;
+            color: #111827;
+            letter-spacing: 0.05em;
+        }
+        
+        .item { margin-bottom: 12px; }
+        .item-header { display: flex; justify-content: space-between; align-items: baseline; }
+        .item-header.sub { margin-top: 1px; }
+        .item-title { font-size: 10.5pt; font-weight: 700; color: #111827; }
+        .item-sub { font-size: 10pt; font-weight: 600; color: #374151; }
+        .item-sub.italic { font-style: italic; font-weight: 500; color: #6b7280; }
+        .item-date { font-size: 9pt; color: #6b7280; font-weight: 500; }
+        
+        .item-list { list-style: none; margin-top: 4px; padding-left: 4px; }
+        .item-list li { 
+            font-size: 9.5pt; 
+            color: #4b5563; 
+            margin-bottom: 3px; 
             position: relative;
+            padding-left: 12px;
+            line-height: 1.4;
         }
-        .header { text-align: center; margin-bottom: 8px; }
-        .header h1 { font-size: 20pt; font-weight: 700; letter-spacing: 0.01em; line-height: 1.2; }
-        .header-meta { font-size: 10pt; color: #333; margin-top: 4px; }
-        .header-link, .external-link { color: inherit; text-decoration: none; }
-        .header-link:hover, .external-link:hover { text-decoration: underline; }
-        .section { margin-bottom: 8px; }
-        .section-title { font-size: 12pt; font-weight: 700; text-transform: uppercase; border-bottom: 1.5px solid #000; padding-bottom: 1px; margin-bottom: 6px; margin-top: 8px; }
-        .exp-item, .proj-item, .edu-item { margin-bottom: 8px; }
-        .exp-header { display: flex; justify-content: space-between; align-items: baseline; }
-        .exp-role { font-size: 11pt; font-weight: 700; }
-        .exp-company { font-size: 10pt; font-weight: 500; color: #333; }
-        .exp-period { font-size: 10pt; color: #444; }
-        .exp-bullet { font-size: 10pt; color: #333; margin-left: 20px; list-style: disc; margin-bottom: 1px; }
-        .proj-header { display: flex; justify-content: space-between; align-items: baseline; }
-        .proj-title { font-size: 11pt; font-weight: 700; }
-        .proj-tech { font-size: 10pt; font-weight: 500; color: #555; }
-        .proj-tech a { color: #000; font-weight: 700; text-decoration: none; }
-        .edu-school { font-size: 11pt; font-weight: 700; }
-        .edu-degree { font-size: 10pt; font-weight: 500; color: #333; }
-        .edu-period { font-size: 10pt; color: #444; }
-        ul { padding-left: 0; }
-        @media print {
-            body {
-                width: 210mm;
-                height: 297mm;
-                padding: 15mm 15mm;
-                margin: 0;
-            }
+        .item-list li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #9ca3af;
         }
+        
+        .skills-text { font-size: 9.5pt; margin-bottom: 4px; color: #4b5563; }
+        .skills-text strong { font-weight: 700; color: #111827; }
+
+        ${template === 'minimal' ? `
+            body { font-family: 'Inter', sans-serif; }
+            .section-title { border-bottom: none; color: #3b82f6; font-size: 9pt; }
+            .item-title { color: #1e40af; }
+        ` : ''}
+
+        ${template === 'professional' ? `
+            .header h1 { text-transform: uppercase; letter-spacing: 0.02em; }
+            .section-title { background: #f3f4f6; border: none; padding: 4px 8px; border-radius: 2px; }
+        ` : ''}
     </style>
 </head>
 <body>
@@ -182,17 +217,18 @@ export function generateResumeHtml(data: ResumeData, _template: string, fontFami
             ${metaItems.join(" · ")}
         </div>
     </div>
-    ${education.length > 0 ? `<div class="section"><h2 class="section-title">Education</h2>${educationHtml}</div>` : ""}
-    ${skillsHtml ? `<div class="section"><h2 class="section-title">Skills</h2>${skillsHtml}</div>` : ""}
-    ${projects.length > 0 ? `<div class="section"><h2 class="section-title">Projects</h2>${projectsHtml}</div>` : ""}
+
     ${experience.length > 0 ? `<div class="section"><h2 class="section-title">Experience</h2>${experienceHtml}</div>` : ""}
-    ${certsHtml ? `<div class="section"><h2 class="section-title">Certifications & Achievements</h2>${certsHtml}</div>` : ""}
+    ${projects.length > 0 ? `<div class="section"><h2 class="section-title">Projects</h2>${projectsHtml}</div>` : ""}
+    ${skillsHtml ? `<div class="section"><h2 class="section-title">Skills & Expertise</h2>${skillsHtml}</div>` : ""}
+    ${education.length > 0 ? `<div class="section"><h2 class="section-title">Education</h2>${educationHtml}</div>` : ""}
+    ${certifications.length > 0 ? `<div class="section"><h2 class="section-title">Certifications</h2>${certifications.map(c => `<p class="skills-text">${escapeHtml(typeof c === 'string' ? c : c.items || "")}</p>`).join("")}</div>` : ""}
 </body>
 </html>`;
 }
 
 function escapeHtml(str: string): string {
-    return str
+    return (str || "")
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")

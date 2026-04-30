@@ -1,9 +1,9 @@
-import { WithContext, Thing } from 'schema-dts';
+import { Thing } from 'schema-dts';
 
 export function JsonLd({ schema }: { schema: Thing }) {
   const schemaWithContext = {
     '@context': 'https://schema.org',
-    ...(schema as Record<string, any>),
+    ...(schema as Record<string, unknown>),
   };
   return (
     <script

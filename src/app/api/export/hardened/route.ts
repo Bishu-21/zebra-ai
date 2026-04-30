@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { generateResumeHtml } from "@/lib/resume-renderer";
+import { handleApiError } from "@/lib/api-error";
 
 /**
  * HARDENED EXPORT API — Server-Side PDF Generation Gate
@@ -21,7 +22,6 @@ import { generateResumeHtml } from "@/lib/resume-renderer";
 
 // Template tier definitions
 const PREMIUM_TEMPLATES = ["executive", "advanced-pro", "fortune500"];
-const FREE_TEMPLATES = ["modern", "minimal"];
 
 export async function POST(req: NextRequest) {
     try {
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
         }
 
         const { resumeData, template = "modern" } = await req.json();
-        const user = session.user as any;
+        const user = session.user as unknown as { plan?: string };
         const userPlan = user.plan || "Free";
 
         // PAYWALL GATE: Premium templates require paid plan
@@ -60,8 +60,7 @@ export async function POST(req: NextRequest) {
             template,
             exportedAt: new Date().toISOString(),
         });
-    } catch (error: any) {
-        console.error("Export failed:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error: unknown) {
+        return handleApiError(error, "POST /api/export/hardened");
     }
 }

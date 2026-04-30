@@ -66,9 +66,9 @@ export function CreditTopUp() {
     }, []);
 
     const plans = [
-        { ...PLANS.starter, icon: <RiFlashlightLine size={20} className="text-black/40" /> },
-        { ...PLANS.pro, icon: <RiStarLine size={20} className="text-black/60" />, popular: true },
-        { ...PLANS.enterprise, icon: <RiShieldCheckLine size={24} className="text-black" /> },
+        { ...PLANS.starter, icon: <RiFlashlightLine size={20} className="text-[var(--muted-foreground)]/60" /> },
+        { ...PLANS.pro, icon: <RiStarLine size={20} className="text-[var(--muted-foreground)]/80" />, popular: true },
+        { ...PLANS.enterprise, icon: <RiShieldCheckLine size={24} className="text-[var(--foreground)]" /> },
     ];
 
     const handlePurchase = async (planId: string) => {
@@ -100,7 +100,7 @@ export function CreditTopUp() {
                     email: "",
                 },
                 theme: {
-                    color: "#000000",
+                    color: "#2563EB", // Primary blue token
                 },
                 handler: async function (response: RazorpayResponse) {
                     // 3. Verify Payment on Server
@@ -146,7 +146,7 @@ export function CreditTopUp() {
         <>
             <button 
                 onClick={() => setIsOpen(true)}
-                className="w-full bg-black hover:bg-black/80 text-white px-4 py-3 rounded-xl text-[0.7rem] font-bold uppercase tracking-widest transition-all shadow-xl shadow-black/10 active:scale-95 flex items-center justify-center gap-2"
+                className="w-full bg-[var(--secondary)] hover:bg-[var(--secondary)]/90 text-white px-4 py-3 rounded-[var(--radius-md)] text-[0.7rem] font-bold uppercase tracking-widest transition-all shadow-lg shadow-black/5 active:scale-95 flex items-center justify-center gap-2"
             >
                 <RiAddLine size={14} />
                 Provision
@@ -155,65 +155,65 @@ export function CreditTopUp() {
             {isOpen && mounted && createPortal(
                 <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-10">
                     <div 
-                        className="absolute inset-0 bg-black/60 backdrop-blur-md animate-in fade-in duration-300" 
+                        className="absolute inset-0 bg-black/40 backdrop-blur-md animate-in fade-in duration-300" 
                         onClick={() => !loading && setIsOpen(false)}
                     />
-                    <div className="relative bg-white/95 backdrop-blur-3xl w-full max-w-3xl rounded-3xl shadow-2xl border border-white/50 overflow-hidden animate-in fade-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
+                    <div className="relative bg-[var(--background)] w-full max-w-3xl rounded-[var(--radius-xl)] shadow-2xl border border-[var(--border-subtle)] overflow-hidden animate-in fade-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
                         
                         {/* Header */}
-                        <div className="p-10 border-b border-black/5 flex items-center justify-between bg-white/40 backdrop-blur-xl">
+                        <div className="p-10 border-b border-[var(--border-subtle)] flex items-center justify-between bg-[var(--background)]/40 backdrop-blur-xl">
                             <div className="flex items-center gap-6">
-                                <div className="w-14 h-14 bg-black rounded-2xl flex items-center justify-center text-white shadow-xl shadow-black/10">
+                                <div className="w-14 h-14 bg-[var(--secondary)] rounded-[var(--radius-md)] flex items-center justify-center text-white shadow-lg shadow-black/10">
                                     <RiFlashlightLine size={28} />
                                 </div>
                                 <div className="flex flex-col">
-                                    <h2 className="text-2xl font-bold text-black tracking-tight">Intelligence Allocation</h2>
-                                    <p className="text-[0.75rem] font-medium text-black/40 tracking-tight">Provision additional units to scale your professional narrative.</p>
+                                    <h2 className="text-2xl font-bold text-[var(--foreground)] tracking-tight">Intelligence Allocation</h2>
+                                    <p className="text-[0.75rem] font-medium text-[var(--muted-foreground)] tracking-tight">Provision additional units to scale your professional narrative.</p>
                                 </div>
                             </div>
-                            <button onClick={() => setIsOpen(false)} className="w-12 h-12 bg-black/5 rounded-full flex items-center justify-center text-black/30 hover:text-black hover:bg-black group transition-all">
+                            <button onClick={() => setIsOpen(false)} className="w-12 h-12 bg-[var(--muted)] rounded-full flex items-center justify-center text-[var(--muted-foreground)] hover:text-[var(--secondary)] hover:bg-[var(--foreground)] group transition-all">
                                 <RiCloseCircleLine size={24} className="group-hover:scale-110 transition-transform" />
                             </button>
                         </div>
 
                         <div className="p-8 md:p-10 overflow-y-auto no-scrollbar">
                             {success ? (
-                                <div className="flex flex-col items-center justify-center py-16 animate-in fade-in slide-in-from-bottom-8">
-                                    <div className="w-20 h-20 bg-black text-white rounded-2xl flex items-center justify-center mb-6 shadow-xl">
+                                <div className="flex flex-col items-center justify-center py-16 animate-in fade-in slide-in-from-bottom-8 text-center">
+                                    <div className="w-20 h-20 bg-[var(--foreground)] text-[var(--background)] rounded-[var(--radius-lg)] flex items-center justify-center mb-6 shadow-xl">
                                         <RiCheckboxCircleLine size={40} />
                                     </div>
-                                    <h3 className="text-xl font-bold text-black mb-2 tracking-tight">Credits Provisioned</h3>
-                                    <p className="text-black/40 font-medium">Your account state is being updated.</p>
+                                    <h3 className="text-xl font-bold text-[var(--foreground)] mb-2 tracking-tight">Credits Provisioned</h3>
+                                    <p className="text-[var(--muted-foreground)] font-medium">Your account state is being updated.</p>
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    {plans.map((p: any) => (
+                                    {plans.map((p: { id: string; name: string; credits: number; displayPrice: string; icon: React.ReactNode; popular?: boolean }) => (
                                         <div 
                                             key={p.id}
-                                            className={`relative p-8 rounded-3xl border transition-all group flex flex-col items-center text-center ${p.popular ? 'border-black/20 bg-black/[0.02] shadow-md' : 'border-black/5 bg-white/40 hover:bg-white/60 hover:shadow-sm'}`}
+                                            className={`relative p-8 rounded-[var(--radius-lg)] border transition-all group flex flex-col items-center text-center ${p.popular ? 'border-[var(--primary)]/20 bg-[var(--primary)]/[0.03] shadow-md' : 'border-[var(--border-subtle)] bg-[var(--background)]/40 hover:bg-[var(--background)]/60 hover:shadow-sm'}`}
                                         >
                                             {p.popular && (
-                                                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-black text-white text-[0.5rem] font-bold uppercase tracking-[0.25em] px-4 py-1.5 rounded-full shadow-lg z-10 whitespace-nowrap">
+                                                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[var(--primary)] text-white text-[0.5rem] font-bold uppercase tracking-[0.25em] px-4 py-1.5 rounded-full shadow-lg z-10 whitespace-nowrap">
                                                     Optimal Capacity
                                                 </div>
                                             )}
-                                            <div className="mb-6 bg-white rounded-2xl w-14 h-14 flex items-center justify-center shadow-sm border border-black/5 group-hover:scale-110 transition-transform">
+                                            <div className="mb-6 bg-[var(--background)] rounded-[var(--radius-md)] w-14 h-14 flex items-center justify-center shadow-sm border border-[var(--border-subtle)] group-hover:scale-110 transition-transform">
                                                 {p.icon}
                                             </div>
-                                            <h4 className="font-bold text-black mb-2 tracking-tight text-[0.65rem] uppercase tracking-[0.2em]">{p.name}</h4>
+                                            <h4 className="font-bold text-[var(--secondary)] mb-2 tracking-tight text-[0.65rem] uppercase tracking-[0.2em]">{p.name}</h4>
                                             <div className="mb-8">
                                                  <div className="flex flex-col items-center">
-                                                     <span className="text-4xl font-black text-black tracking-tighter">{p.displayPrice}</span>
-                                                     <div className="flex items-center gap-2 mt-2 px-3 py-1 bg-black/5 rounded-full">
-                                                        <div className="w-1.5 h-1.5 bg-black/40 rounded-full animate-pulse" />
-                                                        <p className="text-[0.6rem] text-black/50 font-bold uppercase tracking-widest">{p.credits} Intelligence Units</p>
+                                                     <span className="text-4xl font-black text-[var(--foreground)] tracking-tighter">{p.displayPrice}</span>
+                                                     <div className="flex items-center gap-2 mt-2 px-3 py-1 bg-[var(--muted)] rounded-full">
+                                                        <div className="w-1.5 h-1.5 bg-[var(--primary)]/40 rounded-full animate-pulse" />
+                                                        <p className="text-[0.6rem] text-[var(--muted-foreground)] font-bold uppercase tracking-widest">{p.credits} Intelligence Units</p>
                                                     </div>
                                                 </div>
                                             </div>
                                             <button 
                                                 disabled={loading}
                                                 onClick={() => handlePurchase(p.id)}
-                                                className={`w-full py-4 rounded-xl text-[0.65rem] font-bold uppercase tracking-widest transition-all ${p.popular ? 'bg-black text-white hover:bg-black/90 shadow-xl shadow-black/20' : 'bg-black/5 text-black hover:bg-black/10'} disabled:opacity-50 active:scale-95`}
+                                                className={`w-full py-4 rounded-[var(--radius-md)] text-[0.65rem] font-bold uppercase tracking-widest transition-all ${p.popular ? 'bg-[var(--primary)] text-white hover:bg-[var(--primary)]/90 shadow-lg shadow-[var(--primary)]/10' : 'bg-[var(--muted)] text-[var(--secondary)] hover:bg-[var(--muted)]/80'} disabled:opacity-50 active:scale-95`}
                                             >
                                                 {loading ? "Allocating..." : "Provision"}
                                             </button>
@@ -223,9 +223,9 @@ export function CreditTopUp() {
                             )}
                         </div>
 
-                        <div className="p-8 bg-black/[0.02] border-t border-black/5 flex items-center justify-center gap-2">
-                             <div className="w-1.5 h-1.5 bg-black/10 rounded-full" />
-                             <p className="text-[0.6rem] text-black/20 font-bold uppercase tracking-[0.4em]">Terminal: Secure Provisioning Layer</p>
+                        <div className="p-8 bg-[var(--muted)]/30 border-t border-[var(--border-subtle)] flex items-center justify-center gap-2">
+                             <div className="w-1.5 h-1.5 bg-[var(--muted-foreground)]/20 rounded-full" />
+                             <p className="text-[0.6rem] text-[var(--muted-foreground)]/60 font-bold uppercase tracking-[0.4em]">Terminal: Secure Provisioning Layer</p>
                         </div>
                     </div>
                 </div>,

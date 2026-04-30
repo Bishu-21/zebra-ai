@@ -7,6 +7,7 @@ import { NavAuth } from "@/components/auth/NavAuth";
 import type { WebSite, WithContext } from "schema-dts";
 import Link from "next/link";
 import { Suspense } from "react";
+import Image from "next/image";
 
 export default function Home() {
   const websiteSchema: WithContext<WebSite> = {
@@ -26,7 +27,13 @@ export default function Home() {
       <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-[12px] border-b-[1px] border-border-subtle">
         <div className="max-w-[1400px] mx-auto px-6 h-20 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
-            <img src="/zebra_star.png" alt="Zebra AI" className="w-8 h-8 object-contain group-hover:rotate-12 transition-transform duration-300" />
+            <Image 
+                src="/zebra_star.png" 
+                alt="Zebra AI" 
+                width={32} 
+                height={32} 
+                className="w-8 h-8 object-contain group-hover:rotate-12 transition-transform duration-300" 
+            />
             <span className="text-[1.25rem] font-bold tracking-[-0.05em] text-foreground">Zebra AI</span>
           </Link>
           <div className="hidden md:flex items-center gap-10">
@@ -56,11 +63,17 @@ export default function Home() {
         <div className="flex flex-col md:flex-row justify-between items-center px-12 py-16 gap-12 max-w-7xl mx-auto">
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <img src="/zebra_star.png" alt="Zebra AI" className="w-10 h-10 object-contain" />
+              <Image 
+                src="/zebra_star.png" 
+                alt="Zebra AI" 
+                width={40} 
+                height={40} 
+                className="w-10 h-10 object-contain" 
+              />
               <div className="text-2xl font-bold tracking-tighter text-foreground">Zebra AI</div>
             </div>
             <p className="text-accent-dark font-medium text-sm max-w-xs leading-relaxed">
-              Advancing the integrity of human career metadata through surgical precision AI.
+              Advancing the integrity of human career metadata through precision-engineered AI.
             </p>
             <p className="text-accent-gray text-xs font-bold uppercase tracking-widest pt-2">© 2026 Zebra. All rights reserved.</p>
           </div>

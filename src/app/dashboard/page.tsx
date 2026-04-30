@@ -2,28 +2,19 @@ import React from "react";
 import { 
     RiFileTextLine, 
     RiAddLine, 
-    RiUploadCloud2Line, 
-    RiBriefcase4Line, 
-    RiBarChartGroupedLine, 
     RiFlashlightLine, 
-    RiInformationLine,
-    RiMagicLine,
-    RiArrowDropDownLine,
-    RiLoader4Line,
-    RiArrowRightLine,
-    RiFocus3Line,
-    RiTimer2Line,
-    RiArrowRightSLine,
-    RiCheckboxCircleLine,
-    RiRadarLine,
+    RiArrowRightSLine, 
+    RiCheckboxCircleLine, 
+    RiRadarLine, 
     RiArticleLine
 } from "react-icons/ri";
 import Link from "next/link";
 import { AnalyzeResume } from "@/components/dashboard/AnalyzeResume";
-import { TailorResume } from "@/components/dashboard/TailorResume";
+import { TailorResume, type Resume } from "@/components/dashboard/TailorResume";
 import { ImportResume } from "@/components/dashboard/ImportResume";
-import { InsightsFeed } from "@/components/dashboard/InsightsFeed";
+import { InsightsFeed, type TailoringData } from "@/components/dashboard/InsightsFeed";
 import { ResumeVault } from "@/components/dashboard/ResumeVault";
+import { ProjectAnalyzerCard } from "@/components/dashboard/ProjectAnalyzerCard";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/lib/db";
@@ -31,19 +22,14 @@ import {
     user as userTable,
     resumes as resumesTable, 
     analysis as analysisTable, 
-    atsOptimisations as atsOptimisationsTable 
+    atsOptimisations as atsOptimisationsTable,
+    projectAnalyses as projectAnalysesTable
 } from "@/lib/schema";
-import { eq, desc, count } from "drizzle-orm";
+import { eq, desc, count, inArray } from "drizzle-orm";
+import { ResumeAnalysisData } from "@/components/compiler/types";
+import { ProjectAnalysisData } from "@/components/dashboard/ProjectAnalysisResults";
 
-function formatTimeAgo(date: Date) {
-  const now = new Date();
-  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-  
-  if (diffInSeconds < 60) return "Just now";
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-  return `${Math.floor(diffInSeconds / 86400)}d ago`;
-}
+
 
 export default async function DashboardPage() {
   let session;
@@ -63,23 +49,40 @@ export default async function DashboardPage() {
 
   if (!session) return null;
 
+  // Fetch project analyses for feed
+  const projectResults = await db.query.projectAnalyses.findMany({
+      where: eq(projectAnalysesTable.userId, session.user.id),
+      orderBy: [desc(projectAnalysesTable.createdAt)],
+      limit: 10,
+  });
+
   // Fetch real resumes
   const userResumes = await db.query.resumes.findMany({
     where: eq(resumesTable.userId, session.user.id),
     orderBy: [desc(resumesTable.updatedAt)],
-    with: {
-        analyses: {
-            orderBy: [desc(analysisTable.createdAt)],
-            limit: 1,
-        }
-    }
   });
+
+  // Fetch resume IDs that have analyses to avoid complex lateral joins in findMany
+  // This resolves the "Failed query" runtime exception on the dashboard
+  const analysisStats = userResumes.length > 0 
+    ? await db.select({ resumeId: analysisTable.resumeId })
+        .from(analysisTable)
+        .where(
+            inArray(analysisTable.resumeId, userResumes.map(r => r.id))
+        )
+        .groupBy(analysisTable.resumeId)
+    : [];
+  
+  const resumesWithStatus = userResumes.map(r => ({
+      ...r,
+      analyses: analysisStats.some(a => a.resumeId === r.id) ? [true] : []
+  }));
 
   // Fetch all analyses for feed
   const allAnalyses = await db.query.analysis.findMany({
-      where: (analysis, { inArray }) => 
+      where: (analysis, { inArray: inArrayFn }) => 
         userResumes.length > 0 
-          ? inArray(analysis.resumeId, userResumes.map(r => r.id))
+          ? inArrayFn(analysis.resumeId, userResumes.map(r => r.id))
           : eq(analysis.id, "none"),
       orderBy: [desc(analysisTable.createdAt)],
       limit: 10,
@@ -115,8 +118,8 @@ export default async function DashboardPage() {
   type StatItem = {
     label: string;
     value?: number;
-    icon: any;
-    customValue?: any;
+    icon: React.ComponentType<{ size?: number; className?: string }>;
+    customValue?: number;
   };
 
   const stats: StatItem[] = [
@@ -126,33 +129,60 @@ export default async function DashboardPage() {
     { label: "AI Credits", icon: RiRadarLine, customValue: credits },
   ];
 
-  const vaultItems = userResumes.map(r => ({
+  const vaultItems = resumesWithStatus.map(r => ({
       id: r.id,
       title: r.title || "Untitled Resume",
       date: r.updatedAt,
       hasAnalysis: r.analyses.length > 0,
+      parentResumeId: r.parentResumeId,
+      targetRole: r.targetRole,
+      targetCompany: r.targetCompany,
   }));
+
 
   const intelligenceReports = [
       ...allAnalyses.map(a => ({
           id: a.id,
           type: "analysis" as const,
-          title: `Analysis: ${a.resume.title}`,
+          title: `Analysis: ${a.resume?.title || "Deleted Resume"}`,
           subtext: `${a.score > 80 ? 'Excellent' : 'Average'} Quality`,
           date: a.createdAt,
           score: a.score,
-          fullData: a.feedback,
+          fullData: (a.feedback || {}) as ResumeAnalysisData,
       })),
       ...atsResults.map(r => ({
           id: r.id,
           type: "tailoring" as const,
-          title: `Match: ${r.resume.title}`,
+          title: `Match: ${r.resume?.title || "Deleted Resume"}`,
           subtext: `Tailored for Job`,
           date: r.createdAt,
           score: r.matchScore,
-          fullData: r.feedback,
+          fullData: (r.feedback || {}) as TailoringData,
       })),
-  ].sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 10);
+      ...projectResults.map(p => {
+          let projectTitle = p.url;
+          try {
+              const urlObj = new URL(p.url);
+              projectTitle = `${urlObj.hostname}${urlObj.pathname}`;
+          } catch {
+              // fallback to raw url
+          }
+          
+          return {
+              id: p.id,
+              type: "project" as const,
+              title: `Project: ${projectTitle}`,
+              subtext: `Technical Proof Analysis`,
+              date: p.createdAt,
+              score: p.score,
+              fullData: { ...(p.data as ProjectAnalysisData), url: p.url },
+          };
+      }),
+  ].sort((a, b) => {
+      const timeA = new Date(a.date).getTime();
+      const timeB = new Date(b.date).getTime();
+      return timeB - timeA;
+  }).slice(0, 15);
 
   return (
     <div className="p-6 md:p-10 pb-32 max-w-[90rem] mx-auto overflow-x-hidden">
@@ -192,7 +222,7 @@ export default async function DashboardPage() {
       {/* Action Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
         <AnalyzeResume />
-        <TailorResume resumes={userResumes} />
+        <TailorResume resumes={resumesWithStatus as Resume[]} />
         <Link 
           href="/dashboard/resumes/new"
           className="group/card relative overflow-hidden flex flex-col justify-between h-full min-h-[220px] cursor-pointer transition-all p-10 bg-white border border-black/[0.04] rounded-[2.5rem] hover:shadow-2xl hover:shadow-black/[0.03] active:scale-[0.99]"
@@ -215,6 +245,7 @@ export default async function DashboardPage() {
           </div>
         </Link>
         <ImportResume />
+        <ProjectAnalyzerCard />
       </div>
 
       {/* Resume Vault Section */}

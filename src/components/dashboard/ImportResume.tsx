@@ -17,6 +17,17 @@ export function ImportResume() {
     const { showToast } = useToast();
     const router = useRouter();
 
+    const openImportedResume = (resumeId: string) => {
+        try {
+            router.push(`/dashboard/resumes/${resumeId}`);
+        } catch (err) {
+            const message = err instanceof Error ? err.message : "Could not open imported resume";
+            showToast(message, "error");
+            setIsUploading(false);
+            setUploadStep("");
+        }
+    };
+
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -50,7 +61,7 @@ export function ImportResume() {
             
             // Artificial delay for premium feel
             setTimeout(() => {
-                router.push(`/dashboard/resumes/${data.id}`);
+                openImportedResume(data.id);
             }, 800);
 
         } catch (err) {

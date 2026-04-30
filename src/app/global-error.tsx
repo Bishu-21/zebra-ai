@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 
-export default function GlobalError(props: any) {
+export default function GlobalError(props: { error: Error & { digest?: string }; unstable_retry: () => void }) {
     const { error, unstable_retry: unstable_retryAction } = props;
     useEffect(() => {
         // Log the error to an error reporting service

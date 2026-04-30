@@ -2,7 +2,7 @@ import React from "react";
 import { ResumeEditor } from "@/components/dashboard/ResumeEditor";
 import { db } from "@/lib/db";
 import { resumes as resumesTable } from "@/lib/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect, unstable_rethrow } from "next/navigation";
@@ -27,7 +27,7 @@ export default async function ResumeEditorPage({ params: paramsPromise }: { para
     if (params.id !== "new") {
         try {
             resume = await db.query.resumes.findFirst({
-                where: eq(resumesTable.id, params.id),
+                where: and(eq(resumesTable.id, params.id), eq(resumesTable.userId, session.user.id)),
             });
             if (!resume) redirect("/dashboard");
         } catch (error) {

@@ -66,7 +66,7 @@ export function Pricing() {
         name: "Zebra AI",
         description: `Upgrade to ${PLANS[planId].name}`,
         order_id: data.id,
-        handler: function (response: any) {
+        handler: function () {
           showToast("Payment successful! Credits added.");
           router.push("/dashboard");
         },
@@ -79,10 +79,10 @@ export function Pricing() {
         },
       };
 
-      const rzp = new (window as any).Razorpay(options);
+      const rzp = new (window as unknown as { Razorpay: new (opts: typeof options) => { open: () => void } }).Razorpay(options);
       rzp.open();
-    } catch (error: any) {
-      showToast(error.message, "error");
+    } catch (error: unknown) {
+      showToast(error instanceof Error ? error.message : "Payment failed", "error");
     } finally {
       setLoading(null);
     }
@@ -137,7 +137,7 @@ export function Pricing() {
             Premium Career Tools, <span className="text-primary">Localized</span>
           </h2>
           <p className="text-[#4A4A4A] text-[1.1rem] leading-relaxed">
-            We believe career growth shouldn't break the bank. Our pricing is tailored for the <span className="font-bold text-[#0A0A0A]">Indian job market</span>, starting at just the price of a coffee.
+            We believe career growth shouldn&apos;t break the bank. Our pricing is tailored for the <span className="font-bold text-[#0A0A0A]">Indian job market</span>, starting at just the price of a coffee.
           </p>
         </div>
 

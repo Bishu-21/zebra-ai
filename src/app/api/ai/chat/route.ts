@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
                     role: "model",
                     parts: [{ text: "Acknowledged. System ready for resume engineering. How can I help you optimize your signals today?" }],
                 },
-                ...(history || []).map((h: any) => ({
+                ...(history || []).map((h: { role: string; content: string }) => ({
                     role: h.role,
                     parts: [{ text: h.content }],
                 })),
@@ -50,8 +50,8 @@ export async function POST(req: NextRequest) {
         const response = result.response.text();
 
         return NextResponse.json({ response });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Chat API Error:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 500 });
     }
 }

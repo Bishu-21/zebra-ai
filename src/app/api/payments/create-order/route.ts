@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { razorpay } from "@/lib/razorpay";
 import { PLANS, PlanId } from "@/lib/constants/plans";
+import { db } from "@/lib/db";
+import { transactions as transactionsTable } from "@/lib/schema";
 import { headers } from "next/headers";
+import crypto from "crypto";
 
 export async function POST(req: NextRequest) {
     try {
@@ -21,7 +24,7 @@ export async function POST(req: NextRequest) {
         }
 
         const plan = PLANS[planId as PlanId];
-        const amountInPaise = plan.priceInINR * 100; // Razorpay expects amount in subunits (paise for INR)
+        const amountInPaise = plan.priceInINR * 100;
 
         const options = {
             amount: amountInPaise,
@@ -30,11 +33,23 @@ export async function POST(req: NextRequest) {
             notes: {
                 userId: session.user.id,
                 planId: plan.id,
-                credits: plan.credits,
             }
         };
 
         const order = await razorpay.orders.create(options);
+
+        // Save order to database as pending
+        await db.insert(transactionsTable).values({
+            id: crypto.randomUUID(),
+            orderId: order.id,
+            userId: session.user.id,
+            planId: plan.id,
+            amount: amountInPaise,
+            currency: "INR",
+            status: "pending",
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        });
 
         return NextResponse.json({
             id: order.id,
@@ -43,8 +58,8 @@ export async function POST(req: NextRequest) {
             key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Razorpay Order Creation Error:", error);
-        return NextResponse.json({ error: error.message || "Failed to initiate transaction" }, { status: 500 });
+        return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to initiate transaction" }, { status: 500 });
     }
 }
