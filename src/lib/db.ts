@@ -1,22 +1,27 @@
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
+import { drizzle } from "drizzle-orm/neon-serverless";
+import { Pool, neonConfig } from "@neondatabase/serverless";
 import * as schema from "./schema";
+import * as ws from 'ws';
+
+// Required for Neon serverless in some environments
+if (typeof window === 'undefined') {
+  neonConfig.webSocketConstructor = ws.default || ws;
+}
 
 const globalForDb = global as unknown as {
-  queryClient: postgres.Sql | undefined;
+  pool: Pool | undefined;
 };
 
-const queryClient = globalForDb.queryClient ?? postgres(process.env.DATABASE_URL!, {
-  max: 5, // Limit connections for serverless
-  idle_timeout: 20,
-  connect_timeout: 30,
-  ssl: "require",
+const pool = globalForDb.pool ?? new Pool({ 
+  connectionString: process.env.DATABASE_URL,
+});
+
+pool.on('error', (err: Error) => {
+  console.error('Neon Pool Error:', err);
 });
 
 if (process.env.NODE_ENV !== "production") {
-  globalForDb.queryClient = queryClient;
+  globalForDb.pool = pool;
 }
 
-export const db = drizzle(queryClient, { schema });
-
-
+export const db = drizzle(pool, { schema });

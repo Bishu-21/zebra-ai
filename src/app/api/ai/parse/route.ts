@@ -8,6 +8,8 @@ const model = genAI.getGenerativeModel({
   model: process.env.GEMINI_MODEL || "gemini-1.5-flash" 
 });
 
+import { parseSchema } from "@/lib/validation";
+
 export async function POST(req: NextRequest) {
   try {
     const session = await auth.api.getSession({
@@ -18,11 +20,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { text } = await req.json();
+    const body = await req.json();
+    const validation = parseSchema.safeParse(body);
 
-    if (!text) {
-      return NextResponse.json({ error: "No text provided" }, { status: 400 });
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error.issues[0].message }, { status: 400 });
     }
+
+    const { text } = validation.data;
 
     const prompt = `
       SYSTEM: You are a high-precision Resume Parsing Engine. Your task is to take unstructured raw text from a resume and convert it into a strictly structured JSON format following the schema provided.
@@ -114,8 +119,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(parsedData);
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("AI Parsing Error:", error);
-    return NextResponse.json({ error: error.message || "Failed to parse resume" }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to parse resume" }, { status: 500 });
   }
 }

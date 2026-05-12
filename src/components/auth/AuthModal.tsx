@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { m, AnimatePresence } from "framer-motion";
 import { signIn, signUp } from "@/lib/auth-client";
+import Image from "next/image";
 
 export function AuthModal() {
   const [isOpen, setIsOpen] = useState(false);
@@ -118,7 +119,13 @@ export function AuthModal() {
             {/* Content Header */}
             <div className="mb-10 mt-2">
               <div className="flex items-center gap-2 mb-1">
-                <img src="/zebra_star.png" alt="Zebra" className="w-6 h-6 object-contain" />
+                <Image 
+                    src="/zebra_star.png" 
+                    alt="Zebra" 
+                    width={24} 
+                    height={24} 
+                    className="w-6 h-6 object-contain" 
+                />
                 <span className="text-[0.65rem] font-black uppercase tracking-[0.25em] text-accent-gray">Access Terminal</span>
               </div>
               <h2 className="text-3xl font-bold tracking-tighter text-foreground">

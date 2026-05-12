@@ -4,12 +4,10 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 
 interface Settings {
     fontSize: string;
-    interfaceLanguage: string;
     spellcheck: boolean;
     lineWrapping: boolean;
     compactView: boolean;
     autoSave: boolean;
-    pdfTheme: "light" | "dark";
     resumeFont: string;
     previewScale: number | "auto";
 }
@@ -21,12 +19,10 @@ interface SettingsContextType {
 
 const defaultSettings: Settings = {
     fontSize: "14px",
-    interfaceLanguage: "English (US)",
     spellcheck: true,
     lineWrapping: true,
     compactView: false,
     autoSave: true,
-    pdfTheme: "light",
     resumeFont: "Latin Modern Roman",
     previewScale: "auto",
 };
@@ -45,12 +41,10 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
                 // Migration logic for old settings keys if necessary
                 const migrated: Settings = {
                     fontSize: parsed.fontSize || defaultSettings.fontSize,
-                    interfaceLanguage: parsed.interfaceLanguage || defaultSettings.interfaceLanguage,
                     spellcheck: parsed.spellcheck !== undefined ? parsed.spellcheck : defaultSettings.spellcheck,
                     lineWrapping: parsed.lineWrapping !== undefined ? parsed.lineWrapping : (parsed.wordWrap !== undefined ? parsed.wordWrap : defaultSettings.lineWrapping),
                     compactView: parsed.compactView !== undefined ? parsed.compactView : (parsed.realtimeCompilation !== undefined ? !parsed.realtimeCompilation : defaultSettings.compactView),
                     autoSave: parsed.autoSave !== undefined ? parsed.autoSave : (parsed.autoFormatting !== undefined ? parsed.autoFormatting : defaultSettings.autoSave),
-                    pdfTheme: parsed.pdfTheme || (parsed.equationHover ? "dark" : "light") || defaultSettings.pdfTheme,
                     resumeFont: parsed.resumeFont || defaultSettings.resumeFont,
                     previewScale: parsed.previewScale || defaultSettings.previewScale,
                 };

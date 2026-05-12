@@ -7,6 +7,7 @@ import { CreditTopUp } from "./CreditTopUp";
 import Link from "next/link";
 import { signOut } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 // --- INLINED SIDEBAR ICONS (Performance & Hydration Safe) ---
 const SidebarIcon = ({ children }: { children: React.ReactNode }) => (
@@ -83,7 +84,7 @@ export function Sidebar({ plan, credits, userName, userImage, onOpenSettingsActi
             {!isOpen && (
                 <button 
                     onClick={toggleSidebar}
-                    className="lg:hidden fixed top-5 left-6 z-[70] w-10 h-10 bg-white/80 backdrop-blur-md border border-[#F5F5F5] rounded-xl flex items-center justify-center text-[#171717] shadow-sm hover:bg-white transition-colors"
+                    className="lg:hidden fixed top-5 left-6 z-[70] w-10 h-10 bg-background/80 backdrop-blur-md border border-border-subtle rounded-xl flex items-center justify-center text-foreground shadow-sm hover:bg-background transition-colors"
                     aria-label="Open Menu"
                 >
                     <MenuIcon />
@@ -97,7 +98,7 @@ export function Sidebar({ plan, credits, userName, userImage, onOpenSettingsActi
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-md z-[60]"
+                        className="lg:hidden fixed inset-0 bg-black/40 backdrop-blur-md z-[60]"
                         onClick={() => setIsOpen(false)}
                     />
                 )}
@@ -109,7 +110,7 @@ export function Sidebar({ plan, credits, userName, userImage, onOpenSettingsActi
                 animate={{ 
                     x: isMobile ? (isOpen ? 0 : "-100%") : 0,
                 }}
-                className="fixed lg:sticky top-0 left-0 h-screen w-[280px] bg-[#FAFAFA] border-r border-[#F5F5F5] flex flex-col z-[70] overflow-hidden shadow-2xl lg:shadow-none"
+                className="fixed lg:sticky top-0 left-0 h-screen w-[280px] bg-background border-r border-border-subtle flex flex-col z-[70] overflow-hidden shadow-2xl lg:shadow-none"
                 transition={{ type: "spring", damping: 30, stiffness: 300 }}
             >
                 <div className="pt-10 px-8 flex flex-col h-full">
@@ -120,6 +121,8 @@ export function Sidebar({ plan, credits, userName, userImage, onOpenSettingsActi
                                 <img 
                                     src="/zebra_star.svg" 
                                     alt="Zebra AI" 
+                                    width={64}
+                                    height={64}
                                     className="w-16 h-16 object-contain relative z-10 group-hover:scale-110 group-hover:rotate-[5deg] transition-all duration-500 ease-out"
                                 />
                             </div>
@@ -132,7 +135,7 @@ export function Sidebar({ plan, credits, userName, userImage, onOpenSettingsActi
                         {isMobile && (
                             <button 
                                 onClick={() => setIsOpen(false)}
-                                className="absolute -top-2 -right-4 w-10 h-10 bg-black/5 rounded-xl flex items-center justify-center text-[#171717]/40 hover:text-[#171717] hover:bg-black/10 transition-all"
+                                className="absolute -top-2 -right-4 w-10 h-10 bg-border-subtle rounded-[var(--radius-md)] flex items-center justify-center text-secondary/40 hover:text-secondary hover:bg-muted transition-all"
                             >
                                 <CloseIcon />
                             </button>
@@ -140,7 +143,7 @@ export function Sidebar({ plan, credits, userName, userImage, onOpenSettingsActi
                     </div>
 
                     <div className="space-y-1 flex-grow overflow-y-auto custom-scrollbar pr-1">
-                        <p className="text-[0.6rem] font-bold tracking-[0.2em] uppercase text-[#A3A3A3] mb-4 ml-4">Navigation</p>
+                        <p className="text-[0.6rem] font-bold tracking-[0.2em] uppercase text-muted-foreground mb-4 ml-4 opacity-60">Navigation</p>
                         
                         <div className="space-y-1">
                             <DashboardLink href="/dashboard" icon={<HomeIcon />}>
@@ -157,7 +160,7 @@ export function Sidebar({ plan, credits, userName, userImage, onOpenSettingsActi
                             </DashboardLink>
                              <button 
                                 onClick={onOpenSettingsAction}
-                                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all hover:bg-black/5 text-[#737373] hover:text-[#171717] font-bold text-sm group"
+                                className="w-full flex items-center gap-3 px-4 py-3 rounded-[var(--radius-md)] transition-all hover:bg-muted text-muted-foreground hover:text-secondary font-bold text-sm group"
                             >
                                 <SettingsIcon />
                                 <span>Settings</span>
@@ -170,7 +173,7 @@ export function Sidebar({ plan, credits, userName, userImage, onOpenSettingsActi
                                 <div className="absolute top-0 right-0 w-16 h-16 bg-primary/5 rounded-bl-[2rem] -mr-4 -mt-4 transition-transform group-hover/card:scale-110" />
                                 <div className="flex items-center justify-between mb-4">
                                     <div className="flex flex-col">
-                                        <span className="text-[0.6rem] font-bold text-[#A3A3A3] uppercase tracking-[0.1em] mb-1">Tier</span>
+                                        <span className="text-[0.6rem] font-bold text-muted-foreground uppercase tracking-[0.1em] mb-1">Tier</span>
                                         <div className="flex items-center gap-1.5">
                                             <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse shadow-[0_0_8px_primary]" />
                                             <span className="text-xs font-black text-[#171717] tracking-tight">{plan} Plan</span>
@@ -181,7 +184,7 @@ export function Sidebar({ plan, credits, userName, userImage, onOpenSettingsActi
                                         <span className="text-[0.55rem] font-black text-[#A3A3A3] uppercase tracking-[0.1em]">Credits</span>
                                     </div>
                                 </div>
-                                <div className="w-full bg-[#F5F5F5] h-1.5 rounded-full overflow-hidden mb-5">
+                                <div className="w-full bg-muted h-1.5 rounded-full overflow-hidden mb-5">
                                      <m.div 
                                         className="bg-primary h-full" 
                                         initial={{ width: 0 }}
@@ -195,7 +198,7 @@ export function Sidebar({ plan, credits, userName, userImage, onOpenSettingsActi
                     </div>
 
                     {/* Bottom Section: Integrated Profile & Logout */}
-                    <div className="pt-6 pb-8 mt-auto border-t border-[#F5F5F5]">
+                    <div className="pt-6 pb-8 mt-auto border-t border-border-subtle">
                         <div 
                             onClick={onOpenProfileAction}
                             className="group flex items-center gap-3 p-2 pr-4 rounded-2xl bg-white border border-[#F5F5F5] hover:border-primary/20 hover:shadow-lg hover:shadow-black/5 transition-all cursor-pointer"
@@ -203,7 +206,14 @@ export function Sidebar({ plan, credits, userName, userImage, onOpenSettingsActi
                             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-indigo-600 p-0.5 shadow-md group-hover:scale-105 transition-transform">
                                 <div className="w-full h-full rounded-[0.55rem] bg-white overflow-hidden flex items-center justify-center">
                                     {userImage ? (
-                                        <img src={userImage} alt={userName} className="w-full h-full object-cover" />
+                                        <Image 
+                                            src={userImage} 
+                                            alt={userName} 
+                                            width={40} 
+                                            height={40} 
+                                            className="w-full h-full object-cover" 
+                                            unoptimized
+                                        />
                                     ) : (
                                         <span className="text-xs font-black text-primary">{userName.charAt(0).toUpperCase()}</span>
                                     )}
@@ -211,13 +221,13 @@ export function Sidebar({ plan, credits, userName, userImage, onOpenSettingsActi
                             </div>
                             
                             <div className="flex-grow min-w-0">
-                                <p className="text-[0.7rem] font-black text-[#171717] truncate tracking-tight">{userName}</p>
-                                <p className="text-[0.55rem] font-bold text-[#A3A3A3] uppercase tracking-widest">{plan} Member</p>
+                                <p className="text-[0.7rem] font-black text-secondary truncate tracking-tight">{userName}</p>
+                                <p className="text-[0.55rem] font-bold text-muted-foreground uppercase tracking-widest">{plan} Member</p>
                             </div>
 
                             <button 
                                 onClick={handleSignOut}
-                                className="w-8 h-8 rounded-lg bg-[#FAFAFA] flex items-center justify-center text-[#D4D4D4] hover:text-red-500 hover:bg-red-50 transition-all shadow-sm active:scale-95"
+                                className="w-8 h-8 rounded-lg bg-background flex items-center justify-center text-muted-foreground/30 hover:text-red-500 hover:bg-red-500/10 transition-all shadow-sm active:scale-95"
                                 title="Sign Out"
                             >
                                 <LogoutIcon />

@@ -15,9 +15,14 @@ import {
 } from "react-icons/ri";
 
 export default async function AnalyticsPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  let session = null;
+  try {
+    session = await auth.api.getSession({
+      headers: await headers(),
+    });
+  } catch (e) {
+    console.error("Session fetch failed in analytics:", e);
+  }
 
   if (!session) return null;
 
@@ -143,7 +148,7 @@ export default async function AnalyticsPage() {
             
             <h4 className="text-xl font-black tracking-tight mb-8">Recent Activity</h4>
             <div className="space-y-6 flex-grow">
-                {userJobs.length > 0 ? userJobs.map((job, i) => (
+                {userJobs.length > 0 ? userJobs.map((job) => (
                     <div key={job.id} className="flex gap-4 items-start group">
                         <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0 group-hover:bg-[#3B82F6] transition-colors">
                             <RiFlashlightLine size={14} />

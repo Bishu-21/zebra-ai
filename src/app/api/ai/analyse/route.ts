@@ -3,8 +3,9 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { user as userTable, resumes as resumesTable, analysis as analysisTable } from "@/lib/schema";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, and } from "drizzle-orm";
 import { headers } from "next/headers";
+import { handleApiError } from "@/lib/api-error";
 import crypto from "crypto";
 
 // Initialize Gemini
@@ -12,6 +13,8 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 const model = genAI.getGenerativeModel({ 
   model: process.env.GEMINI_MODEL || "gemma-4-31b-it" 
 });
+
+import { analyseSchema } from "@/lib/validation";
 
 export async function POST(req: NextRequest) {
   try {
@@ -23,9 +26,28 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { resumeId, content, title } = await req.json();
+    const body = await req.json();
+    const validation = analyseSchema.safeParse(body);
 
-    if (!content) {
+    if (!validation.success) {
+        return NextResponse.json({ error: validation.error.issues[0].message }, { status: 400 });
+    }
+
+    const { resumeId } = validation.data;
+    const { content, title } = body; // content and title might be optional if resumeId exists, but we need to check if content is provided either via resume or body
+
+    // 1. Get Content: If resumeId provided, fetch it. Otherwise use content from body.
+    let finalContent = content;
+    
+    if (resumeId) {
+        const resume = await db.query.resumes.findFirst({
+            where: and(eq(resumesTable.id, resumeId), eq(resumesTable.userId, session.user.id))
+        });
+        if (!resume) return NextResponse.json({ error: "Resume not found" }, { status: 404 });
+        finalContent = resume.content;
+    }
+
+    if (!finalContent) {
       return NextResponse.json({ error: "Resume content is required" }, { status: 400 });
     }
 
@@ -61,7 +83,7 @@ export async function POST(req: NextRequest) {
 
       RESUME CONTENT:
       """
-      ${content}
+      ${finalContent}
       """
 
       ANALYSIS GUIDELINES (45+ POINT CHECKLIST):
@@ -110,8 +132,12 @@ export async function POST(req: NextRequest) {
           "readability": "Feedback on layout density and visual flow."
         },
         "suggestedBulletPoints": [
-          { "rationale": "Quantification & Action", "after": "Optimized project delivery speed by 25% through..." },
-          { "rationale": "Value Proposition", "after": "Spearheaded integration of AI modules..." }
+          { 
+            "original": "The original bullet text from the resume",
+            "problem": "Why this bullet is weak (e.g., missing metrics, passive voice)",
+            "after": "The improved, high-impact bullet text",
+            "rationale": "Why this version is better (e.g., uses Action Verb + Metric formula)"
+          }
         ]
       }
 
@@ -136,7 +162,7 @@ export async function POST(req: NextRequest) {
         
         const jsonString = text.substring(start, end + 1);
         jsonFeedback = JSON.parse(jsonString);
-    } catch (e) {
+    } catch {
         console.error("AI returned malformed JSON or text:", text);
         return NextResponse.json({ 
             error: "Analyzer failed to generate structured data. Please try again.",
@@ -174,8 +200,7 @@ export async function POST(req: NextRequest) {
         resumeId: activeResumeId
     });
 
-  } catch (error: any) {
-    console.error("Analysis Error:", error);
-    return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 });
+  } catch (error: unknown) {
+    return handleApiError(error, "POST /api/ai/analyse");
   }
 }

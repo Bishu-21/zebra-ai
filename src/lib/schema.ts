@@ -18,6 +18,7 @@ export const userRelations = relations(user, ({ many }) => ({
     jobs: many(jobs),
     coverLetters: many(coverLetters),
     atsOptimisations: many(atsOptimisations),
+    projectAnalyses: many(projectAnalyses),
     sessions: many(session),
     accounts: many(account),
     transactions: many(transactions),
@@ -77,6 +78,9 @@ export const resumes = pgTable("resumes", {
     userId: text("user_id")
         .notNull()
         .references(() => user.id),
+    parentResumeId: text("parent_resume_id"), // For duplication/versioning
+    targetRole: text("target_role"),
+    targetCompany: text("target_company"),
     title: text("title").notNull(),
     content: text("content"), // Can store raw text or serialized JSON
     status: text("status").notNull().default("Draft"),
@@ -91,6 +95,12 @@ export const resumes = pgTable("resumes", {
 
 export const resumesRelations = relations(resumes, ({ one, many }) => ({
     user: one(user, { fields: [resumes.userId], references: [user.id] }),
+    parent: one(resumes, {
+        fields: [resumes.parentResumeId],
+        references: [resumes.id],
+        relationName: "resumeVersions",
+    }),
+    versions: many(resumes, { relationName: "resumeVersions" }),
     analyses: many(analysis),
     atsOptimisations: many(atsOptimisations),
     coverLetters: many(coverLetters),
@@ -124,6 +134,9 @@ export const jobs = pgTable("jobs", {
     position: text("position").notNull(),
     status: text("status").notNull().default("Applied"), // Applied, Interviewing, Offers, Rejected
     salary: text("salary"),
+    location: text("location"),
+    jobType: text("job_type"),
+    description: text("description"),
     url: text("url"),
     location: text("location"), // Added back to prevent data loss
     jobType: text("job_type"), // Added back to prevent data loss

@@ -10,15 +10,15 @@ export async function DELETE(
     { params: paramsPromise }: { params: Promise<{ id: string }> }
 ) {
     const params = await paramsPromise;
-    const session = await auth.api.getSession({
-        headers: await headers(),
-    });
-
-    if (!session) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     try {
+        const session = await auth.api.getSession({
+            headers: await headers(),
+        });
+
+        if (!session) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
         const deleted = await db
             .delete(resumesTable)
             .where(
@@ -34,7 +34,7 @@ export async function DELETE(
         }
 
         return NextResponse.json({ success: true, message: "Resume deleted" });
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error: unknown) {
+        return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 500 });
     }
 }

@@ -4,9 +4,10 @@ import { db } from "@/lib/db";
 import { resumes as resumesTable, analysis as analysisTable } from "@/lib/schema";
 import { eq, desc, and } from "drizzle-orm";
 import { headers } from "next/headers";
+import { handleApiError } from "@/lib/api-error";
 import crypto from "crypto";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const session = await auth.api.getSession({
         headers: await headers(),
@@ -35,11 +36,12 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ success: true, resumes: resumesWithScores });
 
-  } catch (error: any) {
-    console.error("Resumes Fetch Error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  } catch (error: unknown) {
+    return handleApiError(error, "GET /api/resumes");
   }
 }
+
+import { resumeSchema } from "@/lib/validation";
 
 export async function POST(req: NextRequest) {
     try {
@@ -51,11 +53,18 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
   
-      const { id, title, content } = await req.json();
+      const body = await req.json();
+      const validation = resumeSchema.safeParse(body);
+
+      if (!validation.success) {
+          return NextResponse.json({ error: validation.error.issues[0].message }, { status: 400 });
+      }
+
+      const { id, title, content } = validation.data;
   
       if (id) {
-          // Update existing
-          await db.update(resumesTable)
+          // Update existing — ownership check: only update if resume belongs to this user
+          const result = await db.update(resumesTable)
               .set({ 
                   title: title || "Untitled", 
                   content, 
@@ -68,6 +77,10 @@ export async function POST(req: NextRequest) {
                   )
               );
           
+          if (result.rowCount === 0) {
+              return NextResponse.json({ error: "Resume not found" }, { status: 404 });
+          }
+
           return NextResponse.json({ success: true, id });
       } else {
           // Create new
@@ -84,8 +97,7 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ success: true, id: newId });
       }
   
-    } catch (error: any) {
-      console.error("Resume Save Error:", error);
-      return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    } catch (error: unknown) {
+      return handleApiError(error, "POST /api/resumes");
     }
 }

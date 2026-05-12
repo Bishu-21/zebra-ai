@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { RiAlertLine, RiRestartLine } from "react-icons/ri";
 
-export default function DashboardError(props: any) {
+export default function DashboardError(props: { error: Error & { digest?: string }; unstable_retry: () => void }) {
     const { error, unstable_retry: unstable_retryAction } = props;
     useEffect(() => {
         console.error("Dashboard Runtime Exception:", error);

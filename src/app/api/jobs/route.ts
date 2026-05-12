@@ -4,9 +4,10 @@ import { db } from "@/lib/db";
 import { jobs as jobsTable, resumes as resumesTable, resumeVersions as resumeVersionsTable } from "@/lib/schema";
 import { eq, desc, and } from "drizzle-orm";
 import { headers } from "next/headers";
+import { handleApiError } from "@/lib/api-error";
 import crypto from "crypto";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const session = await auth.api.getSession({
         headers: await headers(),
@@ -23,11 +24,12 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ success: true, jobs: userJobs });
 
-  } catch (error: any) {
-    console.error("Jobs Fetch Error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  } catch (error: unknown) {
+    return handleApiError(error, "GET /api/jobs");
   }
 }
+
+import { jobSchema } from "@/lib/validation";
 
 export async function POST(req: NextRequest) {
     try {
@@ -72,6 +74,9 @@ export async function POST(req: NextRequest) {
           status: status || "Applied",
           salary,
           url,
+          location,
+          jobType,
+          description,
           resumeId: resumeId || null,
           resumeVersionId: resumeVersionId || null,
           createdAt: new Date(),
@@ -80,9 +85,8 @@ export async function POST(req: NextRequest) {
       
       return NextResponse.json({ success: true, id });
   
-    } catch (error: any) {
-      console.error("Job Save Error:", error);
-      return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    } catch (error: unknown) {
+      return handleApiError(error, "POST /api/jobs");
     }
 }
 
@@ -127,6 +131,9 @@ export async function PATCH(req: NextRequest) {
                 position,
                 salary,
                 url,
+                location,
+                jobType,
+                description,
                 resumeId,
                 resumeVersionId,
                 updatedAt: new Date() 
@@ -138,11 +145,14 @@ export async function PATCH(req: NextRequest) {
                 )
             );
         
+        if (result.rowCount === 0) {
+            return NextResponse.json({ error: "Job not found" }, { status: 404 });
+        }
+
         return NextResponse.json({ success: true });
     
-    } catch (error: any) {
-        console.error("Job Update Error:", error);
-        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    } catch (error: unknown) {
+        return handleApiError(error, "PATCH /api/jobs");
     }
 }
 
@@ -170,10 +180,13 @@ export async function DELETE(req: NextRequest) {
                 )
             );
         
+        if (result.rowCount === 0) {
+            return NextResponse.json({ error: "Job not found" }, { status: 404 });
+        }
+
         return NextResponse.json({ success: true });
     
-    } catch (error: any) {
-        console.error("Job Delete Error:", error);
-        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    } catch (error: unknown) {
+        return handleApiError(error, "DELETE /api/jobs");
     }
 }

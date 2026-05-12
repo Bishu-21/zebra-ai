@@ -3,7 +3,7 @@
 import React from "react";
 import { m, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { RewriteItem, AuditItem, ResumeAnalysisData } from "@/components/compiler/types";
+import { RewriteItem, ResumeAnalysisData } from "@/components/compiler/types";
 
 // --- STRATEGIC DIAGNOSTIC ICONS (Performance & Hydration Safe) ---
 const IconBox = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
@@ -53,7 +53,7 @@ const CircularGauge = ({ value, label, icon: Icon }: { value: number; label: str
         <div className="bg-white border border-[#F5F5F5] p-5 rounded-[1.8rem] flex flex-col items-center text-center transition-all hover:border-primary/30 hover:shadow-[0_4px_20px_rgba(59,130,246,0.03)] group">
             <div className="relative w-14 h-14 mb-4">
                 <svg className="w-full h-full transform -rotate-90">
-                    <circle cx="28" cy="28" r={radius} stroke="#F5F5F5" strokeWidth="2.5" fill="transparent" />
+                    <circle cx="28" cy="28" r={radius} stroke="currentColor" className="text-border-subtle" strokeWidth="2.5" fill="transparent" />
                     <m.circle
                         initial={{ strokeDashoffset: circumference }}
                         animate={{ strokeDashoffset }}
@@ -64,7 +64,7 @@ const CircularGauge = ({ value, label, icon: Icon }: { value: number; label: str
                     />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-[0.7rem] font-bold text-[#171717]">{value}</span>
+                    <span className="text-[0.7rem] font-bold text-foreground">{value}</span>
                 </div>
             </div>
             <div className="flex items-center gap-1.5 opacity-40 group-hover:opacity-100 transition-opacity">
@@ -140,7 +140,7 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
                     initial={{ opacity: 0, scale: 0.98, y: 10 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.98, y: 10 }}
-                    className="relative bg-white w-full max-w-6xl max-h-[92vh] rounded-[2.5rem] shadow-[0_40px_80px_rgba(0,0,0,0.06)] border border-[#F5F5F5] flex flex-col overflow-hidden"
+                    className="relative bg-background w-full max-w-6xl max-h-[92vh] rounded-[var(--radius-xl)] shadow-[var(--shadow-2xl)] border border-border-subtle flex flex-col overflow-hidden"
                 >
                     {/* Header */}
                     <div className="px-6 md:px-10 py-6 border-b border-[#F5F5F5] flex items-center justify-between bg-white/40 backdrop-blur-3xl sticky top-0 z-20">
@@ -153,14 +153,14 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
                                 </div>
                                 <span className="text-[0.55rem] font-bold uppercase tracking-[0.3em] text-[#A3A3A3] hidden xs:inline">AI Engine</span>
                             </div>
-                            <h2 className="text-xl font-bold text-[#171717] tracking-tight">Analysis Results</h2>
+                            <h2 className="text-xl font-bold text-foreground tracking-tight">Analysis Results</h2>
                         </div>
-                        <button onClick={onCloseAction} className="w-10 h-10 hover:bg-[#F5F5F5] rounded-xl flex items-center justify-center text-[#A3A3A3] transition-colors">
+                        <button onClick={onCloseAction} className="w-10 h-10 hover:bg-muted rounded-[var(--radius-md)] flex items-center justify-center text-muted-foreground transition-colors">
                             <CloseIcon />
                         </button>
                     </div>
 
-                    <div className="flex-grow overflow-y-auto no-scrollbar p-10 pt-8 space-y-10 bg-[#FAFAFA]/30">
+                    <div className="flex-grow overflow-y-auto no-scrollbar p-10 pt-8 space-y-10 bg-muted/30">
                         
                         {/* Top: Score & Summary Column + Gauges */}
                         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -188,7 +188,7 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
                                 </div>
 
                                 {actionItems.length > 0 && (
-                                    <div className="bg-white border border-[#F5F5F5] p-8 rounded-[2.2rem] space-y-5">
+                                    <div className="bg-background border border-border-subtle p-8 rounded-[var(--radius-xl)] space-y-5">
                                         <div className="flex items-center gap-3 px-6 py-3 bg-black/5 rounded-2xl border border-black/5">
                                             <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                                             <span className="text-[0.65rem] font-black uppercase tracking-widest text-accent-gray">Action Items</span>
@@ -216,28 +216,28 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
                                 <div className="grid grid-cols-1 gap-6">
                                     <div className="space-y-4">
                                         <div className="flex items-center gap-3 ml-2">
-                                            <AlertIcon className="text-red-500 scale-75" />
-                                            <h4 className="text-[0.6rem] font-bold uppercase tracking-[0.15em] text-[#171717]/60">Required Optimizations</h4>
+                                            <AlertIcon className="text-error scale-75" />
+                                            <h4 className="text-[0.6rem] font-bold uppercase tracking-[0.15em] text-foreground/60">Required Optimizations</h4>
                                         </div>
                                         <div className="grid grid-cols-1 gap-3">
                                             {weaknesses.map((item: string, i: number) => (
-                                                <div key={i} className="p-4 bg-white border border-[#F5F5F5] rounded-xl flex items-center gap-4 group">
-                                                    <div className="w-1.5 h-1.5 bg-red-500 rounded-full" />
-                                                    <p className="text-[0.7rem] font-medium text-[#171717]">{item}</p>
+                                                <div key={i} className="p-4 bg-background border border-border-subtle rounded-[var(--radius-md)] flex items-center gap-4 group">
+                                                    <div className="w-1.5 h-1.5 bg-error rounded-full" />
+                                                    <p className="text-[0.7rem] font-medium text-foreground">{item}</p>
                                                 </div>
                                             ))}
                                         </div>
                                     </div>
-                                    <div className="space-y-4 pt-4 border-t border-[#F5F5F5]">
+                                    <div className="space-y-4 pt-4 border-t border-border-subtle">
                                         <div className="flex items-center gap-3 ml-2">
-                                            <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
-                                            <h4 className="text-[0.6rem] font-bold uppercase tracking-[0.15em] text-[#171717]/60">Current Strengths</h4>
+                                            <div className="w-1.5 h-1.5 bg-success rounded-full" />
+                                            <h4 className="text-[0.6rem] font-bold uppercase tracking-[0.15em] text-foreground/60">Current Strengths</h4>
                                         </div>
                                         <div className="grid grid-cols-2 gap-3">
                                             {strengths.map((item: string, i: number) => (
-                                                <div key={i} className="p-4 bg-[#FAFAFA] rounded-xl flex items-center gap-3">
-                                                    <div className="w-1 h-1 bg-green-500/40 rounded-full" />
-                                                    <p className="text-[0.65rem] font-medium text-[#737373]">{item}</p>
+                                                <div key={i} className="p-4 bg-muted rounded-[var(--radius-md)] flex items-center gap-3">
+                                                    <div className="w-1 h-1 bg-success/40 rounded-full" />
+                                                    <p className="text-[0.65rem] font-medium text-muted-foreground">{item}</p>
                                                 </div>
                                             ))}
                                         </div>
@@ -247,11 +247,11 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
                         </div>
 
                         {rewrites.length > 0 && (
-                            <div className="pt-10 border-t border-[#F5F5F5] space-y-8">
+                            <div className="pt-10 border-t border-border-subtle space-y-8">
                                 <div className="flex items-center justify-between">
                                     <div className="space-y-1">
-                                        <h4 className="text-[0.6rem] font-bold uppercase tracking-[0.25em] text-[#171717]">Improvement Suggestions</h4>
-                                        <p className="text-[0.55rem] text-[#A3A3A3] font-medium tracking-wide">Context-aware restructuring and rationale</p>
+                                        <h4 className="text-[0.6rem] font-bold uppercase tracking-[0.25em] text-foreground">Improvement Suggestions</h4>
+                                        <p className="text-[0.55rem] text-muted-foreground font-medium tracking-wide">Context-aware restructuring and rationale</p>
                                     </div>
                                     <div className="px-3 py-1.5 bg-primary/5 text-primary rounded-lg border border-primary/10 text-[0.5rem] font-bold uppercase tracking-widest flex items-center gap-2">
                                         <PulseIcon />
@@ -259,8 +259,10 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-1 gap-6">
-                                    {rewrites.map((item: any, i: number) => {
+                                    {rewrites.map((item: RewriteItem | string, i: number) => {
                                         const isString = typeof item === "string";
+                                        const original = isString ? null : item.original;
+                                        const problem = isString ? null : item.problem;
                                         const rationale = isString ? "Optimization for clarity and impact." : (item.rationale ?? "Optimization for clarity and impact.");
                                         const suggestion = isString ? item : (item.after ?? item.suggestion ?? "");
 
@@ -305,7 +307,7 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
                             </button>
                             <button 
                                 onClick={onCloseAction}
-                                className="px-8 py-3.5 bg-black text-white text-xs font-bold uppercase tracking-widest rounded-2xl hover:bg-neutral-800 transition-all active:scale-[0.98]"
+                                className="px-8 py-3.5 bg-foreground text-background text-xs font-bold uppercase tracking-widest rounded-[var(--radius-md)] hover:bg-secondary transition-all active:scale-[0.98]"
                             >
                                 Done
                             </button>

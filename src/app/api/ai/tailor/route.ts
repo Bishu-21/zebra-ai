@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { user as userTable, resumes as resumesTable, atsOptimisations as atsTable, resumeVersions as resumeVersionsTable } from "@/lib/schema";
 import { eq, sql, and } from "drizzle-orm";
 import { headers } from "next/headers";
+import { handleApiError } from "@/lib/api-error";
 import crypto from "crypto";
 
 // Initialize Gemini
@@ -12,6 +13,8 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 const model = genAI.getGenerativeModel({ 
   model: process.env.GEMINI_MODEL || "gemma-4-31b-it" 
 });
+
+import { tailorSchema } from "@/lib/validation";
 
 export async function POST(req: NextRequest) {
     try {
@@ -25,9 +28,11 @@ export async function POST(req: NextRequest) {
 
         const { resumeId, jobDescription, saveAsVersion, company, targetRole } = await req.json();
 
-        if (!resumeId || !jobDescription) {
-            return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+        if (!validation.success) {
+            return NextResponse.json({ error: validation.error.issues[0].message }, { status: 400 });
         }
+
+        const { resumeId, jobDescription } = validation.data;
 
         // 1. Check credits
         const userData = await db.query.user.findFirst({
@@ -38,7 +43,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Insufficient credits" }, { status: 403 });
         }
 
-        // 2. Fetch Resume
+        // 2. Fetch Resume — ownership check: only allow user's own resumes
         const resume = await db.query.resumes.findFirst({
             where: and(
                 eq(resumesTable.id, resumeId),
@@ -109,7 +114,7 @@ export async function POST(req: NextRequest) {
             
             const jsonString = textResponse.substring(start, end + 1);
             analysis = JSON.parse(jsonString);
-        } catch (e) {
+        } catch {
             console.error("AI returned malformed JSON or text:", textResponse);
             return NextResponse.json({ 
                 error: "Failed to parse AI analysis. The model returned non-JSON data.",
@@ -153,8 +158,7 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ success: true, analysis });
 
-    } catch (error: any) {
-        console.error("Tailor API Error:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error: unknown) {
+        return handleApiError(error, "POST /api/ai/tailor");
     }
 }

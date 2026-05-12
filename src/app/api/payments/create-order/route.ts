@@ -6,6 +6,7 @@ import { transactions as transactionsTable } from "@/lib/schema";
 import { PLANS, PlanId } from "@/lib/constants/plans";
 import crypto from "crypto";
 import { headers } from "next/headers";
+import crypto from "crypto";
 
 export async function POST(req: NextRequest) {
     try {
@@ -24,7 +25,7 @@ export async function POST(req: NextRequest) {
         }
 
         const plan = PLANS[planId as PlanId];
-        const amountInPaise = plan.priceInINR * 100; // Razorpay expects amount in subunits (paise for INR)
+        const amountInPaise = plan.priceInINR * 100;
 
         const options = {
             amount: amountInPaise,
@@ -33,7 +34,6 @@ export async function POST(req: NextRequest) {
             notes: {
                 userId: session.user.id,
                 planId: plan.id,
-                credits: plan.credits,
             }
         };
 
@@ -61,8 +61,8 @@ export async function POST(req: NextRequest) {
             key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Razorpay Order Creation Error:", error);
-        return NextResponse.json({ error: error.message || "Failed to initiate transaction" }, { status: 500 });
+        return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to initiate transaction" }, { status: 500 });
     }
 }

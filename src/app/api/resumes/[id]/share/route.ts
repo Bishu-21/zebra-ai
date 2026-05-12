@@ -5,6 +5,7 @@ import { resumes } from "@/lib/schema";
 import { eq, and } from "drizzle-orm";
 import { headers } from "next/headers";
 import crypto from "crypto";
+import { handleApiError } from "@/lib/api-error";
 
 /**
  * POST /api/resumes/[id]/share — Generate a share token for public viewing
@@ -12,14 +13,23 @@ import crypto from "crypto";
  * GET /api/resumes/[id]/share — Get current share status
  */
 
+import { shareSchema } from "@/lib/validation";
+
 export async function POST(req: NextRequest, { params: paramsPromise }: { params: Promise<{ id: string }> }) {
     const params = await paramsPromise;
-    const session = await auth.api.getSession({ headers: await headers() });
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
+    
     try {
+        const session = await auth.api.getSession({ headers: await headers() });
+        if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
         const body = await req.json();
-        const { isPublic } = body;
+        const validation = shareSchema.safeParse(body);
+
+        if (!validation.success) {
+            return NextResponse.json({ error: validation.error.issues[0].message }, { status: 400 });
+        }
+
+        const { isPublic } = validation.data;
 
         // Verify ownership
         const resume = await db.query.resumes.findFirst({
@@ -43,34 +53,33 @@ export async function POST(req: NextRequest, { params: paramsPromise }: { params
 
         const shareUrl = `${getBaseUrl(req)}/share/${shareToken}`;
         return NextResponse.json({ shareToken, shareUrl, isPublic: isPublic ?? resume.isPublic });
-    } catch (error: any) {
-        console.error("Share failed:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error: unknown) {
+        return handleApiError(error, "Resume Share POST");
     }
 }
 
 export async function DELETE(req: NextRequest, { params: paramsPromise }: { params: Promise<{ id: string }> }) {
     const params = await paramsPromise;
-    const session = await auth.api.getSession({ headers: await headers() });
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
     try {
+        const session = await auth.api.getSession({ headers: await headers() });
+        if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
         await db.update(resumes)
             .set({ shareToken: null, isPublic: false, updatedAt: new Date() })
             .where(and(eq(resumes.id, params.id), eq(resumes.userId, session.user.id)));
 
         return NextResponse.json({ revoked: true });
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error: unknown) {
+        return handleApiError(error, "Resume Share DELETE");
     }
 }
 
 export async function GET(req: NextRequest, { params: paramsPromise }: { params: Promise<{ id: string }> }) {
     const params = await paramsPromise;
-    const session = await auth.api.getSession({ headers: await headers() });
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
     try {
+        const session = await auth.api.getSession({ headers: await headers() });
+        if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
         const resume = await db.query.resumes.findFirst({
             where: and(eq(resumes.id, params.id), eq(resumes.userId, session.user.id)),
             columns: { shareToken: true, isPublic: true },
@@ -87,8 +96,8 @@ export async function GET(req: NextRequest, { params: paramsPromise }: { params:
             });
         }
         return NextResponse.json({ shared: false, isPublic: false });
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error: unknown) {
+        return handleApiError(error, "Resume Share GET");
     }
 }
 

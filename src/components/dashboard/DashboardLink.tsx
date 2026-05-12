@@ -17,7 +17,7 @@ export function DashboardLink({ href, icon, children }: DashboardLinkProps) {
   return (
     <Link 
       href={href}
-      className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[0.8rem] font-bold transition-all duration-300 relative group ${
+      className={`flex items-center gap-3 px-4 py-3 rounded-[var(--radius-md)] text-[0.8rem] font-bold transition-all duration-300 relative group ${
         isActive 
           ? "bg-primary/10 text-primary shadow-sm" 
           : "text-[#737373] hover:text-[#0A0A0A] hover:bg-black/[0.03]"

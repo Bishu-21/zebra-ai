@@ -23,7 +23,7 @@ export function DashboardShell({ plan, credits, userName, userImage, children }:
     return (
         <SettingsProvider>
             <ToastProvider>
-                <div className="min-h-screen bg-[#FDFDFD] flex font-sans text-[#0A0A0A] overflow-hidden">
+                <div className="min-h-screen bg-background flex font-sans text-foreground overflow-hidden">
                     <Sidebar 
                         plan={plan} 
                         credits={credits} 

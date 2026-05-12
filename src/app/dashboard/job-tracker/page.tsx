@@ -7,9 +7,14 @@ import { eq, desc } from "drizzle-orm";
 import { JobBoard } from "@/components/dashboard/JobBoard";
 
 export default async function JobTrackerPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  let session = null;
+  try {
+    session = await auth.api.getSession({
+      headers: await headers(),
+    });
+  } catch (e) {
+    console.error("Session fetch failed in job-tracker:", e);
+  }
 
   if (!session) return null;
 

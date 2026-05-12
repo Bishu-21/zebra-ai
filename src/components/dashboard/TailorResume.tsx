@@ -21,7 +21,7 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/Toast";
 import { RiSaveLine, RiBuildingLine, RiBriefcaseLine } from "react-icons/ri";
 
-interface Resume {
+export interface Resume {
     id: string;
     title: string;
     [key: string]: unknown;
@@ -53,6 +53,14 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
     const [analysis, setAnalysis] = useState<TailorAnalysis | null>(null);
     const router = useRouter();
 
+    const refreshDashboard = () => {
+        try {
+            router.refresh();
+        } catch {
+            setError("Analysis completed, but the dashboard could not refresh automatically.");
+        }
+    };
+
     const handleTailor = async () => {
         if (!formData.resumeId || !formData.jobDescription) {
             setError("Please select a resume and paste the job description.");
@@ -83,13 +91,13 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                     setAnalysis(data.analysis);
                     clearInterval(stepInterval);
                     setScanStep("Tailoring Complete.");
-                    router.refresh();
+                    refreshDashboard();
                 }, 800);
             } else {
                 setError(data.error || "Tailoring failed.");
                 clearInterval(stepInterval);
             }
-        } catch (_err) {
+        } catch {
             setError("Analysis failed. High traffic or invalid job description detected.");
             clearInterval(stepInterval);
         } finally {
@@ -139,7 +147,7 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
             {/* Launcher Card */}
             <div 
                 onClick={() => setIsOpen(true)}
-                className="group/card relative overflow-hidden flex flex-col justify-between w-full h-full cursor-pointer transition-all p-10 bg-white border border-black/[0.04] rounded-[2.5rem] hover:shadow-2xl hover:shadow-black/[0.03] active:scale-[0.99] group"
+                className="group/card relative overflow-hidden flex flex-col justify-between w-full h-full cursor-pointer transition-all p-10 bg-background border border-border-subtle rounded-[var(--radius-xl)] hover:shadow-2xl hover:shadow-black/[0.03] active:scale-[0.99] group"
             >
                 <div className="absolute top-0 right-0 w-32 h-32 bg-black/[0.01] rounded-bl-[4rem] group-hover/card:scale-110 transition-transform" />
                 
@@ -177,7 +185,7 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                             initial={{ scale: 0.95, opacity: 0, y: 20 }}
                             animate={{ scale: 1, opacity: 1, y: 0 }}
                             exit={{ scale: 0.95, opacity: 0, y: 20 }}
-                            className="relative bg-white/90 backdrop-blur-xl w-full max-w-5xl max-h-[90vh] rounded-[2.5rem] shadow-2xl border border-white/50 flex flex-col overflow-hidden"
+                            className="relative bg-background/90 backdrop-blur-xl w-full max-w-5xl max-h-[90vh] rounded-[var(--radius-xl)] shadow-2xl border border-white/50 flex flex-col overflow-hidden"
                         >
                             {/* Header */}
                             <div className="p-6 sm:p-10 border-b border-black/[0.03] flex items-center justify-between bg-white/40 backdrop-blur-3xl sticky top-0 z-20">
@@ -204,13 +212,13 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                                     <div className="max-w-4xl mx-auto space-y-8">
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                             <div className="space-y-3">
-                                                <label className="text-[0.65rem] font-black uppercase tracking-widest text-black/40 flex items-center gap-2">
+                                                <label className="text-[0.65rem] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-2">
                                                     <RiFileTextLine size={14} />
                                                     Base Profile
                                                 </label>
                                                 <div className="relative">
                                                     <select 
-                                                        className="w-full bg-black/5 border-2 border-transparent focus:border-black/10 rounded-2xl px-6 py-5 text-sm font-bold outline-none transition-all appearance-none cursor-pointer text-black"
+                                                        className="w-full bg-muted border-2 border-transparent focus:border-primary/20 rounded-[var(--radius-md)] px-6 py-5 text-sm font-bold outline-none transition-all appearance-none cursor-pointer text-foreground"
                                                         value={formData.resumeId}
                                                         onChange={(e) => setFormData({...formData, resumeId: e.target.value})}
                                                     >
@@ -254,13 +262,13 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                                         </div>
 
                                         <div className="space-y-3 relative">
-                                            <label className="text-[0.65rem] font-black uppercase tracking-widest text-black/40 flex items-center gap-2">
+                                            <label className="text-[0.65rem] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-2">
                                                 <RiInformationLine size={14} />
                                                 Target Job Description
                                             </label>
                                             
                                             {/* Input Area */}
-                                            <div className="relative group/input overflow-hidden rounded-[2rem] border border-black/5 shadow-inner bg-black/[0.02]">
+                                            <div className="relative group/input overflow-hidden rounded-[var(--radius-xl)] border border-border-subtle shadow-inner bg-muted/20">
                                                 {/* Cinematic Scan Animation Overlay */}
                                                 <AnimatePresence>
                                                     {loading && (
@@ -268,19 +276,19 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                                                             initial={{ opacity: 0 }}
                                                             animate={{ opacity: 1 }}
                                                             exit={{ opacity: 0 }}
-                                                            className="absolute inset-0 z-30 pointer-events-none overflow-hidden rounded-[2rem]"
+                                                            className="absolute inset-0 z-30 pointer-events-none overflow-hidden rounded-[var(--radius-xl)]"
                                                         >
                                                             <div className="absolute inset-0 bg-white/60 backdrop-blur-[4px]"></div>
                                                             
                                                             <div className="absolute inset-0 flex flex-col items-center justify-center gap-6">
-                                                                <div className="scale-150 text-black/80">
+                                                                <div className="scale-150 text-foreground/80">
                                                                     <RiLoader4Line className="animate-spin" size={40} />
                                                                 </div>
                                                                 <div className="flex flex-col items-center gap-2">
-                                                                    <span className="text-sm font-bold uppercase tracking-[0.2em] text-[#0A0A0A] animate-pulse">{scanStep}</span>
-                                                                    <div className="w-48 h-2 bg-black/[0.05] rounded-full overflow-hidden">
+                                                                    <span className="text-sm font-bold uppercase tracking-[0.2em] text-foreground animate-pulse">{scanStep}</span>
+                                                                    <div className="w-48 h-2 bg-muted rounded-full overflow-hidden">
                                                                         <m.div 
-                                                                            className="h-full bg-[#3B82F6]"
+                                                                            className="h-full bg-primary"
                                                                             initial={{ width: "0%" }}
                                                                             animate={{ width: "100%" }}
                                                                             transition={{ duration: 6, ease: "linear" }}
@@ -306,7 +314,7 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                                             <m.div 
                                                 initial={{ opacity: 0, y: 10 }}
                                                 animate={{ opacity: 1, y: 0 }}
-                                                className="bg-red-500 text-white p-6 rounded-2xl flex items-center gap-3 text-sm font-black uppercase tracking-wider shadow-xl"
+                                                className="bg-error text-white p-6 rounded-[var(--radius-md)] flex items-center gap-3 text-sm font-black uppercase tracking-wider shadow-xl"
                                             >
                                                 <RiErrorWarningLine size={24} />
                                                 {error}
@@ -329,9 +337,9 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                                                 </div>
                                             </div>
                                             
-                                            <div className="md:col-span-2 bg-white border border-black/5 p-10 rounded-[2.5rem] flex flex-col justify-center shadow-sm">
-                                                <h4 className="text-sm font-black uppercase tracking-widest mb-4 text-black/30">Role Fit Assessment</h4>
-                                                <p className="text-black/70 leading-relaxed font-bold text-lg">
+                                            <div className="md:col-span-2 bg-background border border-border-subtle p-10 rounded-[var(--radius-xl)] flex flex-col justify-center shadow-sm">
+                                                <h4 className="text-sm font-black uppercase tracking-widest mb-4 text-muted-foreground/30">Role Fit Assessment</h4>
+                                                <p className="text-foreground/70 leading-relaxed font-bold text-lg">
                                                     {analysis.roleFit}
                                                 </p>
                                             </div>
@@ -339,13 +347,13 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                             <div className="space-y-6">
-                                                <h4 className="font-black flex items-center gap-2 text-[0.65rem] uppercase tracking-[0.2em] text-black/30">
-                                                    <RiCheckboxCircleLine size={18} className="text-green-500" />
+                                                <h4 className="font-black flex items-center gap-2 text-[0.65rem] uppercase tracking-[0.2em] text-muted-foreground/30">
+                                                    <RiCheckboxCircleLine size={18} className="text-success" />
                                                     Target Keywords Found
                                                 </h4>
                                                 <div className="flex flex-wrap gap-2">
                                                     {(analysis.keywordsFound || []).map((kw: string, i: number) => (
-                                                        <span key={i} className="px-5 py-2.5 bg-green-500/5 text-green-700 rounded-xl text-[0.7rem] font-black uppercase tracking-wider border border-green-500/10">
+                                                        <span key={i} className="px-5 py-2.5 bg-success/5 text-success rounded-[var(--radius-md)] text-[0.7rem] font-black uppercase tracking-wider border border-success/10">
                                                             {kw}
                                                         </span>
                                                     ))}
@@ -353,13 +361,13 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                                             </div>
 
                                             <div className="space-y-6">
-                                                <h4 className="font-black flex items-center gap-2 text-[0.65rem] uppercase tracking-[0.2em] text-black/30">
-                                                    <RiErrorWarningLine size={18} className="text-orange-500" />
+                                                <h4 className="font-black flex items-center gap-2 text-[0.65rem] uppercase tracking-[0.2em] text-muted-foreground/30">
+                                                    <RiErrorWarningLine size={18} className="text-warning" />
                                                     Critical Profile Gaps
                                                 </h4>
                                                 <div className="flex flex-wrap gap-2">
                                                     {(analysis.keywordsMissing || []).map((kw: string, i: number) => (
-                                                        <span key={i} className="px-5 py-2.5 bg-orange-500/5 text-orange-700 rounded-xl text-[0.7rem] font-bold uppercase tracking-wider border border-orange-500/10">
+                                                        <span key={i} className="px-5 py-2.5 bg-warning/5 text-warning rounded-[var(--radius-md)] text-[0.7rem] font-bold uppercase tracking-wider border border-warning/10">
                                                             {kw}
                                                         </span>
                                                     ))}
@@ -367,9 +375,9 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                                             </div>
                                         </div>
 
-                                        <div className="bg-black/5 border border-black/5 p-10 rounded-[2.5rem]">
-                                            <h4 className="font-black text-black flex items-center gap-3 mb-8 uppercase tracking-widest text-sm">
-                                                <RiMagicLine size={20} className="text-black/60" />
+                                        <div className="bg-muted/50 border border-border-subtle p-10 rounded-[var(--radius-xl)]">
+                                            <h4 className="font-black text-foreground flex items-center gap-3 mb-8 uppercase tracking-widest text-sm">
+                                                <RiMagicLine size={20} className="text-foreground/60" />
                                                 Priority Recommendations
                                             </h4>
                                             <div className="grid grid-cols-1 gap-4">
@@ -378,7 +386,7 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                                                         <span className="w-10 h-10 bg-primary text-white rounded-xl flex items-center justify-center text-xs font-bold shadow-lg flex-shrink-0">
                                                             0{i + 1}
                                                         </span>
-                                                        <p className="text-[0.9rem] font-bold text-[#0A0A0A]/70 leading-relaxed pt-1">
+                                                        <p className="text-[0.9rem] font-bold text-foreground/70 leading-relaxed pt-1">
                                                             {tip}
                                                         </p>
                                                     </div>

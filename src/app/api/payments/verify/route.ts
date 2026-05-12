@@ -24,7 +24,6 @@ export async function POST(req: NextRequest) {
         }
 
         // 1. Verify HMAC Signature
-        // Reference: https://razorpay.com/docs/payments/server-integration/nodejs/payment-gateway/generate-signature/
         const secret = process.env.RAZORPAY_KEY_SECRET!;
         const body = razorpay_order_id + "|" + razorpay_payment_id;
         
@@ -33,10 +32,8 @@ export async function POST(req: NextRequest) {
             .update(body.toString())
             .digest("hex");
 
-        const isAuthentic = expectedSignature === razorpay_signature;
-
-        if (!isAuthentic) {
-            console.error("Signature mismatch. Potentially fraudulent attempt detected.");
+        if (expectedSignature !== razorpay_signature) {
+            console.error("Signature mismatch detected.");
             return NextResponse.json({ error: "Payment verification failed" }, { status: 400 });
         }
 
@@ -90,7 +87,7 @@ export async function POST(req: NextRequest) {
                     credits: sql`${userTable.credits} + ${currentPlan.credits}`,
                     plan: currentPlan.id === "starter" ? "Starter" : (currentPlan.id === "pro" ? "Professional" : "Elite")
                 })
-                .where(eq(userTable.id, userId));
+                .where(eq(userTable.id, session.user.id));
                 
             // Update existing pending transaction
             await tx.update(transactionsTable)
@@ -105,10 +102,10 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ 
             success: true, 
             message: "Payment verified and credits added successfully",
-            addedCredits: currentPlan.credits 
+            addedCredits: plan.credits 
         });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Payment Verification Error:", error);
         return NextResponse.json({ error: "Internal verification error" }, { status: 500 });
     }

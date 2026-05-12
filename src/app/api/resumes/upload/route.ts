@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { resumes as resumesTable } from "@/lib/schema";
-import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
+import { handleApiError } from "@/lib/api-error";
 import crypto from "crypto";
+import { MAX_FILE_SIZE, MAX_TITLE_LENGTH, MAX_CONTENT_LENGTH } from "@/lib/validation";
 import { extractText, getDocumentProxy } from "unpdf";
 import mammoth from "mammoth";
 
@@ -24,6 +25,11 @@ export async function POST(req: NextRequest) {
 
     if (!file) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
+    }
+
+    // Server-side size limit check (5MB)
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json({ error: `File size exceeds ${MAX_FILE_SIZE / (1024 * 1024)}MB limit` }, { status: 400 });
     }
 
     const bytes = await file.arrayBuffer();
@@ -58,6 +64,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Server-side content length check
+    if (content.length > MAX_CONTENT_LENGTH) {
+      return NextResponse.json(
+        { error: `Extracted content is too large (max ${MAX_CONTENT_LENGTH / 1024}KB of text).` },
+        { status: 400 }
+      );
+    }
+
+    if (title.length > MAX_TITLE_LENGTH) {
+      return NextResponse.json({ error: "Title is too long" }, { status: 400 });
+    }
+
     // Create new resume record
     const newId = crypto.randomUUID();
     await db.insert(resumesTable).values({
@@ -77,11 +95,7 @@ export async function POST(req: NextRequest) {
       title 
     });
 
-  } catch (error: any) {
-    console.error("Resume Upload Error:", error);
-    return NextResponse.json(
-      { error: error.message || "Internal server error during upload" },
-      { status: 500 }
-    );
+  } catch (error: unknown) {
+    return handleApiError(error, "POST /api/resumes/upload");
   }
 }
