@@ -187,7 +187,7 @@ export function ResumeVault({ items }: ResumeVaultProps) {
 
                                     <div className="flex items-center justify-between pt-4 border-t border-black/[0.02]">
                                         <div className="flex items-center gap-2">
-                                            {item.hasAnalysis ? (
+                                            {item.hasAnalysis && (
                                                 <div className="flex items-center gap-1.5 px-2 py-1 bg-emerald-500/5 rounded-md border border-emerald-500/10">
                                                     <RiCheckboxCircleLine className="text-emerald-500" size={10} />
                                                     <span className="text-[0.5rem] font-black text-emerald-600 uppercase tracking-widest">Analyzed</span>
