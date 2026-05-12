@@ -2,7 +2,7 @@ import React from "react";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/lib/db";
-import { jobs as jobsTable, resumes as resumesTable } from "@/lib/schema";
+import { jobs as jobsTable, resumes as resumesTable, resumeVersions as resumeVersionsTable } from "@/lib/schema";
 import { eq, desc } from "drizzle-orm";
 import { JobBoard } from "@/components/dashboard/JobBoard";
 
@@ -19,10 +19,14 @@ export default async function JobTrackerPage() {
     orderBy: [desc(jobsTable.updatedAt)],
   });
 
-  // 2. Fetch user's resumes for the selection dropdown
   const userResumes = await db.query.resumes.findMany({
       where: eq(resumesTable.userId, session.user.id),
       orderBy: [desc(resumesTable.updatedAt)],
+  });
+
+  const userVersions = await db.query.resumeVersions.findMany({
+      where: eq(resumeVersionsTable.userId, session.user.id),
+      orderBy: [desc(resumeVersionsTable.createdAt)],
   });
 
   // Convert to type expected by JobBoard
@@ -34,6 +38,7 @@ export default async function JobTrackerPage() {
       salary: job.salary,
       url: job.url,
       resumeId: job.resumeId,
+      resumeVersionId: job.resumeVersionId,
       updatedAt: job.updatedAt.toISOString(),
   }));
 
@@ -53,7 +58,6 @@ export default async function JobTrackerPage() {
                 <p className="text-[0.6rem] font-black text-[#A3A3A3] uppercase tracking-widest mb-1">Applications</p>
                 <div className="flex items-center gap-2">
                     <span className="text-2xl font-black text-[#0A0A0A]">{userJobs.length}</span>
-                    <span className="text-[0.65rem] font-bold text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-full">+2 this week</span>
                 </div>
             </div>
             <div className="bg-white border border-black/[0.04] p-4 pr-10 rounded-[2rem] shadow-sm">
@@ -64,13 +68,16 @@ export default async function JobTrackerPage() {
                             ? Math.round((userJobs.filter(j => j.status !== 'Applied').length / userJobs.length) * 100) 
                             : 0}%
                     </span>
-                    <span className="text-[0.65rem] font-bold text-[#3B82F6] bg-blue-50 px-2 py-0.5 rounded-full">Top 10%</span>
                 </div>
             </div>
         </div>
       </div>
 
-      <JobBoard initialJobs={formattedJobs} resumes={userResumes} />
+      <JobBoard 
+        initialJobs={formattedJobs} 
+        resumes={userResumes} 
+        versions={userVersions}
+      />
     </div>
   );
 }

@@ -31,7 +31,8 @@ import {
     user as userTable,
     resumes as resumesTable, 
     analysis as analysisTable, 
-    atsOptimisations as atsOptimisationsTable 
+    atsOptimisations as atsOptimisationsTable,
+    resumeVersions as resumeVersionsTable
 } from "@/lib/schema";
 import { eq, desc, count } from "drizzle-orm";
 
@@ -71,6 +72,9 @@ export default async function DashboardPage() {
         analyses: {
             orderBy: [desc(analysisTable.createdAt)],
             limit: 1,
+        },
+        versions: {
+            orderBy: [desc(resumeVersionsTable.createdAt)],
         }
     }
   });
@@ -131,6 +135,14 @@ export default async function DashboardPage() {
       title: r.title || "Untitled Resume",
       date: r.updatedAt,
       hasAnalysis: r.analyses.length > 0,
+      versions: r.versions.map(v => ({
+          id: v.id,
+          title: v.title,
+          company: v.company,
+          targetRole: v.targetRole,
+          matchScore: v.matchScore,
+          createdAt: v.createdAt
+      }))
   }));
 
   const intelligenceReports = [

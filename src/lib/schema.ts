@@ -20,6 +20,8 @@ export const userRelations = relations(user, ({ many }) => ({
     atsOptimisations: many(atsOptimisations),
     sessions: many(session),
     accounts: many(account),
+    transactions: many(transactions),
+    resumeVersions: many(resumeVersions),
 }));
 
 export const session = pgTable("session", {
@@ -57,7 +59,7 @@ export const account = pgTable("account", {
 	updatedAt: timestamp("updated_at").notNull(),
 });
 
-export const accountRelations = relations(account, ({ one }) => ({
+export const accountRelations = relations(account, ({ many, one }) => ({
     user: one(user, { fields: [account.userId], references: [user.id] }),
 }));
 
@@ -80,6 +82,9 @@ export const resumes = pgTable("resumes", {
     status: text("status").notNull().default("Draft"),
     isPublic: boolean("is_public").notNull().default(false),
     shareToken: text("share_token"), // Unique token for public sharing
+    parentResumeId: text("parent_resume_id"), // Added back to prevent data loss
+    targetRole: text("target_role"), // Added back to prevent data loss
+    targetCompany: text("target_company"), // Added back to prevent data loss
     createdAt: timestamp("created_at").notNull(),
     updatedAt: timestamp("updated_at").notNull(),
 });
@@ -89,6 +94,7 @@ export const resumesRelations = relations(resumes, ({ one, many }) => ({
     analyses: many(analysis),
     atsOptimisations: many(atsOptimisations),
     coverLetters: many(coverLetters),
+    versions: many(resumeVersions),
 }));
 
 export const analysis = pgTable("analysis", {
@@ -112,11 +118,16 @@ export const jobs = pgTable("jobs", {
         .references(() => user.id),
     resumeId: text("resume_id")
         .references(() => resumes.id), // Optional: link to a resume
+    resumeVersionId: text("resume_version_id")
+        .references(() => resumeVersions.id),
     company: text("company").notNull(),
     position: text("position").notNull(),
     status: text("status").notNull().default("Applied"), // Applied, Interviewing, Offers, Rejected
     salary: text("salary"),
     url: text("url"),
+    location: text("location"), // Added back to prevent data loss
+    jobType: text("job_type"), // Added back to prevent data loss
+    description: text("description"), // Added back to prevent data loss
     createdAt: timestamp("created_at").notNull(),
     updatedAt: timestamp("updated_at").notNull(),
 });
@@ -124,6 +135,7 @@ export const jobs = pgTable("jobs", {
 export const jobsRelations = relations(jobs, ({ one }) => ({
     user: one(user, { fields: [jobs.userId], references: [user.id] }),
     resume: one(resumes, { fields: [jobs.resumeId], references: [resumes.id] }),
+    version: one(resumeVersions, { fields: [jobs.resumeVersionId], references: [resumeVersions.id] }),
 }));
 
 export const coverLetters = pgTable("cover_letters", {
@@ -162,4 +174,49 @@ export const atsOptimisations = pgTable("ats_optimisations", {
 export const atsOptimisationsRelations = relations(atsOptimisations, ({ one }) => ({
     user: one(user, { fields: [atsOptimisations.userId], references: [user.id] }),
     resume: one(resumes, { fields: [atsOptimisations.resumeId], references: [resumes.id] }),
+}));
+
+export const transactions = pgTable("transactions", {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+        .notNull()
+        .references(() => user.id),
+    provider: text("provider").notNull(), // e.g. "razorpay"
+    orderId: text("order_id").notNull().unique(),
+    paymentId: text("payment_id").unique(),
+    planId: text("plan_id"),
+    credits: integer("credits").notNull(),
+    amount: integer("amount").notNull(),
+    currency: text("currency").notNull().default("INR"),
+    status: text("status").notNull(), // "pending", "success", "failed"
+    createdAt: timestamp("created_at").notNull(),
+    updatedAt: timestamp("updated_at").notNull(),
+});
+
+export const transactionsRelations = relations(transactions, ({ one }) => ({
+    user: one(user, { fields: [transactions.userId], references: [user.id] }),
+}));
+
+export const resumeVersions = pgTable("resume_versions", {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+        .notNull()
+        .references(() => user.id),
+    resumeId: text("resume_id")
+        .notNull()
+        .references(() => resumes.id),
+    title: text("title").notNull(),
+    company: text("company"),
+    targetRole: text("target_role"),
+    jobDescription: text("job_description"),
+    content: text("content").notNull(),
+    matchScore: integer("match_score"),
+    feedback: jsonb("feedback"),
+    createdAt: timestamp("created_at").notNull(),
+    updatedAt: timestamp("updated_at").notNull(),
+});
+
+export const resumeVersionsRelations = relations(resumeVersions, ({ one }) => ({
+    user: one(user, { fields: [resumeVersions.userId], references: [user.id] }),
+    resume: one(resumes, { fields: [resumeVersions.resumeId], references: [resumes.id] }),
 }));

@@ -116,7 +116,7 @@ export function Sidebar({ plan, credits, userName, userImage, onOpenSettingsActi
                     <div className="flex flex-col items-center justify-center mb-10 text-center relative">
                         <Link href="/dashboard" className="flex flex-col items-center gap-3 group" onClick={() => setIsOpen(false)}>
                             <div className="relative">
-                                <div className="absolute inset-0 bg-[#3B82F6]/30 blur-3xl rounded-full scale-150 opacity-0 group-hover:opacity-100 transition-all duration-700" />
+                                <div className="absolute inset-0 bg-primary/30 blur-3xl rounded-full scale-150 opacity-0 group-hover:opacity-100 transition-all duration-700" />
                                 <img 
                                     src="/zebra_star.svg" 
                                     alt="Zebra AI" 
@@ -125,7 +125,7 @@ export function Sidebar({ plan, credits, userName, userImage, onOpenSettingsActi
                             </div>
                             <div className="flex flex-col items-center relative z-10">
                                 <h1 className="text-2xl font-black tracking-[-0.06em] text-[#0A0A0A] leading-none">Zebra AI</h1>
-                                <div className="h-1 w-6 bg-[#3B82F6] rounded-full mt-2 transform origin-center scale-x-0 group-hover:scale-x-100 transition-all duration-500 ease-out" />
+                                <div className="h-1 w-6 bg-primary rounded-full mt-2 transform origin-center scale-x-0 group-hover:scale-x-100 transition-all duration-500 ease-out" />
                             </div>
                         </Link>
                         
@@ -167,23 +167,23 @@ export function Sidebar({ plan, credits, userName, userImage, onOpenSettingsActi
                         <div className="mt-8 pt-8 border-t border-[#F5F5F5]">
                              <p className="text-[0.6rem] font-bold tracking-[0.2em] uppercase text-[#A3A3A3] mb-4 ml-4">Subscription</p>
                              <div className="relative bg-white border border-[#F5F5F5] rounded-[1.5rem] p-5 group/card shadow-sm hover:shadow-md transition-all overflow-hidden">
-                                <div className="absolute top-0 right-0 w-16 h-16 bg-[#3B82F6]/5 rounded-bl-[2rem] -mr-4 -mt-4 transition-transform group-hover/card:scale-110" />
+                                <div className="absolute top-0 right-0 w-16 h-16 bg-primary/5 rounded-bl-[2rem] -mr-4 -mt-4 transition-transform group-hover/card:scale-110" />
                                 <div className="flex items-center justify-between mb-4">
                                     <div className="flex flex-col">
                                         <span className="text-[0.6rem] font-bold text-[#A3A3A3] uppercase tracking-[0.1em] mb-1">Tier</span>
                                         <div className="flex items-center gap-1.5">
-                                            <div className="w-1.5 h-1.5 bg-[#3B82F6] rounded-full animate-pulse shadow-[0_0_8px_#3B82F6]" />
+                                            <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse shadow-[0_0_8px_primary]" />
                                             <span className="text-xs font-black text-[#171717] tracking-tight">{plan} Plan</span>
                                         </div>
                                     </div>
                                     <div className="flex flex-col items-end">
-                                        <span className="text-base font-black text-[#3B82F6] tracking-tighter leading-none mb-0.5">{credits}</span>
+                                        <span className="text-base font-black text-primary tracking-tighter leading-none mb-0.5">{credits}</span>
                                         <span className="text-[0.55rem] font-black text-[#A3A3A3] uppercase tracking-[0.1em]">Credits</span>
                                     </div>
                                 </div>
                                 <div className="w-full bg-[#F5F5F5] h-1.5 rounded-full overflow-hidden mb-5">
                                      <m.div 
-                                        className="bg-[#3B82F6] h-full" 
+                                        className="bg-primary h-full" 
                                         initial={{ width: 0 }}
                                         animate={{ width: plan === "Pro" ? "100%" : `${Math.min((credits / 10) * 100, 100)}%` }}
                                         transition={{ duration: 1.5, ease: "easeOut" }}
@@ -198,14 +198,14 @@ export function Sidebar({ plan, credits, userName, userImage, onOpenSettingsActi
                     <div className="pt-6 pb-8 mt-auto border-t border-[#F5F5F5]">
                         <div 
                             onClick={onOpenProfileAction}
-                            className="group flex items-center gap-3 p-2 pr-4 rounded-2xl bg-white border border-[#F5F5F5] hover:border-[#3B82F6]/20 hover:shadow-lg hover:shadow-black/5 transition-all cursor-pointer"
+                            className="group flex items-center gap-3 p-2 pr-4 rounded-2xl bg-white border border-[#F5F5F5] hover:border-primary/20 hover:shadow-lg hover:shadow-black/5 transition-all cursor-pointer"
                         >
-                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#3B82F6] to-[#6366F1] p-0.5 shadow-md group-hover:scale-105 transition-transform">
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-indigo-600 p-0.5 shadow-md group-hover:scale-105 transition-transform">
                                 <div className="w-full h-full rounded-[0.55rem] bg-white overflow-hidden flex items-center justify-center">
                                     {userImage ? (
                                         <img src={userImage} alt={userName} className="w-full h-full object-cover" />
                                     ) : (
-                                        <span className="text-xs font-black text-[#3B82F6]">{userName.charAt(0).toUpperCase()}</span>
+                                        <span className="text-xs font-black text-primary">{userName.charAt(0).toUpperCase()}</span>
                                     )}
                                 </div>
                             </div>

@@ -3,7 +3,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { user as userTable, resumes as resumesTable, coverLetters as coverLettersTable } from "@/lib/schema";
-import { eq, desc, sql } from "drizzle-orm";
+import { eq, desc, sql, and } from "drizzle-orm";
 import { headers } from "next/headers";
 import crypto from "crypto";
 
@@ -63,7 +63,10 @@ export async function POST(req: NextRequest) {
         let resumeText = "";
         if (resumeId) {
             const resume = await db.query.resumes.findFirst({
-                where: eq(resumesTable.id, resumeId)
+                where: and(
+                    eq(resumesTable.id, resumeId),
+                    eq(resumesTable.userId, session.user.id)
+                )
             });
             resumeText = resume?.content || "";
         }

@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = 'https://zebra-ai.dev';
+  const baseUrl = 'https://zebra-ai.app';
 
   return {
     rules: {

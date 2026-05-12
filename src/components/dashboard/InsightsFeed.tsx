@@ -78,25 +78,25 @@ export function InsightsFeed({ data }: InsightsFeedProps) {
                         onClick={() => handleOpenModal(item)}
                         className="flex flex-col p-8 bg-white border border-black/[0.04] rounded-[2.2rem] transition-all cursor-pointer group shadow-sm relative overflow-hidden"
                     >
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-black/[0.01] rounded-bl-[4rem] -mr-8 -mt-8 transition-transform group-hover:scale-110 group-hover:bg-[#3B82F6]/[0.02]" />
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-black/[0.01] rounded-bl-[4rem] -mr-8 -mt-8 transition-transform group-hover:scale-110 group-hover:bg-primary/[0.02]" />
                         
                         <div className="flex items-start justify-between mb-8">
                             <div className="flex items-center gap-5">
                                 <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 shadow-sm ${
                                     item.type === "import" 
-                                        ? "bg-[#3B82F6] text-white shadow-blue-500/20" 
-                                        : "bg-black/[0.03] text-[#737373]/40 group-hover:bg-[#3B82F6] group-hover:text-white group-hover:shadow-blue-500/20"
+                                        ? "bg-primary text-white shadow-blue-500/20" 
+                                        : "bg-black/[0.03] text-[#737373]/40 group-hover:bg-primary group-hover:text-white group-hover:shadow-blue-500/20"
                                 }`}>
                                     {item.type === "analysis" ? <RiBarChartGroupedLine size={24} /> : item.type === "tailoring" ? <RiFlashlightLine size={24} /> : <RiUploadCloud2Line size={24} />}
                                 </div>
                                 <div className="flex flex-col gap-1">
                                     <span className={`text-[0.6rem] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest w-fit shadow-sm border border-black/[0.02] ${
-                                        item.type === "import" ? "bg-[#3B82F6]/10 text-[#3B82F6]" : "bg-black/[0.04] text-[#737373]/60"
+                                        item.type === "import" ? "bg-primary/10 text-primary" : "bg-black/[0.04] text-[#737373]/60"
                                     }`}>
                                         {item.type === "analysis" ? "Analysis Report" : item.type === "tailoring" ? "Tailoring Analysis" : "New Import"}
                                     </span>
                                     <p className="text-[0.55rem] font-bold text-[#737373]/40 flex items-center gap-1.5 uppercase tracking-widest">
-                                        <RiTimer2Line size={12} className="text-[#3B82F6]/40" />
+                                        <RiTimer2Line size={12} className="text-primary/40" />
                                         {formatTimeAgo(item.date)}
                                     </p>
                                 </div>
@@ -108,7 +108,7 @@ export function InsightsFeed({ data }: InsightsFeedProps) {
                                         <m.span 
                                             initial={{ scale: 0.9 }}
                                             animate={{ scale: 1 }}
-                                            className="text-4xl font-black text-[#0A0A0A] tracking-tighter group-hover:text-[#3B82F6] transition-colors leading-none"
+                                            className="text-4xl font-black text-[#0A0A0A] tracking-tighter group-hover:text-primary transition-colors leading-none"
                                         >
                                             {item.score}
                                         </m.span>
@@ -126,14 +126,14 @@ export function InsightsFeed({ data }: InsightsFeedProps) {
                         </div>
 
                         <div className="flex-grow mb-6">
-                            <h4 className="font-bold text-[#0A0A0A] group-hover:text-[#3B82F6] transition-colors tracking-tight text-lg leading-tight line-clamp-1 mb-3">
+                            <h4 className="font-bold text-[#0A0A0A] group-hover:text-primary transition-colors tracking-tight text-lg leading-tight line-clamp-2 mb-3">
                                 {item.title}
                             </h4>
                             
                             {item.fullData?.actionItems && item.fullData.actionItems.length > 0 && (
                                 <div className="space-y-2">
                                     <div className="flex items-center gap-2">
-                                        <div className="w-1 h-4 bg-[#3B82F6] rounded-full" />
+                                        <div className="w-1 h-4 bg-primary rounded-full" />
                                         <span className="text-[0.6rem] font-bold text-[#737373] uppercase tracking-widest">Priority Improvement:</span>
                                     </div>
                                     <p className="text-[0.7rem] font-medium text-black/60 line-clamp-1 italic">
@@ -147,13 +147,14 @@ export function InsightsFeed({ data }: InsightsFeedProps) {
                                 <div className="flex -space-x-1">
                                     {[1, 2, 3].map(i => (
                                         <div key={i} className="w-5 h-5 rounded-full bg-black/[0.04] border-2 border-white flex items-center justify-center">
-                                            <div className={`w-1 h-1 rounded-full ${i === 1 ? 'bg-[#3B82F6]' : 'bg-black/20'}`} />
+                                            <div className={`w-1 h-1 rounded-full ${i === 1 ? 'bg-primary' : 'bg-black/20'}`} />
                                         </div>
                                     ))}
                                 </div>
-                                <span className="text-[0.55rem] font-bold text-[#737373]/40 uppercase tracking-widest">Analysis Insight Available</span>
+                                <span className="text-[0.55rem] font-bold text-[#737373]/40 uppercase tracking-widest hidden sm:inline">Analysis Insight Available</span>
+                                <span className="text-[0.55rem] font-bold text-[#737373]/40 uppercase tracking-widest sm:hidden">Analysis Available</span>
                             </div>
-                            <div className="w-10 h-10 rounded-xl bg-black/[0.03] flex items-center justify-center text-[#737373]/40 group-hover:bg-[#3B82F6] group-hover:text-white transition-all flex-shrink-0 shadow-sm">
+                            <div className="w-10 h-10 rounded-xl bg-black/[0.03] flex items-center justify-center text-[#737373]/40 group-hover:bg-primary group-hover:text-white transition-all flex-shrink-0 shadow-sm">
                                 <RiArrowRightSLine size={18} />
                             </div>
                         </div>

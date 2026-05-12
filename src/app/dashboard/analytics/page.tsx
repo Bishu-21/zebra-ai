@@ -45,6 +45,21 @@ export default async function AnalyticsPage() {
     }
   }
 
+  // Fetch recent scores for chart
+  let chartScores: number[] = [];
+  if (userResumes.length > 0) {
+    const resumeIds = userResumes.map(r => r.id);
+    const recentAnalyses = await db.query.analysis.findMany({
+        where: inArray(analysisTable.resumeId, resumeIds),
+        orderBy: [desc(analysisTable.createdAt)],
+        limit: 10
+    });
+    chartScores = recentAnalyses.map(a => a.score).reverse();
+  }
+  
+  // Padding for chart if less than 10 entries
+  const displayScores = chartScores.length > 0 ? chartScores : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
   const credits = (session.user as any).credits || 0;
 
   const stats = [
@@ -96,20 +111,26 @@ export default async function AnalyticsPage() {
             </div>
             
             <div className="flex-grow flex items-end justify-between gap-3 h-48 pb-4">
-                {[35, 60, 45, 85, 70, 95, 80, 65, 88, 75].map((h, i) => (
+                {displayScores.map((h, i) => (
                     <div key={i} className="flex-grow group/bar relative">
                         <div 
-                            className={`w-full rounded-t-xl transition-all duration-700 ${i === 5 ? 'bg-[#3B82F6]' : 'bg-[#3B82F6]/10 hover:bg-[#3B82F6]/30'}`} 
-                            style={{ height: `${h}%` }}
+                            className={`w-full rounded-t-xl transition-all duration-700 ${i === displayScores.length - 1 && h > 0 ? 'bg-[#3B82F6]' : 'bg-[#3B82F6]/10 hover:bg-[#3B82F6]/30'}`} 
+                            style={{ height: `${h || 2}%` }}
                         />
-                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-all bg-black text-white text-[0.6rem] font-bold px-2 py-1 rounded pointer-events-none">
-                            {h}%
-                        </div>
+                        {h > 0 && (
+                            <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-all bg-black text-white text-[0.6rem] font-bold px-2 py-1 rounded pointer-events-none">
+                                {h}%
+                            </div>
+                        )}
                     </div>
                 ))}
             </div>
             <div className="flex justify-between items-center mt-6 pt-6 border-t border-black/5">
-                <p className="text-xs font-bold text-[#737373]">Average match score has improved by <span className="text-[#3B82F6]">12.4%</span> this session.</p>
+                <p className="text-xs font-bold text-[#737373]">
+                    {chartScores.length > 0 
+                        ? `Tracking performance across your last ${chartScores.length} analyses.`
+                        : "No analysis data available yet. Start by analyzing a resume."}
+                </p>
                 <button className="text-[0.65rem] font-black text-[#3B82F6] uppercase tracking-[0.2em] flex items-center gap-1 hover:gap-2 transition-all">
                     Full Report <RiArrowRightUpLine size={14} />
                 </button>

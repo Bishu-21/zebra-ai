@@ -18,7 +18,8 @@ import {
     RiArrowRightSLine
 } from "react-icons/ri";
 import { useRouter } from "next/navigation";
-import { ResumeAnalysisData } from "@/components/compiler/types";
+import { useToast } from "@/components/ui/Toast";
+import { RiSaveLine, RiBuildingLine, RiBriefcaseLine } from "react-icons/ri";
 
 interface Resume {
     id: string;
@@ -32,6 +33,8 @@ interface TailorAnalysis {
     keywordsFound: string[];
     keywordsMissing: string[];
     tailoringSuggestions: string[];
+    tailoredResumeContent?: string;
+    executiveSummary?: string;
 }
 
 export function TailorResume({ resumes }: { resumes: Resume[] }) {
@@ -41,7 +44,11 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
     const [formData, setFormData] = useState({
         resumeId: resumes[0]?.id || "",
         jobDescription: "",
+        company: "",
+        targetRole: "",
     });
+    const [savingVersion, setSavingVersion] = useState(false);
+    const { showToast } = useToast();
     const [scanStep, setScanStep] = useState("");
     const [analysis, setAnalysis] = useState<TailorAnalysis | null>(null);
     const router = useRouter();
@@ -90,6 +97,43 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
         }
     };
 
+    const handleSaveVersion = async () => {
+        if (!formData.resumeId || !formData.jobDescription || !analysis) return;
+        
+        const baseResume = resumes.find(r => r.id === formData.resumeId);
+        if (!baseResume) return;
+
+        setSavingVersion(true);
+        try {
+            const res = await fetch("/api/resume-versions", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    resumeId: formData.resumeId,
+                    title: `Tailored for ${formData.company || formData.targetRole || 'Job'}`,
+                    company: formData.company,
+                    targetRole: formData.targetRole,
+                    jobDescription: formData.jobDescription,
+                    content: analysis.tailoredResumeContent || JSON.stringify({ baseContent: baseResume.content, tailoringAnalysis: analysis }),
+                    matchScore: analysis.matchScore,
+                    feedback: analysis
+                }),
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                showToast("Version saved successfully!");
+                router.refresh();
+            } else {
+                showToast(data.error || "Failed to save version", "info");
+            }
+        } catch (_err) {
+            showToast("Connection error. Try again later.", "info");
+        } finally {
+            setSavingVersion(false);
+        }
+    };
+
     return (
         <>
             {/* Launcher Card */}
@@ -100,7 +144,7 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                 <div className="absolute top-0 right-0 w-32 h-32 bg-black/[0.01] rounded-bl-[4rem] group-hover/card:scale-110 transition-transform" />
                 
                 <div className="flex items-start justify-between mb-8">
-                    <div className="w-14 h-14 bg-black/[0.03] rounded-2xl flex items-center justify-center text-[#737373]/40 group-hover/card:bg-[#3B82F6] group-hover/card:text-white transition-all duration-500">
+                    <div className="w-14 h-14 bg-black/[0.03] rounded-2xl flex items-center justify-center text-[#737373]/40 group-hover/card:bg-primary group-hover/card:text-white transition-all duration-500">
                         <RiFocus3Line size={24} />
                     </div>
                     <div className="flex items-center gap-1 opacity-0 group-hover/card:opacity-100 transition-opacity">
@@ -136,21 +180,21 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                             className="relative bg-white/90 backdrop-blur-xl w-full max-w-5xl max-h-[90vh] rounded-[2.5rem] shadow-2xl border border-white/50 flex flex-col overflow-hidden"
                         >
                             {/* Header */}
-                            <div className="p-10 border-b border-black/[0.03] flex items-center justify-between bg-white/40 backdrop-blur-3xl sticky top-0 z-20">
-                                <div className="flex items-center gap-6">
-                                    <div className="w-16 h-16 bg-primary rounded-[1.5rem] flex items-center justify-center text-white shadow-2xl shadow-blue-500/20">
-                                        <RiFlashlightLine size={28} />
+                            <div className="p-6 sm:p-10 border-b border-black/[0.03] flex items-center justify-between bg-white/40 backdrop-blur-3xl sticky top-0 z-20">
+                                <div className="flex items-center gap-4 sm:gap-6">
+                                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-primary rounded-[1rem] sm:rounded-[1.5rem] flex items-center justify-center text-white shadow-2xl shadow-blue-500/20">
+                                        <RiFlashlightLine size={24} className="sm:size-[28px]" />
                                     </div>
                                     <div>
                                         <div className="flex items-center gap-3 mb-1.5">
-                                            <h2 className="text-2xl font-bold text-foreground tracking-tighter uppercase leading-none">Role Match Analysis</h2>
+                                            <h2 className="text-lg sm:text-2xl font-bold text-foreground tracking-tighter uppercase leading-none">Role Match Analysis</h2>
                                         </div>
-                                        <p className="text-[0.7rem] font-bold text-accent-gray uppercase tracking-widest text-black/30">
+                                        <p className="text-[0.6rem] sm:text-[0.7rem] font-bold text-accent-gray uppercase tracking-widest text-black/30">
                                             Analyzing Profile <span className="mx-2 opacity-50">&amp;</span> Job Alignment
                                         </p>
                                     </div>
                                 </div>
-                                <button onClick={() => !loading && setIsOpen(false)} className="w-12 h-12 flex items-center justify-center text-black/20 hover:text-black hover:bg-black/[0.03] rounded-full transition-all disabled:opacity-30" disabled={loading}>
+                                <button onClick={() => !loading && setIsOpen(false)} className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center text-black/20 hover:text-black hover:bg-black/[0.03] rounded-full transition-all disabled:opacity-30" disabled={loading}>
                                     <RiCloseCircleLine size={24} />
                                 </button>
                             </div>
@@ -176,6 +220,35 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                                                     <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-black/30">
                                                         <RiArrowDropDownLine size={24} />
                                                     </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="space-y-3">
+                                                    <label className="text-[0.65rem] font-black uppercase tracking-widest text-black/40 flex items-center gap-2">
+                                                        <RiBuildingLine size={14} />
+                                                        Company
+                                                    </label>
+                                                    <input 
+                                                        type="text"
+                                                        placeholder="e.g. Google"
+                                                        className="w-full bg-black/5 border-2 border-transparent focus:border-black/10 rounded-2xl px-6 py-5 text-sm font-bold outline-none transition-all text-black"
+                                                        value={formData.company}
+                                                        onChange={(e) => setFormData({...formData, company: e.target.value})}
+                                                    />
+                                                </div>
+                                                <div className="space-y-3">
+                                                    <label className="text-[0.65rem] font-black uppercase tracking-widest text-black/40 flex items-center gap-2">
+                                                        <RiBriefcaseLine size={14} />
+                                                        Role
+                                                    </label>
+                                                    <input 
+                                                        type="text"
+                                                        placeholder="e.g. Frontend Dev"
+                                                        className="w-full bg-black/5 border-2 border-transparent focus:border-black/10 rounded-2xl px-6 py-5 text-sm font-bold outline-none transition-all text-black"
+                                                        value={formData.targetRole}
+                                                        onChange={(e) => setFormData({...formData, targetRole: e.target.value})}
+                                                    />
                                                 </div>
                                             </div>
                                         </div>
@@ -221,7 +294,7 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
 
                                                 <textarea 
                                                     placeholder="Paste the full job requirements from the recruiter..."
-                                                    className={`w-full min-h-[350px] px-8 py-8 text-[0.95rem] font-medium outline-none transition-all resize-none leading-relaxed text-black bg-transparent ${loading ? "blur-[2px]" : ""}`}
+                                                    className={`w-full min-h-[300px] sm:min-h-[350px] px-6 sm:px-8 py-6 sm:py-8 text-[0.85rem] sm:text-[0.95rem] font-medium outline-none transition-all resize-none leading-relaxed text-black bg-transparent ${loading ? "blur-[2px]" : ""}`}
                                                     value={formData.jobDescription}
                                                     onChange={(e) => setFormData({...formData, jobDescription: e.target.value})}
                                                     disabled={loading}
@@ -245,7 +318,7 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                             <div className="bg-[#0A0A0A] text-white p-8 rounded-[2.5rem] flex flex-col justify-between aspect-square md:aspect-auto shadow-2xl shadow-black/20">
                                                 <p className="text-[0.65rem] font-bold uppercase tracking-widest text-white/40 mb-2 text-center">Match Potential</p>
-                                                <h3 className="text-7xl font-bold text-[#3B82F6] text-center">{analysis.matchScore}%</h3>
+                                                <h3 className="text-7xl font-bold text-primary text-center">{analysis.matchScore}%</h3>
                                                 <div className="mt-4 w-full h-1 bg-white/10 rounded-full overflow-hidden">
                                                     <m.div 
                                                         initial={{ width: 0 }}
@@ -302,7 +375,7 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                                             <div className="grid grid-cols-1 gap-4">
                                                 {(analysis.tailoringSuggestions || []).map((tip: string, i: number) => (
                                                     <div key={i} className="flex items-start gap-6 p-6 bg-white rounded-2xl border border-black/5 hover:border-black/20 transition-all group">
-                                                        <span className="w-10 h-10 bg-[#3B82F6] text-white rounded-xl flex items-center justify-center text-xs font-bold shadow-lg flex-shrink-0">
+                                                        <span className="w-10 h-10 bg-primary text-white rounded-xl flex items-center justify-center text-xs font-bold shadow-lg flex-shrink-0">
                                                             0{i + 1}
                                                         </span>
                                                         <p className="text-[0.9rem] font-bold text-[#0A0A0A]/70 leading-relaxed pt-1">
@@ -317,40 +390,54 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                             </div>
 
                             {/* Footer */}
-                            <div className="p-8 border-t border-black/5 flex items-center justify-between bg-white/30 backdrop-blur-xl sticky bottom-0">
-                                <div className="flex items-center gap-3 px-6 py-3 bg-black/5 rounded-2xl border border-black/5">
+                            <div className="p-6 sm:p-8 border-t border-black/5 flex flex-col sm:flex-row items-center justify-between bg-white/30 backdrop-blur-xl sticky bottom-0 gap-4">
+                                <div className="flex items-center gap-3 px-6 py-3 bg-black/5 rounded-2xl border border-black/5 w-full sm:w-auto justify-center sm:justify-start">
                                     <RiBarChartLine size={18} className="text-black/60 theme-pulse" />
                                     <span className="text-[0.65rem] font-black uppercase tracking-widest text-[#737373]">Analysis Hub</span>
                                 </div>
 
-                                <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-4 w-full sm:w-auto">
                                     {!analysis ? (
                                         <>
                                             <button 
                                                 onClick={() => setIsOpen(false)}
-                                                className="px-8 py-4 text-[0.7rem] font-black uppercase tracking-widest text-black/40 hover:text-black transition-colors"
+                                                className="flex-grow sm:flex-grow-0 px-8 py-4 text-[0.7rem] font-black uppercase tracking-widest text-black/40 hover:text-black transition-colors"
                                             >
                                                 Cancel
                                             </button>
                                             <button 
                                                 onClick={handleTailor}
                                                 disabled={loading || !formData.jobDescription.trim()}
-                                                className="bg-[#3B82F6] text-white px-10 py-5 rounded-[1.25rem] font-bold text-sm hover:bg-[#2563EB] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-2xl shadow-blue-500/20 disabled:opacity-30 flex items-center gap-3"
+                                                className="flex-grow sm:flex-grow-0 bg-primary text-white px-10 py-5 rounded-[1.25rem] font-bold text-sm hover:bg-primary-dark hover:scale-[1.02] active:scale-[0.98] transition-all shadow-2xl shadow-blue-500/20 disabled:opacity-30 flex items-center justify-center gap-3"
                                             >
-                                                {loading ? "Analyzing Alignment..." : "Run Analysis"}
+                                                {loading ? "Analyzing..." : "Run Analysis"}
                                                 {!loading && <RiArrowRightLine size={18} />}
                                             </button>
                                         </>
                                     ) : (
-                                        <button 
-                                            onClick={() => {
-                                                setAnalysis(null);
-                                                setIsOpen(false);
-                                            }}
-                                            className="bg-[#3B82F6] text-white px-12 py-5 rounded-[1.25rem] font-bold text-sm hover:bg-[#2563EB] hover:scale-[1.02] transition-all shadow-2xl shadow-blue-500/20 uppercase tracking-widest"
-                                        >
-                                            Close Report
-                                        </button>
+                                        <div className="flex flex-col sm:flex-row-reverse items-center gap-3 w-full sm:w-auto">
+                                            <button 
+                                                onClick={handleSaveVersion}
+                                                disabled={savingVersion}
+                                                className="w-full sm:w-auto bg-primary text-white px-8 py-5 rounded-[1.25rem] font-bold text-sm hover:bg-primary-dark hover:scale-[1.02] transition-all shadow-xl shadow-blue-500/20 flex items-center justify-center gap-3 disabled:opacity-50"
+                                            >
+                                                {savingVersion ? (
+                                                    <RiLoader4Line className="animate-spin" size={20} />
+                                                ) : (
+                                                    <RiSaveLine size={20} />
+                                                )}
+                                                {savingVersion ? "Saving..." : "Save Version"}
+                                            </button>
+                                            <button 
+                                                onClick={() => {
+                                                    setAnalysis(null);
+                                                    setIsOpen(false);
+                                                }}
+                                                className="w-full sm:w-auto bg-black/5 text-black/60 hover:text-black hover:bg-black/10 px-12 py-5 rounded-[1.25rem] font-bold text-[0.7rem] transition-all uppercase tracking-widest"
+                                            >
+                                                Close
+                                            </button>
+                                        </div>
                                     )}
                                 </div>
                             </div>

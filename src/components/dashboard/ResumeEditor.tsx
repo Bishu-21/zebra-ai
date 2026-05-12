@@ -26,9 +26,11 @@ import type { ResumeData, ResumeContent, Experience, Project, Education, SkillCa
 
 interface ResumeEditorProps {
     initialData?: { id: string; title: string; content: string; };
+    isStripeVersion?: boolean;
+    versionTitle?: string | null;
 }
 
-export function ResumeEditor({ initialData }: ResumeEditorProps) {
+export function ResumeEditor({ initialData, isStripeVersion, versionTitle }: ResumeEditorProps) {
     const [resume, setResume] = useState<ResumeData>(() => parseResumeData(initialData));
     const selectedTemplate = 'modern' as TemplateType;
     const [isSaving, setIsSaving] = useState(false);
@@ -450,8 +452,14 @@ export function ResumeEditor({ initialData }: ResumeEditorProps) {
                         </AnimatePresence>
                     </div>
 
-                    <div className="hidden sm:block">
+                    <div className="hidden sm:flex items-center gap-2">
                         <span className="px-2 py-0.5 bg-[#3B82F6]/10 text-[#3B82F6] rounded text-[10px] font-semibold tracking-wide">DRAFT</span>
+                        {isStripeVersion && (
+                            <span className="px-2 py-0.5 bg-primary/10 text-primary rounded text-[10px] font-semibold tracking-wide flex items-center gap-1 border border-primary/20">
+                                <RiMagicLine size={10} />
+                                TAILORED VERSION
+                            </span>
+                        )}
                     </div>
                 </div>
                 <div className="flex items-center gap-2">

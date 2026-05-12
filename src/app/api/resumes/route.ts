@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { resumes as resumesTable, analysis as analysisTable } from "@/lib/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import { headers } from "next/headers";
 import crypto from "crypto";
 
@@ -61,7 +61,12 @@ export async function POST(req: NextRequest) {
                   content, 
                   updatedAt: new Date() 
               })
-              .where(eq(resumesTable.id, id));
+              .where(
+                  and(
+                      eq(resumesTable.id, id),
+                      eq(resumesTable.userId, session.user.id)
+                  )
+              );
           
           return NextResponse.json({ success: true, id });
       } else {

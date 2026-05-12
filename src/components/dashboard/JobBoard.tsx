@@ -17,7 +17,8 @@ import {
     RiMore2Fill,
     RiMapPin2Line,
     RiArrowRightSLine,
-    RiCalendarEventLine
+    RiCalendarEventLine,
+    RiMagicLine
 } from "react-icons/ri";
 import { formatRelativeTime } from "@/lib/utils";
 
@@ -29,12 +30,21 @@ type Job = {
     salary?: string | null;
     url?: string | null;
     resumeId?: string | null;
+    resumeVersionId?: string | null;
     updatedAt: string;
 };
 
 const STATUSES = ["Applied", "Interviewing", "Offers", "Rejected"] as const;
 
-export function JobBoard({ initialJobs, resumes = [] }: { initialJobs: Job[], resumes?: { id: string; title: string }[] }) {
+export function JobBoard({ 
+    initialJobs, 
+    resumes = [], 
+    versions = [] 
+}: { 
+    initialJobs: Job[], 
+    resumes?: { id: string; title: string }[],
+    versions?: { id: string; title: string; company: string | null; targetRole: string | null }[]
+}) {
     const [jobs, setJobs] = useState<Job[]>(initialJobs);
     const [isAdding, setIsAdding] = useState(false);
     const [newJob, setNewJob] = useState({ 
@@ -43,7 +53,8 @@ export function JobBoard({ initialJobs, resumes = [] }: { initialJobs: Job[], re
         status: "Applied" as Job["status"],
         salary: "",
         url: "",
-        resumeId: ""
+        resumeId: "",
+        resumeVersionId: ""
     });
     const [loading, setLoading] = useState(false);
 
@@ -64,7 +75,7 @@ export function JobBoard({ initialJobs, resumes = [] }: { initialJobs: Job[], re
                     updatedAt: new Date().toISOString() 
                 };
                 setJobs([addedJob, ...jobs]);
-                setNewJob({ company: "", position: "", status: "Applied", salary: "", url: "", resumeId: "" });
+                setNewJob({ company: "", position: "", status: "Applied", salary: "", url: "", resumeId: "", resumeVersionId: "" });
                 setIsAdding(false);
             }
         } catch (error) {
@@ -107,7 +118,7 @@ export function JobBoard({ initialJobs, resumes = [] }: { initialJobs: Job[], re
 
     const getStatusColor = (status: Job["status"]) => {
         switch (status) {
-            case "Applied": return { bg: "bg-blue-500", text: "text-blue-500", border: "border-blue-500/20", light: "bg-blue-50" };
+            case "Applied": return { bg: "bg-primary", text: "text-primary", border: "border-primary/20", light: "bg-primary/5" };
             case "Interviewing": return { bg: "bg-amber-500", text: "text-amber-500", border: "border-amber-500/20", light: "bg-amber-50" };
             case "Offers": return { bg: "bg-emerald-500", text: "text-emerald-500", border: "border-emerald-500/20", light: "bg-emerald-50" };
             case "Rejected": return { bg: "bg-rose-500", text: "text-rose-500", border: "border-rose-500/20", light: "bg-rose-50" };
@@ -167,7 +178,7 @@ export function JobBoard({ initialJobs, resumes = [] }: { initialJobs: Job[], re
                                                 {job.salary && (
                                                     <div className="flex items-center gap-2.5 text-[#171717]">
                                                         <div className="w-5 h-5 rounded-md bg-white border border-black/5 flex items-center justify-center shadow-sm">
-                                                            <RiMoneyDollarCircleLine size={12} className="text-[#3B82F6]" />
+                                                            <RiMoneyDollarCircleLine size={12} className="text-primary" />
                                                         </div>
                                                         <span className="text-[0.65rem] font-black tracking-tight">{job.salary}</span>
                                                     </div>
@@ -175,10 +186,20 @@ export function JobBoard({ initialJobs, resumes = [] }: { initialJobs: Job[], re
                                                 {job.resumeId && (
                                                     <div className="flex items-center gap-2.5 text-[#171717]">
                                                         <div className="w-5 h-5 rounded-md bg-white border border-black/5 flex items-center justify-center shadow-sm">
-                                                            <RiFileTextLine size={12} className="text-emerald-500" />
+                                                            <RiFileTextLine size={12} className="text-[#A3A3A3]" />
                                                         </div>
                                                         <span className="text-[0.65rem] font-black tracking-tight truncate max-w-[150px]">
                                                             {resumes.find(r => r.id === job.resumeId)?.title || "Linked Resume"}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                {job.resumeVersionId && (
+                                                    <div className="flex items-center gap-2.5 text-[#171717]">
+                                                        <div className="w-5 h-5 rounded-md bg-white border border-black/5 flex items-center justify-center shadow-sm">
+                                                            <RiMagicLine size={12} className="text-primary" />
+                                                        </div>
+                                                        <span className="text-[0.65rem] font-black tracking-tight truncate max-w-[150px]">
+                                                            {versions.find(v => v.id === job.resumeVersionId)?.title || "Tailored Version"}
                                                         </span>
                                                     </div>
                                                 )}
@@ -188,7 +209,7 @@ export function JobBoard({ initialJobs, resumes = [] }: { initialJobs: Job[], re
                                                             <RiExternalLinkLine size={12} className="text-[#A3A3A3]" />
                                                             <span className="text-[0.6rem] font-black text-[#737373] uppercase tracking-widest">Listing</span>
                                                         </div>
-                                                        <RiArrowRightSLine size={14} className="text-[#A3A3A3] group-hover/link:text-[#3B82F6] group-hover/link:translate-x-0.5 transition-all" />
+                                                        <RiArrowRightSLine size={14} className="text-[#A3A3A3] group-hover/link:text-primary group-hover/link:translate-x-0.5 transition-all" />
                                                     </a>
                                                 )}
                                             </div>
@@ -218,11 +239,11 @@ export function JobBoard({ initialJobs, resumes = [] }: { initialJobs: Job[], re
                                 {status === 'Applied' && (
                                     <div className="px-1 pt-2">
                                         {isAdding ? (
-                                            <m.div initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} className="bg-white p-5 rounded-[2rem] border border-[#3B82F6]/20 shadow-2xl shadow-blue-500/10 space-y-4">
+                                            <m.div initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} className="bg-white p-5 rounded-[2rem] border border-primary/20 shadow-2xl shadow-blue-500/10 space-y-4">
                                                 <div className="space-y-2">
                                                     <label className="text-[0.6rem] font-black text-[#A3A3A3] uppercase tracking-widest ml-1">Company & Role</label>
-                                                    <input autoFocus type="text" placeholder="Company..." className="w-full text-xs font-black p-3.5 bg-[#F5F5F5] rounded-2xl border-none focus:ring-2 focus:ring-[#3B82F6]/20 transition-all placeholder:text-[#A3A3A3]" value={newJob.company} onChange={(e) => setNewJob({...newJob, company: e.target.value})} />
-                                                    <input type="text" placeholder="Position..." className="w-full text-xs font-black p-3.5 bg-[#F5F5F5] rounded-2xl border-none focus:ring-2 focus:ring-[#3B82F6]/20 transition-all placeholder:text-[#A3A3A3]" value={newJob.position} onChange={(e) => setNewJob({...newJob, position: e.target.value})} />
+                                                    <input autoFocus type="text" placeholder="Company..." className="w-full text-xs font-black p-3.5 bg-[#F5F5F5] rounded-2xl border-none focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-[#A3A3A3]" value={newJob.company} onChange={(e) => setNewJob({...newJob, company: e.target.value})} />
+                                                    <input type="text" placeholder="Position..." className="w-full text-xs font-black p-3.5 bg-[#F5F5F5] rounded-2xl border-none focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-[#A3A3A3]" value={newJob.position} onChange={(e) => setNewJob({...newJob, position: e.target.value})} />
                                                 </div>
                                                 
                                                 <div className="grid grid-cols-2 gap-3">
@@ -237,13 +258,37 @@ export function JobBoard({ initialJobs, resumes = [] }: { initialJobs: Job[], re
                                                 </div>
 
                                                 <div className="space-y-2">
-                                                    <label className="text-[0.6rem] font-black text-[#A3A3A3] uppercase tracking-widest ml-1">Attach Resume</label>
+                                                    <label className="text-[0.6rem] font-black text-[#A3A3A3] uppercase tracking-widest ml-1">Attach Resume or Version</label>
                                                     <div className="relative">
-                                                        <select className="w-full bg-[#F5F5F5] border-none rounded-2xl p-3.5 pl-10 text-xs font-black appearance-none cursor-pointer hover:bg-black/5 transition-all" value={newJob.resumeId || ""} onChange={(e) => setNewJob({...newJob, resumeId: e.target.value})}>
+                                                        <select 
+                                                            className="w-full bg-[#F5F5F5] border-none rounded-2xl p-3.5 pl-10 text-xs font-black appearance-none cursor-pointer hover:bg-black/5 transition-all" 
+                                                            value={newJob.resumeVersionId ? `v:${newJob.resumeVersionId}` : (newJob.resumeId || "")} 
+                                                            onChange={(e) => {
+                                                                const val = e.target.value;
+                                                                if (val.startsWith("v:")) {
+                                                                    setNewJob({...newJob, resumeVersionId: val.replace("v:", ""), resumeId: ""});
+                                                                } else {
+                                                                    setNewJob({...newJob, resumeId: val, resumeVersionId: ""});
+                                                                }
+                                                            }}
+                                                        >
                                                             <option value="">No Resume Linked</option>
-                                                            {resumes.map((r: any) => (<option key={r.id} value={r.id}>{r.title}</option>))}
+                                                            <optgroup label="Base Resumes">
+                                                                {resumes.map((r: any) => (<option key={r.id} value={r.id}>{r.title}</option>))}
+                                                            </optgroup>
+                                                            {versions.length > 0 && (
+                                                                <optgroup label="Tailored Versions">
+                                                                    {versions.map((v: any) => (
+                                                                        <option key={v.id} value={`v:${v.id}`}>
+                                                                            {v.title} {v.company ? `@ ${v.company}` : ""}
+                                                                        </option>
+                                                                    ))}
+                                                                </optgroup>
+                                                            )}
                                                         </select>
-                                                        <RiFileTextLine size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#A3A3A3]" />
+                                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#A3A3A3]">
+                                                            {newJob.resumeVersionId ? <RiMagicLine size={16} /> : <RiFileTextLine size={16} />}
+                                                        </div>
                                                     </div>
                                                 </div>
 
@@ -259,9 +304,9 @@ export function JobBoard({ initialJobs, resumes = [] }: { initialJobs: Job[], re
                                         ) : (
                                             <button 
                                                 onClick={() => setIsAdding(true)}
-                                                className="w-full py-10 border-2 border-dashed border-black/[0.06] rounded-[2rem] text-[0.65rem] font-black uppercase tracking-[0.2em] text-[#A3A3A3] hover:bg-white hover:border-[#3B82F6]/20 hover:text-[#3B82F6] transition-all flex flex-col items-center justify-center gap-4 group/add"
+                                                className="w-full py-10 border-2 border-dashed border-black/[0.06] rounded-[2rem] text-[0.65rem] font-black uppercase tracking-[0.2em] text-[#A3A3A3] hover:bg-white hover:border-primary/20 hover:text-primary transition-all flex flex-col items-center justify-center gap-4 group/add"
                                             >
-                                                <div className="w-12 h-12 rounded-2xl bg-black/[0.02] group-hover/add:bg-[#3B82F6]/10 flex items-center justify-center transition-colors">
+                                                <div className="w-12 h-12 rounded-2xl bg-black/[0.02] group-hover/add:bg-primary/10 flex items-center justify-center transition-colors">
                                                     <RiAddLine size={24} className="group-hover/add:rotate-90 transition-transform" />
                                                 </div>
                                                 <span>New Job Entry</span>

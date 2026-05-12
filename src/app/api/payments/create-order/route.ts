@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { razorpay } from "@/lib/razorpay";
+import { db } from "@/lib/db";
+import { transactions as transactionsTable } from "@/lib/schema";
 import { PLANS, PlanId } from "@/lib/constants/plans";
+import crypto from "crypto";
 import { headers } from "next/headers";
 
 export async function POST(req: NextRequest) {
@@ -35,6 +38,21 @@ export async function POST(req: NextRequest) {
         };
 
         const order = await razorpay.orders.create(options);
+
+        // Record pending transaction
+        await db.insert(transactionsTable).values({
+            id: crypto.randomUUID(),
+            userId: session.user.id,
+            provider: "razorpay",
+            orderId: order.id,
+            planId: plan.id,
+            credits: plan.credits,
+            amount: amountInPaise,
+            currency: "INR",
+            status: "pending",
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        });
 
         return NextResponse.json({
             id: order.id,

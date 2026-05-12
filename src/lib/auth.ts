@@ -8,6 +8,7 @@ export const auth = betterAuth({
 		provider: "pg",
 		schema: schema,
 	}),
+	trustedOrigins: [process.env.BETTER_AUTH_URL!],
 	emailAndPassword: {
 		enabled: true,
 	},
@@ -18,3 +19,4 @@ export const auth = betterAuth({
 		},
 	},
 });
+

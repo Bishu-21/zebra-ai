@@ -9,8 +9,8 @@ html {
 :root {
   --background: #FDFDFD;
   --foreground: #0A0A0A;
-  --primary: #2563EB;
-  --primary-dark: #1E40AF;
+  --primary: #1E40AF;
+  --primary-dark: #1E3A8A;
   --accent-gray: #64748B;
   --accent-dark: #334155;
   --border-subtle: rgba(10, 10, 10, 0.05);

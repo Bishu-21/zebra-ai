@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { user as userTable, resumes as resumesTable, atsOptimisations as atsTable } from "@/lib/schema";
-import { eq, sql } from "drizzle-orm";
+import { user as userTable, resumes as resumesTable, atsOptimisations as atsTable, resumeVersions as resumeVersionsTable } from "@/lib/schema";
+import { eq, sql, and } from "drizzle-orm";
 import { headers } from "next/headers";
 import crypto from "crypto";
 
@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const { resumeId, jobDescription } = await req.json();
+        const { resumeId, jobDescription, saveAsVersion, company, targetRole } = await req.json();
 
         if (!resumeId || !jobDescription) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -40,7 +40,10 @@ export async function POST(req: NextRequest) {
 
         // 2. Fetch Resume
         const resume = await db.query.resumes.findFirst({
-            where: eq(resumesTable.id, resumeId)
+            where: and(
+                eq(resumesTable.id, resumeId),
+                eq(resumesTable.userId, session.user.id)
+            )
         });
 
         if (!resume) {
@@ -82,7 +85,8 @@ export async function POST(req: NextRequest) {
             "roleFit": string,
             "criticalGaps": string[],
             "tailoringSuggestions": string[],
-            "executiveSummary": string
+            "executiveSummary": string,
+            "tailoredResumeContent": string
           }
 
           OUTPUT:
@@ -128,6 +132,23 @@ export async function POST(req: NextRequest) {
                 feedback: analysis,
                 createdAt: new Date(),
             });
+
+            if (saveAsVersion) {
+                await tx.insert(resumeVersionsTable).values({
+                    id: crypto.randomUUID(),
+                    userId: session.user.id,
+                    resumeId: resumeId,
+                    title: `${resume.title} - ${company || "Tailored Version"}`,
+                    company: company || null,
+                    targetRole: targetRole || null,
+                    jobDescription: jobDescription,
+                    content: analysis.tailoredResumeContent,
+                    matchScore: analysis.matchScore,
+                    feedback: analysis,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                });
+            }
         });
 
         return NextResponse.json({ success: true, analysis });

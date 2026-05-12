@@ -8,6 +8,20 @@
       "when": 1775201009771,
       "tag": "0000_late_johnny_blaze",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1778529473809,
+      "tag": "0001_numerous_gladiator",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1778612037004,
+      "tag": "0002_low_warhawk",
+      "breakpoints": true
     }
   ]
 }

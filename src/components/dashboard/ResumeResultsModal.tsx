@@ -50,7 +50,7 @@ const CircularGauge = ({ value, label, icon: Icon }: { value: number; label: str
     const strokeDashoffset = circumference - (value / 100) * circumference;
 
     return (
-        <div className="bg-white border border-[#F5F5F5] p-5 rounded-[1.8rem] flex flex-col items-center text-center transition-all hover:border-[#3B82F6]/30 hover:shadow-[0_4px_20px_rgba(59,130,246,0.03)] group">
+        <div className="bg-white border border-[#F5F5F5] p-5 rounded-[1.8rem] flex flex-col items-center text-center transition-all hover:border-primary/30 hover:shadow-[0_4px_20px_rgba(59,130,246,0.03)] group">
             <div className="relative w-14 h-14 mb-4">
                 <svg className="w-full h-full transform -rotate-90">
                     <circle cx="28" cy="28" r={radius} stroke="#F5F5F5" strokeWidth="2.5" fill="transparent" />
@@ -58,7 +58,8 @@ const CircularGauge = ({ value, label, icon: Icon }: { value: number; label: str
                         initial={{ strokeDashoffset: circumference }}
                         animate={{ strokeDashoffset }}
                         transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
-                        cx="28" cy="28" r={radius} stroke="#3B82F6" strokeWidth="2.5"
+                        cx="28" cy="28" r={radius} stroke="currentColor" strokeWidth="2.5"
+                        className="text-primary"
                         strokeDasharray={circumference} strokeLinecap="round" fill="transparent"
                     />
                 </svg>
@@ -67,7 +68,7 @@ const CircularGauge = ({ value, label, icon: Icon }: { value: number; label: str
                 </div>
             </div>
             <div className="flex items-center gap-1.5 opacity-40 group-hover:opacity-100 transition-opacity">
-                <Icon className="text-[#3B82F6] scale-75" />
+                <Icon className="text-primary scale-75" />
                 <span className="text-[0.5rem] font-bold uppercase tracking-[0.1em] text-[#171717]">{label}</span>
             </div>
         </div>
@@ -142,14 +143,15 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
                     className="relative bg-white w-full max-w-6xl max-h-[92vh] rounded-[2.5rem] shadow-[0_40px_80px_rgba(0,0,0,0.06)] border border-[#F5F5F5] flex flex-col overflow-hidden"
                 >
                     {/* Header */}
-                    <div className="px-10 py-6 border-b border-[#F5F5F5] flex items-center justify-between bg-white/40 backdrop-blur-3xl sticky top-0 z-20">
+                    <div className="px-6 md:px-10 py-6 border-b border-[#F5F5F5] flex items-center justify-between bg-white/40 backdrop-blur-3xl sticky top-0 z-20">
                         <div className="flex flex-col">
                             <div className="flex items-center gap-3">
-                                <div className="flex items-center gap-2 px-2.5 py-1 bg-[#3B82F6]/10 text-[#3B82F6] rounded-full">
+                                <div className="flex items-center gap-2 px-2.5 py-1 bg-primary/10 text-primary rounded-full">
                                     <PulseIcon />
-                                    <span className="text-[0.55rem] font-bold uppercase tracking-widest">Complete Analysis Report</span>
+                                    <span className="text-[0.55rem] font-bold uppercase tracking-widest hidden sm:inline">Complete Analysis Report</span>
+                                    <span className="text-[0.55rem] font-bold uppercase tracking-widest sm:hidden">Analysis Report</span>
                                 </div>
-                                <span className="text-[0.55rem] font-bold uppercase tracking-[0.3em] text-[#A3A3A3]">AI Engine</span>
+                                <span className="text-[0.55rem] font-bold uppercase tracking-[0.3em] text-[#A3A3A3] hidden xs:inline">AI Engine</span>
                             </div>
                             <h2 className="text-xl font-bold text-[#171717] tracking-tight">Analysis Results</h2>
                         </div>
@@ -165,7 +167,7 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
                             {/* Strategic Column (Left) */}
                             <div className="lg:col-span-5 flex flex-col gap-6">
                                 <div className="bg-[#0A0A0A] p-8 rounded-[2.2rem] relative overflow-hidden group">
-                                    <div className="absolute inset-0 bg-gradient-to-br from-[#3B82F6]/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    <div className="absolute inset-0 bg-gradient-to-br from-primary/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                                     <div className="relative z-10 space-y-6">
                                         <div className="flex justify-between items-start">
                                             <div>
@@ -175,7 +177,7 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
                                                     <span className="text-white/20 text-xl font-bold">/100</span>
                                                 </div>
                                             </div>
-                                            <ShieldIcon className="text-[#3B82F6] opacity-60" />
+                                            <ShieldIcon className="text-primary opacity-60" />
                                         </div>
                                         <div className="pt-4 border-t border-white/10">
                                             <p className="text-[0.85rem] font-medium text-white/80 leading-relaxed">
@@ -194,7 +196,7 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
                                         <div className="space-y-3">
                                             {actionItems.slice(0, 3).map((item: string, i: number) => (
                                                 <div key={i} className="flex items-start gap-4 p-4 bg-[#FAFAFA] rounded-xl border border-transparent hover:border-[#F5F5F5] transition-all">
-                                                    <span className="text-[0.6rem] font-bold text-[#3B82F6] bg-[#3B82F6]/10 w-5 h-5 flex items-center justify-center rounded-md">0{i+1}</span>
+                                                    <span className="text-[0.6rem] font-bold text-primary bg-primary/10 w-5 h-5 flex items-center justify-center rounded-md">0{i+1}</span>
                                                     <p className="text-[0.7rem] font-semibold text-[#171717] leading-tight">{item}</p>
                                                 </div>
                                             ))}
@@ -251,7 +253,7 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
                                         <h4 className="text-[0.6rem] font-bold uppercase tracking-[0.25em] text-[#171717]">Improvement Suggestions</h4>
                                         <p className="text-[0.55rem] text-[#A3A3A3] font-medium tracking-wide">Context-aware restructuring and rationale</p>
                                     </div>
-                                    <div className="px-3 py-1.5 bg-[#3B82F6]/5 text-[#3B82F6] rounded-lg border border-[#3B82F6]/10 text-[0.5rem] font-bold uppercase tracking-widest flex items-center gap-2">
+                                    <div className="px-3 py-1.5 bg-primary/5 text-primary rounded-lg border border-primary/10 text-[0.5rem] font-bold uppercase tracking-widest flex items-center gap-2">
                                         <PulseIcon />
                                         <span>Analysis Complete</span>
                                     </div>
@@ -263,16 +265,16 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
                                         const suggestion = isString ? item : (item.after ?? item.suggestion ?? "");
 
                                         return (
-                                            <div key={i} className="grid grid-cols-1 lg:grid-cols-12 gap-6 bg-white border border-[#F5F5F5] rounded-[2rem] overflow-hidden p-8 hover:border-[#3B82F6]/20 transition-all shadow-sm">
+                                            <div key={i} className="grid grid-cols-1 lg:grid-cols-12 gap-6 bg-white border border-[#F5F5F5] rounded-[2rem] overflow-hidden p-8 hover:border-primary/20 transition-all shadow-sm">
                                                 <div className="lg:col-span-4 space-y-4">
                                                     <span className="text-[0.5rem] font-bold uppercase tracking-[0.2em] text-[#A3A3A3] block">Improvement Logic</span>
                                                     <p className="text-[0.7rem] font-medium text-[#171717]/80 leading-relaxed border-l border-[#F5F5F5] pl-4">
                                                         {rationale}
                                                     </p>
                                                 </div>
-                                                <div className="lg:col-span-8 p-6 bg-[#3B82F6]/[0.02] rounded-2xl border border-[#3B82F6]/5 space-y-3 relative overflow-hidden">
+                                                <div className="lg:col-span-8 p-6 bg-primary/[0.02] rounded-2xl border border-primary/5 space-y-3 relative overflow-hidden">
                                                     <div className="absolute top-0 right-0 p-4 opacity-[0.03] rotate-12"><RocketIcon /></div>
-                                                    <span className="text-[0.5rem] font-bold uppercase tracking-[0.2em] text-[#3B82F6] block">Suggested Content</span>
+                                                    <span className="text-[0.5rem] font-bold uppercase tracking-[0.2em] text-primary block">Suggested Content</span>
                                                     <p className="text-[0.75rem] font-medium text-[#171717] leading-relaxed tracking-tight">
                                                         {suggestion}
                                                     </p>
@@ -285,19 +287,19 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
                         )}
                     </div>
 
-                    <div className="p-8 border-t border-black/5 flex items-center justify-between bg-white/30 backdrop-blur-xl sticky bottom-0">
-                        <div className="flex items-center gap-3 px-6 py-3 bg-black/5 rounded-2xl border border-black/5">
+                    <div className="p-6 md:p-8 border-t border-black/5 flex flex-col sm:flex-row items-center justify-between bg-white/30 backdrop-blur-xl sticky bottom-0 gap-4">
+                        <div className="flex items-center gap-3 px-6 py-3 bg-black/5 rounded-2xl border border-black/5 w-full sm:w-auto justify-center sm:justify-start">
                             <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                             <span className="text-[0.65rem] font-black uppercase tracking-widest text-accent-gray">Analyzer Active</span>
                         </div>
                         
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-4 w-full sm:w-auto">
                             <button 
                                 onClick={() => {
                                     router.push(`/dashboard/resumes/${resumeId || "new"}`);
                                     onCloseAction();
                                 }}
-                                className="px-10 py-4 bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-2xl shadow-xl shadow-blue-500/10 font-bold text-[0.65rem] uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-[0.98]"
+                                className="flex-grow sm:flex-grow-0 px-10 py-4 bg-primary hover:bg-primary-dark text-white rounded-2xl shadow-xl shadow-blue-500/10 font-bold text-[0.65rem] uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-[0.98]"
                             >
                                 Refine Resume
                             </button>
