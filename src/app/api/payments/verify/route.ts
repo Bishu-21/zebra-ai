@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ 
             success: true, 
             message: "Payment verified and credits added successfully",
-            addedCredits: plan.credits 
+            addedCredits: currentPlan.credits 
         });
 
     } catch (error: unknown) {

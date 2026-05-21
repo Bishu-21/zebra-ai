@@ -16,9 +16,11 @@ const pool = globalForDb.pool ?? new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-pool.on('error', (err: Error) => {
-  console.error('Neon Pool Error:', err);
-});
+if (!globalForDb.pool) {
+  pool.on('error', (err: Error) => {
+    console.error('Neon Pool Error:', err);
+  });
+}
 
 if (process.env.NODE_ENV !== "production") {
   globalForDb.pool = pool;

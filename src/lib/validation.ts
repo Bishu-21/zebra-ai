@@ -34,12 +34,14 @@ export const jobSchema = z.object({
     id: idSchema.optional(),
     company: z.string().min(1, "Company is required").max(MAX_TITLE_LENGTH).trim(),
     position: z.string().min(1, "Position is required").max(MAX_TITLE_LENGTH).trim(),
-    url: z.string().url("Invalid URL").max(MAX_URL_LENGTH).optional().or(z.literal("")),
+    url: z.string().max(MAX_URL_LENGTH).optional().or(z.literal("")),
     description: z.string().max(MAX_JOB_DESC_LENGTH).optional().or(z.literal("")),
     status: z.enum(["Applied", "Interviewing", "Offers", "Rejected"]).optional(),
     salary: z.string().max(100).optional().or(z.literal("")),
     location: z.string().max(MAX_TITLE_LENGTH).optional().or(z.literal("")),
     jobType: z.string().max(100).optional().or(z.literal("")),
+    resumeId: idSchema.optional().or(z.literal("")),
+    resumeVersionId: idSchema.optional().or(z.literal("")),
 });
 
 // 3. /api/ai/analyse
@@ -66,6 +68,11 @@ export const generateCoverLetterSchema = z.object({
     resumeId: idSchema.optional(),
     title: z.string().max(MAX_TITLE_LENGTH).optional(),
     jobDescription: z.string().min(20, "Job description is too short").max(MAX_JOB_DESC_LENGTH),
+    intelligence: z.object({
+        skills: z.array(z.string()),
+        companySignals: z.array(z.string()),
+        requirements: z.array(z.string()),
+    }).optional(),
 });
 
 // 6. /api/jobs/scrape

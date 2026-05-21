@@ -143,7 +143,7 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
                     className="relative bg-background w-full max-w-6xl max-h-[92vh] rounded-[var(--radius-xl)] shadow-[var(--shadow-2xl)] border border-border-subtle flex flex-col overflow-hidden"
                 >
                     {/* Header */}
-                    <div className="px-6 md:px-10 py-6 border-b border-[#F5F5F5] flex items-center justify-between bg-white/40 backdrop-blur-3xl sticky top-0 z-20">
+                    <div className="px-4 sm:px-10 py-4 sm:py-6 border-b border-[#F5F5F5] flex items-center justify-between bg-white/40 backdrop-blur-3xl sticky top-0 z-20">
                         <div className="flex flex-col">
                             <div className="flex items-center gap-3">
                                 <div className="flex items-center gap-2 px-2.5 py-1 bg-primary/10 text-primary rounded-full">
@@ -160,27 +160,27 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
                         </button>
                     </div>
 
-                    <div className="flex-grow overflow-y-auto no-scrollbar p-10 pt-8 space-y-10 bg-muted/30">
+                    <div className="flex-grow overflow-y-auto no-scrollbar p-4 sm:p-10 pt-6 sm:pt-8 space-y-6 sm:space-y-10 bg-muted/30">
                         
                         {/* Top: Score & Summary Column + Gauges */}
-                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8">
                             {/* Strategic Column (Left) */}
                             <div className="lg:col-span-5 flex flex-col gap-6">
-                                <div className="bg-[#0A0A0A] p-8 rounded-[2.2rem] relative overflow-hidden group">
-                                    <div className="absolute inset-0 bg-gradient-to-br from-primary/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <div className="bg-white border border-[#F5F5F5] p-6 sm:p-8 rounded-[2.2rem] relative overflow-hidden group shadow-sm">
+                                    <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                                     <div className="relative z-10 space-y-6">
                                         <div className="flex justify-between items-start">
                                             <div>
-                                                <p className="text-[0.55rem] font-bold uppercase tracking-[0.3em] text-white/40 mb-3">Resume Score</p>
+                                                <p className="text-[0.55rem] font-bold uppercase tracking-[0.3em] text-[#A3A3A3] mb-3">Resume Score</p>
                                                 <div className="flex items-baseline gap-2">
-                                                    <h3 className="text-6xl font-bold text-white tracking-tighter leading-none">{score}</h3>
-                                                    <span className="text-white/20 text-xl font-bold">/100</span>
+                                                    <h3 className="text-6xl font-black text-[#0A0A0A] tracking-tighter leading-none">{score}</h3>
+                                                    <span className="text-[#A3A3A3] text-xl font-bold">/100</span>
                                                 </div>
                                             </div>
-                                            <ShieldIcon className="text-primary opacity-60" />
+                                            <ShieldIcon className="text-primary opacity-20" />
                                         </div>
-                                        <div className="pt-4 border-t border-white/10">
-                                            <p className="text-[0.85rem] font-medium text-white/80 leading-relaxed">
+                                        <div className="pt-4 border-t border-[#F5F5F5]">
+                                            <p className="text-[0.85rem] font-medium text-[#171717]/80 leading-relaxed">
                                                 &quot;{summary}&quot;
                                             </p>
                                         </div>
@@ -188,7 +188,7 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
                                 </div>
 
                                 {actionItems.length > 0 && (
-                                    <div className="bg-background border border-border-subtle p-8 rounded-[var(--radius-xl)] space-y-5">
+                                    <div className="bg-background border border-border-subtle p-6 sm:p-8 rounded-[var(--radius-xl)] space-y-5">
                                         <div className="flex items-center gap-3 px-6 py-3 bg-black/5 rounded-2xl border border-black/5">
                                             <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                                             <span className="text-[0.65rem] font-black uppercase tracking-widest text-accent-gray">Action Items</span>
@@ -233,7 +233,7 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
                                             <div className="w-1.5 h-1.5 bg-success rounded-full" />
                                             <h4 className="text-[0.6rem] font-bold uppercase tracking-[0.15em] text-foreground/60">Current Strengths</h4>
                                         </div>
-                                        <div className="grid grid-cols-2 gap-3">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                             {strengths.map((item: string, i: number) => (
                                                 <div key={i} className="p-4 bg-muted rounded-[var(--radius-md)] flex items-center gap-3">
                                                     <div className="w-1 h-1 bg-success/40 rounded-full" />
@@ -267,7 +267,7 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
                                         const suggestion = isString ? item : (item.after ?? item.suggestion ?? "");
 
                                         return (
-                                            <div key={i} className="grid grid-cols-1 lg:grid-cols-12 gap-6 bg-white border border-[#F5F5F5] rounded-[2rem] overflow-hidden p-8 hover:border-primary/20 transition-all shadow-sm">
+                                            <div key={i} className="grid grid-cols-1 lg:grid-cols-12 gap-6 bg-white border border-[#F5F5F5] rounded-[2rem] overflow-hidden p-6 sm:p-8 hover:border-primary/20 transition-all shadow-sm">
                                                 <div className="lg:col-span-4 space-y-4">
                                                     <span className="text-[0.5rem] font-bold uppercase tracking-[0.2em] text-[#A3A3A3] block">Improvement Logic</span>
                                                     <p className="text-[0.7rem] font-medium text-[#171717]/80 leading-relaxed border-l border-[#F5F5F5] pl-4">
@@ -289,25 +289,21 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
                         )}
                     </div>
 
-                    <div className="p-6 md:p-8 border-t border-black/5 flex flex-col sm:flex-row items-center justify-between bg-white/30 backdrop-blur-xl sticky bottom-0 gap-4">
-                        <div className="flex items-center gap-3 px-6 py-3 bg-black/5 rounded-2xl border border-black/5 w-full sm:w-auto justify-center sm:justify-start">
-                            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                            <span className="text-[0.65rem] font-black uppercase tracking-widest text-accent-gray">Analyzer Active</span>
-                        </div>
+                    <div className="p-4 sm:p-6 md:p-8 border-t border-black/5 flex flex-col md:flex-row items-center justify-end bg-white/30 backdrop-blur-xl sticky bottom-0 gap-4">
                         
-                        <div className="flex items-center gap-4 w-full sm:w-auto">
+                        <div className="flex items-center gap-3 w-full md:w-auto flex-col sm:flex-row">
                             <button 
                                 onClick={() => {
                                     router.push(`/dashboard/resumes/${resumeId || "new"}`);
                                     onCloseAction();
                                 }}
-                                className="flex-grow sm:flex-grow-0 px-10 py-4 bg-primary hover:bg-primary-dark text-white rounded-2xl shadow-xl shadow-blue-500/10 font-bold text-[0.65rem] uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-[0.98]"
+                                className="w-full sm:w-auto px-8 py-3.5 bg-primary hover:bg-[#1A1A1A] text-white rounded-[var(--radius-md)] font-bold text-[0.65rem] uppercase tracking-widest transition-all active:scale-[0.98]"
                             >
                                 Refine Resume
                             </button>
                             <button 
                                 onClick={onCloseAction}
-                                className="px-8 py-3.5 bg-foreground text-background text-xs font-bold uppercase tracking-widest rounded-[var(--radius-md)] hover:bg-secondary transition-all active:scale-[0.98]"
+                                className="w-full sm:w-auto px-8 py-3.5 bg-muted hover:bg-[#EAEAEA] text-foreground text-[0.65rem] font-bold uppercase tracking-widest rounded-[var(--radius-md)] transition-all active:scale-[0.98]"
                             >
                                 Done
                             </button>

@@ -29,7 +29,14 @@ interface ResumeVersionsModalProps {
 }
 
 export function ResumeVersionsModal({ isOpen, onCloseAction, parentTitle, versions }: ResumeVersionsModalProps) {
+    const [isMounted, setIsMounted] = React.useState(false);
+
+    React.useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
     function formatTimeAgo(date: Date) {
+        if (!isMounted) return "---";
         const now = new Date();
         const diffInSeconds = Math.floor((now.getTime() - new Date(date).getTime()) / 1000);
         

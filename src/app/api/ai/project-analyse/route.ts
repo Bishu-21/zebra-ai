@@ -54,22 +54,22 @@ export async function POST(req: NextRequest) {
             browser = await puppeteer.launch({
                 args: isLocal ? ['--no-sandbox'] : [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox'],
                 defaultViewport: { width: 1280, height: 800 },
-                executablePath: isLocal 
-                    ? process.env.CHROME_PATH || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe' 
+                executablePath: isLocal
+                    ? process.env.CHROME_PATH || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
                     : await chromium.executablePath(),
                 headless: true,
             });
 
             const page = await browser.newPage();
             await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36');
-            
+
             await page.setRequestInterception(true);
             page.on('request', (request: HTTPRequest) => {
                 const resourceType = request.resourceType();
                 if (['image', 'font', 'media'].includes(resourceType)) {
-                    request.abort().catch(() => {});
+                    request.abort().catch(() => { });
                 } else {
-                    request.continue().catch(() => {});
+                    request.continue().catch(() => { });
                 }
             });
 
@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
 
             // Analyze with Gemini
             const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-            const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+            const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" });
 
             const prompt = `
                 Analyze the following project content from this URL: ${url}
@@ -140,10 +140,10 @@ export async function POST(req: NextRequest) {
 
             const result = await model.generateContent(prompt);
             const aiResponse = result.response.text();
-            
+
             const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
             if (!jsonMatch) throw new Error("AI failed to generate analysis");
-            
+
             const analysis = JSON.parse(jsonMatch[0]);
 
             // Save to database

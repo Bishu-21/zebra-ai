@@ -115,18 +115,18 @@ export function CoverLetterActions({ letter }: { letter: CoverLetter }) {
 
     return (
         <>
-            <div className="flex items-center gap-3 pt-6 border-t border-[#F5F5F5]">
+            <div className="flex items-center gap-3 pt-6 border-t border-[#F5F5F5] group-hover:border-[#EAEAEA] transition-colors duration-300">
                 <button 
                     onClick={() => setIsViewOpen(true)}
-                    className="flex-grow h-12 bg-[#0A0A0A] text-white rounded-xl text-xs font-bold hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                    className="flex-grow h-12 bg-[#0A0A0A] text-white rounded-xl text-xs font-bold hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 group/btn"
                 >
                     View Letter
-                    <RiArrowRightSLine size={14} />
+                    <RiArrowRightSLine size={14} className="group-hover/btn:translate-x-1 transition-transform" />
                 </button>
                 <button 
                     onClick={handleDelete}
                     disabled={isDeleting}
-                    className="w-12 h-12 border border-[#EAEAEA] rounded-xl flex items-center justify-center text-red-400 hover:bg-red-50 hover:border-red-100 transition-all disabled:opacity-50"
+                    className="w-12 h-12 border border-[#EAEAEA] rounded-xl flex items-center justify-center text-red-400 hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-all duration-300 disabled:opacity-50"
                 >
                     {isDeleting ? (
                         <span className="w-4 h-4 border-2 border-red-400/30 border-t-red-400 rounded-full animate-spin"></span>

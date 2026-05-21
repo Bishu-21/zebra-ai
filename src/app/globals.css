@@ -9,8 +9,9 @@ html {
 :root {
   --background: #FDFDFD;
   --foreground: #0A0A0A;
-  --primary: #1E40AF;
-  --primary-dark: #1E3A8A;
+  --primary: #0A0A0A;
+  --primary-dark: #000000;
+  --primary-foreground: #FFFFFF;
   --accent-gray: #64748B;
   --accent-dark: #334155;
   --muted-foreground: #737373;
@@ -42,6 +43,7 @@ html {
   --color-foreground: var(--foreground);
   --color-primary: var(--primary);
   --color-primary-dark: var(--primary-dark);
+  --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-accent-gray: var(--accent-gray);
   --color-accent-dark: var(--accent-dark);

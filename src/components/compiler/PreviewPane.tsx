@@ -27,6 +27,7 @@ export function PreviewPane({ content, onJumpToSourceAction, template = "modern"
     const { settings, updateSettingsAction } = useSettings();
     const [autoScale, setAutoScale] = useState(1);
     const [realPaperHeight] = useState(297); // in mm
+    const [isMobile, setIsMobile] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
     const paperRef = useRef<HTMLDivElement>(null);
 
@@ -41,9 +42,17 @@ export function PreviewPane({ content, onJumpToSourceAction, template = "modern"
     ];
 
     useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
+    useEffect(() => {
         const resizeObserver = new ResizeObserver((entries) => {
             for (const entry of entries) {
-                const containerWidth = entry.contentRect.width - 64; // Padding
+                const padding = window.innerWidth < 768 ? 32 : 64;
+                const containerWidth = entry.contentRect.width - padding; // Dynamic Padding
                 const paperWidth = 794; 
                 const newScale = containerWidth / paperWidth;
                 setAutoScale(Math.min(newScale, 1.2));
@@ -62,7 +71,7 @@ export function PreviewPane({ content, onJumpToSourceAction, template = "modern"
             if (e.ctrlKey) {
                 e.preventDefault();
                 const delta = e.deltaY > 0 ? -0.1 : 0.1;
-                const baseScale = settings.previewScale === "auto" ? autoScale : (settings.previewScale as number);
+                const baseScale = (settings.previewScale === "auto" || isMobile) ? autoScale : (settings.previewScale as number);
                 const newScale = Math.min(Math.max(baseScale + delta, 0.25), 3);
                 updateSettingsAction({ previewScale: Number(newScale.toFixed(2)) });
             }
@@ -75,9 +84,9 @@ export function PreviewPane({ content, onJumpToSourceAction, template = "modern"
         return () => {
             if (container) container.removeEventListener('wheel', handleWheel);
         };
-    }, [settings.previewScale, autoScale, updateSettingsAction]);
+    }, [settings.previewScale, autoScale, updateSettingsAction, isMobile]);
 
-    const currentScale = settings.previewScale === "auto" ? autoScale : settings.previewScale;
+    const currentScale = (settings.previewScale === "auto" || isMobile) ? autoScale : settings.previewScale;
     const currentFont = fontOptions.find(f => f.name === settings.resumeFont) || fontOptions[0];
 
     const [isFontOpen, setIsFontOpen] = useState(false);
@@ -148,7 +157,7 @@ export function PreviewPane({ content, onJumpToSourceAction, template = "modern"
                 <span className="text-[10px] font-semibold text-muted-foreground/40">A4 · 1 page</span>
             </div>
             {/* Paper scroll area */}
-            <div className="flex-grow overflow-y-auto overflow-x-hidden custom-scrollbar scroll-smooth bg-muted/30 p-8 sm:p-12 min-h-0">
+            <div className="flex-grow overflow-y-auto overflow-x-hidden custom-scrollbar scroll-smooth bg-muted/30 p-4 sm:p-12 min-h-0">
                 {/* Visual Footprint Container (Centered via mx-auto) */}
                 <div 
                     style={{ 

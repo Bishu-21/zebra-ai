@@ -12,6 +12,12 @@ const inter = Inter({
 
 const baseUrl = 'https://zebra-ai.app';
 
+export const viewport: import('next').Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+};
+
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
   title: {

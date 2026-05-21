@@ -36,7 +36,18 @@ export function GenerateCoverLetter({ resumes }: { resumes: { id: string; title:
     const [isExporting, setIsExporting] = useState(false);
     const [scraping, setScraping] = useState(false);
     const [scrapeUrl, setScrapeUrl] = useState("");
+    const [isMounted, setIsMounted] = useState(false);
+    const [intelligence, setIntelligence] = useState<{
+        skills: string[];
+        companySignals: string[];
+        requirements: string[];
+    } | null>(null);
+    const [enriching, setEnriching] = useState(false);
     const router = useRouter();
+
+    React.useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     const handleScrape = async () => {
         if (!scrapeUrl.trim()) return;
@@ -77,7 +88,10 @@ export function GenerateCoverLetter({ resumes }: { resumes: { id: string; title:
             const res = await fetch("/api/cover-letters", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formData),
+                body: JSON.stringify({
+                    ...formData,
+                    intelligence: intelligence // Pass intelligence as optional enrichment
+                }),
             });
             const data = await res.json();
 
@@ -92,6 +106,31 @@ export function GenerateCoverLetter({ resumes }: { resumes: { id: string; title:
             setError("Network error. Please try again.");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleEnrich = async () => {
+        if (!formData.jobDescription) return;
+        setEnriching(true);
+        setError(null);
+        try {
+            const res = await fetch("/api/azure/job-intelligence", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ jobDescription: formData.jobDescription }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                setIntelligence(data.data);
+            } else if (data.fallback) {
+                console.log("Azure not configured, skipping enrichment.");
+            } else {
+                setError(data.error || "Enrichment failed.");
+            }
+        } catch {
+            setError("Enrichment failed. Please check your connection.");
+        } finally {
+            setEnriching(false);
         }
     };
 
@@ -175,7 +214,7 @@ export function GenerateCoverLetter({ resumes }: { resumes: { id: string; title:
                 <div className="w-8 h-8 bg-white/10 rounded-xl flex items-center justify-center group-hover:bg-white/20 transition-colors">
                     <RiAddLine size={20} />
                 </div>
-                Generate New Letter
+                Generate Cover Letter
             </m.button>
 
             <AnimatePresence>
@@ -202,15 +241,13 @@ export function GenerateCoverLetter({ resumes }: { resumes: { id: string; title:
                             <div className="p-10 border-b border-black/5 flex items-center justify-between bg-white/60 backdrop-blur-xl sticky top-0 z-10">
                                 <div className="flex items-center gap-6">
                                     <div className="w-14 h-14 bg-blue-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
-                                        <RiMagicLine size={30} />
+                                        <RiMailSendLine size={30} />
                                     </div>
                                     <div>
-                                        <h2 className="text-3xl font-black text-black tracking-tighter">Zebra Cover Letter Coach</h2>
+                                        <h2 className="text-3xl font-black text-black tracking-tighter">Cover Letter Generator</h2>
                                         <div className="flex items-center gap-3 mt-1">
-                                            <span className="px-2 py-0.5 bg-blue-500/10 text-blue-600 text-[0.65rem] font-black uppercase tracking-widest rounded-md">AI Engine v2.5</span>
-                                            <span className="w-1 h-1 rounded-full bg-black/20" />
                                             <p className="text-[0.7rem] font-bold text-black/40 uppercase tracking-widest">
-                                                Tailored <span className="opacity-40">&middot;</span> High-Conversion <span className="opacity-40">&middot;</span> Professional
+                                                Professional <span className="opacity-40">&middot;</span> Tailored <span className="opacity-40">&middot;</span> Precise
                                             </p>
                                         </div>
                                     </div>
@@ -262,14 +299,10 @@ export function GenerateCoverLetter({ resumes }: { resumes: { id: string; title:
                                                 <div className="flex items-center justify-between">
                                                     <label className="text-[0.75rem] font-black uppercase tracking-[0.25em] text-blue-600 flex items-center gap-3">
                                                         <div className="w-8 h-8 bg-blue-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-                                                            <RiFlashlightLine size={16} />
+                                                            <RiExternalLinkLine size={16} />
                                                         </div>
-                                                        Magic Scrape Intelligence
+                                                        Import from Job URL
                                                     </label>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                                                        <span className="text-[0.6rem] font-black text-green-600/60 uppercase tracking-widest">Live Agent Active</span>
-                                                    </div>
                                                 </div>
                                                 
                                                 <div className="flex flex-col md:flex-row gap-4">
@@ -290,12 +323,12 @@ export function GenerateCoverLetter({ resumes }: { resumes: { id: string; title:
                                                         disabled={scraping || !scrapeUrl.trim()}
                                                         className="bg-blue-600 text-white px-12 py-5 rounded-[1.5rem] font-black text-sm hover:bg-blue-700 disabled:opacity-50 transition-all flex items-center justify-center gap-3 shadow-lg shadow-blue-600/20 active:bg-blue-800"
                                                     >
-                                                        {scraping ? <RiLoader4Line className="animate-spin" size={24} /> : <RiSparkling2Line size={24} />}
-                                                        {scraping ? "Scanning..." : "Auto-Extract"}
+                                                        {scraping ? <RiLoader4Line className="animate-spin" size={24} /> : <RiDownload2Line size={24} />}
+                                                        {scraping ? "Extracting..." : "Extract Description"}
                                                     </m.button>
                                                 </div>
                                                 <p className="text-[0.75rem] font-bold text-black/40 leading-relaxed max-w-2xl">
-                                                    Our autonomous browser agent will visit the page, bypass noise, and extract critical job requirements instantly.
+                                                    Automatically extract role details and requirements from supported job platforms.
                                                 </p>
                                             </div>
                                         </div>
@@ -306,11 +339,62 @@ export function GenerateCoverLetter({ resumes }: { resumes: { id: string; title:
                                                 <span className="text-[0.65rem] font-bold text-black/20 uppercase tracking-widest">{formData.jobDescription.length} characters</span>
                                             </div>
                                             <textarea 
-                                                placeholder="Paste the full job description here. Zebra's AI will parse requirements, company culture, and key skills automatically..."
+                                                placeholder="Paste the job description here. Our system will analyze key skills and requirements..."
                                                 className="w-full bg-white border-2 border-transparent focus:border-blue-500/20 rounded-[2.5rem] px-10 py-10 text-[1.1rem] font-medium outline-none transition-all min-h-[350px] resize-none leading-[1.7] text-black shadow-sm placeholder:text-black/10 no-scrollbar"
                                                 value={formData.jobDescription}
-                                                onChange={(e) => setFormData({...formData, jobDescription: e.target.value})}
+                                                onChange={(e) => {
+                                                    setFormData({...formData, jobDescription: e.target.value});
+                                                    if (intelligence) setIntelligence(null); // Reset intelligence when text changes
+                                                }}
                                             />
+
+                                            {formData.jobDescription.length > 50 && !intelligence && (
+                                                <div className="flex justify-center -mt-8 relative z-20">
+                                                    <m.button
+                                                        whileHover={{ scale: 1.05 }}
+                                                        whileTap={{ scale: 0.95 }}
+                                                        onClick={handleEnrich}
+                                                        disabled={enriching}
+                                                        className="bg-white border border-black/5 text-black px-8 py-3 rounded-2xl font-black text-xs shadow-xl flex items-center gap-3 hover:bg-black hover:text-white transition-all group"
+                                                    >
+                                                        {enriching ? <RiLoader4Line className="animate-spin" size={16} /> : <RiMailSendLine size={16} className="text-blue-500 group-hover:text-white" />}
+                                                        {enriching ? "Analyzing..." : "Analyze with Azure AI"}
+                                                    </m.button>
+                                                </div>
+                                            )}
+
+                                            {intelligence && (
+                                                <m.div 
+                                                    initial={{ opacity: 0, y: 10 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4"
+                                                >
+                                                    <div className="bg-blue-50/50 p-6 rounded-[2rem] border border-blue-500/10">
+                                                        <p className="text-[0.6rem] font-black uppercase tracking-widest text-blue-600 mb-4">Role Skills</p>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {intelligence.skills.slice(0, 8).map((s, i) => (
+                                                                <span key={i} className="px-3 py-1.5 bg-white text-blue-700 text-[0.65rem] font-bold rounded-lg border border-blue-100 shadow-sm">{s}</span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                    <div className="bg-purple-50/50 p-6 rounded-[2rem] border border-purple-500/10">
+                                                        <p className="text-[0.6rem] font-black uppercase tracking-widest text-purple-600 mb-4">Company Signals</p>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {intelligence.companySignals.slice(0, 5).map((s, i) => (
+                                                                <span key={i} className="px-3 py-1.5 bg-white text-purple-700 text-[0.65rem] font-bold rounded-lg border border-purple-100 shadow-sm">{s}</span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                    <div className="bg-green-50/50 p-6 rounded-[2rem] border border-green-500/10">
+                                                        <p className="text-[0.6rem] font-black uppercase tracking-widest text-green-600 mb-4">Requirements</p>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {intelligence.requirements.slice(0, 5).map((s, i) => (
+                                                                <span key={i} className="px-3 py-1.5 bg-white text-green-700 text-[0.65rem] font-bold rounded-lg border border-green-100 shadow-sm truncate max-w-full">{s}</span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </m.div>
+                                            )}
                                         </div>
 
                                         {error && (
@@ -332,11 +416,11 @@ export function GenerateCoverLetter({ resumes }: { resumes: { id: string; title:
                                         <div className="bg-black text-white p-8 rounded-[2.5rem] flex items-center justify-between shadow-2xl shadow-black/20">
                                             <div className="flex items-center gap-5">
                                                 <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-green-400">
-                                                    <RiCheckboxCircleLine size={30} />
+                                                    <RiCheckLine size={30} />
                                                 </div>
                                                 <div>
-                                                    <p className="text-xl font-black tracking-tight">Generation Complete</p>
-                                                    <p className="text-xs font-bold text-white/40 uppercase tracking-widest">Optimized for high-impact response</p>
+                                                    <p className="text-xl font-black tracking-tight">Letter Ready</p>
+                                                    <p className="text-xs font-bold text-white/40 uppercase tracking-widest">Drafted and ready for review</p>
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-3">
@@ -372,14 +456,14 @@ export function GenerateCoverLetter({ resumes }: { resumes: { id: string; title:
                                                 {/* Professional Header Decor */}
                                                 <div className="mb-20 flex justify-between items-start">
                                                     <div className="font-sans">
-                                                        <h1 className="text-4xl font-black tracking-tighter text-black uppercase leading-none">Applicant</h1>
-                                                        <p className="text-[0.7rem] font-bold text-blue-600 uppercase tracking-[0.3em] mt-3">Professional Candidate Profile</p>
+                                                        <h1 className="text-4xl font-black tracking-tighter text-black uppercase leading-none">Draft</h1>
+                                                        <p className="text-[0.7rem] font-bold text-blue-600 uppercase tracking-[0.3em] mt-3">Personalized Cover Letter</p>
                                                         <div className="h-1 w-20 bg-blue-600 mt-6" />
                                                     </div>
                                                     <div className="text-right font-sans">
-                                                        <p className="text-[0.7rem] uppercase tracking-widest font-black text-black/20 mb-3">Zebra AI Premium Document</p>
+                                                        <p className="text-[0.7rem] uppercase tracking-widest font-black text-black/20 mb-3">Zebra AI System Generated</p>
                                                         <p className="text-[0.9rem] font-bold text-black/70">
-                                                            {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                                                            {isMounted ? new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : "---"}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -390,15 +474,9 @@ export function GenerateCoverLetter({ resumes }: { resumes: { id: string; title:
                                                 
                                                 <div className="mt-24 pt-12 border-t border-black/5 flex justify-between items-end font-sans">
                                                     <div>
-                                                        <p className="text-lg font-serif italic text-black/60 mb-8">Professional Regards,</p>
+                                                        <p className="text-lg font-serif italic text-black/60 mb-8">Sincerely,</p>
                                                         <div className="w-48 h-px bg-black/10 mb-4" />
                                                         <p className="text-2xl font-black text-black tracking-tight">Applicant Name</p>
-                                                    </div>
-                                                    <div className="flex flex-col items-end gap-2">
-                                                        <div className="w-14 h-14 bg-black/[0.03] rounded-2xl flex items-center justify-center border border-black/5">
-                                                            <div className="w-6 h-6 border-2 border-blue-600/20 rounded-full" />
-                                                        </div>
-                                                        <span className="text-[0.6rem] font-black text-black/10 uppercase tracking-widest">Seal of Quality</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -425,7 +503,7 @@ export function GenerateCoverLetter({ resumes }: { resumes: { id: string; title:
                                                 onClick={() => setIsOpen(false)}
                                                 className="px-8 py-4 text-sm font-black text-black/30 hover:text-black transition-colors"
                                             >
-                                                Discard Draft
+                                                Cancel
                                             </button>
                                             <m.button 
                                                 whileHover={{ scale: 1.05 }}
@@ -437,12 +515,12 @@ export function GenerateCoverLetter({ resumes }: { resumes: { id: string; title:
                                                 {loading ? (
                                                     <>
                                                         <RiLoader4Line className="animate-spin" size={24} />
-                                                        Zebra is Drafting...
+                                                        Generating...
                                                     </>
                                                 ) : (
                                                     <>
-                                                        Generate High-Impact Letter
-                                                        <RiSparkling2Line size={22} className="text-blue-400" />
+                                                        Generate Cover Letter
+                                                        <RiCheckLine size={22} className="text-blue-400" />
                                                     </>
                                                 )}
                                             </m.button>
@@ -452,7 +530,7 @@ export function GenerateCoverLetter({ resumes }: { resumes: { id: string; title:
                                             onClick={() => setIsOpen(false)}
                                             className="bg-black text-white px-14 py-5 rounded-[1.5rem] font-black text-sm hover:scale-[1.02] transition-all shadow-xl shadow-black/20 active:scale-[0.98]"
                                         >
-                                            Close Suite
+                                            Done
                                         </button>
                                     )}
                                 </div>

@@ -158,7 +158,7 @@ export async function POST(req: NextRequest) {
 
             // 3. Use Gemini to extract details
             const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-            const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+            const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" });
 
             const prompt = `
                 Extract job details from the following raw text content and metadata of a job listing page (URL: ${url}):

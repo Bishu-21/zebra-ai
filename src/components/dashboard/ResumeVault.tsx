@@ -5,7 +5,6 @@ import {
     RiFileTextLine, 
     RiSearchLine, 
     RiArrowRightSLine, 
-    RiMore2Fill,
     RiTimeLine,
     RiCheckboxCircleLine,
     RiMagicLine,
@@ -14,9 +13,6 @@ import {
 } from "react-icons/ri";
 import Link from "next/link";
 import { m, AnimatePresence } from "framer-motion";
-import { useRouter } from "next/navigation";
-import { useToast } from "@/components/ui/Toast";
-import { ResumeVersionsModal } from "./ResumeVersionsModal";
 
 interface ResumeVersion {
     id: string;
@@ -32,6 +28,9 @@ interface Resume {
     title: string;
     date: Date;
     hasAnalysis: boolean;
+    parentResumeId?: string | null;
+    targetRole?: string | null;
+    targetCompany?: string | null;
     versions?: ResumeVersion[];
 }
 
@@ -42,14 +41,11 @@ interface ResumeVaultProps {
 export function ResumeVault({ items }: ResumeVaultProps) {
     const [search, setSearch] = useState("");
     const [isExpanded, setIsExpanded] = useState(false);
-    const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
-    const [versionModal, setVersionModal] = useState<{ isOpen: boolean; parentTitle: string; versions: Resume[] }>({
-        isOpen: false,
-        parentTitle: "",
-        versions: []
-    });
-    const router = useRouter();
-    const { showToast } = useToast();
+    const [isMounted, setIsMounted] = useState(false);
+
+    React.useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     // Versioning Logic: Group versions under their root parents
     // Roots are resumes with no parentResumeId OR those whose parent is not in the list
@@ -68,56 +64,8 @@ export function ResumeVault({ items }: ResumeVaultProps) {
 
     const displayedItems = isExpanded ? finalRoots : finalRoots.slice(0, 4);
 
-    const getVersionsForRoot = (rootId: string) => {
-        // Simple one-level or recursive check? Let's do a simple filter for now.
-        // If we want recursive, we'd need more logic. 
-        // Most users will duplicate from the main one.
-        return items.filter(r => r.parentResumeId === rootId);
-    };
-
-    async function handleDuplicate(e: React.MouseEvent, id: string) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        if (duplicatingId) return;
-
-        setDuplicatingId(id);
-        try {
-            const res = await fetch(`/api/resumes/${id}/duplicate`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({}), 
-            });
-
-            if (!res.ok) {
-                const data = await res.json();
-                throw new Error(data.error || "Failed to duplicate");
-            }
-
-            const data = await res.json();
-            showToast("Resume duplicated successfully", "success");
-            router.refresh(); 
-            router.push(`/dashboard/resumes/${data.id}`);
-        } catch (error: unknown) {
-            const message = error instanceof Error ? error.message : "An unexpected error occurred";
-            showToast(message, "error");
-        } finally {
-            setDuplicatingId(null);
-        }
-    }
-
-    const openVersions = (e: React.MouseEvent, root: Resume) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const rootVersions = getVersionsForRoot(root.id);
-        setVersionModal({
-            isOpen: true,
-            parentTitle: root.title,
-            versions: rootVersions
-        });
-    };
-
     function formatTimeAgo(date: Date) {
+        if (!isMounted) return "---";
         const now = new Date();
         const diffInSeconds = Math.floor((now.getTime() - new Date(date).getTime()) / 1000);
         
@@ -252,13 +200,6 @@ export function ResumeVault({ items }: ResumeVaultProps) {
                     ))}
                 </AnimatePresence>
             </div>
-
-            <ResumeVersionsModal 
-                isOpen={versionModal.isOpen}
-                onCloseAction={() => setVersionModal({ ...versionModal, isOpen: false })}
-                parentTitle={versionModal.parentTitle}
-                versions={versionModal.versions}
-            />
 
             {finalRoots.length > 4 && (
                 <div className="flex justify-center pt-6">

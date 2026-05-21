@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useId } from "react";
 import { useSettings } from "@/context/SettingsContext";
 import { RiMagicLine } from "react-icons/ri";
 
@@ -13,12 +13,17 @@ export function FieldInput({ label, value, onChange, placeholder, name, type = "
     onMagicAction?: () => void;
 }) {
     const { settings } = useSettings();
+    const generatedId = useId();
+    const fieldId = name || `input-${label.toLowerCase().replace(/[^a-z0-9]/g, "-")}-${generatedId}`;
+    const fieldName = name || `name-${label.toLowerCase().replace(/[^a-z0-9]/g, "-")}-${generatedId}`;
+
     return (
         <div className={settings.compactView ? "space-y-0.5" : "space-y-1"}>
-            <label className="text-[10px] font-bold text-[#737373] tracking-wide uppercase opacity-70">{label}</label>
+            <label htmlFor={fieldId} className="text-[10px] font-bold text-[#737373] tracking-wide uppercase opacity-70">{label}</label>
             <div className="relative group">
                 <input 
-                    name={name}
+                    id={fieldId}
+                    name={fieldName}
                     type={type}
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
@@ -51,12 +56,17 @@ export function FieldTextarea({ label, value, onChange, placeholder, name, rows 
     onMagicAction?: () => void;
 }) {
     const { settings } = useSettings();
+    const generatedId = useId();
+    const fieldId = name || `textarea-${label.toLowerCase().replace(/[^a-z0-9]/g, "-")}-${generatedId}`;
+    const fieldName = name || `name-${label.toLowerCase().replace(/[^a-z0-9]/g, "-")}-${generatedId}`;
+
     return (
         <div className={settings.compactView ? "space-y-0.5" : "space-y-1"}>
-            <label className="text-[10px] font-bold text-[#737373] tracking-wide uppercase opacity-70">{label}</label>
+            <label htmlFor={fieldId} className="text-[10px] font-bold text-[#737373] tracking-wide uppercase opacity-70">{label}</label>
             <div className="relative group">
                 <textarea 
-                    name={name}
+                    id={fieldId}
+                    name={fieldName}
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
                     placeholder={placeholder}

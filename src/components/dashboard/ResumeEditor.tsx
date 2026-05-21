@@ -427,7 +427,7 @@ export function ResumeEditor({ initialData, isStripeVersion, versionTitle }: Res
                                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                                 className="flex items-center gap-2 px-2 py-1 rounded-[var(--radius-sm)] hover:bg-muted transition-all group"
                             >
-                                <span className="text-sm font-semibold text-foreground max-w-[200px] truncate">{resume.title}</span>
+                                <span className="text-sm font-semibold text-foreground max-w-[120px] sm:max-w-[200px] truncate">{resume.title}</span>
                                 <RiArrowDownSLine size={14} className={`text-muted-foreground transition-transform duration-200 ${isMenuOpen ? 'rotate-180' : ''}`} />
                             </button>
                         ) : (
@@ -439,7 +439,7 @@ export function ResumeEditor({ initialData, isStripeVersion, versionTitle }: Res
                                 onChange={(e) => setResume({...resume, title: e.target.value})}
                                 onBlur={() => { setIsRenaming(false); handleSave(); }}
                                 onKeyDown={(e) => { if (e.key === 'Enter') { setIsRenaming(false); handleSave(); } }}
-                                className="bg-muted text-sm font-semibold text-foreground outline-none px-2 py-1 rounded-[var(--radius-sm)] border border-primary w-48 transition-all" 
+                                className="bg-muted text-sm font-semibold text-foreground outline-none px-2 py-1 rounded-[var(--radius-sm)] border border-primary w-32 sm:w-48 transition-all" 
                             />
                         )}
 
@@ -506,7 +506,7 @@ export function ResumeEditor({ initialData, isStripeVersion, versionTitle }: Res
                         <span className="hidden sm:block">Copy</span>
                     </button>
 
-                    <div className="flex bg-muted p-0.5 rounded-[var(--radius-md)] items-center gap-0.5 border border-border-subtle">
+                    <div className="hidden md:flex bg-muted p-0.5 rounded-[var(--radius-md)] items-center gap-0.5 border border-border-subtle">
                         {(['modern', 'professional', 'minimal'] as const).map((t) => (
                             <button 
                                 key={t}
@@ -545,7 +545,6 @@ export function ResumeEditor({ initialData, isStripeVersion, versionTitle }: Res
                                     throw new Error(data.error);
                                 }
 
-                                // Handle direct blob download
                                 const blob = await res.blob();
                                 const url = window.URL.createObjectURL(blob);
                                 const a = document.createElement("a");
@@ -564,10 +563,10 @@ export function ResumeEditor({ initialData, isStripeVersion, versionTitle }: Res
                         }} 
                         disabled={isGeneratingPdf}
                         title="Export PDF"
-                        className="flex h-7 px-2 sm:px-3 rounded-[var(--radius-md)] text-[10px] font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-all items-center gap-1.5 disabled:opacity-50"
+                        className="hidden sm:flex h-7 px-2 sm:px-3 rounded-[var(--radius-md)] text-[10px] font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-all items-center gap-1.5 disabled:opacity-50"
                     >
                         {isGeneratingPdf ? <RiLoader4Line size={12} className="animate-spin" /> : <RiFileDownloadLine size={12} />}
-                        <span className="hidden sm:block">{isGeneratingPdf ? "Exporting..." : "Export"}</span>
+                        <span>{isGeneratingPdf ? "Exporting..." : "Export"}</span>
                     </button>
                     <button 
                         onClick={() => setIsZenMode(!isZenMode)}
@@ -808,9 +807,9 @@ export function ResumeEditor({ initialData, isStripeVersion, versionTitle }: Res
             <AnimatePresence>
                 {showAiPanel && (
                     <>
-                        <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowAiPanel(false)} className="fixed inset-0 bg-foreground/10 backdrop-blur-[2px] z-[110]" />
+                        <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowAiPanel(false)} className="fixed inset-0 bg-foreground/10 backdrop-blur-[2px] z-[180]" />
                         <m.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", damping: 30, stiffness: 300 }}
-                            className={`fixed top-0 right-0 h-full ${isMobile ? 'w-full max-w-[400px]' : 'w-[400px]'} bg-background border-l border-border-subtle shadow-[-20px_0_50px_rgba(0,0,0,0.08)] z-[120] flex flex-col`}>
+                            className="fixed top-0 right-0 h-full w-full sm:w-[400px] bg-background border-l border-border-subtle shadow-[-20px_0_50px_rgba(0,0,0,0.08)] z-[200] flex flex-col">
                             <div className="h-11 border-b border-border-subtle flex items-center justify-between px-4 shrink-0 bg-background/80 backdrop-blur-md">
                                 <div className="flex items-center gap-2">
                                     <div className="w-5 h-5 rounded-[var(--radius-sm)] bg-primary/10 flex items-center justify-center">
@@ -947,9 +946,11 @@ export function ResumeEditor({ initialData, isStripeVersion, versionTitle }: Res
                             </div>
 
                             {/* CHAT INPUT AREA */}
-                            <div className="p-4 border-t border-border-subtle bg-background shrink-0">
+                            <div className="p-4 pb-[68px] sm:pb-4 border-t border-border-subtle bg-background shrink-0">
                                 <form onSubmit={handleSendMessage} className="relative group">
                                     <input 
+                                        id="ze-ai-chat-input"
+                                        name="ze-ai-chat-input"
                                         value={chatInput}
                                         onChange={(e) => setChatInput(e.target.value)}
                                         placeholder="Ask ZE-AI anything..."
@@ -969,7 +970,7 @@ export function ResumeEditor({ initialData, isStripeVersion, versionTitle }: Res
                     </>
                 )}
             </AnimatePresence>
-
+ 
             {/* ── STATUS BAR ── */}
             {!isMobile && (
                 <footer className="h-6 bg-primary flex items-center justify-between px-3 shrink-0 select-none">
@@ -983,15 +984,15 @@ export function ResumeEditor({ initialData, isStripeVersion, versionTitle }: Res
                     </div>
                 </footer>
             )}
-
+ 
             {/* ── MOBILE TAB BAR ── */}
             {isMobile && (
-                <footer className="h-[52px] bg-background border-t border-border-subtle flex items-center justify-around px-2 shrink-0 select-none pb-safe z-50 relative shadow-[0_-4px_20px_rgba(0,0,0,0.04)]">
-                    <button onClick={() => setMobileTab("editor")} className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-colors ${mobileTab === 'editor' ? 'text-primary' : 'text-muted-foreground'}`}>
+                <footer className="h-[52px] bg-background border-t border-border-subtle flex items-center justify-around px-2 shrink-0 select-none pb-safe z-[250] relative shadow-[0_-4px_20px_rgba(0,0,0,0.04)]">
+                    <button onClick={() => { setMobileTab("editor"); setShowAiPanel(false); }} className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-colors ${(mobileTab === 'editor' && !showAiPanel) ? 'text-primary' : 'text-muted-foreground'}`}>
                         <RiBallPenLine size={18} />
                         <span className="text-[9px] font-bold uppercase tracking-widest">Editor</span>
                     </button>
-                    <button onClick={() => setMobileTab("preview")} className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-colors ${mobileTab === 'preview' ? 'text-primary' : 'text-muted-foreground'}`}>
+                    <button onClick={() => { setMobileTab("preview"); setShowAiPanel(false); }} className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-colors ${(mobileTab === 'preview' && !showAiPanel) ? 'text-primary' : 'text-muted-foreground'}`}>
                         <RiClipboardLine size={18} />
                         <span className="text-[9px] font-bold uppercase tracking-widest">Preview</span>
                     </button>

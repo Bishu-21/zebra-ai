@@ -7,7 +7,7 @@ async function run() {
       },
       body: JSON.stringify({
         email: "test-" + Date.now() + "@example.com",
-        password: "securepassword123",
+        password: process.env.TEST_PASSWORD || "Test@123456",
         name: "Test User"
       })
     });

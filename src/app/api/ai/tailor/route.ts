@@ -6,6 +6,7 @@ import { user as userTable, resumes as resumesTable, atsOptimisations as atsTabl
 import { eq, sql, and } from "drizzle-orm";
 import { headers } from "next/headers";
 import { handleApiError } from "@/lib/api-error";
+import { tailorSchema } from "@/lib/validation";
 import crypto from "crypto";
 
 // Initialize Gemini
@@ -13,8 +14,6 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 const model = genAI.getGenerativeModel({ 
   model: process.env.GEMINI_MODEL || "gemma-4-31b-it" 
 });
-
-import { tailorSchema } from "@/lib/validation";
 
 export async function POST(req: NextRequest) {
     try {
@@ -26,13 +25,19 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const { resumeId, jobDescription, saveAsVersion, company, targetRole } = await req.json();
+        const body = await req.json();
+        const validation = tailorSchema.safeParse(body);
 
         if (!validation.success) {
             return NextResponse.json({ error: validation.error.issues[0].message }, { status: 400 });
         }
 
         const { resumeId, jobDescription } = validation.data;
+        const { saveAsVersion, company, targetRole } = body as {
+            saveAsVersion?: boolean;
+            company?: string;
+            targetRole?: string;
+        };
 
         // 1. Check credits
         const userData = await db.query.user.findFirst({

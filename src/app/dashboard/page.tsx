@@ -23,7 +23,8 @@ import {
     resumes as resumesTable, 
     analysis as analysisTable, 
     atsOptimisations as atsOptimisationsTable,
-    resumeVersions as resumeVersionsTable
+    resumeVersions as resumeVersionsTable,
+    projectAnalyses as projectAnalysesTable
 } from "@/lib/schema";
 import { eq, desc, count, inArray } from "drizzle-orm";
 import { ResumeAnalysisData } from "@/components/compiler/types";
@@ -143,6 +144,9 @@ export default async function DashboardPage() {
       title: r.title || "Untitled Resume",
       date: r.updatedAt,
       hasAnalysis: r.analyses.length > 0,
+      parentResumeId: r.parentResumeId,
+      targetRole: r.targetRole,
+      targetCompany: r.targetCompany,
       versions: r.versions.map(v => ({
           id: v.id,
           title: v.title,

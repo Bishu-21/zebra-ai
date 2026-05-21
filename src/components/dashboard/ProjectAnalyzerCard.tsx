@@ -46,7 +46,7 @@ export function ProjectAnalyzerCard() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-5xl max-h-[90vh] bg-[#F5F5F7] rounded-[2.5rem] shadow-2xl overflow-hidden border border-white/20"
+              className="relative w-full max-w-5xl max-h-[90vh] flex flex-col bg-[#F5F5F7] rounded-[2.5rem] shadow-2xl overflow-hidden border border-white/20"
             >
               <div className="absolute top-8 right-8 z-[110]">
                 <button 
@@ -57,7 +57,7 @@ export function ProjectAnalyzerCard() {
                 </button>
               </div>
               
-              <div className="h-full overflow-y-auto no-scrollbar p-8 md:p-12">
+              <div className="flex-1 overflow-y-auto p-8 md:p-12 custom-scrollbar">
                 <div className="mb-12">
                     <h2 className="text-4xl font-bold tracking-tighter text-black mb-4">Project Proof Analyzer</h2>
                     <p className="text-black/50 text-sm max-w-xl leading-relaxed">

@@ -46,6 +46,11 @@ export function InsightsFeed({ data }: InsightsFeedProps) {
     const [selectedProject, setSelectedProject] = useState<ProjectAnalysisData | null>(null);
     const [isResumeModalOpen, setIsResumeModalOpen] = useState(false);
     const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+    const [isMounted, setIsMounted] = useState(false);
+
+    React.useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     const openResume = (resumeId: string) => {
         try {
@@ -116,6 +121,7 @@ export function InsightsFeed({ data }: InsightsFeedProps) {
     };
 
     function formatTimeAgo(date: Date) {
+        if (!isMounted) return "---";
         const now = new Date();
         const diffInSeconds = Math.floor((now.getTime() - new Date(date).getTime()) / 1000);
         

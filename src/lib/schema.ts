@@ -60,7 +60,7 @@ export const account = pgTable("account", {
 	updatedAt: timestamp("updated_at").notNull(),
 });
 
-export const accountRelations = relations(account, ({ many, one }) => ({
+export const accountRelations = relations(account, ({ one }) => ({
     user: one(user, { fields: [account.userId], references: [user.id] }),
 }));
 
@@ -86,9 +86,6 @@ export const resumes = pgTable("resumes", {
     status: text("status").notNull().default("Draft"),
     isPublic: boolean("is_public").notNull().default(false),
     shareToken: text("share_token"), // Unique token for public sharing
-    parentResumeId: text("parent_resume_id"), // Added back to prevent data loss
-    targetRole: text("target_role"), // Added back to prevent data loss
-    targetCompany: text("target_company"), // Added back to prevent data loss
     createdAt: timestamp("created_at").notNull(),
     updatedAt: timestamp("updated_at").notNull(),
 });
@@ -100,7 +97,7 @@ export const resumesRelations = relations(resumes, ({ one, many }) => ({
         references: [resumes.id],
         relationName: "resumeVersions",
     }),
-    versions: many(resumes, { relationName: "resumeVersions" }),
+    duplicateVersions: many(resumes, { relationName: "resumeVersions" }),
     analyses: many(analysis),
     atsOptimisations: many(atsOptimisations),
     coverLetters: many(coverLetters),
@@ -138,9 +135,6 @@ export const jobs = pgTable("jobs", {
     jobType: text("job_type"),
     description: text("description"),
     url: text("url"),
-    location: text("location"), // Added back to prevent data loss
-    jobType: text("job_type"), // Added back to prevent data loss
-    description: text("description"), // Added back to prevent data loss
     createdAt: timestamp("created_at").notNull(),
     updatedAt: timestamp("updated_at").notNull(),
 });
@@ -208,6 +202,21 @@ export const transactions = pgTable("transactions", {
 
 export const transactionsRelations = relations(transactions, ({ one }) => ({
     user: one(user, { fields: [transactions.userId], references: [user.id] }),
+}));
+
+export const projectAnalyses = pgTable("project_analyses", {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+        .notNull()
+        .references(() => user.id),
+    url: text("url").notNull(),
+    score: integer("score").notNull(),
+    data: jsonb("data").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const projectAnalysesRelations = relations(projectAnalyses, ({ one }) => ({
+    user: one(user, { fields: [projectAnalyses.userId], references: [user.id] }),
 }));
 
 export const resumeVersions = pgTable("resume_versions", {

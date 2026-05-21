@@ -18,7 +18,9 @@ import {
     RiMapPin2Line,
     RiArrowRightSLine,
     RiCalendarEventLine,
-    RiMagicLine
+    RiMagicLine,
+    RiLoader4Line,
+    RiArrowRightLine
 } from "react-icons/ri";
 import { formatRelativeTime } from "@/lib/utils";
 
@@ -56,6 +58,9 @@ export function JobBoard({
         status: "Applied" as Job["status"],
         salary: "",
         url: "",
+        location: "",
+        jobType: "",
+        description: "",
         resumeId: "",
         resumeVersionId: ""
     });
@@ -80,7 +85,7 @@ export function JobBoard({
                     updatedAt: new Date().toISOString() 
                 };
                 setJobs([addedJob, ...jobs]);
-                setNewJob({ company: "", position: "", status: "Applied", salary: "", url: "", resumeId: "", resumeVersionId: "" });
+                setNewJob({ company: "", position: "", status: "Applied", salary: "", url: "", location: "", jobType: "", description: "", resumeId: "", resumeVersionId: "" });
                 setIsAdding(false);
                 setScrapeUrl("");
             }
