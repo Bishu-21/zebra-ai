@@ -38,8 +38,8 @@ export function ScratchCard({
       const ctx = canvas.getContext("2d", { alpha: true });
       if (!ctx) return;
 
-      // Fill with blue and simple pattern - NO more pixel loops
-      ctx.fillStyle = "#3B82F6"; 
+      // Fill with dark gray and simple pattern - NO more pixel loops
+      ctx.fillStyle = "#171717"; 
       ctx.fillRect(0, 0, width, height);
 
       // Add a simple subtle overlay instead of heavy noise loop
@@ -156,7 +156,7 @@ export function ScratchCard({
   return (
     <div
       ref={containerRef}
-      className={`relative w-full h-[320px] max-w-xl mx-auto overflow-hidden rounded-[16px] shadow-[0px_10px_40px_rgba(0,0,0,0.06)] bg-[#3B82F6] ${className}`}
+      className={`relative w-full h-[320px] max-w-xl mx-auto overflow-hidden rounded-[16px] shadow-[0px_10px_40px_rgba(0,0,0,0.06)] bg-[#171717] ${className}`}
       style={{ backgroundImage: isRevealed ? 'none' : noiseBg }}
     >
       {/* Revealed Content (Bottom Layer) */}

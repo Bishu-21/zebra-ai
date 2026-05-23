@@ -5,6 +5,7 @@ import { m } from "framer-motion";
 import { PLANS, PlanId } from "@/lib/constants/plans";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/Toast";
+import { useSession } from "@/lib/auth-client";
 
 const CheckIcon = ({ size = 14, className = "" }: { size?: number, className?: string }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -37,55 +38,17 @@ const EnterpriseIcon = ({ size = 24 }: { size?: number }) => (
 
 export function Pricing() {
   const router = useRouter();
+  const { data: session } = useSession();
   const { showToast } = useToast();
   const [loading, setLoading] = useState<string | null>(null);
 
   const handleSubscription = async (planId: PlanId) => {
-    setLoading(planId);
-    try {
-      const response = await fetch("/api/payments/create-order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planId }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          router.push("/sign-in");
-          return;
-        }
-        throw new Error(data.error || "Failed to initiate payment");
-      }
-
-      const options = {
-        key: data.key,
-        amount: data.amount,
-        currency: data.currency,
-        name: "Zebra AI",
-        description: `Upgrade to ${PLANS[planId].name}`,
-        order_id: data.id,
-        handler: function () {
-          showToast("Payment successful! Credits added.");
-          router.push("/dashboard");
-        },
-        prefill: {
-          name: "",
-          email: "",
-        },
-        theme: {
-          color: "#3B82F6",
-        },
-      };
-
-      const rzp = new (window as unknown as { Razorpay: new (opts: typeof options) => { open: () => void } }).Razorpay(options);
-      rzp.open();
-    } catch (error: unknown) {
-      showToast(error instanceof Error ? error.message : "Payment failed", "error");
-    } finally {
-      setLoading(null);
+    if (!session) {
+      // Trigger the Auth Modal
+      window.dispatchEvent(new CustomEvent("open-auth"));
+      return;
     }
+    router.push(`/dashboard?showPricing=true&plan=${planId}`);
   };
 
   const planCards = [
@@ -96,7 +59,7 @@ export function Pricing() {
       price: PLANS.starter.displayPrice,
       description: "Perfect for students & single applications.",
       features: [`${PLANS.starter.credits} AI Scan Credits`, "ATS Score Optimization", "Resume Templates", "Community Support"],
-      cta: "Get Started",
+      cta: "Get Plains",
       featured: false
     },
     {
@@ -106,7 +69,7 @@ export function Pricing() {
       price: PLANS.pro.displayPrice,
       description: "Strategic edge for active job seekers.",
       features: [`${PLANS.pro.credits} Monthly Credits`, "Deep AI Resume Audit", "Job Description Matching", "Priority Support"],
-      cta: "Go Pro",
+      cta: "Go Mountain",
       featured: true
     },
     {
@@ -115,8 +78,8 @@ export function Pricing() {
       icon: <EnterpriseIcon />,
       price: PLANS.enterprise.displayPrice,
       description: "Full suite for career excellence.",
-      features: [`${PLANS.enterprise.credits} Bulk Credits`, "All Pro Features", "Universal Translate", "Dedicated Mentorship"],
-      cta: "Get Elite",
+      features: [`${PLANS.enterprise.credits} Bulk Credits`, "All Mountain Features", "Universal Translate", "Dedicated Mentorship"],
+      cta: "Get Grevy's",
       featured: false
     }
   ];
@@ -151,17 +114,17 @@ export function Pricing() {
               transition={{ delay: index * 0.1 }}
               className={`p-10 pt-14 rounded-[28px] border-[1.5px] transition-all duration-300 relative ${
                 plan.featured 
-                ? "bg-white border-primary shadow-[0px_24px_60px_-15px_rgba(59,130,246,0.15)] scale-105 z-10" 
-                : "bg-white/60 border-black/5 hover:border-primary/30"
+                ? "bg-white border-primary shadow-[0px_24px_60px_-15px_rgba(0,0,0,0.1)] scale-105 z-10" 
+                : "bg-white/60 border-black/5 hover:border-black/30"
               }`}
             >
               {plan.featured && (
-                <div className="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-primary text-white text-[0.65rem] font-bold uppercase tracking-wider rounded-full shadow-lg shadow-blue-500/20">
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-primary text-white text-[0.65rem] font-bold uppercase tracking-wider rounded-full shadow-lg shadow-black/10">
                   Most Popular
                 </div>
               )}
               <div className="flex items-center justify-between mb-8 mt-2">
-                <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
+                <div className="w-12 h-12 bg-black/5 rounded-2xl flex items-center justify-center text-primary">
                   {plan.icon}
                 </div>
               </div>
@@ -175,8 +138,8 @@ export function Pricing() {
               <div className="space-y-4 mb-10">
                 {plan.features.map((feature) => (
                   <div key={feature} className="flex items-center gap-3">
-                    <div className="w-5 h-5 rounded-full bg-[#3B82F615] flex items-center justify-center">
-                      <CheckIcon className="text-[#3B82F6]" />
+                    <div className="w-5 h-5 rounded-full bg-black/5 flex items-center justify-center">
+                      <CheckIcon className="text-primary" />
                     </div>
                     <span className="text-sm font-medium text-[#4A4A4A]">{feature}</span>
                   </div>
@@ -188,8 +151,8 @@ export function Pricing() {
                 disabled={loading !== null}
                 className={`w-full py-4 rounded-xl font-bold text-sm tracking-wide transition-all active:scale-[0.98] disabled:opacity-50 ${
                 plan.featured 
-                ? "bg-[#3B82F6] text-white hover:bg-[#2563EB] shadow-lg shadow-blue-500/20" 
-                : "bg-[#0A0A0A] text-white border-2 border-[#0A0A0A] hover:bg-transparent hover:text-[#0A0A0A]"
+                ? "bg-[#0A0A0A] text-white hover:bg-[#262626] shadow-lg shadow-black/15" 
+                : "bg-white text-[#0A0A0A] border-[1.5px] border-black/10 hover:border-black/30 hover:bg-neutral-50"
               }`}>
                 {loading === plan.id ? "Processing..." : plan.cta}
               </button>

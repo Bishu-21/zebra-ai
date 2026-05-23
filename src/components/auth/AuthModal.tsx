@@ -151,7 +151,7 @@ export function AuthModal() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="John Doe"
-                    className="w-full bg-[#F9F9F9] border border-[#EAEAEA] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#3B82F6] transition-colors"
+                    className="w-full bg-[#F9F9F9] border border-[#EAEAEA] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#0A0A0A] focus:ring-1 focus:ring-[#0A0A0A] transition-colors"
                   />
                 </div>
               )}
@@ -164,7 +164,7 @@ export function AuthModal() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@company.com"
-                  className="w-full bg-[#F9F9F9] border border-[#EAEAEA] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#3B82F6] transition-colors"
+                  className="w-full bg-[#F9F9F9] border border-[#EAEAEA] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#0A0A0A] focus:ring-1 focus:ring-[#0A0A0A] transition-colors"
                 />
               </div>
 
@@ -176,7 +176,7 @@ export function AuthModal() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full bg-[#F9F9F9] border border-[#EAEAEA] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#3B82F6] transition-colors"
+                  className="w-full bg-[#F9F9F9] border border-[#EAEAEA] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#0A0A0A] focus:ring-1 focus:ring-[#0A0A0A] transition-colors"
                 />
               </div>
 
@@ -221,7 +221,7 @@ export function AuthModal() {
                 {mode === "signin" ? "New to the precision editor?" : "Already have an account?"}
                 <button 
                   onClick={() => setMode(mode === "signin" ? "signup" : "signin")} 
-                  className="text-[#3B82F6] hover:text-[#2563EB] ml-2 transition-colors uppercase"
+                  className="text-[#0A0A0A] hover:text-[#2A2A2A] underline underline-offset-4 ml-2 transition-colors uppercase font-black"
                 >
                   {mode === "signin" ? "Make an account" : "Sign In"}
                 </button>

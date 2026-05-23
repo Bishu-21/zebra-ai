@@ -68,17 +68,17 @@ export default async function AnalyticsPage() {
   const credits = (session.user as any).credits || 0;
 
   const stats = [
-    { label: "Total Resumes", value: userResumes.length.toString(), sub: "Active Documents", icon: RiStackLine, color: "text-blue-500" },
-    { label: "Active Applications", value: userJobs.length.toString(), sub: "Tracked in Pipeline", icon: RiRadarLine, color: "text-indigo-500" },
-    { label: "Average Match Score", value: `${avgScore}%`, sub: "ATS Alignment Score", icon: RiCompass3Line, color: "text-emerald-500" },
-    { label: "Total Analyses", value: analysesCount.toString(), sub: "Analysis Reports", icon: RiBarChartGroupedLine, color: "text-amber-500" }
+    { label: "Total Resumes", value: userResumes.length.toString(), sub: "Active Documents", icon: RiStackLine, color: "text-[#0A0A0A]" },
+    { label: "Active Applications", value: userJobs.length.toString(), sub: "Tracked in Pipeline", icon: RiRadarLine, color: "text-[#0A0A0A]" },
+    { label: "Average Match Score", value: `${avgScore}%`, sub: "ATS Alignment Score", icon: RiCompass3Line, color: "text-[#0A0A0A]" },
+    { label: "Total Analyses", value: analysesCount.toString(), sub: "Analysis Reports", icon: RiBarChartGroupedLine, color: "text-[#0A0A0A]" }
   ];
 
   return (
     <div className="p-8 md:p-12 max-w-7xl mx-auto space-y-12 pb-24 font-sans text-[#171717]">
       <div className="max-w-3xl">
         <div className="flex items-center gap-3 mb-6">
-            <div className="px-3 py-1 bg-[#3B82F6]/10 text-[#3B82F6] rounded-full text-[0.6rem] font-black uppercase tracking-widest">Analytics & Reports</div>
+            <div className="px-3 py-1 bg-black/5 text-[#0A0A0A] rounded-full text-[0.6rem] font-black uppercase tracking-widest">Analytics & Reports</div>
         </div>
         <h1 className="text-4xl md:text-5xl font-black tracking-tighter leading-tight mb-6">Performance Analytics</h1>
         <p className="text-[#737373] text-lg font-medium leading-relaxed max-w-2xl">
@@ -110,7 +110,7 @@ export default async function AnalyticsPage() {
                     <p className="text-xs font-bold text-[#A3A3A3] uppercase tracking-widest mt-1">Score tracking over time</p>
                 </div>
                 <div className="flex items-center gap-2 px-4 py-2 bg-[#FAFAFA] rounded-xl border border-black/5">
-                    <RiTimerFlashLine size={18} className="text-[#3B82F6]" />
+                    <RiTimerFlashLine size={18} className="text-[#0A0A0A]" />
                     <span className="text-[0.65rem] font-black uppercase tracking-widest">Live Tracking</span>
                 </div>
             </div>
@@ -119,7 +119,7 @@ export default async function AnalyticsPage() {
                 {displayScores.map((h, i) => (
                     <div key={i} className="flex-grow group/bar relative">
                         <div 
-                            className={`w-full rounded-t-xl transition-all duration-700 ${i === displayScores.length - 1 && h > 0 ? 'bg-[#3B82F6]' : 'bg-[#3B82F6]/10 hover:bg-[#3B82F6]/30'}`} 
+                            className={`w-full rounded-t-xl transition-all duration-700 ${i === displayScores.length - 1 && h > 0 ? 'bg-black' : 'bg-black/10 hover:bg-black/30'}`} 
                             style={{ height: `${h || 2}%` }}
                         />
                         {h > 0 && (
@@ -136,21 +136,21 @@ export default async function AnalyticsPage() {
                         ? `Tracking performance across your last ${chartScores.length} analyses.`
                         : "No analysis data available yet. Start by analyzing a resume."}
                 </p>
-                <button className="text-[0.65rem] font-black text-[#3B82F6] uppercase tracking-[0.2em] flex items-center gap-1 hover:gap-2 transition-all">
+                <button className="text-[0.65rem] font-black text-[#0A0A0A] uppercase tracking-[0.2em] flex items-center gap-1 hover:gap-2 transition-all">
                     Full Report <RiArrowRightUpLine size={14} />
                 </button>
             </div>
         </div>
 
         {/* Intelligence Feed */}
-        <div className="bg-[#171717] rounded-[2.5rem] p-10 text-white flex flex-col shadow-2xl shadow-blue-900/10 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#3B82F6]/10 rounded-bl-[4rem] -mr-8 -mt-8" />
+        <div className="bg-[#171717] rounded-[2.5rem] p-10 text-white flex flex-col shadow-2xl shadow-black/10 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-bl-[4rem] -mr-8 -mt-8" />
             
             <h4 className="text-xl font-black tracking-tight mb-8">Recent Activity</h4>
             <div className="space-y-6 flex-grow">
                 {userJobs.length > 0 ? userJobs.map((job) => (
                     <div key={job.id} className="flex gap-4 items-start group">
-                        <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0 group-hover:bg-[#3B82F6] transition-colors">
+                        <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0 group-hover:bg-white group-hover:text-black transition-colors">
                             <RiFlashlightLine size={14} />
                         </div>
                         <div>

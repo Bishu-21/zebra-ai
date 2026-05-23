@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
             await tx.update(userTable)
                 .set({ 
                     credits: sql`${userTable.credits} + ${currentPlan.credits}`,
-                    plan: currentPlan.id === "starter" ? "Starter" : (currentPlan.id === "pro" ? "Professional" : "Elite")
+                    plan: currentPlan.id === "starter" ? "Plains Zebra" : (currentPlan.id === "pro" ? "Mountain Zebra" : "Grevy's Zebra")
                 })
                 .where(eq(userTable.id, session.user.id));
                 

@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
 
         let browser: Browser | null = null;
         try {
-            const isLocal = process.env.NODE_ENV === 'development';
+            const isLocal = process.env.NODE_ENV === 'development' || process.platform === 'win32';
             browser = await puppeteer.launch({
                 args: isLocal ? ['--no-sandbox'] : [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox'],
                 defaultViewport: { width: 1280, height: 800 },

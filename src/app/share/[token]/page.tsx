@@ -48,7 +48,7 @@ export default async function SharedResumePage({ params: paramsPromise }: { para
     const certifications = (content.certifications || []) as Achievement[];
 
     return (
-        <div className="min-h-screen bg-[#EBEEF2] font-sans flex flex-col">
+        <div className="min-h-screen bg-[#F5F5F5] font-sans flex flex-col">
             {/* Top bar */}
             <header className="h-12 bg-white border-b border-black/6 flex items-center justify-between px-6 shrink-0 print:hidden">
                 <Link href="/" className="text-sm font-bold tracking-[-0.04em] text-[#0A0A0A]">Zebra AI</Link>
@@ -116,7 +116,7 @@ export default async function SharedResumePage({ params: paramsPromise }: { para
                                             <span className="text-[12px] font-bold">{proj.title}</span>
                                             <span className="text-[11px] text-[#555] shrink-0">
                                                 {proj.techStack}
-                                                {proj.link && <> · <a href={proj.link} target="_blank" rel="noopener noreferrer" className="font-bold text-[#1a1a1a] hover:text-[#3B82F6]">Live Demo</a></>}
+                                                {proj.link && <> · <a href={proj.link} target="_blank" rel="noopener noreferrer" className="font-bold text-[#1a1a1a] hover:underline">Live Demo</a></>}
                                             </span>
                                         </div>
                                         <Bullets items={proj.highlights} />
@@ -168,7 +168,7 @@ export default async function SharedResumePage({ params: paramsPromise }: { para
             </main>
 
             {/* Footer */}
-            <footer className="h-8 bg-[#3B82F6] flex items-center justify-center shrink-0 print:hidden">
+            <footer className="h-8 bg-[#0A0A0A] flex items-center justify-center shrink-0 print:hidden">
                 <span className="text-[9px] font-semibold text-white/70">Compiled with Zebra AI — zebra-ai.app</span>
             </footer>
         </div>

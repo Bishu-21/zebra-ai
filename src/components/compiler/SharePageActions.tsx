@@ -69,7 +69,7 @@ export function SharePageActions({ token, resumeTitle, resumeData }: SharePageAc
             <button 
                 onClick={handleDownload}
                 disabled={isDownloading}
-                className="h-8 px-4 bg-[#0A0A0A] text-white text-[11px] font-bold rounded-md hover:bg-black/80 transition-all flex items-center gap-2 disabled:opacity-50"
+                className="h-8 px-4 border border-black/15 text-[#0A0A0A] text-[11px] font-bold rounded-md hover:bg-black/5 bg-transparent transition-all flex items-center gap-2 disabled:opacity-50"
             >
                 {isDownloading ? <RiLoader4Line className="animate-spin" size={14} /> : <RiFileDownloadLine size={14} />}
                 {isDownloading ? "Generating..." : "Download PDF"}
@@ -80,7 +80,7 @@ export function SharePageActions({ token, resumeTitle, resumeData }: SharePageAc
             {/* Build Yours */}
             <Link 
                 href={`/register?import=${token}`}
-                className="h-8 px-4 bg-[#3B82F6] text-white text-[11px] font-bold rounded-md hover:bg-[#2563EB] transition-all flex items-center gap-2"
+                className="h-8 px-4 bg-[#0A0A0A] text-white text-[11px] font-bold rounded-md hover:bg-[#262626] transition-all flex items-center gap-2"
             >
                 <RiBallPenLine size={14} />
                 Edit this Resume

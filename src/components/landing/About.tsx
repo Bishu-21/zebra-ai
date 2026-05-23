@@ -47,7 +47,7 @@ export function About() {
             <span className="text-[0.7rem] font-bold tracking-[0.2em] uppercase text-black">The Manifesto</span>
           </m.div>
           <h2 className="text-[2.5rem] md:text-[3.5rem] font-bold tracking-[-0.04em] leading-[1.1] mb-6 md:mb-8 text-[#0A0A0A]">
-            Why <span className="text-[#3B82F6]">Zebra</span>?
+            Why <span className="text-[#0A0A0A]">Zebra</span>?
           </h2>
           <p className="text-[#4A4A4A] text-[1.1rem] leading-relaxed">
             In nature, no two zebras share the same stripe pattern. They are unique by design. 

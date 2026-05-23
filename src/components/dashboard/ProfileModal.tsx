@@ -33,6 +33,7 @@ export function ProfileModal({ isOpen, onCloseAction, userName, userImage }: Pro
     const router = useRouter();
     const { showToast } = useToast();
     const { data: session } = useSession();
+    const user = session?.user as any;
     const [view, setView] = useState<ViewState>("menu");
     const [newName, setNewName] = useState(userName);
     const [isSaving, setIsSaving] = useState(false);
@@ -181,7 +182,7 @@ export function ProfileModal({ isOpen, onCloseAction, userName, userImage }: Pro
                                                 <div className="space-y-1">
                                                     <AccountAction icon={RiIdCardLine} title="Public Identity" subtitle="Update name and avatar" onClick={() => setView("edit")} />
                                                     <AccountAction icon={RiShieldLine} title="Security" subtitle="Password and account safety" onClick={() => setView("security")} />
-                                                    <AccountAction icon={RiMoneyDollarCircleLine} title="Billing" subtitle="Manage your Pro subscription" onClick={() => setView("billing")} />
+                                                    <AccountAction icon={RiMoneyDollarCircleLine} title="Billing" subtitle={user?.plan ? `Plan: ${user.plan}` : "Manage your subscription"} onClick={() => setView("billing")} />
                                                 </div>
                                             </div>
 
@@ -269,14 +270,22 @@ export function ProfileModal({ isOpen, onCloseAction, userName, userImage }: Pro
                                             <div className="w-12 h-12 bg-[var(--primary)]/10 rounded-full flex items-center justify-center text-[var(--primary)] mb-4">
                                                 <RiMoneyDollarCircleLine size={24} />
                                             </div>
-                                            <h4 className="text-lg font-black text-[var(--secondary)]">Pro Membership</h4>
-                                            <p className="text-xs text-[var(--muted-foreground)] mt-2 mb-6">You are currently on the Free plan. Upgrade to unlock AI-powered content generation.</p>
-                                            <button 
-                                                onClick={() => showToast("Upgrade functionality coming soon", "success")}
-                                                className="w-full h-12 bg-[var(--primary)] text-primary-foreground rounded-[var(--radius-md)] font-bold hover:bg-[var(--primary-dark)] transition-all"
-                                            >
-                                                Upgrade to Pro
-                                            </button>
+                                            <h4 className="text-lg font-black text-[var(--secondary)]">
+                                                {user?.plan ? `${user.plan} Plan` : "Free Plan"}
+                                            </h4>
+                                            <p className="text-xs text-[var(--muted-foreground)] mt-2 mb-6">
+                                                {user?.plan && user.plan !== "Free"
+                                                    ? `You are currently on the premium ${user.plan} plan. Thank you for supporting Zebra AI!`
+                                                    : "You are currently on the Free plan. Upgrade to unlock premium resume tailoring and unlimited AI credits."}
+                                            </p>
+                                            {(!user?.plan || user.plan === "Free") && (
+                                                <button 
+                                                    onClick={() => showToast("Upgrade functionality coming soon", "success")}
+                                                    className="w-full h-12 bg-[var(--primary)] text-primary-foreground rounded-[var(--radius-md)] font-bold hover:bg-[var(--primary-dark)] transition-all"
+                                                >
+                                                    Upgrade Plan
+                                                </button>
+                                            )}
                                         </div>
                                     </m.div>
                                 )}

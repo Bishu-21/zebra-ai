@@ -13,6 +13,8 @@ import {
 } from "react-icons/ri";
 import Link from "next/link";
 import { m, AnimatePresence } from "framer-motion";
+import { ResumeResultsModal } from "./ResumeResultsModal";
+import type { ResumeAnalysisData } from "@/components/compiler/types";
 
 interface ResumeVersion {
     id: string;
@@ -32,6 +34,10 @@ interface Resume {
     targetRole?: string | null;
     targetCompany?: string | null;
     versions?: ResumeVersion[];
+    latestAnalysis?: {
+        score: number;
+        feedback: ResumeAnalysisData;
+    };
 }
 
 interface ResumeVaultProps {
@@ -42,6 +48,8 @@ export function ResumeVault({ items }: ResumeVaultProps) {
     const [search, setSearch] = useState("");
     const [isExpanded, setIsExpanded] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
+    const [selectedResumeId, setSelectedResumeId] = useState<string | null>(null);
+    const [selectedAnalysisData, setSelectedAnalysisData] = useState<ResumeAnalysisData | null>(null);
 
     React.useEffect(() => {
         setIsMounted(true);
@@ -93,7 +101,7 @@ export function ResumeVault({ items }: ResumeVaultProps) {
                         placeholder="Search your vault..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="bg-black/[0.02] border border-black/[0.03] rounded-2xl pl-11 pr-6 py-3 text-sm font-medium outline-none focus:bg-white focus:border-primary/30 focus:shadow-xl focus:shadow-blue-500/5 transition-all w-full md:w-72"
+                        className="bg-black/[0.02] border border-black/[0.03] rounded-2xl pl-11 pr-6 py-3 text-sm font-medium outline-none focus:bg-white focus:border-primary/30 focus:shadow-xl focus:shadow-black/5 transition-all w-full md:w-72"
                     />
                 </div>
             </div>
@@ -136,10 +144,22 @@ export function ResumeVault({ items }: ResumeVaultProps) {
                                     <div className="flex items-center justify-between pt-4 border-t border-black/[0.02]">
                                         <div className="flex items-center gap-2">
                                             {item.hasAnalysis && (
-                                                <div className="flex items-center gap-1.5 px-2 py-1 bg-emerald-500/5 rounded-md border border-emerald-500/10">
+                                                <button
+                                                    onClick={(e) => {
+                                                        if (item.latestAnalysis) {
+                                                            e.preventDefault();
+                                                            e.stopPropagation();
+                                                            setSelectedResumeId(item.id);
+                                                            setSelectedAnalysisData(item.latestAnalysis.feedback);
+                                                        }
+                                                    }}
+                                                    className="flex items-center gap-1.5 px-2 py-1 bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-600 rounded-md border border-emerald-500/10 transition-all hover:scale-[1.03] active:scale-[0.97]"
+                                                >
                                                     <RiCheckboxCircleLine className="text-emerald-500" size={10} />
-                                                    <span className="text-[0.5rem] font-black text-emerald-600 uppercase tracking-widest">Analyzed</span>
-                                                </div>
+                                                    <span className="text-[0.5rem] font-black text-emerald-600 uppercase tracking-widest">
+                                                        {item.latestAnalysis ? `${item.latestAnalysis.score} PTS` : "Analyzed"}
+                                                    </span>
+                                                </button>
                                             )}
 
                                             {item.versions && item.versions.length > 0 && (
@@ -282,6 +302,17 @@ export function ResumeVault({ items }: ResumeVaultProps) {
                             ))}
                     </div>
                 </div>
+            )}
+            {selectedAnalysisData && (
+                <ResumeResultsModal
+                    isOpen={!!selectedAnalysisData}
+                    onCloseAction={() => {
+                        setSelectedAnalysisData(null);
+                        setSelectedResumeId(null);
+                    }}
+                    resumeId={selectedResumeId || undefined}
+                    data={selectedAnalysisData}
+                />
             )}
         </div>
     );

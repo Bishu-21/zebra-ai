@@ -95,18 +95,18 @@ export default function Home() {
       {/* Mobile Bottom Navigation */}
       <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-[400px] h-16 bg-white/70 backdrop-blur-[24px] rounded-2xl flex items-center justify-around px-2 z-50 border border-black/5 shadow-[0_8px_32px_rgba(0,0,0,0.08)]">
         <Link href="#product" className="flex-1 flex flex-col items-center justify-center group">
-          <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#737373] group-hover:text-[#3B82F6] transition-all">Product</span>
-          <div className="w-1 h-1 rounded-full bg-[#3B82F6] mt-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#737373] group-hover:text-[#0A0A0A] transition-all">Product</span>
+          <div className="w-1 h-1 rounded-full bg-[#0A0A0A] mt-1 opacity-0 group-hover:opacity-100 transition-opacity" />
         </Link>
         <div className="w-[1px] h-6 bg-black/5" />
         <Link href="#about" className="flex-1 flex flex-col items-center justify-center group">
-          <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#737373] group-hover:text-[#3B82F6] transition-all">Manifesto</span>
-          <div className="w-1 h-1 rounded-full bg-[#3B82F6] mt-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#737373] group-hover:text-[#0A0A0A] transition-all">Manifesto</span>
+          <div className="w-1 h-1 rounded-full bg-[#0A0A0A] mt-1 opacity-0 group-hover:opacity-100 transition-opacity" />
         </Link>
         <div className="w-[1px] h-6 bg-black/5" />
         <Link href="#pricing" className="flex-1 flex flex-col items-center justify-center group">
-          <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#737373] group-hover:text-[#3B82F6] transition-all">Pricing</span>
-          <div className="w-1 h-1 rounded-full bg-[#3B82F6] mt-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#737373] group-hover:text-[#0A0A0A] transition-all">Pricing</span>
+          <div className="w-1 h-1 rounded-full bg-[#0A0A0A] mt-1 opacity-0 group-hover:opacity-100 transition-opacity" />
         </Link>
       </div>
     </div>

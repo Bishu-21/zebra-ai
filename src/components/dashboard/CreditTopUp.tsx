@@ -9,7 +9,7 @@ import {
     RiShieldCheckLine
 } from "react-icons/ri";
 import { createPortal } from "react-dom";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { PLANS, PlanId } from "@/lib/constants/plans";
 
@@ -51,19 +51,51 @@ export function CreditTopUp() {
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
     const [mounted, setMounted] = useState(false);
+    const [scriptLoaded, setScriptLoaded] = useState(false);
     const router = useRouter();
+    const searchParams = useSearchParams();
 
     React.useEffect(() => {
         setMounted(true);
         // Load Razorpay script
+        const existingScript = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+        if (existingScript) {
+            setScriptLoaded(true);
+            return;
+        }
+
         const script = document.createElement("script");
         script.src = "https://checkout.razorpay.com/v1/checkout.js";
         script.async = true;
+        script.onload = () => {
+            setScriptLoaded(true);
+        };
+        script.onerror = () => {
+            console.error("Razorpay script load failed.");
+        };
         document.body.appendChild(script);
         return () => {
-            document.body.removeChild(script);
+            if (document.body.contains(script)) {
+                document.body.removeChild(script);
+            }
         };
     }, []);
+
+    React.useEffect(() => {
+        if (!mounted) return;
+        const showPricing = searchParams.get("showPricing") === "true";
+        const planId = searchParams.get("plan");
+        if (showPricing && planId && PLANS[planId as PlanId]) {
+            setIsOpen(true);
+            if (scriptLoaded) {
+                // Remove parameters from URL
+                const newUrl = window.location.pathname;
+                window.history.replaceState({}, "", newUrl);
+                // Trigger purchase
+                handlePurchase(planId);
+            }
+        }
+    }, [mounted, scriptLoaded, searchParams]);
 
     const plans = [
         { ...PLANS.starter, icon: <RiFlashlightLine size={20} className="text-[var(--muted-foreground)]/60" /> },
@@ -100,7 +132,7 @@ export function CreditTopUp() {
                     email: "",
                 },
                 theme: {
-                    color: "#2563EB", // Primary blue token
+                    color: "#0A0A0A", // Strict monochrome black
                 },
                 handler: async function (response: RazorpayResponse) {
                     // 3. Verify Payment on Server

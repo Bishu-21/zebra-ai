@@ -74,7 +74,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                             {toast.type === "success" ? (
                                 <SuccessIcon size={20} className="text-green-400" />
                             ) : (
-                                <InfoIcon size={20} className="text-blue-400" />
+                                <InfoIcon size={20} className="text-zinc-500" />
                             )}
                             <span className="text-sm font-black uppercase tracking-widest leading-none pt-0.5">
                                 {toast.message}

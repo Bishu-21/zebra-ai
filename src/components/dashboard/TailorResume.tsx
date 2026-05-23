@@ -190,7 +190,7 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                             {/* Header */}
                             <div className="p-6 sm:p-10 border-b border-black/[0.03] flex items-center justify-between bg-white/40 backdrop-blur-3xl sticky top-0 z-20">
                                 <div className="flex items-center gap-4 sm:gap-6">
-                                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-primary rounded-[1rem] sm:rounded-[1.5rem] flex items-center justify-center text-white shadow-2xl shadow-blue-500/20">
+                                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-primary rounded-[1rem] sm:rounded-[1.5rem] flex items-center justify-center text-white shadow-2xl shadow-black/10">
                                         <RiFlashlightLine size={24} className="sm:size-[28px]" />
                                     </div>
                                     <div>
@@ -416,7 +416,7 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                                             <button 
                                                 onClick={handleTailor}
                                                 disabled={loading || !formData.jobDescription.trim()}
-                                                className="flex-grow sm:flex-grow-0 bg-primary text-white px-10 py-5 rounded-[1.25rem] font-bold text-sm hover:bg-primary-dark hover:scale-[1.02] active:scale-[0.98] transition-all shadow-2xl shadow-blue-500/20 disabled:opacity-30 flex items-center justify-center gap-3"
+                                                className="flex-grow sm:flex-grow-0 bg-primary text-white px-10 py-5 rounded-[1.25rem] font-bold text-sm hover:bg-primary-dark hover:scale-[1.02] active:scale-[0.98] transition-all shadow-2xl shadow-black/10 disabled:opacity-30 flex items-center justify-center gap-3"
                                             >
                                                 {loading ? "Analyzing..." : "Run Analysis"}
                                                 {!loading && <RiArrowRightLine size={18} />}
@@ -427,7 +427,7 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                                             <button 
                                                 onClick={handleSaveVersion}
                                                 disabled={savingVersion}
-                                                className="w-full sm:w-auto bg-primary text-white px-8 py-5 rounded-[1.25rem] font-bold text-sm hover:bg-primary-dark hover:scale-[1.02] transition-all shadow-xl shadow-blue-500/20 flex items-center justify-center gap-3 disabled:opacity-50"
+                                                className="w-full sm:w-auto bg-primary text-white px-8 py-5 rounded-[1.25rem] font-bold text-sm hover:bg-primary-dark hover:scale-[1.02] transition-all shadow-xl shadow-black/10 flex items-center justify-center gap-3 disabled:opacity-50"
                                             >
                                                 {savingVersion ? (
                                                     <RiLoader4Line className="animate-spin" size={20} />

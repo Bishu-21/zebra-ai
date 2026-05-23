@@ -148,8 +148,8 @@ export function InsightsFeed({ data }: InsightsFeedProps) {
                             <div className="flex items-center gap-5">
                                 <div className={`w-14 h-14 rounded-[var(--radius-lg)] flex items-center justify-center transition-all duration-500 shadow-[var(--shadow-sm)] ${
                                     item.type === "import" 
-                                        ? "bg-primary text-white shadow-blue-500/20" 
-                                        : "bg-black/[0.03] text-[#737373]/40 group-hover:bg-primary group-hover:text-white group-hover:shadow-blue-500/20"
+                                        ? "bg-primary text-white shadow-black/10" 
+                                        : "bg-black/[0.03] text-[#737373]/40 group-hover:bg-primary group-hover:text-white group-hover:shadow-black/10"
                                 }`}>
                                     {item.type === "analysis" ? <RiBarChartGroupedLine size={24} /> : item.type === "tailoring" ? <RiFlashlightLine size={24} /> : <RiUploadCloud2Line size={24} />}
                                 </div>

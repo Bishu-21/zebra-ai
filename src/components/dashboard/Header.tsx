@@ -31,7 +31,7 @@ export function Header({ credits, userName, userImage, onOpenSettingsAction, onO
 
             <div className="flex items-center gap-3 md:gap-6">
                 {/* Search Bar - Desktop Only */}
-                <div className="hidden lg:flex items-center gap-3 bg-black/[0.03] border border-black/5 px-4 py-2 rounded-xl w-64 group focus-within:bg-white focus-within:border-primary focus-within:shadow-lg focus-within:shadow-blue-500/10 transition-all duration-300">
+                <div className="hidden lg:flex items-center gap-3 bg-black/[0.03] border border-black/5 px-4 py-2 rounded-xl w-64 group focus-within:bg-white focus-within:border-primary focus-within:shadow-lg focus-within:shadow-black/5 transition-all duration-300">
                     <RiSearchLine size={18} className="text-[#A3A3A3] group-focus-within:text-primary" />
                     <input 
                         type="text" 

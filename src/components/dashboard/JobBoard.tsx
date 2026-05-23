@@ -280,7 +280,7 @@ export function JobBoard({
                                 {status === 'Applied' && (
                                     <div className="px-1 pt-2">
                                         {isAdding ? (
-                                            <m.div initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} className="bg-white p-5 rounded-[2rem] border border-primary/20 shadow-2xl shadow-blue-500/10 space-y-4">
+                                            <m.div initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} className="bg-white p-5 rounded-[2rem] border border-primary/20 shadow-2xl shadow-black/5 space-y-4">
                                                 <div className="space-y-2">
                                                     <label className="text-[0.6rem] font-black text-[#A3A3A3] uppercase tracking-widest ml-1">Company & Role</label>
                                                     <input autoFocus type="text" placeholder="Company..." className="w-full text-xs font-black p-3.5 bg-[#F5F5F5] rounded-2xl border-none focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-[#A3A3A3]" value={newJob.company} onChange={(e) => setNewJob({...newJob, company: e.target.value})} />
@@ -290,7 +290,7 @@ export function JobBoard({
                                                 <div className="grid grid-cols-2 gap-3">
                                                     <div className="space-y-2">
                                                         <label className="text-[0.6rem] font-black text-[#A3A3A3] uppercase tracking-widest ml-1">Salary</label>
-                                                        <input type="text" placeholder="$120k..." className="w-full text-xs font-black p-3.5 bg-[#F5F5F5] rounded-2xl border-none focus:ring-2 focus:ring-[#3B82F6]/20 transition-all placeholder:text-[#A3A3A3]" value={newJob.salary} onChange={(e) => setNewJob({...newJob, salary: e.target.value})} />
+                                                        <input type="text" placeholder="$120k..." className="w-full text-xs font-black p-3.5 bg-[#F5F5F5] rounded-2xl border-none focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-[#A3A3A3]" value={newJob.salary} onChange={(e) => setNewJob({...newJob, salary: e.target.value})} />
                                                     </div>
                                                     
                                                     <div className="flex items-center justify-between relative">

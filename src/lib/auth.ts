@@ -23,6 +23,16 @@ export const auth = betterAuth({
 		provider: "pg",
 		schema: schema,
 	}),
+	user: {
+		additionalFields: {
+			plan: {
+				type: "string",
+			},
+			credits: {
+				type: "number",
+			},
+		},
+	},
 	trustedOrigins: getTrustedOrigins(),
 	emailAndPassword: {
 		enabled: true,

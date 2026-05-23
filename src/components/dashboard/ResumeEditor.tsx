@@ -77,6 +77,11 @@ export function ResumeEditor({ initialData, isStripeVersion, versionTitle }: Res
     const searchParams = useSearchParams();
     const { showToast } = useToast();
     const { settings } = useSettings();
+    const lastSavedContentRef = React.useRef(JSON.stringify(resume.content));
+
+    useEffect(() => {
+        lastSavedContentRef.current = JSON.stringify(resume.content);
+    }, [resume.id]);
 
     useEffect(() => {
         const importToken = searchParams.get("import");
@@ -229,6 +234,7 @@ export function ResumeEditor({ initialData, isStripeVersion, versionTitle }: Res
             }
 
             const data = await res.json();
+            lastSavedContentRef.current = JSON.stringify(resume.content);
             if (isNew && data.id) {
                 router.replace(`/dashboard/resumes/${data.id}`);
                 setResume((p: ResumeData) => ({ ...p, id: data.id }));
@@ -252,16 +258,16 @@ export function ResumeEditor({ initialData, isStripeVersion, versionTitle }: Res
         if (!settings.autoSave) return;
         if (resume.id === "new") return;
         
-        const save = async () => {
+        const save = async (contentStr: string) => {
             setIsSaving(true);
             try {
                 const res = await fetch(`/api/resumes/${resume.id}/update`, {
                     method: "PATCH",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ content: JSON.stringify(debouncedContent) })
+                    body: JSON.stringify({ content: contentStr })
                 });
                 if (res.ok) {
-                    // Success silently for autosave
+                    lastSavedContentRef.current = contentStr;
                 }
             } catch (err) {
                 console.error("Autosave failed", err);
@@ -270,10 +276,11 @@ export function ResumeEditor({ initialData, isStripeVersion, versionTitle }: Res
             }
         };
 
-        if (JSON.stringify(debouncedContent) !== JSON.stringify(resume.content)) {
-            save();
+        const debouncedStr = JSON.stringify(debouncedContent);
+        if (debouncedStr !== lastSavedContentRef.current) {
+            save(debouncedStr);
         }
-    }, [debouncedContent, resume.id, resume.content, settings.autoSave]);
+    }, [debouncedContent, resume.id, settings.autoSave]);
 
     const handleDuplicate = async () => {
         setIsSaving(true);
@@ -482,7 +489,7 @@ export function ResumeEditor({ initialData, isStripeVersion, versionTitle }: Res
                     </div>
 
                     <div className="hidden sm:flex items-center gap-2">
-                        <span className="px-2 py-0.5 bg-[#3B82F6]/10 text-[#3B82F6] rounded text-[10px] font-semibold tracking-wide">DRAFT</span>
+                        <span className="px-2 py-0.5 bg-black/5 text-black rounded text-[10px] font-semibold tracking-wide border border-black/10">DRAFT</span>
                         {isStripeVersion && (
                             <span className="px-2 py-0.5 bg-primary/10 text-primary rounded text-[10px] font-semibold tracking-wide flex items-center gap-1 border border-primary/20">
                                 <RiMagicLine size={10} />
@@ -733,8 +740,14 @@ export function ResumeEditor({ initialData, isStripeVersion, versionTitle }: Res
                                         <textarea 
                                             value={JSON.stringify(resume.content, null, 2)} 
                                             onChange={(e) => handleSourceChange(e.target.value)}
-                                            spellCheck={false}
-                                            className={`flex-grow bg-transparent text-emerald-400 font-mono text-[12px] p-4 outline-none transition-all resize-none leading-6 custom-scrollbar ${jsonError ? "text-red-400" : ""}`} 
+                                            spellCheck={settings.spellcheck}
+                                            wrap={settings.lineWrapping ? "soft" : "off"}
+                                            style={{ 
+                                                fontSize: settings.fontSize,
+                                                whiteSpace: settings.lineWrapping ? "pre-wrap" : "pre",
+                                                overflowX: settings.lineWrapping ? "hidden" : "auto"
+                                            }}
+                                            className={`flex-grow bg-transparent text-emerald-400 font-mono p-4 outline-none transition-all resize-none leading-6 custom-scrollbar ${jsonError ? "text-red-400" : ""}`} 
                                         />
                                     </div>
 

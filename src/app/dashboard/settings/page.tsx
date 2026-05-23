@@ -33,7 +33,7 @@ export default async function SettingsPage() {
       <div className="space-y-8">
         <div className="bg-white rounded-2xl border border-[#EAEAEA] p-8">
           <h3 className="text-xl font-bold mb-6 flex items-center gap-3">
-            <User size={20} className="text-[#3B82F6]" />
+            <User size={20} className="text-[#0A0A0A]" />
             Profile Information
           </h3>
           <div className="grid grid-cols-2 gap-8">

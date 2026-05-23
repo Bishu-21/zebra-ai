@@ -35,7 +35,7 @@ export default function GlobalError(props: { error: Error & { digest?: string };
                     <div className="pt-4 flex flex-col gap-3">
                         <button
                             onClick={() => unstable_retryAction()}
-                            className="w-full h-12 bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-xl font-bold transition-all active:scale-[0.98] shadow-lg shadow-blue-500/20"
+                            className="w-full h-12 bg-black hover:bg-zinc-900 text-white rounded-xl font-bold transition-all active:scale-[0.98] shadow-lg shadow-black/10"
                         >
                             Attempt Recovery
                         </button>

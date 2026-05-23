@@ -126,24 +126,24 @@ export function Hero() {
                       &quot;I applied everywhere... nothing.&quot;
                     </p>
                   </div>
-                  <div className="space-y-1 border-l-[3px] border-[#3B82F6] pl-4 md:pl-5 ml-1 md:ml-2">
-                    <p className="text-[0.6rem] md:text-[0.65rem] font-bold tracking-[0.08em] uppercase text-[#3B82F6]">Zebra Intelligence</p>
+                  <div className="space-y-1 border-l-[3px] border-[#0A0A0A] pl-4 md:pl-5 ml-1 md:ml-2">
+                    <p className="text-[0.6rem] md:text-[0.65rem] font-bold tracking-[0.08em] uppercase text-[#0A0A0A]">Zebra Intelligence</p>
                     <p className="text-[1.25rem] md:text-[1.5rem] font-bold leading-[1.1] tracking-[-0.02em] text-[#0A0A0A]">
-                      Your resume didn&apos;t fail. <br/><span className="text-[#3B82F6]">ATS rejected it.</span>
+                      Your resume didn&apos;t fail. <br/><span className="text-[#0A0A0A] underline decoration-neutral-300">ATS rejected it.</span>
                     </p>
                   </div>
                   <div className="pt-2 md:pt-4 flex justify-start">
                     {isLoggedIn ? (
                       <Link 
                         href="/dashboard"
-                        className="bg-[#3B82F6] hover:bg-[#2563EB] text-white px-5 py-2.5 md:px-6 md:py-3 rounded-[8px] text-[0.7rem] md:text-[0.75rem] font-bold tracking-[0.08em] uppercase hover:-translate-y-[2px] transition-all duration-200 shadow-[0_4px_12px_rgba(59,130,246,0.3)]"
+                        className="bg-[#0A0A0A] hover:bg-[#262626] text-white px-5 py-2.5 md:px-6 md:py-3 rounded-[8px] text-[0.7rem] md:text-[0.75rem] font-bold tracking-[0.08em] uppercase hover:-translate-y-[2px] transition-all duration-200 shadow-[0_4px_12px_rgba(0,0,0,0.15)]"
                       >
                         Go to Dashboard
                       </Link>
                     ) : (
                       <button 
                         onClick={() => window.dispatchEvent(new Event("open-auth"))}
-                        className="bg-[#3B82F6] hover:bg-[#2563EB] text-white px-5 py-2.5 md:px-6 md:py-3 rounded-[8px] text-[0.7rem] md:text-[0.75rem] font-bold tracking-[0.08em] uppercase hover:-translate-y-[2px] transition-all duration-200 shadow-[0_4px_12px_rgba(59,130,246,0.3)]"
+                        className="bg-[#0A0A0A] hover:bg-[#262626] text-white px-5 py-2.5 md:px-6 md:py-3 rounded-[8px] text-[0.7rem] md:text-[0.75rem] font-bold tracking-[0.08em] uppercase hover:-translate-y-[2px] transition-all duration-200 shadow-[0_4px_12px_rgba(0,0,0,0.15)]"
                       >
                         Fix with Zebra AI
                       </button>

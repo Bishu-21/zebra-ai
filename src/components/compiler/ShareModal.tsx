@@ -140,7 +140,7 @@ export function ShareModal({ isOpen, onCloseAction, resumeId, resumeTitle }: Sha
                     {/* Header */}
                     <div className="h-12 border-b border-black/6 flex items-center justify-between px-5">
                         <div className="flex items-center gap-2">
-                            <RiShareLine size={14} className="text-[#3B82F6]" />
+                            <RiShareLine size={14} className="text-black" />
                             <span className="text-sm font-semibold text-[#0A0A0A]">Share Resume</span>
                         </div>
                         <button onClick={onCloseAction} className="w-7 h-7 rounded-md flex items-center justify-center text-[#737373] hover:bg-[#F5F5F5] transition-all">
@@ -155,10 +155,10 @@ export function ShareModal({ isOpen, onCloseAction, resumeId, resumeTitle }: Sha
                                 <p className="text-sm text-[#737373]">Save your resume first before sharing.</p>
                             </div>
                         ) : !shareUrl ? (
-                            /* No link yet — generate */
+                             /* No link yet — generate */
                             <div className="text-center space-y-4 py-4">
-                                <div className="w-14 h-14 bg-[#3B82F6]/10 rounded-full flex items-center justify-center mx-auto">
-                                    <RiLinkM size={24} className="text-[#3B82F6]" />
+                                <div className="w-14 h-14 bg-black/5 rounded-full flex items-center justify-center mx-auto">
+                                    <RiLinkM size={24} className="text-black" />
                                 </div>
                                 <div>
                                     <p className="text-sm font-semibold text-[#0A0A0A]">Create a shareable link</p>
@@ -167,7 +167,7 @@ export function ShareModal({ isOpen, onCloseAction, resumeId, resumeTitle }: Sha
                                 <button 
                                     onClick={generateShareLink} 
                                     disabled={loading}
-                                    className="mx-auto h-9 px-6 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold rounded-lg transition-all flex items-center gap-2 disabled:opacity-50 active:scale-95"
+                                    className="mx-auto h-9 px-6 bg-[#0A0A0A] hover:bg-zinc-800 text-white text-xs font-bold rounded-lg transition-all flex items-center gap-2 disabled:opacity-50 active:scale-95"
                                 >
                                     {loading ? <RiLoader4Line size={14} className="animate-spin" /> : <RiLinkM size={14} />}
                                     {loading ? "Generating..." : "Generate Link"}
@@ -203,7 +203,7 @@ export function ShareModal({ isOpen, onCloseAction, resumeId, resumeTitle }: Sha
                                     <button 
                                         onClick={toggleVisibility}
                                         disabled={toggling}
-                                        className={`w-9 h-5 rounded-full relative transition-all ${isPublic ? "bg-[#3B82F6]" : "bg-black/15"} ${toggling ? "opacity-50" : ""}`}
+                                        className={`w-9 h-5 rounded-full relative transition-all ${isPublic ? "bg-[#0A0A0A]" : "bg-black/15"} ${toggling ? "opacity-50" : ""}`}
                                     >
                                         <m.div 
                                             animate={{ x: isPublic ? 18 : 2 }} 

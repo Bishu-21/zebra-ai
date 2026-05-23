@@ -200,8 +200,8 @@ export function generateResumeHtml(data: ResumeData, template: string = "modern"
 
         ${template === 'minimal' ? `
             body { font-family: 'Inter', sans-serif; }
-            .section-title { border-bottom: none; color: #3b82f6; font-size: 9pt; }
-            .item-title { color: #1e40af; }
+            .section-title { border-bottom: none; color: #0A0A0A; font-size: 9pt; }
+            .item-title { color: #0A0A0A; }
         ` : ''}
 
         ${template === 'professional' ? `

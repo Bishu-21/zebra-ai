@@ -203,7 +203,7 @@ export function Sidebar({ plan, credits, userName, userImage, onOpenSettingsActi
                             onClick={onOpenProfileAction}
                             className="group flex items-center gap-3 p-2 pr-4 rounded-2xl bg-white border border-[#F5F5F5] hover:border-primary/20 hover:shadow-lg hover:shadow-black/5 transition-all cursor-pointer"
                         >
-                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-indigo-600 p-0.5 shadow-md group-hover:scale-105 transition-transform">
+                            <div className="w-10 h-10 rounded-xl bg-primary p-0.5 shadow-md group-hover:scale-105 transition-transform">
                                 <div className="w-full h-full rounded-[0.55rem] bg-white overflow-hidden flex items-center justify-center">
                                     {userImage ? (
                                         <Image 

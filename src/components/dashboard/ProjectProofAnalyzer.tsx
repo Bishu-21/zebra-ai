@@ -62,8 +62,8 @@ export function ProjectProofAnalyzer() {
             {/* INPUT SECTION */}
             <div className="bg-white border border-black/8 rounded-2xl p-5 shadow-sm">
                 <div className="flex items-center gap-3 mb-4">
-                    <div className="w-8 h-8 rounded-lg bg-[#3B82F6]/10 flex items-center justify-center">
-                        <RiShieldCheckLine className="text-[#3B82F6]" size={18} />
+                    <div className="w-8 h-8 rounded-lg bg-black/5 flex items-center justify-center">
+                        <RiShieldCheckLine className="text-black" size={18} />
                     </div>
                     <div>
                         <h3 className="text-sm font-black text-[#0A0A0A] uppercase tracking-tight">Project Proof Analyzer</h3>
@@ -81,7 +81,7 @@ export function ProjectProofAnalyzer() {
                             value={url}
                             onChange={(e) => setUrl(e.target.value)}
                             placeholder="Paste GitHub or Live Demo URL..."
-                            className="w-full h-11 bg-[#F5F5F5] border border-black/5 rounded-xl pl-10 pr-4 text-xs font-medium focus:bg-white focus:border-[#3B82F6] transition-all outline-none placeholder:text-[#A3A3A3]"
+                            className="w-full h-11 bg-[#F5F5F5] border border-black/5 rounded-xl pl-10 pr-4 text-xs font-medium focus:bg-white focus:border-black transition-all outline-none placeholder:text-[#A3A3A3]"
                         />
                     </div>
                     <button 

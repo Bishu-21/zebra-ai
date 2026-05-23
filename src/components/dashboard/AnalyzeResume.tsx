@@ -173,7 +173,7 @@ export function AnalyzeResume() {
                 {/* Header */}
                 <div className="p-6 sm:p-10 border-b border-black/[0.03] flex items-center justify-between bg-white/40 backdrop-blur-3xl sticky top-0 z-20">
                     <div className="flex items-center gap-4 sm:gap-6">
-                        <div className="w-12 h-12 sm:w-16 sm:h-16 bg-primary rounded-[1rem] sm:rounded-[1.5rem] flex items-center justify-center text-white shadow-2xl shadow-blue-500/20">
+                        <div className="w-12 h-12 sm:w-16 sm:h-16 bg-primary rounded-[1rem] sm:rounded-[1.5rem] flex items-center justify-center text-white shadow-2xl shadow-black/10">
                             <RiRadarLine size={24} className="sm:size-[28px]" />
                         </div>
                         <div>
@@ -255,7 +255,7 @@ export function AnalyzeResume() {
                                         <m.div 
                                             animate={{ top: ["0%", "100%", "0%"] }}
                                             transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
-                                            className="absolute left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent shadow-[0_0_30px_rgba(30,64,175,0.6)] z-40 opacity-50"
+                                            className="absolute left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent shadow-[0_0_30px_rgba(10,10,10,0.6)] z-40 opacity-50"
                                         />
                                     </m.div>
                                 )}
@@ -301,7 +301,7 @@ export function AnalyzeResume() {
                         <button 
                             onClick={handleManualAnalyze}
                             disabled={isProcessing || !content.trim()}
-                            className="flex-grow sm:flex-grow-0 bg-primary text-white px-10 sm:px-12 py-5 rounded-[1.25rem] font-bold text-sm hover:bg-primary-dark hover:scale-[1.02] active:scale-[0.98] transition-all shadow-2xl shadow-blue-500/20 disabled:opacity-30 flex items-center justify-center gap-3 group"
+                            className="flex-grow sm:flex-grow-0 bg-primary text-white px-10 sm:px-12 py-5 rounded-[1.25rem] font-bold text-sm hover:bg-primary-dark hover:scale-[1.02] active:scale-[0.98] transition-all shadow-2xl shadow-black/10 disabled:opacity-30 flex items-center justify-center gap-3 group"
                         >
                             {isAnalyzing ? "Processing..." : "Run Analysis"}
                             {!isAnalyzing && <RiArrowRightLine size={18} className="group-hover:translate-x-1 transition-transform" />}

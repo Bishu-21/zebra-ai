@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
         let browser: Browser | null = null;
         try {
             // 2. Launch headless browser
-            const isLocal = process.env.NODE_ENV === 'development';
+            const isLocal = process.env.NODE_ENV === 'development' || process.platform === 'win32';
             
             browser = await puppeteer.launch({
                 args: isLocal ? [] : [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox'],

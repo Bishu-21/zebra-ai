@@ -144,7 +144,7 @@ export function CoverLetterActions({ letter }: { letter: CoverLetter }) {
                         {/* Header */}
                         <div className="px-6 py-5 md:p-8 border-b border-[#F5F5F5] flex items-center justify-between bg-white sticky top-0 z-10">
                             <div className="flex items-center gap-3 md:gap-4">
-                                <div className="hidden sm:flex w-12 h-12 bg-[#3B82F6]/5 text-[#3B82F6] rounded-2xl items-center justify-center">
+                                <div className="hidden sm:flex w-12 h-12 bg-black/5 text-black rounded-2xl items-center justify-center">
                                     <RiMailSendLine size={24} />
                                 </div>
                                 <div>
@@ -155,7 +155,7 @@ export function CoverLetterActions({ letter }: { letter: CoverLetter }) {
                             <div className="flex items-center gap-2 md:gap-4">
                                 <button 
                                     onClick={handleCopy}
-                                    className="flex items-center justify-center w-10 h-10 md:w-auto md:px-5 md:py-2.5 bg-[#F9F9F9] border border-[#EAEAEA] hover:border-[#3B82F6] rounded-xl text-xs font-bold transition-all text-[#0A0A0A]"
+                                    className="flex items-center justify-center w-10 h-10 md:w-auto md:px-5 md:py-2.5 bg-[#F9F9F9] border border-[#EAEAEA] hover:border-black rounded-xl text-xs font-bold transition-all text-[#0A0A0A]"
                                     title="Copy Text"
                                 >
                                     {copied ? <RiCheckboxCircleLine size={20} className="text-green-500" /> : <RiFileCopyLine size={20} className="md:size-4 md:mr-2" />}
@@ -164,7 +164,7 @@ export function CoverLetterActions({ letter }: { letter: CoverLetter }) {
                                 <button 
                                     onClick={downloadPDF}
                                     disabled={isExporting}
-                                    className="flex items-center justify-center w-10 h-10 md:w-auto md:px-5 md:py-2.5 bg-[#3B82F6] text-white rounded-xl text-xs font-bold transition-all hover:bg-[#2563EB] disabled:opacity-50"
+                                    className="flex items-center justify-center w-10 h-10 md:w-auto md:px-5 md:py-2.5 bg-[#0A0A0A] text-white rounded-xl text-xs font-bold transition-all hover:bg-zinc-800 disabled:opacity-50"
                                     title="Download PDF"
                                 >
                                     {isExporting ? (
@@ -206,7 +206,7 @@ export function CoverLetterActions({ letter }: { letter: CoverLetter }) {
                             <button 
                                 onClick={downloadPDF}
                                 disabled={isExporting}
-                                className="flex-grow bg-[#3B82F6] text-white py-4 rounded-2xl font-black text-sm transition-all shadow-lg shadow-[#3B82F6]/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                                className="flex-grow bg-[#0A0A0A] text-white py-4 rounded-2xl font-black text-sm transition-all shadow-lg shadow-black/10 disabled:opacity-50 flex items-center justify-center gap-2"
                             >
                                 {isExporting ? (
                                     <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
