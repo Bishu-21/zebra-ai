@@ -35,7 +35,7 @@ export function ScratchCard({
       canvas.width = width;
       canvas.height = height;
 
-      const ctx = canvas.getContext("2d", { alpha: true });
+      const ctx = canvas.getContext("2d", { alpha: true, willReadFrequently: true });
       if (!ctx) return;
 
       // Fill with dark gray and simple pattern - NO more pixel loops
@@ -126,7 +126,7 @@ export function ScratchCard({
     isDrawing.current = true;
     setIsScratching(true);
     const { x, y } = getCoordinates(e);
-    const ctx = canvasRef.current?.getContext("2d");
+    const ctx = canvasRef.current?.getContext("2d", { willReadFrequently: true });
     if (ctx) {
       ctx.beginPath();
       ctx.moveTo(x, y);
@@ -140,7 +140,7 @@ export function ScratchCard({
 
     rafId.current = requestAnimationFrame(() => {
       const { x, y } = getCoordinates(e);
-      const ctx = canvasRef.current?.getContext("2d");
+      const ctx = canvasRef.current?.getContext("2d", { willReadFrequently: true });
       if (ctx) {
         ctx.lineTo(x, y);
         ctx.stroke();

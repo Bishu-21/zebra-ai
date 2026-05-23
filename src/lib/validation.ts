@@ -46,7 +46,7 @@ export const jobSchema = z.object({
 
 // 3. /api/ai/analyse
 export const analyseSchema = z.object({
-    resumeId: idSchema,
+    resumeId: idSchema.optional(),
 });
 
 // 4. /api/ai/tailor

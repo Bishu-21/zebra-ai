@@ -74,11 +74,6 @@ export function CreditTopUp() {
             console.error("Razorpay script load failed.");
         };
         document.body.appendChild(script);
-        return () => {
-            if (document.body.contains(script)) {
-                document.body.removeChild(script);
-            }
-        };
     }, []);
 
     React.useEffect(() => {
