@@ -49,57 +49,138 @@ export async function POST(req: NextRequest) {
         }
 
         let browser: Browser | null = null;
+        let projectContent = "";
         try {
-            const isLocal = process.env.NODE_ENV === 'development' || process.platform === 'win32';
-            browser = await puppeteer.launch({
-                args: isLocal ? ['--no-sandbox'] : [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox'],
-                defaultViewport: { width: 1280, height: 800 },
-                executablePath: isLocal
-                    ? process.env.CHROME_PATH || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
-                    : await chromium.executablePath(),
-                headless: true,
-            });
+            const githubRegex = /(?:https?:\/\/)?(?:www\.)?github\.com\/([^/]+)\/([^/]+)/i;
+            const match = url.match(githubRegex);
 
-            const page = await browser.newPage();
-            await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36');
-
-            await page.setRequestInterception(true);
-            page.on('request', (request: HTTPRequest) => {
-                const resourceType = request.resourceType();
-                if (['image', 'font', 'media'].includes(resourceType)) {
-                    request.abort().catch(() => { });
-                } else {
-                    request.continue().catch(() => { });
+            if (match) {
+                const owner = match[1];
+                const repo = match[2].replace(/\.git$/, '').split('/')[0];
+                
+                console.log(`Project Proof Analyzer: Detected GitHub URL, attempting direct fetch for ${owner}/${repo}`);
+                
+                interface GitHubRepoInfo {
+                    description?: string | null;
+                    stargazers_count?: number;
+                    language?: string | null;
+                    topics?: string[];
                 }
-            });
-
-            // Navigate
-            await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
-
-            // Specific handling for GitHub
-            let projectContent = "";
-            if (url.includes("github.com")) {
-                // Try to find README content
+                let repoInfo: GitHubRepoInfo | null = null;
                 try {
-                    await page.waitForSelector('#readme', { timeout: 5000 });
-                    projectContent = await page.evaluate(() => {
-                        const readme = document.querySelector('#readme article');
-                        return readme ? (readme as HTMLElement).innerText : document.body.innerText;
+                    const infoRes = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
+                        headers: { 'User-Agent': 'Zebra-AI' }
                     });
-                } catch {
-                    projectContent = await page.evaluate(() => document.body.innerText);
+                    if (infoRes.ok) {
+                        repoInfo = await infoRes.json();
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch repo info from GitHub API:", e);
                 }
-            } else {
-                // Generic page content
-                projectContent = await page.evaluate(() => {
-                    const unwanted = document.querySelectorAll('script, style, nav, footer, noscript');
-                    unwanted.forEach(s => (s as HTMLElement).style.display = 'none');
-                    return document.body.innerText;
-                });
+
+                // Try fetching README from raw content or API
+                const branches = ['main', 'master'];
+                const files = ['README.md', 'readme.md', 'README', 'readme'];
+                let readmeText = "";
+                
+                for (const branch of branches) {
+                    if (readmeText) break;
+                    for (const file of files) {
+                        try {
+                            const rawRes = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${file}`);
+                            if (rawRes.ok) {
+                                readmeText = await rawRes.text();
+                                console.log(`Successfully fetched README from raw content branch=${branch}, file=${file}`);
+                                break;
+                            }
+                        } catch {}
+                    }
+                }
+
+                if (!readmeText) {
+                    try {
+                        const apiRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/readme`, {
+                            headers: { 'User-Agent': 'Zebra-AI' }
+                        });
+                        if (apiRes.ok) {
+                            const apiData = await apiRes.json();
+                            if (apiData.content && apiData.encoding === 'base64') {
+                                readmeText = Buffer.from(apiData.content, 'base64').toString('utf-8');
+                                console.log("Successfully fetched README from GitHub API");
+                            }
+                        }
+                    } catch (e) {
+                        console.error("Failed to fetch README from GitHub API:", e);
+                    }
+                }
+
+                if (readmeText) {
+                    projectContent = `Repository: ${owner}/${repo}\n`;
+                    if (repoInfo) {
+                        projectContent += `Description: ${repoInfo.description || ""}\n`;
+                        projectContent += `Stars: ${repoInfo.stargazers_count || 0}\n`;
+                        projectContent += `Language: ${repoInfo.language || ""}\n`;
+                        projectContent += `Topics: ${(repoInfo.topics || []).join(', ')}\n`;
+                    }
+                    projectContent += `\nREADME Content:\n${readmeText}`;
+                } else if (repoInfo) {
+                    projectContent = `Repository: ${owner}/${repo}\nDescription: ${repoInfo.description || ""}\nLanguage: ${repoInfo.language || ""}`;
+                }
             }
 
-            await browser.close();
-            browser = null;
+            // Fallback to Puppeteer if not GitHub or direct fetch failed to retrieve content
+            if (!projectContent) {
+                console.log(`Project Proof Analyzer: Falling back to Puppeteer scraper for URL: ${url}`);
+                const isLocal = process.env.NODE_ENV === 'development' || process.platform === 'win32';
+                browser = await puppeteer.launch({
+                    args: isLocal ? ['--no-sandbox'] : [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox'],
+                    defaultViewport: { width: 1280, height: 800 },
+                    executablePath: isLocal
+                        ? process.env.CHROME_PATH || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
+                        : await chromium.executablePath(),
+                    headless: true,
+                });
+
+                const page = await browser.newPage();
+                await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36');
+
+                await page.setRequestInterception(true);
+                page.on('request', (request: HTTPRequest) => {
+                    const resourceType = request.resourceType();
+                    if (['image', 'font', 'media'].includes(resourceType)) {
+                        request.abort().catch(() => { });
+                    } else {
+                        request.continue().catch(() => { });
+                    }
+                });
+
+                // Navigate
+                await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
+
+                // Specific handling for GitHub
+                if (url.includes("github.com")) {
+                    // Try to find README content
+                    try {
+                        await page.waitForSelector('#readme', { timeout: 5000 });
+                        projectContent = await page.evaluate(() => {
+                            const readme = document.querySelector('#readme article');
+                            return readme ? (readme as HTMLElement).innerText : document.body.innerText;
+                        });
+                    } catch {
+                        projectContent = await page.evaluate(() => document.body.innerText);
+                    }
+                } else {
+                    // Generic page content
+                    projectContent = await page.evaluate(() => {
+                        const unwanted = document.querySelectorAll('script, style, nav, footer, noscript');
+                        unwanted.forEach(s => (s as HTMLElement).style.display = 'none');
+                        return document.body.innerText;
+                    });
+                }
+
+                await browser.close();
+                browser = null;
+            }
 
             // Analyze with Gemini
             const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
