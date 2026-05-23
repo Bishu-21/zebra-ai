@@ -5,7 +5,7 @@ import { headers } from "next/headers";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 const model = genAI.getGenerativeModel({ 
-  model: process.env.GEMINI_MODEL || "gemini-1.5-flash" 
+  model: process.env.GEMINI_MODEL || "gemini-3.5-flash" 
 });
 
 import { parseSchema } from "@/lib/validation";

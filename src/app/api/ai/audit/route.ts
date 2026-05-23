@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
       return new Response(JSON.stringify({ error: "Missing fields" }), { status: 400 });
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || "gemini-3.5-flash" });
 
     const prompt = `You are Zebra AI, a premium XaaS (Everything-as-a-Service) resume strategist. Your goal is to bypass ATS filters using surgical precision.
 You do not write fluffy text. You provide mathematical, strict, and strategic feedback based on the Zebra AI philosophy: "Quantify everything, lead with action verbs, and eliminate generic fluff."
