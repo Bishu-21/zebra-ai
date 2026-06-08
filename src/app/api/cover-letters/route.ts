@@ -10,9 +10,7 @@ import crypto from "crypto";
 
 // Initialize Gemini
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-const model = genAI.getGenerativeModel({ 
-  model: process.env.GEMINI_MODEL || "gemini-3.1-flash-lite" 
-});
+
 
 export async function GET() {
     try {

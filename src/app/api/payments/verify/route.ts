@@ -79,8 +79,6 @@ export async function POST(req: NextRequest) {
 
         // 4. Atomically update credits and record transaction
         await db.transaction(async (tx) => {
-            const userId = session.user.id;
-            
             // Update user credits and plan
             await tx.update(userTable)
                 .set({ 

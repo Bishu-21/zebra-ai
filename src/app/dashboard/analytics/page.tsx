@@ -65,8 +65,6 @@ export default async function AnalyticsPage() {
   // Padding for chart if less than 10 entries
   const displayScores = chartScores.length > 0 ? chartScores : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
-  const credits = (session.user as any).credits || 0;
-
   const stats = [
     { label: "Total Resumes", value: userResumes.length.toString(), sub: "Active Documents", icon: RiStackLine, color: "text-[#0A0A0A]" },
     { label: "Active Applications", value: userJobs.length.toString(), sub: "Tracked in Pipeline", icon: RiRadarLine, color: "text-[#0A0A0A]" },

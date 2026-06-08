@@ -22,6 +22,7 @@ import { FieldInput, FieldTextarea } from "@/components/compiler/FieldInput";
 import { parseResumeData } from "@/components/compiler/parseResume";
 import { ShareModal } from "@/components/compiler/ShareModal";
 import { useSettings } from "@/context/SettingsContext";
+import { BasicsEditor } from "./BasicsEditor";
 import type { ResumeData, ResumeContent, Experience, Project, Education, SkillCategory, Achievement, SectionId, TemplateType } from "@/components/compiler/types";
 
 interface ResumeEditorProps {
@@ -30,7 +31,7 @@ interface ResumeEditorProps {
     versionTitle?: string | null;
 }
 
-export function ResumeEditor({ initialData, isStripeVersion, versionTitle }: ResumeEditorProps) {
+export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps) {
     const [resume, setResume] = useState<ResumeData>(() => parseResumeData(initialData));
     const [selectedTemplate, setSelectedTemplate] = useState<TemplateType>(() => {
         const saved = localStorage.getItem(`resume-template-${initialData?.id || 'new'}`);
@@ -81,6 +82,7 @@ export function ResumeEditor({ initialData, isStripeVersion, versionTitle }: Res
 
     useEffect(() => {
         lastSavedContentRef.current = JSON.stringify(resume.content);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [resume.id]);
 
     useEffect(() => {
@@ -1029,24 +1031,6 @@ export function ResumeEditor({ initialData, isStripeVersion, versionTitle }: Res
 
 // ── SECTION EDITORS (inline for Phase 0, extract in Phase 2) ──
 
-function BasicsEditor({ content, updateBasics }: { content: ResumeContent; updateBasics: (f: string, v: string) => void }) {
-    return (
-        <div className="space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <FieldInput name="basics.name" label="Full Name" value={content.basics.name} onChange={(v) => updateBasics("name", v)} placeholder="Alex Webb" />
-                <FieldInput name="basics.location" label="Location" value={content.basics.location} onChange={(v) => updateBasics("location", v)} placeholder="Howrah, West Bengal" />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <FieldInput name="basics.email" label="Email" value={content.basics.email} onChange={(v) => updateBasics("email", v)} placeholder="alex@email.com" />
-                <FieldInput name="basics.phone" label="Phone" value={content.basics.phone} onChange={(v) => updateBasics("phone", v)} placeholder="+91-9330199312" />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <FieldInput name="basics.linkedin" label="LinkedIn" value={content.basics.linkedin || ""} onChange={(v) => updateBasics("linkedin", v)} placeholder="linkedin.com/in/..." />
-                <FieldInput name="basics.portfolio" label="Portfolio" value={content.basics.portfolio || ""} onChange={(v) => updateBasics("portfolio", v)} placeholder="yoursite.com" />
-            </div>
-        </div>
-    );
-}
 
 function EducationEditor({ content, updateEducation, addEducation, removeItem }: { content: ResumeContent; updateEducation: (id: number, f: string, v: string | string[]) => void; addEducation: () => void; removeItem: (s: 'education', id: number) => void }) {
     const { settings } = useSettings();

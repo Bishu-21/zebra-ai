@@ -40,21 +40,36 @@ export async function extractJobIntelligence(text: string): Promise<JobIntellige
 
         // Correct iteration for Azure SDK Paged results
         for await (const page of results) {
-            const actions = (page as any).actions;
+            const pageData = page as unknown as {
+                actions?: {
+                    kind: string;
+                    results: {
+                        error?: unknown;
+                        keyPhrases?: string[];
+                        entities?: {
+                            text: string;
+                            category: string;
+                            subCategory?: string;
+                            confidenceScore: number;
+                        }[];
+                    }[];
+                }[];
+            };
+            const actions = pageData.actions;
             if (!actions) continue;
 
             for (const action of actions) {
                 if (action.kind === "KeyPhraseExtraction") {
-                    action.results.forEach((res: any) => {
-                        if (!res.error) {
+                    action.results.forEach((res) => {
+                        if (!res.error && res.keyPhrases) {
                             keyPhrases.push(...res.keyPhrases);
                         }
                     });
                 }
                 if (action.kind === "EntityRecognition") {
-                    action.results.forEach((res: any) => {
-                        if (!res.error) {
-                            res.entities.forEach((entity: any) => {
+                    action.results.forEach((res) => {
+                        if (!res.error && res.entities) {
+                            res.entities.forEach((entity) => {
                                 entities.push({
                                     text: entity.text,
                                     category: entity.category,

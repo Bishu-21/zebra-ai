@@ -90,6 +90,7 @@ export function CreditTopUp() {
                 handlePurchase(planId);
             }
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [mounted, scriptLoaded, searchParams]);
 
     const plans = [

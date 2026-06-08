@@ -7,8 +7,7 @@ import {
     RiFlashlightLine, 
     RiTimer2Line, 
     RiArrowRightSLine,
-    RiUploadCloud2Line,
-    RiShieldCheckLine
+    RiUploadCloud2Line
 } from "react-icons/ri";
 import { ResumeResultsModal } from "./ResumeResultsModal";
 import { ProjectResultsModal } from "./ProjectResultsModal";

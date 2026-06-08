@@ -118,7 +118,7 @@ export function Sidebar({ plan, credits, userName, userImage, onOpenSettingsActi
                         <Link href="/dashboard" className="flex flex-col items-center gap-3 group" onClick={() => setIsOpen(false)}>
                             <div className="relative">
                                 <div className="absolute inset-0 bg-primary/30 blur-3xl rounded-full scale-150 opacity-0 group-hover:opacity-100 transition-all duration-700" />
-                                <img 
+                                <Image 
                                     src="/zebra_star.svg" 
                                     alt="Zebra AI" 
                                     width={64}

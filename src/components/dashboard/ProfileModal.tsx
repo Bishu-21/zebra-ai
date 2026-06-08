@@ -33,7 +33,7 @@ export function ProfileModal({ isOpen, onCloseAction, userName, userImage }: Pro
     const router = useRouter();
     const { showToast } = useToast();
     const { data: session } = useSession();
-    const user = session?.user as any;
+    const user = session?.user as { plan?: string | null } | undefined;
     const [view, setView] = useState<ViewState>("menu");
     const [newName, setNewName] = useState(userName);
     const [isSaving, setIsSaving] = useState(false);

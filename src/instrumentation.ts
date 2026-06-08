@@ -6,6 +6,7 @@ export async function register() {
     if (connectionString) {
       try {
         const { useAzureMonitor } = await import('@azure/monitor-opentelemetry');
+        // eslint-disable-next-line react-hooks/rules-of-hooks
         useAzureMonitor({
           azureMonitorExporterOptions: {
             connectionString: connectionString,
@@ -30,7 +31,7 @@ export const onRequestError: Instrumentation.onRequestError = async (
   context
 ) => {
   const message = err instanceof Error ? err.message : String(err);
-  const digest = (err as any)?.digest || 'N/A';
+  const digest = (err as { digest?: string })?.digest || 'N/A';
 
   console.error('--- Next.js Server Error Captured ---');
   console.error('Message:', message);
@@ -55,7 +56,7 @@ export const onRequestError: Instrumentation.onRequestError = async (
           'next.router.kind': context.routerKind
         });
       }
-    } catch (e) {
+    } catch {
       // Fail silently to avoid infinite error loops or cluttering logs
     }
   }

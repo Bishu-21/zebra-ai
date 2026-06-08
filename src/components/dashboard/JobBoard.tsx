@@ -413,11 +413,11 @@ export function JobBoard({
                                                         >
                                                             <option value="">No Resume Linked</option>
                                                             <optgroup label="Base Resumes">
-                                                                {resumes.map((r: any) => (<option key={r.id} value={r.id}>{r.title}</option>))}
+                                                                {resumes.map((r) => (<option key={r.id} value={r.id}>{r.title}</option>))}
                                                             </optgroup>
                                                             {versions.length > 0 && (
                                                                 <optgroup label="Tailored Versions">
-                                                                    {versions.map((v: any) => (
+                                                                    {versions.map((v) => (
                                                                         <option key={v.id} value={`v:${v.id}`}>
                                                                             {v.title} {v.company ? `@ ${v.company}` : ""}
                                                                         </option>

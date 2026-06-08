@@ -6,6 +6,17 @@ import { eq, and } from "drizzle-orm";
 import { headers } from "next/headers";
 import crypto from "crypto";
 
+interface SaveVersionRequest {
+    resumeId: string;
+    title: string;
+    company?: string | null;
+    targetRole?: string | null;
+    jobDescription?: string | null;
+    content: string;
+    matchScore?: number | null;
+    feedback?: unknown;
+}
+
 export async function POST(req: NextRequest) {
     try {
         const session = await auth.api.getSession({
@@ -16,7 +27,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
     
-        const body = await req.json();
+        const body = (await req.json()) as SaveVersionRequest;
         const { resumeId, title, company, targetRole, jobDescription, content, matchScore, feedback } = body;
 
         if (!resumeId || !title || !content) {
@@ -52,7 +63,7 @@ export async function POST(req: NextRequest) {
         });
 
         return NextResponse.json({ success: true, versionId });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Save Resume Version Error:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }

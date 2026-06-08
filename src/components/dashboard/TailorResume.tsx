@@ -135,7 +135,7 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
             } else {
                 showToast(data.error || "Failed to save version", "info");
             }
-        } catch (_err) {
+        } catch {
             showToast("Connection error. Try again later.", "info");
         } finally {
             setSavingVersion(false);

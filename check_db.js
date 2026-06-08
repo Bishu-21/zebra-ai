@@ -1,6 +1,7 @@
-const { neon } = require("@neondatabase/serverless");
+import { neon } from "@neondatabase/serverless";
+import dotenv from "dotenv";
 
-require("dotenv").config({ path: ".env.local" });
+dotenv.config({ path: ".env.local" });
 
 const sql = neon(process.env.DATABASE_URL);
 

@@ -87,7 +87,7 @@ export default async function DashboardPage() {
       .orderBy(desc(analysisTable.createdAt))
     : [];
   
-  const latestAnalysisMap: Record<string, { id: string; score: number; feedback: any }> = {};
+  const latestAnalysisMap: Record<string, { id: string; score: number; feedback: unknown }> = {};
   for (const a of resumeAnalyses) {
       if (!latestAnalysisMap[a.resumeId]) {
           latestAnalysisMap[a.resumeId] = {

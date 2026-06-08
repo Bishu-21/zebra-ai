@@ -1,15 +1,51 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { z } from "zod";
+import { MAX_CONTENT_LENGTH, MAX_JOB_DESC_LENGTH } from "@/lib/validation";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { db } from "@/lib/db";
+import { user as userTable } from "@/lib/schema";
+import { eq, sql } from "drizzle-orm";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
+const auditSchema = z.object({
+  resumeText: z.string().min(1, "Resume text is required").max(MAX_CONTENT_LENGTH),
+  jobDescription: z.string().min(1, "Job description is required").max(MAX_JOB_DESC_LENGTH),
+});
+
 export async function POST(req: NextRequest) {
   try {
-    const { resumeText, jobDescription } = await req.json();
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
 
-    if (!resumeText || !jobDescription) {
-      return new Response(JSON.stringify({ error: "Missing fields" }), { status: 400 });
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const userData = await db.query.user.findFirst({
+      where: eq(userTable.id, session.user.id),
+    });
+
+    if (!userData || userData.credits <= 0) {
+      return NextResponse.json({ error: "Insufficient credits" }, { status: 403 });
+    }
+
+    let body;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+
+    const validation = auditSchema.safeParse(body);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error.issues[0].message }, { status: 400 });
+    }
+
+    const { resumeText, jobDescription } = validation.data;
 
     const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || "gemini-3.1-flash-lite" });
 
@@ -38,14 +74,24 @@ Resume: ${resumeText}
 Job: ${jobDescription}`;
 
     const result = await model.generateContentStream(prompt);
+
+    // Deduct 1 credit from user
+    await db.update(userTable)
+      .set({ credits: sql`${userTable.credits} - 1` })
+      .where(eq(userTable.id, session.user.id));
     
     const stream = new ReadableStream({
       async start(controller) {
-        for await (const chunk of result.stream) {
-          const chunkText = chunk.text();
-          controller.enqueue(new TextEncoder().encode(chunkText));
+        try {
+          for await (const chunk of result.stream) {
+            const chunkText = chunk.text();
+            controller.enqueue(new TextEncoder().encode(chunkText));
+          }
+          controller.close();
+        } catch (streamError) {
+          console.error("Audit stream error:", streamError);
+          controller.error(new Error("Stream aborted"));
         }
-        controller.close();
       }
     });
 
@@ -58,6 +104,6 @@ Job: ${jobDescription}`;
     });
   } catch (error: unknown) {
     console.error("Audit error:", error);
-    return new Response(JSON.stringify({ error: "Failed to generate audit" }), { status: 500 });
+    return NextResponse.json({ error: "Failed to generate audit" }, { status: 500 });
   }
 }

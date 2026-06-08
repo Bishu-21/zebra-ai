@@ -261,8 +261,6 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
                                 <div className="grid grid-cols-1 gap-6">
                                     {rewrites.map((item: RewriteItem | string, i: number) => {
                                         const isString = typeof item === "string";
-                                        const original = isString ? null : item.original;
-                                        const problem = isString ? null : item.problem;
                                         const rationale = isString ? "Optimization for clarity and impact." : (item.rationale ?? "Optimization for clarity and impact.");
                                         const suggestion = isString ? item : (item.after ?? item.suggestion ?? "");
 

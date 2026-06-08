@@ -3,9 +3,7 @@
 import React, { useState } from "react";
 import { 
     RiAddLine, 
-    RiMagicLine, 
     RiCloseCircleLine, 
-    RiCheckboxCircleLine, 
     RiAlertLine, 
     RiArrowDropDownLine,
     RiFileCopyLine,
@@ -13,9 +11,7 @@ import {
     RiCheckLine,
     RiMailSendLine,
     RiExternalLinkLine,
-    RiFlashlightLine,
-    RiLoader4Line,
-    RiSparkling2Line
+    RiLoader4Line
 } from "react-icons/ri";
 import { useRouter } from "next/navigation";
 import { m, AnimatePresence } from "framer-motion";

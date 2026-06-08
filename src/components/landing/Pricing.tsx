@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import { m } from "framer-motion";
 import { PLANS, PlanId } from "@/lib/constants/plans";
 import { useRouter } from "next/navigation";
-import { useToast } from "@/components/ui/Toast";
 import { useSession } from "@/lib/auth-client";
 
 const CheckIcon = ({ size = 14, className = "" }: { size?: number, className?: string }) => (
@@ -39,8 +38,7 @@ const EnterpriseIcon = ({ size = 24 }: { size?: number }) => (
 export function Pricing() {
   const router = useRouter();
   const { data: session } = useSession();
-  const { showToast } = useToast();
-  const [loading, setLoading] = useState<string | null>(null);
+  const [loading] = useState<string | null>(null);
 
   const handleSubscription = async (planId: PlanId) => {
     if (!session) {

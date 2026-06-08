@@ -24,15 +24,15 @@ export function Header({ credits, userName, userImage, onOpenSettingsAction, onO
             <div className="flex items-center gap-4 text-sm font-semibold text-muted-foreground/70">
                 <div className="hidden md:flex items-center gap-2">
                     <span className="hover:text-primary cursor-pointer transition-colors">Zebra AI</span>
-                    <RiArrowRightSLine size={18} className="text-[#A3A3A3]" />
-                    <span className="text-[#0A0A0A] font-bold">Overview</span>
+                    <RiArrowRightSLine size={18} className="text-muted-foreground/60" />
+                    <span className="text-foreground font-bold">Overview</span>
                 </div>
             </div>
 
             <div className="flex items-center gap-3 md:gap-6">
                 {/* Search Bar - Desktop Only */}
-                <div className="hidden lg:flex items-center gap-3 bg-black/[0.03] border border-black/5 px-4 py-2 rounded-xl w-64 group focus-within:bg-white focus-within:border-primary focus-within:shadow-lg focus-within:shadow-black/5 transition-all duration-300">
-                    <RiSearchLine size={18} className="text-[#A3A3A3] group-focus-within:text-primary" />
+                <div className="hidden lg:flex items-center gap-3 bg-muted/60 border border-border-subtle px-4 py-2 rounded-[var(--radius-md)] w-64 group focus-within:bg-white focus-within:border-primary focus-within:shadow-lg focus-within:shadow-black/5 transition-all duration-300">
+                    <RiSearchLine size={18} className="text-muted-foreground/60 group-focus-within:text-primary" />
                     <input 
                         type="text" 
                         placeholder="Search resources..." 
@@ -49,11 +49,11 @@ export function Header({ credits, userName, userImage, onOpenSettingsAction, onO
                 
                 <button 
                     onClick={onOpenSettingsAction}
-                    className="w-10 h-10 border border-black/5 rounded-xl flex items-center justify-center text-primary bg-primary/5 hover:bg-primary/10 hover:border-primary/20 transition-all relative group shadow-sm" 
+                    className="w-10 h-10 border border-border-subtle rounded-[var(--radius-md)] flex items-center justify-center text-primary bg-primary/5 hover:bg-primary/10 hover:border-primary/20 transition-all relative group shadow-sm" 
                     aria-label="Diagnostics"
                 >
                     <RiPulseLine size={22} className="animate-pulse group-hover:scale-110 transition-transform" />
-                    <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-primary rounded-full border-2 border-white shadow-sm"></span>
+                    <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-primary rounded-full border-2 border-background shadow-sm"></span>
                 </button>
 
                 <div className="flex items-center gap-3 pl-3 md:pl-6 border-l border-border-subtle">
