@@ -1,19 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { z } from "zod";
-import { MAX_CONTENT_LENGTH, MAX_JOB_DESC_LENGTH } from "@/lib/validation";
+import { auditSchema } from "@/lib/validation";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/lib/db";
 import { user as userTable } from "@/lib/schema";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, and, gt } from "drizzle-orm";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-
-const auditSchema = z.object({
-  resumeText: z.string().min(1, "Resume text is required").max(MAX_CONTENT_LENGTH),
-  jobDescription: z.string().min(1, "Job description is required").max(MAX_JOB_DESC_LENGTH),
-});
 
 export async function POST(req: NextRequest) {
   try {
@@ -23,14 +17,6 @@ export async function POST(req: NextRequest) {
 
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const userData = await db.query.user.findFirst({
-      where: eq(userTable.id, session.user.id),
-    });
-
-    if (!userData || userData.credits <= 0) {
-      return NextResponse.json({ error: "Insufficient credits" }, { status: 403 });
     }
 
     let body;
@@ -46,6 +32,19 @@ export async function POST(req: NextRequest) {
     }
 
     const { resumeText, jobDescription } = validation.data;
+
+    // Atomically decrement 1 credit only if user has credits remaining
+    const [updatedUser] = await db.update(userTable)
+      .set({ credits: sql`${userTable.credits} - 1` })
+      .where(and(
+        eq(userTable.id, session.user.id),
+        gt(userTable.credits, 0)
+      ))
+      .returning({ id: userTable.id, credits: userTable.credits });
+
+    if (!updatedUser) {
+      return NextResponse.json({ error: "Insufficient credits" }, { status: 403 });
+    }
 
     const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || "gemini-3.1-flash-lite" });
 
@@ -73,12 +72,16 @@ Resume: ${resumeText}
 
 Job: ${jobDescription}`;
 
-    const result = await model.generateContentStream(prompt);
-
-    // Deduct 1 credit from user
-    await db.update(userTable)
-      .set({ credits: sql`${userTable.credits} - 1` })
-      .where(eq(userTable.id, session.user.id));
+    let result;
+    try {
+      result = await model.generateContentStream(prompt);
+    } catch (modelError) {
+      // Refund the credit atomically if the AI initialization throws an exception
+      await db.update(userTable)
+        .set({ credits: sql`${userTable.credits} + 1` })
+        .where(eq(userTable.id, session.user.id));
+      throw modelError;
+    }
     
     const stream = new ReadableStream({
       async start(controller) {

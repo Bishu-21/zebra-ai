@@ -207,10 +207,11 @@ export async function POST(req: NextRequest) {
         } catch (err: unknown) {
             console.error("Scrape Operation Failed:", err || "Undefined Rejection");
             const errorMessage = err instanceof Error ? err.message : String(err || "Unknown error");
+            const isProd = process.env.NODE_ENV === "production";
             
             return NextResponse.json({ 
                 error: "Failed to scrape job listing automatically.",
-                details: errorMessage,
+                details: isProd ? "Internal trace omitted." : errorMessage,
                 suggestion: "Please try copying and pasting the job details manually into the form if the URL scraping continues to fail."
             }, { status: 500 });
         } finally {
@@ -224,9 +225,10 @@ export async function POST(req: NextRequest) {
         }
     } catch (outerError: unknown) {
         console.error("Fatal Scrape Error:", outerError || "Undefined Fatal Error");
+        const isProd = process.env.NODE_ENV === "production";
         return NextResponse.json({ 
             error: "Internal Server Error",
-            details: outerError instanceof Error ? outerError.message : "Fatal error with no details"
+            details: isProd ? "Internal trace omitted." : (outerError instanceof Error ? outerError.message : "Fatal error with no details")
         }, { status: 500 });
     }
 }

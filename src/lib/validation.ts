@@ -89,3 +89,22 @@ export const shareSchema = z.object({
 export const parseSchema = z.object({
     text: z.string().min(50, "Resume text is too short").max(MAX_CONTENT_LENGTH),
 });
+
+// 9. /api/ai/audit
+export const auditSchema = z.object({
+    resumeText: z.string().min(1, "Resume text is required").max(MAX_CONTENT_LENGTH),
+    jobDescription: z.string().min(1, "Job description is required").max(MAX_JOB_DESC_LENGTH),
+});
+
+// 10. /api/resume-versions
+export const saveVersionSchema = z.object({
+    resumeId: z.string().min(1),
+    title: z.string().min(1, "Title is required").max(MAX_TITLE_LENGTH),
+    company: z.string().max(MAX_TITLE_LENGTH).nullish(),
+    targetRole: z.string().max(MAX_TITLE_LENGTH).nullish(),
+    jobDescription: z.string().max(MAX_JOB_DESC_LENGTH).nullish(),
+    content: z.string().min(1, "Content is required"),
+    matchScore: z.number().int().min(0).max(100).nullish(),
+    feedback: z.unknown().optional(),
+});
+

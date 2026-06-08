@@ -4,18 +4,8 @@ import { db } from "@/lib/db";
 import { resumes as resumesTable, resumeVersions as resumeVersionsTable } from "@/lib/schema";
 import { eq, and } from "drizzle-orm";
 import { headers } from "next/headers";
+import { saveVersionSchema } from "@/lib/validation";
 import crypto from "crypto";
-
-interface SaveVersionRequest {
-    resumeId: string;
-    title: string;
-    company?: string | null;
-    targetRole?: string | null;
-    jobDescription?: string | null;
-    content: string;
-    matchScore?: number | null;
-    feedback?: unknown;
-}
 
 export async function POST(req: NextRequest) {
     try {
@@ -27,12 +17,19 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
     
-        const body = (await req.json()) as SaveVersionRequest;
-        const { resumeId, title, company, targetRole, jobDescription, content, matchScore, feedback } = body;
-
-        if (!resumeId || !title || !content) {
-            return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+        let body;
+        try {
+            body = await req.json();
+        } catch {
+            return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
         }
+
+        const validation = saveVersionSchema.safeParse(body);
+        if (!validation.success) {
+            return NextResponse.json({ error: validation.error.issues[0].message }, { status: 400 });
+        }
+
+        const { resumeId, title, company, targetRole, jobDescription, content, matchScore, feedback } = validation.data;
 
         const resume = await db.query.resumes.findFirst({
             where: and(

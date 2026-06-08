@@ -27,7 +27,11 @@ export default function GlobalError(props: { error: Error & { digest?: string };
                         {error?.message && (
                             <div className="mt-4 p-3 bg-black/5 rounded-lg text-left">
                                 <p className="text-[10px] font-mono text-black/40 uppercase tracking-widest mb-1">Stack Trace Fragment</p>
-                                <p className="text-[11px] font-mono text-red-500/80 break-all">{error.message}</p>
+                                <p className="text-[11px] font-mono text-red-500/80 break-all">
+                                    {process.env.NODE_ENV === "production"
+                                        ? "System execution halted. Details logged internally."
+                                        : error.message}
+                                </p>
                             </div>
                         )}
                     </div>
