@@ -108,3 +108,25 @@ export const saveVersionSchema = z.object({
     feedback: z.unknown().optional(),
 });
 
+// 11. AI Response Validation Schemas (Strict Guardrails)
+export const aiTailorResponseSchema = z.object({
+    matchScore: z.number().min(0).max(100),
+    executiveSummary: z.string(),
+    strengths: z.array(z.string()),
+    gaps: z.array(z.string()),
+    suggestedChanges: z.array(z.object({
+        section: z.string(),
+        changeType: z.string(),
+        originalText: z.string().nullish(),
+        suggestedText: z.string(),
+        reason: z.string().nullish(),
+    })).optional(),
+});
+
+export const aiFitCheckResponseSchema = z.object({
+    fits: z.array(z.string()),
+    missing: z.array(z.string()),
+    suggestedActions: z.array(z.string()),
+});
+
+

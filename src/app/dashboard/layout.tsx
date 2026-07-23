@@ -1,6 +1,4 @@
-import React from "react";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { getSafeSession } from "@/lib/auth-helpers";
 import { redirect, unstable_rethrow } from "next/navigation";
 import { db } from "@/lib/db";
 import { user as userTable } from "@/lib/schema";
@@ -18,9 +16,7 @@ export default async function DashboardLayout({
     let session = null;
     
     try {
-        session = await auth.api.getSession({
-            headers: await headers(),
-        });
+        session = await getSafeSession();
     } catch (error) {
         unstable_rethrow(error);
         console.error("Dashboard Session Check Failed:", error);

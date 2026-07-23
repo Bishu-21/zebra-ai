@@ -12,22 +12,21 @@ export function ProjectAnalyzerCard() {
     <>
       <div 
         onClick={() => setIsOpen(true)}
-        className="group/card relative overflow-hidden flex flex-col justify-between h-full min-h-[220px] cursor-pointer transition-all p-6 bg-white border border-black/[0.04] rounded-2xl hover:shadow-2xl hover:shadow-black/[0.03] active:scale-[0.99]"
+        className="group/card relative overflow-hidden flex flex-col justify-between h-full min-h-[200px] cursor-pointer transition-all p-7 bg-white border border-neutral-200/80 rounded-3xl hover:border-neutral-300 hover:shadow-xl active:scale-[0.99] group shadow-xs"
       >
-        <div className="absolute top-0 right-0 w-32 h-32 bg-black/[0.01] rounded-bl-[4rem] group-hover/card:scale-110 transition-transform" />
         <div className="flex items-start justify-between mb-8">
-          <div className="w-14 h-14 bg-black/[0.03] rounded-2xl flex items-center justify-center text-[#737373]/40 group-hover/card:bg-[#10B981] group-hover/card:text-white transition-all duration-500">
-            <RiShieldCheckLine size={28} />
+          <div className="w-11 h-11 bg-neutral-100 rounded-xl flex items-center justify-center text-neutral-600 group-hover/card:bg-[#0A0A0A] group-hover/card:text-white transition-colors duration-300">
+            <RiShieldCheckLine size={22} />
           </div>
           <div className="flex items-center gap-1 opacity-0 group-hover/card:opacity-100 transition-opacity">
-              <span className="text-[0.6rem] font-bold uppercase tracking-widest text-[#737373]">Validate</span>
-              <RiArrowRightSLine size={14} className="text-[#10B981]" />
+              <span className="text-xs font-semibold text-neutral-500">Check Proof</span>
+              <RiArrowRightSLine size={16} className="text-[#0A0A0A]" />
           </div>
         </div>
         <div>
-          <h3 className="font-bold text-2xl mb-2 text-[#0A0A0A] tracking-tighter">Project Proof Analyzer</h3>
-          <p className="text-[0.65rem] text-[#737373] font-bold uppercase tracking-[0.1em] leading-relaxed">
-            Verify project links, evaluate <br/> tech stack & generate bullet points.
+          <h3 className="font-bold text-xl mb-1.5 text-[#0A0A0A] tracking-tight">Check My Project</h3>
+          <p className="text-xs text-neutral-500 font-normal leading-relaxed">
+            Analyze repository code & verify project proof points.
           </p>
         </div>
       </div>

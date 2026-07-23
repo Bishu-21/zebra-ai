@@ -130,26 +130,22 @@ export function ImportResume() {
             {/* The Trigger Card */}
             <div 
                 onClick={() => setIsModalOpen(true)}
-                className="group/card relative overflow-hidden flex flex-col justify-between h-full cursor-pointer transition-all p-10 bg-white border border-black/[0.04] rounded-[2.5rem] hover:shadow-2xl hover:shadow-black/[0.03] active:scale-[0.99]"
+                className="group/card relative overflow-hidden flex flex-col justify-between h-full cursor-pointer transition-all p-7 bg-white border border-neutral-200/80 rounded-3xl hover:border-neutral-300 hover:shadow-xl active:scale-[0.99] group shadow-xs"
             >
-                {/* Background Decorative Layer */}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-black/[0.01] rounded-bl-[4rem] group-hover/card:scale-110 transition-transform" />
-                
-                {/* Card Content */}
                 <div className="flex items-start justify-between mb-8">
-                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 shadow-sm bg-black/[0.03] text-[#737373]/40 group-hover/card:bg-[#0A0A0A] group-hover/card:text-white">
-                        <RiUploadCloud2Line size={28} />
+                    <div className="w-11 h-11 bg-neutral-100 rounded-xl flex items-center justify-center text-neutral-600 group-hover/card:bg-[#0A0A0A] group-hover/card:text-white transition-colors duration-300">
+                        <RiUploadCloud2Line size={22} />
                     </div>
                     <div className="flex items-center gap-1 opacity-0 group-hover/card:opacity-100 transition-opacity">
-                        <span className="text-[0.6rem] font-bold uppercase tracking-widest text-[#737373]">Import Source</span>
-                        <RiArrowRightSLine size={14} className="text-[#0A0A0A]" />
+                        <span className="text-xs font-semibold text-neutral-500">Upload File</span>
+                        <RiArrowRightSLine size={16} className="text-[#0A0A0A]" />
                     </div>
                 </div>
 
-                <div className="relative">
-                    <h3 className="font-bold text-2xl mb-2 text-[#0A0A0A] tracking-tighter">Import Resume</h3>
-                    <p className="text-[0.65rem] text-[#737373] font-bold uppercase tracking-[0.1em] leading-relaxed">
-                        Sync PDF, DOCX, or <br/> LaTeX professional source.
+                <div>
+                    <h3 className="font-bold text-xl mb-1.5 text-[#0A0A0A] tracking-tight">Import Resume</h3>
+                    <p className="text-xs text-neutral-500 font-normal leading-relaxed">
+                        Import PDF, Word document, or LaTeX source files.
                     </p>
                 </div>
             </div>

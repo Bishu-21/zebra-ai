@@ -2,8 +2,9 @@
 
 import React from "react";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { 
-    RiPulseLine, 
+    RiSettings4Line, 
     RiArrowRightSLine,
     RiSearchLine
 } from "react-icons/ri";
@@ -18,64 +19,78 @@ interface HeaderProps {
 
 export function Header({ credits, userName, userImage, onOpenSettingsAction, onOpenProfileAction }: HeaderProps) {
     const [searchValue, setSearchValue] = React.useState("");
+    const pathname = usePathname();
+
+    const getBreadcrumbTitle = (path: string) => {
+        if (path === "/dashboard") return "Overview";
+        if (path.startsWith("/dashboard/work")) return "My Work";
+        if (path.startsWith("/dashboard/job-tracker")) return "Applications";
+        if (path.startsWith("/dashboard/cover-letters")) return "Cover Letters";
+        if (path.startsWith("/dashboard/analytics")) return "Analytics";
+        if (path.startsWith("/dashboard/settings")) return "Settings";
+        if (path.includes("/resumes/new")) return "New Resume";
+        if (path.includes("/resumes/")) return "Resume Editor";
+        return "Overview";
+    };
 
     return (
-        <header className="h-20 bg-background/40 backdrop-blur-md border-b border-border-subtle flex items-center justify-between px-6 md:px-10 sticky top-0 z-40 shrink-0">
-            <div className="flex items-center gap-4 text-sm font-semibold text-muted-foreground/70">
-                <div className="hidden md:flex items-center gap-2">
-                    <span className="hover:text-primary cursor-pointer transition-colors">Zebra AI</span>
-                    <RiArrowRightSLine size={18} className="text-muted-foreground/60" />
-                    <span className="text-foreground font-bold">Overview</span>
-                </div>
+        <header className="h-16 bg-white/80 backdrop-blur-md border-b border-neutral-200/70 flex items-center justify-between px-6 md:px-10 sticky top-0 z-40 shrink-0">
+            {/* Dynamic Breadcrumbs */}
+            <div className="flex items-center gap-2 text-sm font-medium text-neutral-500">
+                <span className="hover:text-[#0A0A0A] cursor-pointer transition-colors">Zebra AI</span>
+                <RiArrowRightSLine size={16} className="text-neutral-400" />
+                <span className="text-[#0A0A0A] font-semibold">{getBreadcrumbTitle(pathname)}</span>
             </div>
 
-            <div className="flex items-center gap-3 md:gap-6">
+            <div className="flex items-center gap-3 md:gap-5">
                 {/* Search Bar - Desktop Only */}
-                <div className="hidden lg:flex items-center gap-3 bg-muted/60 border border-border-subtle px-4 py-2 rounded-[var(--radius-md)] w-64 group focus-within:bg-white focus-within:border-primary focus-within:shadow-lg focus-within:shadow-black/5 transition-all duration-300">
-                    <RiSearchLine size={18} className="text-muted-foreground/60 group-focus-within:text-primary" />
+                <div className="hidden lg:flex items-center gap-2.5 bg-neutral-100/70 border border-neutral-200/80 px-3.5 py-1.5 rounded-xl w-64 group focus-within:bg-white focus-within:border-[#0A0A0A] focus-within:ring-2 focus-within:ring-black/5 transition-all duration-200">
+                    <RiSearchLine size={16} className="text-neutral-400 group-focus-within:text-[#0A0A0A]" />
                     <input 
                         type="text" 
                         placeholder="Search resources..." 
                         value={searchValue}
                         onChange={(e) => setSearchValue(e.target.value)}
-                        className="bg-transparent border-none outline-none text-xs font-semibold w-full placeholder:text-muted-foreground/40 text-foreground"
+                        className="bg-transparent border-none outline-none text-xs font-medium w-full placeholder:text-neutral-400 text-[#0A0A0A]"
                     />
                 </div>
 
-                <div className="bg-primary/10 px-3 md:px-4 py-1.5 rounded-full flex items-center gap-2 border border-primary/10 shadow-sm">
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
-                    <span className="text-[0.65rem] font-bold text-primary uppercase tracking-[0.1em]">{credits} Credits</span>
+                {/* Credits Badge */}
+                <div className="bg-neutral-100 px-3 py-1.5 rounded-full flex items-center gap-2 border border-neutral-200/80 shadow-xs">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#0A0A0A]"></span>
+                    <span className="text-xs font-semibold text-[#0A0A0A]">{credits} Credits</span>
                 </div>
                 
+                {/* Clean Settings Gear Button */}
                 <button 
                     onClick={onOpenSettingsAction}
-                    className="w-10 h-10 border border-border-subtle rounded-[var(--radius-md)] flex items-center justify-center text-primary bg-primary/5 hover:bg-primary/10 hover:border-primary/20 transition-all relative group shadow-sm" 
-                    aria-label="Diagnostics"
+                    className="w-9 h-9 border border-neutral-200/80 rounded-xl flex items-center justify-center text-neutral-600 bg-neutral-50 hover:bg-neutral-100 hover:text-[#0A0A0A] hover:border-neutral-300 transition-all shadow-xs group" 
+                    title="Settings"
+                    aria-label="Settings"
                 >
-                    <RiPulseLine size={22} className="animate-pulse group-hover:scale-110 transition-transform" />
-                    <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-primary rounded-full border-2 border-background shadow-sm"></span>
+                    <RiSettings4Line size={18} className="group-hover:rotate-45 transition-transform duration-300" />
                 </button>
 
-                <div className="flex items-center gap-3 pl-3 md:pl-6 border-l border-border-subtle">
-                    <div className="hidden md:flex flex-col items-end">
-                        <span className="text-xs font-bold text-foreground">{userName}</span>
-                        <span className="text-[0.6rem] font-bold text-muted-foreground uppercase tracking-widest">Status: Active</span>
-                    </div>
-                    <div 
-                        onClick={onOpenProfileAction}
-                        className="w-10 h-10 rounded-[var(--radius-md)] bg-[var(--secondary)] border border-border-subtle flex items-center justify-center text-white overflow-hidden shadow-[var(--shadow-sm)] group cursor-pointer hover:shadow-[var(--shadow-lg)] hover:shadow-foreground/10 hover:scale-[1.02] active:scale-[0.95] transition-all"
-                    >
+                {/* Profile Avatar (Removed unnecessary "Active Plan" label) */}
+                <div 
+                    onClick={onOpenProfileAction}
+                    className="flex items-center gap-3 pl-3 border-l border-neutral-200/80 cursor-pointer group"
+                >
+                    <span className="hidden md:inline text-xs font-semibold text-[#0A0A0A] group-hover:text-neutral-600 transition-colors">
+                        {userName}
+                    </span>
+                    <div className="w-9 h-9 rounded-xl bg-[#0A0A0A] border border-neutral-200 flex items-center justify-center text-white overflow-hidden shadow-xs group-hover:scale-105 active:scale-95 transition-all shrink-0">
                         {userImage ? (
                             <Image 
                                 src={userImage} 
                                 alt={userName} 
-                                width={40}
-                                height={40}
-                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                                width={36}
+                                height={36}
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" 
                                 unoptimized
                             />
                         ) : (
-                            <span className="text-sm font-black">{userName?.charAt(0)?.toUpperCase() || "U"}</span>
+                            <span className="text-xs font-bold">{userName?.charAt(0)?.toUpperCase() || "U"}</span>
                         )}
                     </div>
                 </div>

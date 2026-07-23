@@ -64,8 +64,14 @@ export function AnalyzeResume() {
       setContent(data.content);
       setScanStep("Content Extracted.");
       
-      // Auto-trigger analysis
-      setTimeout(() => startAnalysis(data.content), 800);
+      // Auto-trigger analysis safely
+      setTimeout(() => {
+        try {
+          startAnalysis(data.content);
+        } catch (err) {
+          console.error("Auto-analysis execution error:", err);
+        }
+      }, 800);
 
     } catch (err: unknown) {
       const error = err as Error;
@@ -142,24 +148,22 @@ export function AnalyzeResume() {
       {/* Launcher Card */}
       <div 
         onClick={() => setIsOpen(true)}
-        className="group/card relative overflow-hidden flex flex-col justify-between w-full h-full cursor-pointer transition-all p-10 bg-background border border-border-subtle rounded-[var(--radius-xl)] hover:shadow-[var(--shadow-xl)] hover:shadow-primary/5 active:scale-[0.99] group"
+        className="group/card relative overflow-hidden flex flex-col justify-between w-full h-full cursor-pointer transition-all p-7 bg-white border border-neutral-200/80 rounded-3xl hover:border-neutral-300 hover:shadow-xl active:scale-[0.99] group shadow-xs"
       >
-        <div className="absolute top-0 right-0 w-32 h-32 bg-foreground/[0.01] rounded-bl-[4rem] group-hover/card:scale-110 transition-transform" />
-        
         <div className="flex items-start justify-between mb-8">
-            <div className="w-14 h-14 bg-black/[0.03] rounded-2xl flex items-center justify-center text-[#737373]/40 group-hover/card:bg-primary group-hover/card:text-white transition-all duration-500">
-                <RiScanLine size={24} />
+            <div className="w-11 h-11 bg-neutral-100 rounded-xl flex items-center justify-center text-neutral-600 group-hover/card:bg-[#0A0A0A] group-hover/card:text-white transition-colors duration-300">
+                <RiScanLine size={22} />
             </div>
             <div className="flex items-center gap-1 opacity-0 group-hover/card:opacity-100 transition-opacity">
-                <span className="text-[0.6rem] font-bold uppercase tracking-widest text-accent-gray">System Status</span>
-                <RiArrowRightSLine size={14} className="text-primary" />
+                <span className="text-xs font-semibold text-neutral-500">Quick Review</span>
+                <RiArrowRightSLine size={16} className="text-[#0A0A0A]" />
             </div>
         </div>
 
         <div>
-            <h3 className="font-bold text-2xl mb-2 text-foreground tracking-tighter">Resume Analyzer</h3>
-            <p className="text-[0.65rem] text-accent-gray font-bold uppercase tracking-[0.1em] leading-relaxed">
-                Detailed Content Review & <br/> Optimization
+            <h3 className="font-bold text-xl mb-1.5 text-[#0A0A0A] tracking-tight">Check My Resume</h3>
+            <p className="text-xs text-neutral-500 font-normal leading-relaxed">
+                Analyze structure, content, and improvement gaps.
             </p>
         </div>
       </div>

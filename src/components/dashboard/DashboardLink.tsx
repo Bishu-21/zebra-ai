@@ -17,20 +17,16 @@ export function DashboardLink({ href, icon, children }: DashboardLinkProps) {
   return (
     <Link 
       href={href}
-      className={`flex items-center gap-3 px-4 py-3 rounded-[var(--radius-md)] text-[0.8rem] font-bold transition-all duration-300 relative group ${
+      className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 relative group ${
         isActive 
-          ? "bg-primary/10 text-primary shadow-sm" 
-          : "text-[#737373] hover:text-[#0A0A0A] hover:bg-black/[0.03]"
+          ? "bg-[#0A0A0A] text-white shadow-sm font-semibold" 
+          : "text-neutral-600 hover:text-[#0A0A0A] hover:bg-neutral-100"
       }`}
     >
-      <span className={`transition-all duration-300 ${isActive ? "text-primary scale-110" : "text-[#737373]/50 group-hover:text-[#0A0A0A] group-hover:scale-110"}`}>
+      <span className={`transition-transform duration-200 ${isActive ? "text-white" : "text-neutral-400 group-hover:text-[#0A0A0A]"}`}>
         {icon}
       </span>
       <span className="tracking-tight">{children}</span>
-      
-      {isActive && (
-        <span className="absolute left-0 w-1 h-4 bg-primary rounded-r-full" />
-      )}
     </Link>
   );
 }

@@ -55,12 +55,9 @@ export function ResumeVault({ items }: ResumeVaultProps) {
         setIsMounted(true);
     }, []);
 
-    // Versioning Logic: Group versions under their root parents
-    // Roots are resumes with no parentResumeId OR those whose parent is not in the list
     const rootResumes = items.filter(r => !r.parentResumeId);
     const versions = items.filter(r => !!r.parentResumeId);
 
-    // If a resume has a parent that isn't in the rootResumes, it's a "ghost root" or we just treat it as a root
     const rootIds = new Set(rootResumes.map(r => r.id));
     const ghostRoots = versions.filter(v => v.parentResumeId && !rootIds.has(v.parentResumeId));
     
@@ -85,28 +82,27 @@ export function ResumeVault({ items }: ResumeVaultProps) {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-border-subtle">
-                <div className="flex items-center gap-3">
-                    <div className="w-2 h-8 bg-primary rounded-full" />
-                    <h3 className="text-xl font-bold text-[#0A0A0A] tracking-tight">Resume Vault</h3>
-                    <span className="px-2 py-0.5 bg-black/[0.03] text-[#737373] text-[0.6rem] font-bold rounded-md uppercase tracking-widest border border-black/[0.02]">
-                        {items.length} Units
-                    </span>
+            {/* Clean Section Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-neutral-200/70">
+                <div className="flex items-center gap-2">
+                    <h2 className="text-xl md:text-2xl font-bold text-[#0A0A0A] tracking-tight">Resume Vault</h2>
+                    <span className="text-xs font-medium text-neutral-400">({items.length} resumes)</span>
                 </div>
 
                 <div className="relative group">
-                    <RiSearchLine className="absolute left-4 top-1/2 -translate-y-1/2 text-black/20 group-focus-within:text-primary transition-colors" size={16} />
+                    <RiSearchLine className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-[#0A0A0A] transition-colors" size={16} />
                     <input 
                         type="text"
                         placeholder="Search your vault..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="bg-black/[0.02] border border-black/[0.03] rounded-2xl pl-11 pr-6 py-3 text-sm font-medium outline-none focus:bg-white focus:border-primary/30 focus:shadow-xl focus:shadow-black/5 transition-all w-full md:w-72"
+                        className="bg-neutral-100/70 border border-neutral-200/80 rounded-xl pl-10 pr-4 py-2 text-xs font-medium outline-none focus:bg-white focus:border-[#0A0A0A] focus:ring-2 focus:ring-black/5 transition-all w-full sm:w-64"
                     />
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Resume Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
                 <AnimatePresence mode="popLayout">
                     {displayedItems.map((item) => (
                         <m.div
@@ -115,117 +111,72 @@ export function ResumeVault({ items }: ResumeVaultProps) {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95 }}
                             key={item.id}
+                            className="h-full"
                         >
                             <Link 
                                 href={`/dashboard/resumes/${item.id}`}
-                                className="group relative block bg-[var(--background)] border border-[var(--border-subtle)] p-5 rounded-[var(--radius-lg)] hover:shadow-[var(--shadow-xl)] hover:shadow-primary/5 transition-all cursor-pointer overflow-hidden h-full flex flex-col"
+                                className="group relative bg-white border border-neutral-200/80 p-6 rounded-3xl hover:border-neutral-300 hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden h-full min-h-[170px] flex flex-col justify-between shadow-xs"
                             >
-                                {/* Zebra Essence Decorative Pattern */}
-                                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                                <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-black/[0.01] rounded-full blur-3xl group-hover:bg-primary/5 transition-colors duration-700" />
-                                
-                                <div className="absolute top-0 right-0 w-24 h-24 bg-black/[0.01] rounded-bl-[2rem] transition-transform group-hover:scale-110" />
-                                
-                                <div className="flex items-start justify-between mb-8">
-                                    <div className="w-14 h-14 bg-black/[0.03] rounded-2xl flex items-center justify-center text-[#737373]/30 group-hover:bg-primary group-hover:text-white transition-all duration-500 shadow-sm">
-                                        <RiFileTextLine size={24} />
+                                {/* Card Header */}
+                                <div>
+                                    <div className="flex items-start justify-between mb-4">
+                                        <div className="w-10 h-10 bg-neutral-100 rounded-xl flex items-center justify-center text-neutral-600 group-hover:bg-[#0A0A0A] group-hover:text-white transition-colors duration-300 shadow-2xs">
+                                            <RiFileTextLine size={20} />
+                                        </div>
+                                        <RiArrowRightSLine className="text-neutral-400 group-hover:text-[#0A0A0A] group-hover:translate-x-1 transition-all" size={18} />
+                                    </div>
+
+                                    <h4 className="font-bold text-[#0A0A0A] tracking-tight text-base line-clamp-1 mb-1">{item.title}</h4>
+                                    <div className="flex items-center gap-1.5 text-xs font-normal text-neutral-400">
+                                        <RiTimeLine size={13} />
+                                        <span>{formatTimeAgo(item.date)}</span>
                                     </div>
                                 </div>
 
-                                <div className="space-y-3.5 flex-grow">
-                                    <div>
-                                        <h4 className="font-bold text-[#0A0A0A] tracking-tight group-hover:text-primary transition-colors text-base line-clamp-1 mb-1">{item.title}</h4>
-                                        <div className="flex items-center gap-2 text-[0.55rem] font-bold text-[#737373]/40 uppercase tracking-widest">
-                                            <RiTimeLine size={12} />
-                                            {formatTimeAgo(item.date)}
-                                        </div>
-                                    </div>
+                                {/* Card Footer Badges */}
+                                <div className="flex items-center justify-between pt-4 mt-4 border-t border-neutral-200/60">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        {item.hasAnalysis && (
+                                            <button
+                                                onClick={(e) => {
+                                                    if (item.latestAnalysis) {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        setSelectedResumeId(item.id);
+                                                        setSelectedAnalysisData(item.latestAnalysis.feedback);
+                                                    }
+                                                }}
+                                                className="flex items-center gap-1.5 px-2.5 py-1 bg-neutral-100 text-[#0A0A0A] rounded-lg border border-neutral-200/80 transition-colors hover:bg-neutral-200/60"
+                                            >
+                                                <RiCheckboxCircleLine className="text-[#0A0A0A]" size={12} />
+                                                <span className="text-[11px] font-semibold">
+                                                    {item.latestAnalysis ? `${item.latestAnalysis.score} pts` : "Reviewed"}
+                                                </span>
+                                            </button>
+                                        )}
 
-                                    <div className="flex items-center justify-between pt-4 border-t border-black/[0.02]">
-                                        <div className="flex items-center gap-2">
-                                            {item.hasAnalysis && (
-                                                <button
-                                                    onClick={(e) => {
-                                                        if (item.latestAnalysis) {
-                                                            e.preventDefault();
-                                                            e.stopPropagation();
-                                                            setSelectedResumeId(item.id);
-                                                            setSelectedAnalysisData(item.latestAnalysis.feedback);
-                                                        }
-                                                    }}
-                                                    className="flex items-center gap-1.5 px-2 py-1 bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-600 rounded-md border border-emerald-500/10 transition-all hover:scale-[1.03] active:scale-[0.97]"
-                                                >
-                                                    <RiCheckboxCircleLine className="text-emerald-500" size={10} />
-                                                    <span className="text-[0.5rem] font-black text-emerald-600 uppercase tracking-widest">
-                                                        {item.latestAnalysis ? `${item.latestAnalysis.score} PTS` : "Analyzed"}
-                                                    </span>
-                                                </button>
-                                            )}
-
-                                            {item.versions && item.versions.length > 0 && (
-                                                <div className="flex items-center gap-1.5 px-2 py-1 bg-primary/5 rounded-md border border-primary/10">
-                                                    <RiMagicLine className="text-primary" size={10} />
-                                                    <span className="text-[0.5rem] font-black text-primary uppercase tracking-widest">
-                                                        {item.versions.length} Versions
-                                                    </span>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <RiArrowRightSLine className="text-black/10 group-hover:text-primary group-hover:translate-x-1 transition-all" size={16} />
+                                        {item.versions && item.versions.length > 0 && (
+                                            <div className="flex items-center gap-1 px-2.5 py-1 bg-neutral-100 rounded-lg border border-neutral-200/80 text-[#0A0A0A]">
+                                                <RiMagicLine size={12} />
+                                                <span className="text-[11px] font-semibold">
+                                                    {item.versions.length} {item.versions.length === 1 ? "Version" : "Versions"}
+                                                </span>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </Link>
-                            
-                            {/* Saved Versions (Compact) */}
-                            {item.versions && item.versions.length > 0 && (
-                                <div className="mt-3 px-2 space-y-2">
-                                    {item.versions.map(v => (
-                                        <div key={v.id} className="bg-white border border-black/[0.04] rounded-2xl p-3.5 flex flex-col gap-2 hover:border-primary/20 hover:shadow-md transition-all">
-                                            <div className="flex justify-between items-start gap-2">
-                                                <span className="text-[0.75rem] font-bold text-[#0A0A0A] line-clamp-1">{v.title}</span>
-                                                {v.matchScore !== null && (
-                                                    <span className="text-[0.65rem] font-black text-primary bg-primary/10 px-1.5 py-0.5 rounded-md whitespace-nowrap">
-                                                        {v.matchScore}%
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.65rem] font-medium text-[#737373]">
-                                                {v.company && (
-                                                    <span className="flex items-center gap-1">
-                                                        <RiBuildingLine size={12} /> {v.company}
-                                                    </span>
-                                                )}
-                                                {v.targetRole && (
-                                                    <span className="flex items-center gap-1">
-                                                        <RiBriefcaseLine size={12} /> {v.targetRole}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <div className="flex justify-between items-end mt-1">
-                                                <div className="text-[0.55rem] font-bold text-[#737373]/50 uppercase tracking-widest">
-                                                    {formatTimeAgo(v.createdAt)}
-                                                </div>
-                                                <Link 
-                                                    href={`/dashboard/resumes/${item.id}?version=${v.id}`}
-                                                    className="text-[0.6rem] font-bold text-primary hover:underline flex items-center gap-0.5"
-                                                >
-                                                    Open <RiArrowRightSLine size={10} />
-                                                </Link>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
                         </m.div>
                     ))}
                 </AnimatePresence>
             </div>
 
+            {/* View All Resumes Action Button */}
             {finalRoots.length > 4 && (
                 <div className="flex justify-center pt-6">
                     <button 
                         onClick={() => setIsExpanded(!isExpanded)}
-                        className="px-8 py-3 bg-[var(--background)] border border-[var(--border-subtle)] rounded-[var(--radius-lg)] text-[0.7rem] font-bold uppercase tracking-wider text-[var(--foreground)] hover:bg-[var(--secondary)] hover:text-white transition-all shadow-sm flex items-center gap-2.5 active:scale-95"
+                        className="px-6 py-2.5 bg-white border border-neutral-200/80 rounded-xl text-xs font-semibold text-[#0A0A0A] hover:bg-neutral-50 hover:border-neutral-300 transition-all shadow-xs flex items-center gap-2 active:scale-95"
                     >
                         {isExpanded ? "Collapse Vault" : `View All ${finalRoots.length} Resumes`}
                         <m.div animate={{ rotate: isExpanded ? 180 : 0 }} transition={{ type: "spring", stiffness: 300 }}>
@@ -235,12 +186,11 @@ export function ResumeVault({ items }: ResumeVaultProps) {
                 </div>
             )}
 
-            {/* Stripe Versions Section */}
+            {/* Saved Tailored Versions Grid Section */}
             {items.some(i => i.versions && i.versions.length > 0) && (
-                <div className="mt-16 pt-10 border-t border-black/[0.04]">
-                    <div className="flex items-center gap-3 mb-8">
-                        <div className="w-1.5 h-5 bg-black/20 rounded-full" />
-                        <h4 className="text-[0.65rem] font-black uppercase tracking-[0.2em] text-black/40">Recent Tailored Versions</h4>
+                <div className="mt-12 pt-8 border-t border-neutral-200/60">
+                    <div className="flex items-center gap-2 mb-6">
+                        <h3 className="text-lg font-bold text-[#0A0A0A]">Recent Tailored Versions</h3>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -251,49 +201,49 @@ export function ResumeVault({ items }: ResumeVaultProps) {
                             .map(version => (
                                 <div 
                                     key={version.id}
-                                    className="group relative bg-black/[0.01] border border-black/[0.03] p-6 rounded-3xl hover:bg-white hover:border-primary/20 hover:shadow-xl hover:shadow-primary/5 transition-all flex flex-col"
+                                    className="group relative bg-white border border-neutral-200/80 p-5 rounded-2xl hover:border-neutral-300 hover:shadow-md transition-all flex flex-col shadow-xs"
                                 >
                                     <div className="flex-grow">
-                                        <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center justify-between mb-3">
                                             <div className="flex items-center gap-2">
-                                                <div className="w-8 h-8 bg-black/5 rounded-lg flex items-center justify-center text-black/20 group-hover:bg-primary group-hover:text-white transition-all">
+                                                <div className="w-7 h-7 bg-neutral-100 rounded-lg flex items-center justify-center text-[#0A0A0A] group-hover:bg-[#0A0A0A] group-hover:text-white transition-colors">
                                                     <RiMagicLine size={14} />
                                                 </div>
-                                                <span className="text-[0.55rem] font-black uppercase tracking-widest text-black/30 group-hover:text-primary transition-colors">Tailored Version</span>
+                                                <span className="text-xs font-semibold text-neutral-500">Tailored Version</span>
                                             </div>
-                                            <div className="flex items-center gap-3">
+                                            <div className="flex items-center gap-2">
                                                 {version.matchScore !== null && (
-                                                    <div className="px-2 py-0.5 bg-primary/10 rounded-full">
-                                                        <span className="text-[0.6rem] font-black text-primary">{version.matchScore}%</span>
-                                                    </div>
+                                                    <span className="text-xs font-bold text-[#0A0A0A] bg-neutral-100 px-2 py-0.5 rounded-full border border-neutral-200/70">
+                                                        {version.matchScore}%
+                                                    </span>
                                                 )}
-                                                <span className="text-[0.55rem] font-bold text-black/20 uppercase tracking-widest">
+                                                <span className="text-[11px] font-medium text-neutral-400">
                                                     {formatTimeAgo(version.createdAt)}
                                                 </span>
                                             </div>
                                         </div>
 
-                                        <h5 className="font-bold text-sm text-black mb-3 line-clamp-1 group-hover:text-primary transition-colors">{version.title}</h5>
+                                        <h5 className="font-bold text-sm text-[#0A0A0A] mb-2 line-clamp-1">{version.title}</h5>
                                         
-                                        <div className="flex flex-wrap gap-3 mb-2">
+                                        <div className="flex flex-wrap gap-2 mb-2 text-xs text-neutral-500 font-normal">
                                             {version.company && (
-                                                <div className="flex items-center gap-1.5 text-[0.6rem] font-bold text-black/40">
+                                                <div className="flex items-center gap-1">
                                                     <RiBuildingLine size={12} />
-                                                    {version.company}
+                                                    <span>{version.company}</span>
                                                 </div>
                                             )}
                                             {version.targetRole && (
-                                                <div className="flex items-center gap-1.5 text-[0.6rem] font-bold text-black/40">
+                                                <div className="flex items-center gap-1">
                                                     <RiBriefcaseLine size={12} />
-                                                    {version.targetRole}
+                                                    <span>{version.targetRole}</span>
                                                 </div>
                                             )}
                                         </div>
                                     </div>
-                                    <div className="mt-4 pt-4 border-t border-black/[0.03] flex justify-end">
+                                    <div className="mt-3 pt-3 border-t border-neutral-200/60 flex justify-end">
                                         <Link 
                                             href={`/dashboard/resumes/${version.resumeId}?version=${version.id}`}
-                                            className="text-[0.65rem] font-bold text-primary hover:underline flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            className="text-xs font-semibold text-[#0A0A0A] hover:underline flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity"
                                         >
                                             Open <RiArrowRightSLine size={12} />
                                         </Link>

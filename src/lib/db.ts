@@ -14,11 +14,20 @@ const globalForDb = global as unknown as {
 
 const pool = globalForDb.pool ?? new Pool({ 
   connectionString: process.env.DATABASE_URL,
+  max: 10,
+  idleTimeoutMillis: 10000,
+  connectionTimeoutMillis: 10000,
+  allowExitOnIdle: true,
 });
 
 if (!globalForDb.pool) {
   pool.on('error', (err: Error) => {
-    console.error('Neon Pool Error:', err);
+    // Gracefully swallow idle socket terminations in serverless environment
+    if (err.message?.includes('terminated unexpectedly')) {
+      console.warn('Neon idle pool socket closed cleanly.');
+    } else {
+      console.error('Neon Pool Error:', err);
+    }
   });
 }
 

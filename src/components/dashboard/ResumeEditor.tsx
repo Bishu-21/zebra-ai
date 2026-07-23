@@ -776,14 +776,23 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                                     </AnimatePresence>
                                 </div>
                             ) : (
-                                <div className={`${settings.compactView ? 'space-y-3' : 'space-y-6'} pb-24`}>
-                                    {activeSection === "basics" && <BasicsEditor content={resume.content} updateBasics={updateBasics} />}
-                                    {activeSection === "education" && <EducationEditor content={resume.content} updateEducation={updateEducation} addEducation={addEducation} removeItem={removeItem} />}
-                                    {activeSection === "skills" && <SkillsEditor content={resume.content} updateSkill={updateSkill} addSkill={addSkill} removeItem={removeItem} />}
-                                    {activeSection === "projects" && <ProjectsEditor content={resume.content} updateProject={updateProject} addProject={addProject} removeItem={removeItem} getAiSuggestions={getAiSuggestions} />}
-                                    {activeSection === "experience" && <ExperienceEditor content={resume.content} updateExperience={updateExperience} addExperience={addExperience} removeItem={removeItem} getAiSuggestions={getAiSuggestions} />}
-                                    {activeSection === "certifications" && <CertsEditor content={resume.content} updateCert={updateCert} addCert={addCert} removeItem={removeItem} />}
-                                </div>
+                                <AnimatePresence mode="wait">
+                                    <m.div
+                                        key={activeSection}
+                                        initial={{ opacity: 0, x: -12 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: 12 }}
+                                        transition={{ duration: 0.2, ease: "easeOut" }}
+                                        className={`${settings.compactView ? 'space-y-3' : 'space-y-6'} pb-24`}
+                                    >
+                                        {activeSection === "basics" && <BasicsEditor content={resume.content} updateBasics={updateBasics} />}
+                                        {activeSection === "education" && <EducationEditor content={resume.content} updateEducation={updateEducation} addEducation={addEducation} removeItem={removeItem} />}
+                                        {activeSection === "skills" && <SkillsEditor content={resume.content} updateSkill={updateSkill} addSkill={addSkill} removeItem={removeItem} />}
+                                        {activeSection === "projects" && <ProjectsEditor content={resume.content} updateProject={updateProject} addProject={addProject} removeItem={removeItem} getAiSuggestions={getAiSuggestions} />}
+                                        {activeSection === "experience" && <ExperienceEditor content={resume.content} updateExperience={updateExperience} addExperience={addExperience} removeItem={removeItem} getAiSuggestions={getAiSuggestions} />}
+                                        {activeSection === "certifications" && <CertsEditor content={resume.content} updateCert={updateCert} addCert={addCert} removeItem={removeItem} />}
+                                    </m.div>
+                                </AnimatePresence>
                             )}
                         </div>
                     </div>

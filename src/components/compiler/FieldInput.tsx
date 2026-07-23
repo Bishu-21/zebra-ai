@@ -19,7 +19,7 @@ export function FieldInput({ label, value, onChange, placeholder, name, type = "
 
     return (
         <div className={settings.compactView ? "space-y-0.5" : "space-y-1"}>
-            <label htmlFor={fieldId} className="text-[10px] font-bold text-[#737373] tracking-wide uppercase opacity-70">{label}</label>
+            <label htmlFor={fieldId} className="text-[10px] font-bold text-[#737373] tracking-wide uppercase opacity-80">{label}</label>
             <div className="relative group">
                 <input 
                     id={fieldId}
@@ -30,14 +30,16 @@ export function FieldInput({ label, value, onChange, placeholder, name, type = "
                     placeholder={placeholder}
                     style={{ fontSize: settings.fontSize }}
                     spellCheck={settings.spellcheck}
-                    className={`w-full ${settings.compactView ? 'h-8' : 'h-10'} bg-[#F5F5F5] rounded-lg px-3 pr-10 text-[#0A0A0A] font-bold border border-[#E5E5E5] focus:border-black focus:bg-white outline-none transition-all placeholder:text-black/20`}
+                    className={`w-full ${settings.compactView ? 'h-9' : 'h-11'} bg-[#F7F7F7] rounded-xl px-3.5 pr-10 text-[#0A0A0A] font-semibold border border-neutral-200 focus:border-[#0A0A0A] focus:bg-white focus:ring-2 focus:ring-black/10 outline-none transition-all duration-200 placeholder:text-neutral-400/70 shadow-sm hover:border-neutral-300`}
                 />
                 {onMagicAction && (
                     <button 
+                        type="button"
                         onClick={onMagicAction}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-md bg-white/50 border border-black/5 flex items-center justify-center text-[#0A0A0A] hover:bg-[#0A0A0A] hover:text-white transition-all shadow-sm opacity-0 group-hover:opacity-100"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg bg-white border border-neutral-200 flex items-center justify-center text-[#0A0A0A] hover:bg-[#0A0A0A] hover:text-white transition-all shadow-sm opacity-0 group-hover:opacity-100 focus:opacity-100"
+                        title="AI Magic Suggestion"
                     >
-                        <RiMagicLine size={12} />
+                        <RiMagicLine size={13} />
                     </button>
                 )}
             </div>
@@ -62,7 +64,7 @@ export function FieldTextarea({ label, value, onChange, placeholder, name, rows 
 
     return (
         <div className={settings.compactView ? "space-y-0.5" : "space-y-1"}>
-            <label htmlFor={fieldId} className="text-[10px] font-bold text-[#737373] tracking-wide uppercase opacity-70">{label}</label>
+            <label htmlFor={fieldId} className="text-[10px] font-bold text-[#737373] tracking-wide uppercase opacity-80">{label}</label>
             <div className="relative group">
                 <textarea 
                     id={fieldId}
@@ -78,14 +80,16 @@ export function FieldTextarea({ label, value, onChange, placeholder, name, rows 
                         overflowX: settings.lineWrapping ? "hidden" : "auto"
                     }}
                     spellCheck={settings.spellcheck}
-                    className={`w-full bg-[#F5F5F5] rounded-xl ${settings.compactView ? 'p-2' : 'p-3'} pr-10 text-[#0A0A0A] font-bold border border-[#E5E5E5] focus:border-black focus:bg-white outline-none transition-all resize-none leading-relaxed placeholder:text-black/20 custom-scrollbar`}
+                    className={`w-full bg-[#F7F7F7] rounded-xl ${settings.compactView ? 'p-2.5' : 'p-3.5'} pr-10 text-[#0A0A0A] font-semibold border border-neutral-200 focus:border-[#0A0A0A] focus:bg-white focus:ring-2 focus:ring-black/10 outline-none transition-all duration-200 resize-none leading-relaxed placeholder:text-neutral-400/70 shadow-sm hover:border-neutral-300 custom-scrollbar`}
                 />
                 {onMagicAction && (
                     <button 
+                        type="button"
                         onClick={onMagicAction}
-                        className="absolute right-3 top-3 w-7 h-7 rounded-lg bg-white/80 border border-black/10 flex items-center justify-center text-[#0A0A0A] hover:bg-[#0A0A0A] hover:text-white transition-all shadow-md opacity-0 group-hover:opacity-100"
+                        className="absolute right-3 top-3 w-7 h-7 rounded-lg bg-white border border-neutral-200 flex items-center justify-center text-[#0A0A0A] hover:bg-[#0A0A0A] hover:text-white transition-all shadow-sm opacity-0 group-hover:opacity-100 focus:opacity-100"
+                        title="AI Magic Suggestion"
                     >
-                        <RiMagicLine size={14} />
+                        <RiMagicLine size={13} />
                     </button>
                 )}
             </div>

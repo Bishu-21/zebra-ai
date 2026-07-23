@@ -7,7 +7,8 @@ import {
     RiFlashlightLine, 
     RiTimer2Line, 
     RiArrowRightSLine,
-    RiUploadCloud2Line
+    RiUploadCloud2Line,
+    RiShieldCheckLine
 } from "react-icons/ri";
 import { ResumeResultsModal } from "./ResumeResultsModal";
 import { ProjectResultsModal } from "./ProjectResultsModal";
@@ -60,20 +61,17 @@ export function InsightsFeed({ data }: InsightsFeedProps) {
     };
     
     const handleOpenModal = (insight: InsightItem) => {
-        // Handle Import redirects
         if (insight.type === "import") {
             openResume(insight.id);
             return;
         }
 
-        // Handle Projects
         if (insight.type === "project") {
             setSelectedProject(insight.fullData as ProjectAnalysisData);
             setIsProjectModalOpen(true);
             return;
         }
         
-        // Handle Tailoring (ATS Optimization) specific normalization
         if (insight.type === "tailoring") {
             const feedback = insight.fullData as TailoringData;
             const normalizedData: ResumeAnalysisData = {
@@ -98,7 +96,6 @@ export function InsightsFeed({ data }: InsightsFeedProps) {
             return;
         }
 
-        // Handle Standard Analysis
         const feedback = insight.fullData as ResumeAnalysisData;
         const normalizedData: ResumeAnalysisData = {
             score: insight.score,
@@ -130,103 +127,94 @@ export function InsightsFeed({ data }: InsightsFeedProps) {
         return `${Math.floor(diffInSeconds / 86400)}d ago`;
     }
 
+    const getTypeIcon = (type: InsightItem["type"]) => {
+        switch (type) {
+            case "analysis": return <RiBarChartGroupedLine size={18} />;
+            case "tailoring": return <RiFlashlightLine size={18} />;
+            case "project": return <RiShieldCheckLine size={18} />;
+            default: return <RiUploadCloud2Line size={18} />;
+        }
+    };
+
+    const getTypeLabel = (type: InsightItem["type"]) => {
+        switch (type) {
+            case "analysis": return "Analysis Report";
+            case "tailoring": return "Tailoring Analysis";
+            case "project": return "Project Check";
+            default: return "New Import";
+        }
+    };
+
     return (
         <>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {data.map((item) => (
-                    <m.div 
-                        key={item.id} 
-                        whileHover={{ y: -3, boxShadow: "var(--shadow-lg)" }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => handleOpenModal(item)}
-                        className="flex flex-col p-6 bg-background border border-border-subtle rounded-[var(--radius-xl)] transition-all cursor-pointer group shadow-sm relative overflow-hidden"
-                    >
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-black/[0.01] rounded-bl-[4rem] -mr-8 -mt-8 transition-transform group-hover:scale-110 group-hover:bg-primary/[0.02]" />
-                        
-                        <div className="flex items-start justify-between mb-6">
-                            <div className="flex items-center gap-5">
-                                <div className={`w-14 h-14 rounded-[var(--radius-lg)] flex items-center justify-center transition-all duration-500 shadow-[var(--shadow-sm)] ${
-                                    item.type === "import" 
-                                        ? "bg-primary text-white shadow-black/10" 
-                                        : "bg-black/[0.03] text-[#737373]/40 group-hover:bg-primary group-hover:text-white group-hover:shadow-black/10"
-                                }`}>
-                                    {item.type === "analysis" ? <RiBarChartGroupedLine size={24} /> : item.type === "tailoring" ? <RiFlashlightLine size={24} /> : <RiUploadCloud2Line size={24} />}
-                                </div>
-                                <div className="flex flex-col gap-1">
-                                    <span className={`text-[0.6rem] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest w-fit shadow-sm border border-black/[0.02] ${
-                                        item.type === "import" ? "bg-primary/10 text-primary" : "bg-black/[0.04] text-[#737373]/60"
-                                    }`}>
-                                        {item.type === "analysis" ? "Analysis Report" : item.type === "tailoring" ? "Tailoring Analysis" : item.type === "project" ? "Project Verification" : "New Import"}
-                                    </span>
-                                    <p className="text-[0.55rem] font-bold text-[#737373]/40 flex items-center gap-1.5 uppercase tracking-widest">
-                                        <RiTimer2Line size={12} className="text-primary/40" />
-                                        {formatTimeAgo(item.date)}
-                                    </p>
-                                </div>
-                            </div>
+                {data.map((item) => {
+                    const suggestion = ('actionItems' in item.fullData ? item.fullData.actionItems?.[0] : undefined) || 
+                                       ('criticalGaps' in item.fullData ? item.fullData.criticalGaps?.[0] : undefined);
 
-                            {item.type !== "import" && (
-                                <div className="flex flex-col items-end gap-2">
-                                    <div className="flex items-baseline gap-1">
-                                        <m.span 
-                                            initial={{ scale: 0.9 }}
-                                            animate={{ scale: 1 }}
-                                            className="text-4xl font-black text-[#0A0A0A] tracking-tighter group-hover:text-primary transition-colors leading-none"
-                                        >
-                                            {item.score}
-                                        </m.span>
-                                        <span className="text-[0.7rem] font-bold text-[var(--foreground)]/10 tracking-tighter uppercase">Pts</span>
+                    return (
+                        <m.div 
+                            key={item.id} 
+                            whileHover={{ y: -2 }}
+                            whileTap={{ scale: 0.99 }}
+                            onClick={() => handleOpenModal(item)}
+                            className="flex flex-col justify-between p-6 bg-white border border-neutral-200/80 rounded-3xl hover:border-neutral-300 hover:shadow-xl transition-all duration-300 cursor-pointer group shadow-xs relative overflow-hidden min-h-[200px]"
+                        >
+                            {/* Card Header */}
+                            <div className="flex items-start justify-between mb-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-neutral-100 flex items-center justify-center text-[#0A0A0A] group-hover:bg-[#0A0A0A] group-hover:text-white transition-colors shadow-2xs shrink-0">
+                                        {getTypeIcon(item.type)}
                                     </div>
-                                    <div className={`px-2 py-0.5 rounded-[var(--radius-md)] text-[0.5rem] font-black uppercase tracking-widest border ${
-                                        item.score > 80 
-                                            ? "bg-success/5 text-success border-success/10" 
-                                            : "bg-warning/5 text-warning border-warning/10"
-                                    }`}>
-                                        {item.score > 80 ? "Optimized" : "Needs Review"}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="flex-grow mb-6">
-                            <h4 className="font-bold text-[#0A0A0A] group-hover:text-primary transition-colors tracking-tight text-lg leading-tight line-clamp-2 mb-3">
-                                {item.title}
-                            </h4>
-                            
-                            {('actionItems' in item.fullData || 'criticalGaps' in item.fullData) && (
-                                <div className="space-y-2">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-1 h-4 bg-primary rounded-full" />
-                                        <span className="text-[0.6rem] font-bold text-[#737373] uppercase tracking-widest">Priority Improvement:</span>
-                                    </div>
-                                    <p className="text-[0.7rem] font-medium text-[var(--foreground)]/60 line-clamp-1 italic">
-                                        &quot;{
-                                            ('actionItems' in item.fullData ? item.fullData.actionItems?.[0] : undefined) || 
-                                            ('criticalGaps' in item.fullData ? item.fullData.criticalGaps?.[0] : undefined) || 
-                                            'View details in full report'
-                                        }&quot;
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-                        <div className="flex items-center justify-between pt-6 border-t border-border-subtle">
-                            <div className="flex items-center gap-4">
-                                <div className="flex -space-x-1">
-                                    {[1, 2, 3].map(i => (
-                                        <div key={i} className="w-5 h-5 rounded-full bg-black/[0.04] border-2 border-white flex items-center justify-center">
-                                            <div className={`w-1 h-1 rounded-full ${i === 1 ? 'bg-primary' : 'bg-black/20'}`} />
+                                    <div className="flex flex-col gap-0.5">
+                                        <span className="text-xs font-semibold text-[#0A0A0A]">
+                                            {getTypeLabel(item.type)}
+                                        </span>
+                                        <div className="flex items-center gap-1 text-xs font-normal text-neutral-400">
+                                            <RiTimer2Line size={13} />
+                                            <span>{formatTimeAgo(item.date)}</span>
                                         </div>
-                                    ))}
+                                    </div>
                                 </div>
-                                <span className="text-[0.55rem] font-bold text-[#737373]/40 uppercase tracking-widest hidden sm:inline">Analysis Insight Available</span>
-                                <span className="text-[0.55rem] font-bold text-[#737373]/40 uppercase tracking-widest sm:hidden">Analysis Available</span>
+
+                                {item.type !== "import" && (
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-2xl font-bold text-[#0A0A0A] tracking-tight">
+                                            {item.score}
+                                        </span>
+                                        <span className="text-xs font-semibold text-neutral-500 bg-neutral-100 px-2 py-0.5 rounded-full border border-neutral-200/80">
+                                            {item.score > 80 ? "High Match" : "Review"}
+                                        </span>
+                                    </div>
+                                )}
                             </div>
-                            <div className="w-10 h-10 rounded-xl bg-black/[0.03] flex items-center justify-center text-[#737373]/40 group-hover:bg-primary group-hover:text-white transition-all flex-shrink-0 shadow-sm">
-                                <RiArrowRightSLine size={18} />
+
+                            {/* Card Body */}
+                            <div className="flex-grow my-2">
+                                <h4 className="font-bold text-[#0A0A0A] tracking-tight text-base line-clamp-1 mb-2">
+                                    {item.title}
+                                </h4>
+                                
+                                {suggestion && (
+                                    <div className="bg-neutral-50/80 border border-neutral-200/60 p-3 rounded-2xl space-y-1">
+                                        <span className="text-xs font-semibold text-neutral-500">Key Suggestion</span>
+                                        <p className="text-xs font-normal text-neutral-600 leading-relaxed line-clamp-2">
+                                            &quot;{suggestion}&quot;
+                                        </p>
+                                    </div>
+                                )}
                             </div>
-                        </div>
-                    </m.div>
-                ))}
+
+                            {/* Card Footer */}
+                            <div className="flex items-center justify-between pt-4 mt-2 border-t border-neutral-200/60">
+                                <span className="text-xs font-medium text-neutral-400 group-hover:text-[#0A0A0A] transition-colors">
+                                    View Full Report
+                                </span>
+                                <RiArrowRightSLine size={18} className="text-neutral-400 group-hover:text-[#0A0A0A] group-hover:translate-x-1 transition-all" />
+                            </div>
+                        </m.div>
+                    );
+                })}
             </div>
 
             {isResumeModalOpen && selectedResume && (

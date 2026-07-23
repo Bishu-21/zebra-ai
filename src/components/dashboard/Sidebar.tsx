@@ -8,41 +8,16 @@ import Link from "next/link";
 import { signOut } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-
-// --- INLINED SIDEBAR ICONS (Performance & Hydration Safe) ---
-const SidebarIcon = ({ children }: { children: React.ReactNode }) => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        {children}
-    </svg>
-);
-
-const HomeIcon = () => (
-    <SidebarIcon><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></SidebarIcon>
-);
-const DocsIcon = () => (
-    <SidebarIcon><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" /><polyline points="14 2 14 8 20 8" /></SidebarIcon>
-);
-const BriefcaseIcon = () => (
-    <SidebarIcon><rect x="2" y="7" width="20" height="14" rx="2" ry="2" /><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" /></SidebarIcon>
-);
-const AnalyticsIcon = () => (
-    <SidebarIcon><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /></SidebarIcon>
-);
-const SettingsIcon = () => (
-    <SidebarIcon><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></SidebarIcon>
-);
-const LogoutIcon = () => (
-    <SidebarIcon><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></SidebarIcon>
-);
-const MenuIcon = () => (
-    <SidebarIcon><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" /></SidebarIcon>
-);
-const CloseIcon = () => (
-    <SidebarIcon>
-        <line x1="18" y1="6" x2="6" y2="18" />
-        <line x1="6" y1="6" x2="18" y2="18" />
-    </SidebarIcon>
-);
+import { 
+    RiHome5Line, 
+    RiFileTextLine, 
+    RiBriefcaseLine, 
+    RiBarChartGroupedLine, 
+    RiSettings4Line, 
+    RiLogoutBoxRLine,
+    RiMenuLine,
+    RiCloseLine
+} from "react-icons/ri";
 
 interface SidebarProps {
     plan: string;
@@ -68,7 +43,7 @@ export function Sidebar({ plan, credits, userName, userImage, onOpenSettingsActi
     const toggleSidebar = () => setIsOpen(!isOpen);
 
     const handleSignOut = async (e: React.MouseEvent) => {
-        e.stopPropagation(); // Prevent opening profile when clicking logout
+        e.stopPropagation();
         await signOut({
             fetchOptions: {
                 onSuccess: () => {
@@ -84,10 +59,10 @@ export function Sidebar({ plan, credits, userName, userImage, onOpenSettingsActi
             {!isOpen && (
                 <button 
                     onClick={toggleSidebar}
-                    className="lg:hidden fixed top-5 left-6 z-[70] w-10 h-10 bg-background/80 backdrop-blur-md border border-border-subtle rounded-xl flex items-center justify-center text-foreground shadow-sm hover:bg-background transition-colors"
+                    className="lg:hidden fixed top-3 left-4 z-[70] w-10 h-10 bg-white border border-neutral-200 rounded-xl flex items-center justify-center text-[#0A0A0A] shadow-sm hover:bg-neutral-50 transition-colors"
                     aria-label="Open Menu"
                 >
-                    <MenuIcon />
+                    <RiMenuLine size={20} />
                 </button>
             )}
 
@@ -98,7 +73,7 @@ export function Sidebar({ plan, credits, userName, userImage, onOpenSettingsActi
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="lg:hidden fixed inset-0 bg-black/40 backdrop-blur-md z-[60]"
+                        className="lg:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-[60]"
                         onClick={() => setIsOpen(false)}
                     />
                 )}
@@ -110,127 +85,116 @@ export function Sidebar({ plan, credits, userName, userImage, onOpenSettingsActi
                 animate={{ 
                     x: isMobile ? (isOpen ? 0 : "-100%") : 0,
                 }}
-                className="fixed lg:sticky top-0 left-0 h-screen w-[280px] bg-background border-r border-border-subtle flex flex-col z-[70] overflow-hidden shadow-2xl lg:shadow-none"
+                className="fixed lg:sticky top-0 left-0 h-screen w-[270px] bg-[#FAF9F6] border-r border-neutral-200/70 flex flex-col z-[70] overflow-hidden shadow-xl lg:shadow-none shrink-0"
                 transition={{ type: "spring", damping: 30, stiffness: 300 }}
             >
-                <div className="pt-10 px-8 flex flex-col h-full">
-                    <div className="flex flex-col items-center justify-center mb-10 text-center relative">
-                        <Link href="/dashboard" className="flex flex-col items-center gap-3 group" onClick={() => setIsOpen(false)}>
-                            <div className="relative">
-                                <div className="absolute inset-0 bg-primary/30 blur-3xl rounded-full scale-150 opacity-0 group-hover:opacity-100 transition-all duration-700" />
-                                <Image 
-                                    src="/zebra_star.svg" 
-                                    alt="Zebra AI" 
-                                    width={64}
-                                    height={64}
-                                    className="w-16 h-16 object-contain relative z-10 group-hover:scale-110 group-hover:rotate-[5deg] transition-all duration-500 ease-out"
-                                />
-                            </div>
-                            <div className="flex flex-col items-center relative z-10">
-                                <h1 className="text-2xl font-black tracking-[-0.06em] text-[#0A0A0A] leading-none">Zebra AI</h1>
-                                <div className="h-1 w-6 bg-primary rounded-full mt-2 transform origin-center scale-x-0 group-hover:scale-x-100 transition-all duration-500 ease-out" />
+                <div className="flex flex-col h-full">
+                    {/* Collinear Header Logo + Plan Pill */}
+                    <div className="h-16 px-6 border-b border-neutral-200/70 flex items-center justify-between shrink-0">
+                        <Link href="/dashboard" className="flex items-center gap-2.5 group" onClick={() => setIsOpen(false)}>
+                            <Image 
+                                src="/zebra_star.svg" 
+                                alt="Zebra AI" 
+                                width={28}
+                                height={28}
+                                className="w-7 h-7 object-contain group-hover:scale-105 transition-transform"
+                            />
+                            <div className="flex items-center gap-2">
+                                <h1 className="text-lg font-bold tracking-tight text-[#0A0A0A]">Zebra AI</h1>
+                                <span className="px-2 py-0.5 text-[10px] font-semibold bg-neutral-200/80 text-[#0A0A0A] rounded-full border border-neutral-300">
+                                    {plan}
+                                </span>
                             </div>
                         </Link>
                         
                         {isMobile && (
                             <button 
                                 onClick={() => setIsOpen(false)}
-                                className="absolute -top-2 -right-4 w-10 h-10 bg-border-subtle rounded-[var(--radius-md)] flex items-center justify-center text-secondary/40 hover:text-secondary hover:bg-muted transition-all"
+                                className="w-8 h-8 rounded-lg bg-neutral-200/60 flex items-center justify-center text-neutral-600 hover:text-[#0A0A0A]"
                             >
-                                <CloseIcon />
+                                <RiCloseLine size={18} />
                             </button>
                         )}
                     </div>
 
-                    <div className="space-y-1 flex-grow overflow-y-auto custom-scrollbar pr-1">
-                        <p className="text-[0.6rem] font-bold tracking-[0.2em] uppercase text-muted-foreground mb-4 ml-4 opacity-60">Navigation</p>
+                    {/* Menu Navigation Links */}
+                    <div className="p-6 space-y-1 flex-grow overflow-y-auto custom-scrollbar">
+                        <p className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider mb-2 px-3">
+                            Workspace
+                        </p>
                         
                         <div className="space-y-1">
-                            <DashboardLink href="/dashboard" icon={<HomeIcon />}>
+                            <DashboardLink href="/dashboard" icon={<RiHome5Line size={18} />}>
                                 Resumes
                             </DashboardLink>
-                            <DashboardLink href="/dashboard/cover-letters" icon={<DocsIcon />}>
+                            <DashboardLink href="/dashboard/work" icon={<RiBriefcaseLine size={18} />}>
+                                My Work
+                            </DashboardLink>
+                            <DashboardLink href="/dashboard/job-tracker" icon={<RiFileTextLine size={18} />}>
+                                Applications
+                            </DashboardLink>
+                            <DashboardLink href="/dashboard/cover-letters" icon={<RiFileTextLine size={18} />}>
                                 Cover Letters
                             </DashboardLink>
-                            <DashboardLink href="/dashboard/job-tracker" icon={<BriefcaseIcon />}>
-                                Job Tracker
-                            </DashboardLink>
-                            <DashboardLink href="/dashboard/analytics" icon={<AnalyticsIcon />}>
+                            <DashboardLink href="/dashboard/analytics" icon={<RiBarChartGroupedLine size={18} />}>
                                 Analytics
                             </DashboardLink>
-                             <button 
+                            <button 
                                 onClick={onOpenSettingsAction}
-                                className="w-full flex items-center gap-3 px-4 py-3 rounded-[var(--radius-md)] transition-all hover:bg-muted text-muted-foreground hover:text-secondary font-bold text-sm group"
+                                className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-neutral-600 hover:text-[#0A0A0A] hover:bg-neutral-100/80 transition-all group"
                             >
-                                <SettingsIcon />
+                                <RiSettings4Line size={18} className="text-neutral-400 group-hover:text-[#0A0A0A] transition-colors" />
                                 <span>Settings</span>
                             </button>
                         </div>
 
-                        <div className="mt-8 pt-8 border-t border-[#F5F5F5]">
-                             <p className="text-[0.6rem] font-bold tracking-[0.2em] uppercase text-[#A3A3A3] mb-4 ml-4">Subscription</p>
-                             <div className="relative bg-white border border-[#F5F5F5] rounded-[1.5rem] p-5 group/card shadow-sm hover:shadow-md transition-all overflow-hidden">
-                                <div className="absolute top-0 right-0 w-16 h-16 bg-primary/5 rounded-bl-[2rem] -mr-4 -mt-4 transition-transform group-hover/card:scale-110" />
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className="flex flex-col">
-                                        <span className="text-[0.6rem] font-bold text-muted-foreground uppercase tracking-[0.1em] mb-1">Tier</span>
-                                        <div className="flex items-center gap-1.5">
-                                            <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse shadow-[0_0_8px_primary]" />
-                                            <span className="text-xs font-black text-[#171717] tracking-tight">{plan} Plan</span>
-                                        </div>
-                                    </div>
-                                    <div className="flex flex-col items-end">
-                                        <span className="text-base font-black text-primary tracking-tighter leading-none mb-0.5">{credits}</span>
-                                        <span className="text-[0.55rem] font-black text-[#A3A3A3] uppercase tracking-[0.1em]">Credits</span>
-                                    </div>
+                        {/* Account Plan Card */}
+                        <div className="mt-8 pt-6 border-t border-neutral-200/60">
+                             <div className="relative bg-white border border-neutral-200/70 rounded-2xl p-4 flex flex-col space-y-3 shadow-2xs">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-semibold text-[#0A0A0A]">{plan} Plan</span>
+                                    <span className="text-xs font-bold text-neutral-500">{credits} Credits</span>
                                 </div>
-                                <div className="w-full bg-muted h-1.5 rounded-full overflow-hidden mb-5">
-                                     <m.div 
-                                        className="bg-primary h-full" 
-                                        initial={{ width: 0 }}
-                                        animate={{ width: plan === "Pro" ? "100%" : `${Math.min((credits / 10) * 100, 100)}%` }}
-                                        transition={{ duration: 1.5, ease: "easeOut" }}
-                                     />
-                                </div>
+                                <p className="text-[11px] font-normal text-neutral-500 leading-relaxed">
+                                    Get credits to tailor applications & build proof.
+                                </p>
                                 <CreditTopUp />
                              </div>
                         </div>
                     </div>
 
-                    {/* Bottom Section: Integrated Profile & Logout */}
-                    <div className="pt-6 pb-8 mt-auto border-t border-border-subtle">
+                    {/* Bottom User Profile Section */}
+                    <div className="px-6 py-4 mt-auto border-t border-neutral-200/60 shrink-0">
                         <div 
                             onClick={onOpenProfileAction}
-                            className="group flex items-center gap-3 p-2 pr-4 rounded-2xl bg-white border border-[#F5F5F5] hover:border-primary/20 hover:shadow-lg hover:shadow-black/5 transition-all cursor-pointer"
+                            className="group flex items-center gap-3 p-2 rounded-xl bg-white border border-neutral-200/80 hover:border-neutral-300 hover:shadow-xs transition-all cursor-pointer"
                         >
-                            <div className="w-10 h-10 rounded-xl bg-primary p-0.5 shadow-md group-hover:scale-105 transition-transform">
-                                <div className="w-full h-full rounded-[0.55rem] bg-white overflow-hidden flex items-center justify-center">
-                                    {userImage ? (
-                                        <Image 
-                                            src={userImage} 
-                                            alt={userName} 
-                                            width={40} 
-                                            height={40} 
-                                            className="w-full h-full object-cover" 
-                                            unoptimized
-                                        />
-                                    ) : (
-                                        <span className="text-xs font-black text-primary">{userName.charAt(0).toUpperCase()}</span>
-                                    )}
-                                </div>
+                            <div className="w-8 h-8 rounded-lg bg-[#0A0A0A] text-white flex items-center justify-center overflow-hidden shadow-xs shrink-0">
+                                {userImage ? (
+                                    <Image 
+                                        src={userImage} 
+                                        alt={userName} 
+                                        width={32} 
+                                        height={32} 
+                                        className="w-full h-full object-cover" 
+                                        unoptimized
+                                    />
+                                ) : (
+                                    <span className="text-xs font-bold">{userName.charAt(0).toUpperCase()}</span>
+                                )}
                             </div>
                             
                             <div className="flex-grow min-w-0">
-                                <p className="text-[0.7rem] font-black text-secondary truncate tracking-tight">{userName}</p>
-                                <p className="text-[0.55rem] font-bold text-muted-foreground uppercase tracking-widest">{plan} Member</p>
+                                <p className="text-xs font-semibold text-[#0A0A0A] truncate">{userName}</p>
+                                <p className="text-[11px] font-medium text-neutral-400">{plan} Tier</p>
                             </div>
 
                             <button 
                                 onClick={handleSignOut}
-                                className="w-8 h-8 rounded-lg bg-background flex items-center justify-center text-muted-foreground/30 hover:text-red-500 hover:bg-red-500/10 transition-all shadow-sm active:scale-95"
+                                className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0"
                                 title="Sign Out"
                             >
-                                <LogoutIcon />
+                                <RiLogoutBoxRLine size={16} />
                             </button>
                         </div>
                     </div>

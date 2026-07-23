@@ -15,8 +15,7 @@ import { ImportResume } from "@/components/dashboard/ImportResume";
 import { InsightsFeed, type TailoringData } from "@/components/dashboard/InsightsFeed";
 import { ResumeVault } from "@/components/dashboard/ResumeVault";
 import { ProjectAnalyzerCard } from "@/components/dashboard/ProjectAnalyzerCard";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { getSafeSession } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { 
     user as userTable,
@@ -30,14 +29,10 @@ import { eq, desc, count, inArray } from "drizzle-orm";
 import { ResumeAnalysisData } from "@/components/compiler/types";
 import { ProjectAnalysisData } from "@/components/dashboard/ProjectAnalysisResults";
 
-
-
 export default async function DashboardPage() {
   let session;
   try {
-      session = await auth.api.getSession({
-          headers: await headers(),
-      });
+      session = await getSafeSession();
   } catch (error) {
       console.error("Dashboard Session Check Failed:", error);
       return (
@@ -223,90 +218,96 @@ export default async function DashboardPage() {
 
   return (
     <div className="p-6 md:p-10 pb-32 max-w-[90rem] mx-auto overflow-x-hidden">
-      {/* Welcome Section - Compact */}
-      <div className="mb-10 relative">
-        <h1 className="text-4xl md:text-5xl font-bold tracking-[-0.04em] leading-[0.95] mb-4 text-[#0A0A0A]">
-            Welcome back{session.user.name ? `, ${session.user.name.split(' ')[0]}` : ''}.
-        </h1>
-        <p className="text-[#737373] text-xs font-medium max-w-lg leading-relaxed">
-          Manage your resumes and AI-powered optimizations from your workspace.
-        </p>
+      {/* Welcome Banner + Compact Cute Metrics Widget */}
+      <div className="mb-10 flex flex-col xl:flex-row xl:items-center justify-between gap-6 bg-[#FAF9F6] p-6 md:p-8 rounded-3xl border border-neutral-200/70 shadow-xs">
+        {/* Left: Greeting */}
+        <div className="space-y-1">
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-[#0A0A0A]">
+              Welcome back{session.user.name ? `, ${session.user.name.split(' ')[0]}` : ''}.
+          </h1>
+          <p className="text-sm font-medium text-neutral-500 max-w-md leading-relaxed">
+            Manage your resumes, application proof, and AI optimizations from your workspace.
+          </p>
+        </div>
+
+        {/* Right: Cute Compact Metrics Cards (Inspired by Flow UI) */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-white p-3 rounded-2xl border border-neutral-200/80 shadow-xs shrink-0">
+          {stats.map((stat, i) => (
+            <div key={i} className="flex flex-col p-3 rounded-xl bg-[#FAF9F6] border border-neutral-200/60 hover:bg-neutral-100/80 transition-colors min-w-[110px]">
+              <div className="flex items-center justify-between mb-2">
+                <div className="w-7 h-7 rounded-lg bg-white border border-neutral-200/70 flex items-center justify-center text-[#0A0A0A] shadow-2xs">
+                  <stat.icon size={14} />
+                </div>
+                <span className="text-xl font-bold tracking-tight text-[#0A0A0A]">
+                  {stat.customValue !== undefined ? stat.customValue : stat.value}
+                </span>
+              </div>
+              <span className="text-[11px] font-medium text-neutral-500 truncate">{stat.label}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Quick Stats Ribbon */}
-      <div className="flex md:grid md:grid-cols-4 gap-4 mb-10 overflow-x-auto pb-2 md:pb-0 scrollbar-hide no-scrollbar">
-        {stats.map((stat, i) => (
-          <div key={i} className={`min-w-[160px] md:min-w-0 flex-shrink-0 bg-white border border-black/[0.04] rounded-2xl p-6 flex flex-col transition-all duration-300 hover:shadow-lg active:scale-[0.98] cursor-default ${
-            stat.label === "AI Credits" 
-              ? "hover:border-[#0A0A0A]/30 hover:shadow-black/10 group/stat" 
-              : "hover:border-[#0A0A0A]/15 hover:shadow-black/5 group/stat"
-          }`}>
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-all duration-300 ${
-              stat.label === "AI Credits" 
-                ? "bg-black/[0.03] text-[#0A0A0A] group-hover/stat:bg-[#0A0A0A] group-hover/stat:text-white" 
-                : "bg-black/[0.03] text-[#737373]/50 group-hover/stat:bg-[#0A0A0A] group-hover/stat:text-white"
-            }`}>
-              <stat.icon size={18} />
+      {/* Action Cards Grid - 3-Top / 2-Bottom Olympic Rings Layout */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-5 mb-12">
+        <div className="lg:col-span-2 h-full">
+          <AnalyzeResume />
+        </div>
+        <div className="lg:col-span-2 h-full">
+          <TailorResume resumes={resumesWithStatus as Resume[]} />
+        </div>
+        <div className="lg:col-span-2 h-full">
+          <Link 
+            href="/dashboard/resumes/new"
+            className="group/card relative overflow-hidden flex flex-col justify-between h-full cursor-pointer transition-all p-7 bg-white border border-neutral-200/80 rounded-3xl hover:border-neutral-300 hover:shadow-xl active:scale-[0.99] group shadow-xs min-h-[200px]"
+          >
+            <div className="flex items-start justify-between mb-8">
+              <div className="w-11 h-11 bg-neutral-100 rounded-xl flex items-center justify-center text-neutral-600 group-hover/card:bg-[#0A0A0A] group-hover/card:text-white transition-colors duration-300">
+                <RiAddLine size={22} />
+              </div>
+              <div className="flex items-center gap-1 opacity-0 group-hover/card:opacity-100 transition-opacity">
+                  <span className="text-xs font-semibold text-neutral-500">Build Resume</span>
+                  <RiArrowRightSLine size={16} className="text-[#0A0A0A]" />
+              </div>
             </div>
-            <p className="text-[0.55rem] font-bold uppercase tracking-[0.2em] text-[#737373] mb-1">{stat.label}</p>
-            <p className="text-3xl font-bold tracking-tighter text-[#0A0A0A]">
-              {stat.customValue !== undefined ? stat.customValue : stat.value}
-            </p>
-          </div>
-        ))}
-      </div>
-
-      {/* Action Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-        <AnalyzeResume />
-        <TailorResume resumes={resumesWithStatus as Resume[]} />
-        <Link 
-          href="/dashboard/resumes/new"
-          className="group/card relative overflow-hidden flex flex-col justify-between h-full min-h-[220px] cursor-pointer transition-all p-10 bg-white border border-black/[0.04] rounded-[2.5rem] hover:shadow-2xl hover:shadow-black/[0.03] active:scale-[0.99]"
-        >
-          <div className="absolute top-0 right-0 w-32 h-32 bg-black/[0.01] rounded-bl-[4rem] group-hover/card:scale-110 transition-transform" />
-          <div className="flex items-start justify-between mb-8">
-            <div className="w-14 h-14 bg-black/[0.03] rounded-2xl flex items-center justify-center text-[#737373]/40 group-hover/card:bg-[#0A0A0A] group-hover/card:text-white transition-all duration-500">
-              <RiAddLine size={28} />
+            <div>
+              <h3 className="font-bold text-xl mb-1.5 text-[#0A0A0A] tracking-tight">Build New Resume</h3>
+              <p className="text-xs text-neutral-500 font-normal leading-relaxed">
+                Create a new resume with guided AI suggestions.
+              </p>
             </div>
-            <div className="flex items-center gap-1 opacity-0 group-hover/card:opacity-100 transition-opacity">
-                <span className="text-[0.6rem] font-bold uppercase tracking-widest text-[#737373]">Create</span>
-                <RiArrowRightSLine size={14} className="text-[#0A0A0A]" />
-            </div>
-          </div>
-          <div>
-            <h3 className="font-bold text-2xl mb-2 text-[#0A0A0A] tracking-tighter">Build New Resume</h3>
-            <p className="text-[0.65rem] text-[#737373] font-bold uppercase tracking-[0.1em] leading-relaxed">
-              Start from a blank canvas <br/> with guided AI prompts.
-            </p>
-          </div>
-        </Link>
-        <ImportResume />
-        <ProjectAnalyzerCard />
+          </Link>
+        </div>
+        <div className="lg:col-span-3 h-full">
+          <ImportResume />
+        </div>
+        <div className="lg:col-span-3 h-full">
+          <ProjectAnalyzerCard />
+        </div>
       </div>
 
       {/* Resume Vault Section */}
-      <div className="mt-20">
+      {/* Resume Vault Section */}
+      <div className="mt-16">
         <ResumeVault items={vaultItems} />
       </div>
 
-      {/* Recent Activity / Insights */}
-      <div className="mt-20">
-        <div className="flex items-center gap-3 mb-8 pb-4 border-b border-black/[0.04]">
-            <div className="w-2 h-8 bg-[#0A0A0A] rounded-full" />
-            <h3 className="text-xl font-bold text-[#0A0A0A] tracking-tight">Performance Insights</h3>
-            <span className="px-2 py-0.5 bg-black/5 text-[#0A0A0A] text-[0.6rem] font-black rounded-md uppercase tracking-widest border border-black/10">
-                Recent Feed
-            </span>
+      {/* Performance Insights Section */}
+      <div className="mt-16">
+        <div className="flex items-center gap-2 mb-6 pb-4 border-b border-neutral-200/70">
+            <h2 className="text-xl md:text-2xl font-bold text-[#0A0A0A] tracking-tight">Performance Insights</h2>
+            <span className="text-xs font-medium text-neutral-400">(Recent Activity)</span>
         </div>
         
         {intelligenceReports.length === 0 ? (
-            <div className="py-16 bg-white/50 rounded-2xl border-2 border-dashed border-black/[0.06] flex flex-col items-center justify-center text-center">
-                <div className="w-14 h-14 bg-black/[0.03] rounded-2xl flex items-center justify-center text-black/10 mb-4">
-                    <RiArticleLine size={24} />
+            <div className="py-14 bg-white rounded-3xl border border-neutral-200/80 p-8 flex flex-col items-center justify-center text-center shadow-xs">
+                <div className="w-12 h-12 bg-neutral-100 rounded-2xl flex items-center justify-center text-neutral-500 mb-3 shadow-2xs">
+                    <RiArticleLine size={22} />
                 </div>
-                <p className="text-black/50 text-sm font-bold mb-1">No reports yet</p>
-                <p className="text-black/30 text-[0.6rem] font-bold uppercase tracking-widest max-w-xs">Analyze a resume to see AI reports here</p>
+                <p className="text-[#0A0A0A] text-sm font-semibold mb-1">No reports yet</p>
+                <p className="text-neutral-500 text-xs font-normal max-w-sm leading-relaxed">
+                  Analyze a resume to generate AI insights, score breakdowns, and recommendations here.
+                </p>
             </div>
         ) : (
             <InsightsFeed data={intelligenceReports} />

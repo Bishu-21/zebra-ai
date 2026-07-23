@@ -13,7 +13,7 @@ export const user = pgTable("user", {
     plan: text("plan").notNull().default("Free"),
 });
 
-export const userRelations = relations(user, ({ many }) => ({
+export const userRelations = relations(user, ({ many, one }) => ({
     resumes: many(resumes),
     jobs: many(jobs),
     coverLetters: many(coverLetters),
@@ -23,6 +23,13 @@ export const userRelations = relations(user, ({ many }) => ({
     accounts: many(account),
     transactions: many(transactions),
     resumeVersions: many(resumeVersions),
+    workItems: many(workItems),
+    certifications: many(certifications),
+    applications: many(applications),
+    applicationChanges: many(applicationChanges),
+    portfolios: one(portfolios),
+    interviewNotes: many(interviewNotes),
+    aiUsage: many(aiUsage),
 }));
 
 export const session = pgTable("session", {
@@ -241,4 +248,160 @@ export const resumeVersions = pgTable("resume_versions", {
 export const resumeVersionsRelations = relations(resumeVersions, ({ one }) => ({
     user: one(user, { fields: [resumeVersions.userId], references: [user.id] }),
     resume: one(resumes, { fields: [resumeVersions.resumeId], references: [resumes.id] }),
+}));
+
+// --- SPEC CANONICAL ENTITIES ---
+
+export const workItems = pgTable("work_items", {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+        .notNull()
+        .references(() => user.id),
+    title: text("title").notNull(),
+    category: text("category").notNull().default("Project"), // Project, Internship, Hackathon, Course, Award, Other
+    description: text("description"),
+    tools: jsonb("tools"), // string[]
+    result: text("result"), // What was achieved or learned
+    proofUrl: text("proof_url"),
+    startDate: timestamp("start_date"),
+    endDate: timestamp("end_date"),
+    isPublic: boolean("is_public").notNull().default(false),
+    lastReviewedAt: timestamp("last_reviewed_at").notNull().defaultNow(),
+    createdAt: timestamp("created_at").notNull(),
+    updatedAt: timestamp("updated_at").notNull(),
+});
+
+export const workItemsRelations = relations(workItems, ({ one }) => ({
+    user: one(user, { fields: [workItems.userId], references: [user.id] }),
+}));
+
+export const certifications = pgTable("certifications", {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+        .notNull()
+        .references(() => user.id),
+    title: text("title").notNull(),
+    issuer: text("issuer").notNull(),
+    issueDate: timestamp("issue_date"),
+    credentialUrl: text("credential_url"),
+    skills: jsonb("skills"), // string[]
+    createdAt: timestamp("created_at").notNull(),
+    updatedAt: timestamp("updated_at").notNull(),
+});
+
+export const certificationsRelations = relations(certifications, ({ one }) => ({
+    user: one(user, { fields: [certifications.userId], references: [user.id] }),
+}));
+
+export const applications = pgTable("applications", {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+        .notNull()
+        .references(() => user.id),
+    company: text("company").notNull(),
+    position: text("position").notNull(),
+    jobDescription: text("job_description"),
+    url: text("url"),
+    status: text("status").notNull().default("Draft"), // Draft, Tailoring, Applied, Interviewing, Offer, Rejected
+    selectedResumeId: text("selected_resume_id").references(() => resumes.id),
+    resumeVersionId: text("resume_version_id").references(() => resumeVersions.id),
+    selectedWorkIds: jsonb("selected_work_ids"), // string[]
+    selectedCertIds: jsonb("selected_cert_ids"), // string[]
+    deadline: timestamp("deadline"),
+    notes: text("notes"),
+    outcome: text("outcome"),
+    createdAt: timestamp("created_at").notNull(),
+    updatedAt: timestamp("updated_at").notNull(),
+});
+
+export const applicationsRelations = relations(applications, ({ one, many }) => ({
+    user: one(user, { fields: [applications.userId], references: [user.id] }),
+    selectedResume: one(resumes, { fields: [applications.selectedResumeId], references: [resumes.id] }),
+    resumeVersion: one(resumeVersions, { fields: [applications.resumeVersionId], references: [resumeVersions.id] }),
+    changes: many(applicationChanges),
+    interviewNotes: many(interviewNotes),
+}));
+
+export const applicationChanges = pgTable("application_changes", {
+    id: text("id").primaryKey(),
+    applicationId: text("application_id")
+        .notNull()
+        .references(() => applications.id),
+    userId: text("user_id")
+        .notNull()
+        .references(() => user.id),
+    section: text("section").notNull(),
+    changeType: text("change_type").notNull(),
+    originalText: text("original_text"),
+    suggestedText: text("suggested_text").notNull(),
+    userEdits: text("user_edits"),
+    status: text("status").notNull().default("pending"), // pending, approved, rejected
+    createdAt: timestamp("created_at").notNull(),
+    updatedAt: timestamp("updated_at").notNull(),
+});
+
+export const applicationChangesRelations = relations(applicationChanges, ({ one }) => ({
+    application: one(applications, { fields: [applicationChanges.applicationId], references: [applications.id] }),
+    user: one(user, { fields: [applicationChanges.userId], references: [user.id] }),
+}));
+
+export const portfolios = pgTable("portfolios", {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+        .notNull()
+        .unique()
+        .references(() => user.id),
+    slug: text("slug").notNull().unique(),
+    title: text("title").notNull(),
+    bio: text("bio"),
+    selectedWorkIds: jsonb("selected_work_ids"), // string[]
+    isPublished: boolean("is_published").notNull().default(false),
+    theme: text("theme").notNull().default("default"),
+    createdAt: timestamp("created_at").notNull(),
+    updatedAt: timestamp("updated_at").notNull(),
+});
+
+export const portfoliosRelations = relations(portfolios, ({ one }) => ({
+    user: one(user, { fields: [portfolios.userId], references: [user.id] }),
+}));
+
+export const interviewNotes = pgTable("interview_notes", {
+    id: text("id").primaryKey(),
+    applicationId: text("application_id")
+        .notNull()
+        .references(() => applications.id),
+    userId: text("user_id")
+        .notNull()
+        .references(() => user.id),
+    question: text("question").notNull(),
+    category: text("category"),
+    studentAnswer: text("student_answer"),
+    keyPoints: jsonb("key_points"),
+    outcome: text("outcome"),
+    createdAt: timestamp("created_at").notNull(),
+    updatedAt: timestamp("updated_at").notNull(),
+});
+
+export const interviewNotesRelations = relations(interviewNotes, ({ one }) => ({
+    application: one(applications, { fields: [interviewNotes.applicationId], references: [applications.id] }),
+    user: one(user, { fields: [interviewNotes.userId], references: [user.id] }),
+}));
+
+export const aiUsage = pgTable("ai_usage", {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+        .notNull()
+        .references(() => user.id),
+    operationName: text("operation_name").notNull(),
+    promptVersion: text("prompt_version").notNull().default("v1"),
+    inputTokens: integer("input_tokens").notNull().default(0),
+    outputTokens: integer("output_tokens").notNull().default(0),
+    creditsCost: integer("credits_cost").notNull().default(1),
+    idempotencyKey: text("idempotency_key").unique(),
+    status: text("status").notNull().default("success"),
+    createdAt: timestamp("created_at").notNull(),
+});
+
+export const aiUsageRelations = relations(aiUsage, ({ one }) => ({
+    user: one(user, { fields: [aiUsage.userId], references: [user.id] }),
 }));
