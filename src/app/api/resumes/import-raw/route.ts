@@ -1,21 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { resumes as resumesTable } from "@/lib/schema";
-import { headers } from "next/headers";
 import { handleApiError } from "@/lib/api-error";
 import crypto from "crypto";
 import { MAX_TITLE_LENGTH, MAX_CONTENT_LENGTH } from "@/lib/validation";
+import { requireAuth } from "@/lib/auth-policy";
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { auth: authCtx, errorResponse } = await requireAuth();
+    if (errorResponse) return errorResponse;
 
     const { text, title } = await req.json();
 
@@ -43,7 +37,7 @@ export async function POST(req: NextRequest) {
     const newId = crypto.randomUUID();
     await db.insert(resumesTable).values({
       id: newId,
-      userId: session.user.id,
+      userId: authCtx.user.id,
       title: safeTitle || "Imported LaTeX",
       content: text,
       status: "Draft",

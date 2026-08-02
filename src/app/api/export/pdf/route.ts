@@ -1,7 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { generateResumeHtml } from "@/lib/resume-renderer";
-import chromium from "@sparticuz/chromium-min";
+import { handleApiError } from "@/lib/api-error";
 import puppeteer, { type Browser } from "puppeteer-core";
+import { requireAuth } from "@/lib/auth-policy";
+import { getPdfBrowserConfig } from "@/lib/pdf-browser";
 
 /**
  * PREMIUM PDF EXPORT API
@@ -12,24 +14,26 @@ import puppeteer, { type Browser } from "puppeteer-core";
 
 export async function POST(req: NextRequest) {
     try {
+        const { errorResponse } = await requireAuth();
+        if (errorResponse) return errorResponse;
+
         const { resumeData, template = "modern", title, fontFamily } = await req.json();
         const safeTitle = (title || "resume").toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
 
         // 1. Generate the HTML content
         const html = generateResumeHtml(resumeData, template, fontFamily);
 
         let browser: Browser | null = null;
         try {
-            // 2. Launch headless browser
-            const isLocal = process.env.NODE_ENV === 'development' || process.platform === 'win32';
-            
+            // 2. Launch headless browser with dynamic executable resolution
+            const launchConfig = await getPdfBrowserConfig();
+
             browser = await puppeteer.launch({
-                args: isLocal ? [] : [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox'],
-                defaultViewport: (chromium as unknown as { defaultViewport: { width: number; height: number } }).defaultViewport,
-                executablePath: isLocal 
-                    ? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe' 
-                    : await chromium.executablePath(),
-                headless: (chromium as unknown as { headless: boolean | "shell" }).headless,
+                args: launchConfig.args,
+                defaultViewport: launchConfig.defaultViewport,
+                executablePath: launchConfig.executablePath,
+                headless: launchConfig.headless,
             });
 
             const page = await browser.newPage();
@@ -62,10 +66,7 @@ export async function POST(req: NextRequest) {
 
         } catch (err: unknown) {
             console.error("PDF Export Process Failed:", err || "Undefined Rejection");
-            return NextResponse.json({ 
-                error: "Failed to generate PDF.",
-                details: err instanceof Error ? err.message : String(err || "Unknown error")
-            }, { status: 500 });
+            return handleApiError(err, "POST /api/export/pdf inner");
         } finally {
             if (browser) {
                 try {
@@ -76,10 +77,6 @@ export async function POST(req: NextRequest) {
             }
         }
     } catch (outerError: unknown) {
-        console.error("Fatal PDF Export Error:", outerError || "Undefined Fatal Error");
-        return NextResponse.json({ 
-            error: "Internal Server Error",
-            details: outerError instanceof Error ? outerError.message : "Fatal error with no details"
-        }, { status: 500 });
+        return handleApiError(outerError, "POST /api/export/pdf outer");
     }
 }

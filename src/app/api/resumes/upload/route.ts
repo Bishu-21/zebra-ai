@@ -1,23 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { resumes as resumesTable } from "@/lib/schema";
-import { headers } from "next/headers";
 import { handleApiError } from "@/lib/api-error";
 import crypto from "crypto";
 import { MAX_FILE_SIZE, MAX_TITLE_LENGTH, MAX_CONTENT_LENGTH } from "@/lib/validation";
 import { extractText, getDocumentProxy } from "unpdf";
 import mammoth from "mammoth";
+import { requireAuth } from "@/lib/auth-policy";
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { auth: authCtx, errorResponse } = await requireAuth();
+    if (errorResponse) return errorResponse;
 
     const formData = await req.formData();
     const file = formData.get("file") as File;
@@ -80,7 +74,7 @@ export async function POST(req: NextRequest) {
     const newId = crypto.randomUUID();
     await db.insert(resumesTable).values({
       id: newId,
-      userId: session.user.id,
+      userId: authCtx.user.id,
       title: title || "Uploaded Resume",
       content: content,
       status: "Draft",

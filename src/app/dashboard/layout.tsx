@@ -1,11 +1,10 @@
 import { getSafeSession } from "@/lib/auth-helpers";
 import { redirect, unstable_rethrow } from "next/navigation";
-import { db } from "@/lib/db";
+import { db, sanitizeSecretText } from "@/lib/db";
 import { user as userTable } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 
-// ZEBRA_AI_DASHBOARD_STABILIZATION_V4
 export const dynamic = "force-dynamic";
 
 export default async function DashboardLayout({
@@ -19,7 +18,8 @@ export default async function DashboardLayout({
         session = await getSafeSession();
     } catch (error) {
         unstable_rethrow(error);
-        console.error("Dashboard Session Check Failed:", error);
+        const msg = sanitizeSecretText(error instanceof Error ? error.message : String(error));
+        console.error("Dashboard Session Check Failed:", msg);
         return redirect("/");
     }
 
@@ -28,14 +28,22 @@ export default async function DashboardLayout({
     }
 
     const { user } = session;
+    let credits = 0;
+    let plan = "Free";
     
-    // Fetch fresh user data from DB
-    const currentUser = await db.query.user.findFirst({
-        where: eq(userTable.id, user.id)
-    });
-
-    const credits = currentUser?.credits ?? 0;
-    const plan = currentUser?.plan ?? "Free";
+    try {
+        // Fetch fresh user data from DB with fallback for transient DB outages
+        const currentUser = await db.query.user.findFirst({
+            where: eq(userTable.id, user.id)
+        });
+        if (currentUser) {
+            credits = currentUser.credits ?? 0;
+            plan = currentUser.plan ?? "Free";
+        }
+    } catch (error) {
+        const msg = sanitizeSecretText(error instanceof Error ? error.message : String(error));
+        console.warn("[Dashboard Layout] DB query degraded mode:", msg);
+    }
 
     return (
         <DashboardShell 

@@ -23,12 +23,28 @@ import {
     RiArrowRightLine
 } from "react-icons/ri";
 import { formatRelativeTime } from "@/lib/utils";
+import { type ApplicationStatus } from "@/lib/application-state-machine";
 
-type Job = {
+import { ApplicationSuggestionsModal } from "@/components/dashboard/ApplicationSuggestionsModal";
+
+export const BOARD_STATUSES = [
+    "Draft",
+    "Preparing",
+    "Tailoring",
+    "Applied",
+    "Interviewing",
+    "Offer",
+    "Rejected",
+    "Withdrawn"
+] as const;
+
+export type BoardStatus = (typeof BOARD_STATUSES)[number];
+
+export type Job = {
     id: string;
     company: string;
     position: string;
-    status: "Applied" | "Interviewing" | "Offers" | "Rejected";
+    status: BoardStatus | ApplicationStatus | "Offers";
     salary?: string | null;
     url?: string | null;
     location?: string | null;
@@ -38,8 +54,6 @@ type Job = {
     resumeVersionId?: string | null;
     updatedAt: string;
 };
-
-const STATUSES = ["Applied", "Interviewing", "Offers", "Rejected"] as const;
 
 export function JobBoard({ 
     initialJobs, 
@@ -67,21 +81,41 @@ export function JobBoard({
     const [loading, setLoading] = useState(false);
     const [isScraping, setIsScraping] = useState(false);
     const [scrapeUrl, setScrapeUrl] = useState("");
+    const [selectedAppModal, setSelectedAppModal] = useState<{ id: string; company: string; position: string } | null>(null);
 
     const handleAddJob = async () => {
         if (!newJob.company || !newJob.position) return;
         setLoading(true);
         try {
-            const res = await fetch("/api/jobs", {
+            // Attempt posting to canonical /api/applications first
+            let res = await fetch("/api/applications", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(newJob),
+                body: JSON.stringify({
+                    company: newJob.company,
+                    position: newJob.position,
+                    jobDescription: newJob.description,
+                    url: newJob.url,
+                    selectedResumeId: newJob.resumeId || undefined,
+                }),
             });
-            const data = await res.json();
-            if (data.success) {
+            let data = await res.json();
+
+            if (!res.ok) {
+                // Fallback to legacy /api/jobs
+                res = await fetch("/api/jobs", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(newJob),
+                });
+                data = await res.json();
+            }
+
+            if (data.success || data.application) {
+                const addedId = data.application?.id || data.id;
                 const addedJob: Job = { 
                     ...newJob, 
-                    id: data.id, 
+                    id: addedId, 
                     updatedAt: new Date().toISOString() 
                 };
                 setJobs([addedJob, ...jobs]);
@@ -90,7 +124,7 @@ export function JobBoard({
                 setScrapeUrl("");
             }
         } catch (error) {
-            console.error("Add Job Error:", error);
+            console.error("Add Application Error:", error);
         } finally {
             setLoading(false);
         }
@@ -128,11 +162,18 @@ export function JobBoard({
 
     const handleUpdateStatus = async (id: string, status: Job["status"]) => {
         try {
-            const res = await fetch("/api/jobs", {
+            let res = await fetch("/api/applications", {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ id, status }),
             });
+            if (!res.ok) {
+                res = await fetch("/api/jobs", {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ id, status }),
+                });
+            }
             if (res.ok) {
                 setJobs(jobs.map(j => j.id === id ? { ...j, status } : j));
             }
@@ -142,46 +183,65 @@ export function JobBoard({
     };
 
     const handleDeleteJob = async (id: string) => {
-        if (!confirm("Are you sure?")) return;
+        if (!confirm("Are you sure you want to delete this application?")) return;
         try {
-            const res = await fetch("/api/jobs", {
+            let res = await fetch(`/api/applications?id=${id}`, {
                 method: "DELETE",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id }),
             });
+            if (!res.ok) {
+                res = await fetch("/api/jobs", {
+                    method: "DELETE",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ id }),
+                });
+            }
             if (res.ok) {
                 setJobs(jobs.filter(j => j.id !== id));
             }
         } catch (error) {
-            console.error("Delete Job Error:", error);
+            console.error("Delete Application Error:", error);
         }
     };
 
-    const getStatusColor = (status: Job["status"]) => {
+    const getStatusColor = (status: string) => {
         switch (status) {
-            case "Applied": return { bg: "bg-primary", text: "text-primary", border: "border-primary/20", light: "bg-primary/5" };
-            case "Interviewing": return { bg: "bg-amber-500", text: "text-amber-500", border: "border-amber-500/20", light: "bg-amber-50" };
-            case "Offers": return { bg: "bg-emerald-500", text: "text-emerald-500", border: "border-emerald-500/20", light: "bg-emerald-50" };
-            case "Rejected": return { bg: "bg-rose-500", text: "text-rose-500", border: "border-rose-500/20", light: "bg-rose-50" };
+            case "Draft": return { bg: "bg-slate-500", text: "text-slate-600", border: "border-slate-500/20", light: "bg-slate-50" };
+            case "Preparing": return { bg: "bg-sky-500", text: "text-sky-600", border: "border-sky-500/20", light: "bg-sky-50" };
+            case "Tailoring": return { bg: "bg-indigo-500", text: "text-indigo-600", border: "border-indigo-500/20", light: "bg-indigo-50" };
+            case "Applied": return { bg: "bg-blue-600", text: "text-blue-600", border: "border-blue-500/20", light: "bg-blue-50" };
+            case "Interviewing": return { bg: "bg-amber-500", text: "text-amber-600", border: "border-amber-500/20", light: "bg-amber-50" };
+            case "Offers":
+            case "Offer": return { bg: "bg-emerald-500", text: "text-emerald-600", border: "border-emerald-500/20", light: "bg-emerald-50" };
+            case "Rejected": return { bg: "bg-rose-500", text: "text-rose-600", border: "border-rose-500/20", light: "bg-rose-50" };
+            case "Withdrawn": return { bg: "bg-zinc-500", text: "text-zinc-600", border: "border-zinc-500/20", light: "bg-zinc-50" };
+            default: return { bg: "bg-primary", text: "text-primary", border: "border-primary/20", light: "bg-primary/5" };
         }
     };
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-24">
-            {STATUSES.map((status) => {
+        <>
+        <div className="flex gap-6 overflow-x-auto pb-8 min-w-full">
+            {BOARD_STATUSES.map((status) => {
                 const colors = getStatusColor(status);
-                const columnJobs = jobs.filter(j => j.status === status);
+                const columnJobs = jobs.filter(j => {
+                    if (status === "Offer") return j.status === "Offer" || j.status === "Offers";
+                    return j.status === status;
+                });
                 
                 return (
-                    <div key={status} className="flex flex-col h-full min-h-[600px] group/column">
+                    <div key={status} className="flex flex-col h-full min-w-[280px] max-w-[340px] flex-1 group/column">
                         {/* Column Header */}
                         <div className="flex items-center justify-between mb-6 px-2">
                             <div className="flex items-center gap-3">
                                 <div className={`w-8 h-8 rounded-[var(--radius-md)] ${colors.bg} flex items-center justify-center text-white shadow-lg shadow-black/5`}>
+                                    {status === 'Draft' && <RiFileTextLine size={16} />}
+                                    {status === 'Preparing' && <RiMagicLine size={16} />}
+                                    {status === 'Tailoring' && <RiMagicLine size={16} />}
                                     {status === 'Applied' && <RiInboxArchiveLine size={16} />}
                                     {status === 'Interviewing' && <RiChat3Line size={16} />}
-                                    {status === 'Offers' && <RiCheckboxCircleLine size={16} />}
+                                    {(status === 'Offer' || (status as string) === 'Offers') && <RiCheckboxCircleLine size={16} />}
                                     {status === 'Rejected' && <RiCloseCircleLine size={16} />}
+                                    {status === 'Withdrawn' && <RiInboxArchiveLine size={16} />}
                                 </div>
                                 <div>
                                     <h3 className="font-black text-[0.65rem] uppercase tracking-widest text-foreground leading-none mb-1">{status}</h3>
@@ -214,7 +274,7 @@ export function JobBoard({
                                             </button>
                                         </div>
 
-                                        {(job.salary || job.url || job.resumeId) && (
+                                        {(job.salary || job.url || job.resumeId || job.id) && (
                                             <div className="space-y-3 mb-5 p-3.5 bg-[#FAFAFA] rounded-2xl border border-black/[0.02]">
                                                 {job.salary && (
                                                     <div className="flex items-center gap-2.5 text-[#171717]">
@@ -244,6 +304,19 @@ export function JobBoard({
                                                         </span>
                                                     </div>
                                                 )}
+
+                                                {/* Suggestions Review Action Button */}
+                                                <button
+                                                    onClick={() => setSelectedAppModal({ id: job.id, company: job.company, position: job.position })}
+                                                    className="w-full flex items-center justify-between p-2.5 bg-white rounded-xl border border-neutral-200 hover:border-neutral-400 transition-all text-xs font-bold text-[#0A0A0A] shadow-2xs"
+                                                >
+                                                    <div className="flex items-center gap-2">
+                                                        <RiMagicLine size={14} className="text-indigo-600" />
+                                                        <span>Review suggestions</span>
+                                                    </div>
+                                                    <RiArrowRightSLine size={14} className="text-neutral-400" />
+                                                </button>
+
                                                 {job.url && (
                                                     <a href={job.url.startsWith('http') ? job.url : `https://${job.url}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between w-full p-2 bg-white rounded-[var(--radius-md)] border border-border-subtle hover:border-primary transition-all group/link">
                                                         <div className="flex items-center gap-2">
@@ -256,6 +329,7 @@ export function JobBoard({
                                             </div>
                                         )}
 
+
                                         <div className="flex items-center justify-between pt-4 border-t border-border-subtle">
                                             <div className="relative">
                                                 <select 
@@ -263,7 +337,7 @@ export function JobBoard({
                                                     onChange={(e) => handleUpdateStatus(job.id, e.target.value as Job["status"])}
                                                     className={`text-[0.6rem] font-black uppercase tracking-widest pl-2 pr-8 py-1.5 rounded-[var(--radius-md)] ${colors.light} ${colors.text} border border-transparent hover:border-current transition-all appearance-none outline-none cursor-pointer`}
                                                 >
-                                                    {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                                                    {BOARD_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
                                                 </select>
                                                 <RiArrowDropDownLine size={16} className={`absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none ${colors.text}`} />
                                             </div>
@@ -433,7 +507,7 @@ export function JobBoard({
 
                                                 <div className="flex gap-2 pt-2">
                                                     <button onClick={handleAddJob} disabled={loading} className="flex-grow h-12 bg-foreground text-background rounded-[var(--radius-lg)] text-xs font-black uppercase tracking-widest hover:bg-secondary transition-all disabled:opacity-50">
-                                                        {loading ? "..." : "Create Entry"}
+                                                        {loading ? "..." : "Add application"}
                                                     </button>
                                                     <button onClick={() => setIsAdding(false)} className="h-12 px-5 bg-muted text-muted-foreground rounded-[var(--radius-lg)] text-xs font-black uppercase tracking-widest hover:text-foreground hover:bg-border-subtle transition-all">
                                                         <RiCloseCircleLine size={20} />
@@ -448,7 +522,7 @@ export function JobBoard({
                                                 <div className="w-12 h-12 rounded-2xl bg-black/[0.02] group-hover/add:bg-primary/10 flex items-center justify-center transition-colors">
                                                     <RiAddLine size={24} className="group-hover/add:rotate-90 transition-transform" />
                                                 </div>
-                                                <span>New Job Entry</span>
+                                                <span>Add application</span>
                                             </button>
                                         )}
                                     </div>
@@ -459,5 +533,17 @@ export function JobBoard({
                 );
             })}
         </div>
+
+        {selectedAppModal && (
+            <ApplicationSuggestionsModal
+                applicationId={selectedAppModal.id}
+                company={selectedAppModal.company}
+                position={selectedAppModal.position}
+                isOpen={!!selectedAppModal}
+                onCloseAction={() => setSelectedAppModal(null)}
+            />
+        )}
+        </>
     );
 }
+

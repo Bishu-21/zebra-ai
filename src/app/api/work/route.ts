@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 import { db } from "@/lib/db";
 import { workItems as workItemsTable } from "@/lib/schema";
 import { eq, and, desc } from "drizzle-orm";
+import { handleApiError } from "@/lib/api-error";
 import { z } from "zod";
+import { requireAuth, notFoundResponse } from "@/lib/auth-policy";
 
 const createWorkItemSchema = z.object({
     title: z.string().min(1, "Title is required"),
@@ -16,37 +16,26 @@ const createWorkItemSchema = z.object({
     isPublic: z.boolean().default(false),
 });
 
-export async function GET(req: NextRequest) {
+export async function GET() {
     try {
-        const session = await auth.api.getSession({
-            headers: await headers(),
-        });
-
-        if (!session?.user) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
+        const { auth: authCtx, errorResponse } = await requireAuth();
+        if (errorResponse) return errorResponse;
 
         const items = await db.query.workItems.findMany({
-            where: eq(workItemsTable.userId, session.user.id),
+            where: eq(workItemsTable.userId, authCtx.user.id),
             orderBy: [desc(workItemsTable.createdAt)],
         });
 
         return NextResponse.json({ items });
-    } catch (error: any) {
-        console.error("GET /api/work Error:", error);
-        return NextResponse.json({ error: error.message || "Failed to fetch work items" }, { status: 500 });
+    } catch (error: unknown) {
+        return handleApiError(error, "GET /api/work");
     }
 }
 
 export async function POST(req: NextRequest) {
     try {
-        const session = await auth.api.getSession({
-            headers: await headers(),
-        });
-
-        if (!session?.user) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
+        const { auth: authCtx, errorResponse } = await requireAuth();
+        if (errorResponse) return errorResponse;
 
         const body = await req.json();
         const parsed = createWorkItemSchema.parse(body);
@@ -56,7 +45,7 @@ export async function POST(req: NextRequest) {
 
         const [newItem] = await db.insert(workItemsTable).values({
             id,
-            userId: session.user.id,
+            userId: authCtx.user.id,
             title: parsed.title,
             category: parsed.category,
             description: parsed.description || null,
@@ -70,24 +59,18 @@ export async function POST(req: NextRequest) {
         }).returning();
 
         return NextResponse.json({ item: newItem });
-    } catch (error: any) {
+    } catch (error: unknown) {
         if (error instanceof z.ZodError) {
             return NextResponse.json({ error: error.issues?.[0]?.message || "Validation failed" }, { status: 400 });
         }
-        console.error("POST /api/work Error:", error);
-        return NextResponse.json({ error: error.message || "Failed to create work item" }, { status: 500 });
+        return handleApiError(error, "POST /api/work");
     }
 }
 
 export async function DELETE(req: NextRequest) {
     try {
-        const session = await auth.api.getSession({
-            headers: await headers(),
-        });
-
-        if (!session?.user) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
+        const { auth: authCtx, errorResponse } = await requireAuth();
+        if (errorResponse) return errorResponse;
 
         const { searchParams } = new URL(req.url);
         const id = searchParams.get("id");
@@ -96,16 +79,20 @@ export async function DELETE(req: NextRequest) {
             return NextResponse.json({ error: "Item ID required" }, { status: 400 });
         }
 
-        await db.delete(workItemsTable).where(
+        const [deleted] = await db.delete(workItemsTable).where(
             and(
                 eq(workItemsTable.id, id),
-                eq(workItemsTable.userId, session.user.id)
+                eq(workItemsTable.userId, authCtx.user.id)
             )
-        );
+        ).returning({ id: workItemsTable.id });
+
+        if (!deleted) {
+            return notFoundResponse("Work item");
+        }
 
         return NextResponse.json({ success: true });
-    } catch (error: any) {
-        console.error("DELETE /api/work Error:", error);
-        return NextResponse.json({ error: error.message || "Failed to delete work item" }, { status: 500 });
+    } catch (error: unknown) {
+        return handleApiError(error, "DELETE /api/work");
     }
 }
+

@@ -1,23 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { razorpay } from "@/lib/razorpay";
-import { db } from "@/lib/db";
+import { db, sanitizeSecretText } from "@/lib/db";
 import { transactions as transactionsTable } from "@/lib/schema";
 import { PLANS, PlanId } from "@/lib/constants/plans";
 import crypto from "crypto";
-import { headers } from "next/headers";
+import { requireAuth } from "@/lib/auth-policy";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
     try {
-        const session = await auth.api.getSession({
-            headers: await headers(),
-        });
+        const { auth: authCtx, errorResponse } = await requireAuth();
+        if (errorResponse) return errorResponse;
 
-        if (!session) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        // Rate limiting boundary (max 10 order creation requests per minute per user)
+        const rateCheck = checkRateLimit(`create-order:${authCtx.user.id}`, 10, 60000);
+        if (!rateCheck.success) {
+            return NextResponse.json({ 
+                error: "Too many payment initiation requests. Please wait a minute." 
+            }, { status: 429 });
         }
 
-        const { planId } = await req.json();
+        const body = await req.json().catch(() => ({}));
+        const { planId } = body;
 
         if (!planId || !(planId in PLANS)) {
             return NextResponse.json({ error: "Invalid plan identifier" }, { status: 400 });
@@ -29,9 +33,9 @@ export async function POST(req: NextRequest) {
         const options = {
             amount: amountInPaise,
             currency: "INR",
-            receipt: `receipt_${Date.now()}_${session.user.id.slice(0, 8)}`,
+            receipt: `receipt_${Date.now()}_${authCtx.user.id.slice(0, 8)}`,
             notes: {
-                userId: session.user.id,
+                userId: authCtx.user.id,
                 planId: plan.id,
             }
         };
@@ -41,7 +45,7 @@ export async function POST(req: NextRequest) {
         // Record pending transaction
         await db.insert(transactionsTable).values({
             id: crypto.randomUUID(),
-            userId: session.user.id,
+            userId: authCtx.user.id,
             provider: "razorpay",
             orderId: order.id,
             planId: plan.id,
@@ -61,7 +65,8 @@ export async function POST(req: NextRequest) {
         });
 
     } catch (error: unknown) {
-        console.error("Razorpay Order Creation Error:", error);
-        return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to initiate transaction" }, { status: 500 });
+        const sanitizedMsg = sanitizeSecretText(error instanceof Error ? error.message : String(error));
+        console.error("Razorpay Order Creation Error:", sanitizedMsg);
+        return NextResponse.json({ error: "Failed to initiate payment transaction safely." }, { status: 500 });
     }
 }

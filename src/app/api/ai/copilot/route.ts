@@ -1,67 +1,67 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { requireAuth } from "@/lib/auth-policy";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { sanitizeSecretText } from "@/lib/db";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "dummy");
 
 export async function POST(req: NextRequest) {
     try {
-        const session = await auth.api.getSession({
-            headers: await headers(),
-        });
+        const { auth: authCtx, errorResponse } = await requireAuth();
+        if (errorResponse) return errorResponse;
 
-        if (!session) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        // Rate limiting boundary (max 15 copilot requests per minute per user)
+        const rateCheck = checkRateLimit(`ai-copilot:${authCtx.user.id}`, 15, 60000);
+        if (!rateCheck.success) {
+            return NextResponse.json({ 
+                error: "Rate limit exceeded for AI copilot. Please wait a minute." 
+            }, { status: 429 });
         }
 
-        const { section, context, currentText } = await req.json();
+        const body = await req.json().catch(() => ({}));
+        const { section, context, currentText } = body;
 
-        const model = genAI.getGenerativeModel({ model: process.env.COPILOT_MODEL || "gemini-2.5-flash-lite" });
+        const cleanSection = String(section || "general").slice(0, 100);
+        const cleanText = String(currentText || "").slice(0, 10000);
+
+        const model = genAI.getGenerativeModel({ model: process.env.COPILOT_MODEL || "gemini-3.1-flash-lite" });
 
         const prompt = `
             SYSTEM: You are Zebra (ZE-AI), a hyper-focused AI Resume Strategist.
-            STYLE: Silicon Valley / High-Performance Minimalism.
-            STRATEGY: Action -> Quantifiable Impact -> Technical Tooling.
-            
-            SECTION: "${section}"
-            CURRENT CONTENT: "${currentText || "Empty"}"
-            USER CONTEXT: ${JSON.stringify(context)}
+            SECTION: "${cleanSection}"
+            CURRENT CONTENT: "${cleanText}"
+            USER CONTEXT: ${JSON.stringify(context || {}).slice(0, 2000)}
 
             INSTRUCTIONS:
             1. Suggest 3 high-impact, ATS-optimized bullet points specifically for this section.
-            2. For EXPERIENCE: Use the formula [Action Verb] + [Quantifiable Result] + [Tech Used].
-            3. For PROJECTS: Highlight the "Problem Solved" and "Tech Stack" integration.
-            4. For SKILLS: Group by category (e.g., "Languages", "Frameworks") and ensure modern tooling is prioritized.
-            5. ELIMINATE FLUFF: No "Responsible for", no "Assisted in". Use "Spearheaded", "Architected", "Optimized".
-            6. ONE-PAGE RULE: Keep each suggestion under 120 characters including spaces.
+            2. Use formula: [Action Verb] + [Quantifiable Result] + [Tech Used].
+            3. Keep each suggestion under 120 characters including spaces.
             
-            OUTPUT: A JSON array of 3 objects with these keys:
-            - "original": The text being replaced (use empty string if adding new).
-            - "problem": 1-sentence critique of why the original is weak.
-            - "after": The high-impact suggestion.
-            - "rationale": Brief explanation of the improvement strategy.
+            OUTPUT: A JSON array of 3 objects with keys:
+            - "original": text being replaced
+            - "problem": 1-sentence critique
+            - "after": High-impact suggestion
+            - "rationale": Brief explanation
 
-            Return ONLY the JSON array. No markdown.
+            Return ONLY the JSON array.
         `;
 
         const result = await model.generateContent(prompt);
-        const text = result.response.text();
+        const textText = result.response.text();
 
-        // Extract JSON
         let suggestions = [];
         try {
-            const jsonMatch = text.match(/\[[\s\S]*\]/);
+            const jsonMatch = textText.match(/\[[\s\S]*\]/);
             if (jsonMatch) {
                 suggestions = JSON.parse(jsonMatch[0]);
             } else {
-                // Fallback parsing if JSON fails but lines are provided
-                suggestions = text.split('\n')
+                suggestions = textText.split('\n')
                     .map(s => s.replace(/^[-*•\d.\s]+/, '').trim())
                     .filter(s => s.length > 5)
                     .slice(0, 3)
                     .map(s => ({
-                        original: currentText || "",
+                        original: cleanText,
                         problem: "Lacks quantification and action verbs.",
                         after: s,
                         rationale: "Used action verbs and focused on impact."
@@ -73,6 +73,8 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ suggestions });
     } catch (error: unknown) {
-        return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 500 });
+        const sanitizedMsg = sanitizeSecretText(error instanceof Error ? error.message : String(error));
+        console.error("Fatal Copilot Error:", sanitizedMsg);
+        return NextResponse.json({ error: "Failed to generate copilot suggestions safely." }, { status: 500 });
     }
 }

@@ -1,21 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { resumes as resumesTable, resumeVersions as resumeVersionsTable } from "@/lib/schema";
-import { eq, and } from "drizzle-orm";
-import { headers } from "next/headers";
+import { resumeVersions as resumeVersionsTable } from "@/lib/schema";
 import { saveVersionSchema } from "@/lib/validation";
 import crypto from "crypto";
+import { requireAuth, getUserOwnedResume, notFoundResponse } from "@/lib/auth-policy";
 
 export async function POST(req: NextRequest) {
     try {
-        const session = await auth.api.getSession({
-            headers: await headers(),
-        });
-    
-        if (!session) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
+        const { auth: authCtx, errorResponse } = await requireAuth();
+        if (errorResponse) return errorResponse;
     
         let body;
         try {
@@ -31,22 +24,16 @@ export async function POST(req: NextRequest) {
 
         const { resumeId, title, company, targetRole, jobDescription, content, matchScore, feedback } = validation.data;
 
-        const resume = await db.query.resumes.findFirst({
-            where: and(
-                eq(resumesTable.id, resumeId),
-                eq(resumesTable.userId, session.user.id)
-            )
-        });
-
+        const resume = await getUserOwnedResume(authCtx.user.id, resumeId);
         if (!resume) {
-            return NextResponse.json({ error: "Base resume not found or unauthorized" }, { status: 403 });
+            return notFoundResponse("Base resume");
         }
 
         const versionId = crypto.randomUUID();
         
         await db.insert(resumeVersionsTable).values({
             id: versionId,
-            userId: session.user.id,
+            userId: authCtx.user.id,
             resumeId,
             title,
             company: company || null,

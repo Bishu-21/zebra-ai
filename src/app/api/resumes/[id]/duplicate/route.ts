@@ -1,35 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { resumes as resumesTable } from "@/lib/schema";
-import { eq, and } from "drizzle-orm";
-import { headers } from "next/headers";
 import { handleApiError } from "@/lib/api-error";
 import { duplicateResumeSchema } from "@/lib/validation";
 import crypto from "crypto";
+import { requireAuth, getUserOwnedResume, notFoundResponse } from "@/lib/auth-policy";
 
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { auth: authCtx, errorResponse } = await requireAuth();
+    if (errorResponse) return errorResponse;
 
     const { id } = await params;
     
     // 1. Get original resume and verify ownership
-    const original = await db.query.resumes.findFirst({
-      where: and(eq(resumesTable.id, id), eq(resumesTable.userId, session.user.id)),
-    });
+    const original = await getUserOwnedResume(authCtx.user.id, id);
 
     if (!original) {
-      return NextResponse.json({ error: "Resume not found" }, { status: 404 });
+      return notFoundResponse("Resume");
     }
 
     // 2. Parse body for target info
@@ -56,7 +47,7 @@ export async function POST(
 
     await db.insert(resumesTable).values({
       id: newId,
-      userId: session.user.id,
+      userId: authCtx.user.id,
       parentResumeId: original.id,
       title: newTitle,
       content: original.content,

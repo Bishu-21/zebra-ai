@@ -10,6 +10,19 @@ export const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 // --- Shared Schemas ---
 export const idSchema = z.string().uuid();
 
+export const APPLICATION_STATUSES = [
+    "Draft",
+    "Preparing",
+    "Ready",
+    "Applied",
+    "Interviewing",
+    "Offer",
+    "Rejected",
+    "Withdrawn"
+] as const;
+
+export const applicationStatusSchema = z.enum(APPLICATION_STATUSES);
+
 // --- API Specific Schemas ---
 
 // 1. /api/resumes

@@ -1,23 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { auditSchema } from "@/lib/validation";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 import { db } from "@/lib/db";
 import { user as userTable } from "@/lib/schema";
 import { eq, sql, and, gt } from "drizzle-orm";
+import { requireAuth } from "@/lib/auth-policy";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { auth: authCtx, errorResponse } = await requireAuth();
+    if (errorResponse) return errorResponse;
 
     let body;
     try {
@@ -37,7 +31,7 @@ export async function POST(req: NextRequest) {
     const [updatedUser] = await db.update(userTable)
       .set({ credits: sql`${userTable.credits} - 1` })
       .where(and(
-        eq(userTable.id, session.user.id),
+        eq(userTable.id, authCtx.user.id),
         gt(userTable.credits, 0)
       ))
       .returning({ id: userTable.id, credits: userTable.credits });
@@ -79,7 +73,7 @@ Job: ${jobDescription}`;
       // Refund the credit atomically if the AI initialization throws an exception
       await db.update(userTable)
         .set({ credits: sql`${userTable.credits} + 1` })
-        .where(eq(userTable.id, session.user.id));
+        .where(eq(userTable.id, authCtx.user.id));
       throw modelError;
     }
     

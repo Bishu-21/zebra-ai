@@ -49,7 +49,7 @@ export default function MyWorkPage() {
     const [proofUrl, setProofUrl] = useState("");
     const [isPublic, setIsPublic] = useState(false);
 
-    const fetchItems = async () => {
+    const fetchItems = React.useCallback(async () => {
         try {
             setLoading(true);
             const res = await fetch("/api/work");
@@ -64,11 +64,12 @@ export default function MyWorkPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [showToast]);
 
     useEffect(() => {
         fetchItems();
-    }, []);
+    }, [fetchItems]);
+
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -103,7 +104,7 @@ export default function MyWorkPage() {
             } else {
                 showToast(data.error || "Failed to create item", "error");
             }
-        } catch (err) {
+        } catch {
             showToast("Error submitting work item", "error");
         } finally {
             setSubmitting(false);
@@ -121,7 +122,7 @@ export default function MyWorkPage() {
             } else {
                 showToast("Failed to delete item", "error");
             }
-        } catch (err) {
+        } catch {
             showToast("Error deleting item", "error");
         }
     };
@@ -169,7 +170,7 @@ export default function MyWorkPage() {
                     className="inline-flex items-center justify-center gap-2 bg-[#0A0A0A] text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-neutral-800 transition-all shadow-sm active:scale-95"
                 >
                     <RiAddLine className="w-4 h-4" />
-                    Add Work Item
+                    + Add project
                 </button>
             </div>
 
@@ -214,17 +215,17 @@ export default function MyWorkPage() {
                         <RiFolder2Line className="w-7 h-7" />
                     </div>
                     <div>
-                        <h3 className="text-base font-bold text-[#0A0A0A]">No work items added yet</h3>
+                        <h3 className="text-base font-bold text-[#0A0A0A]">No work items saved yet</h3>
                         <p className="text-xs text-neutral-500 max-w-sm mx-auto mt-1">
-                            Add the projects, internships, hackathons, or certificates you have built so Zebra can tailor your applications accurately.
+                            Add a project, internship, or hackathon to build proof for your applications.
                         </p>
                     </div>
                     <button
                         onClick={() => setIsAddModalOpen(true)}
-                        className="inline-flex items-center gap-2 bg-[#0A0A0A] text-white px-4 py-2 rounded-xl font-bold text-xs hover:bg-neutral-800 transition-all"
+                        className="inline-flex items-center justify-center gap-2 bg-[#0A0A0A] text-white px-4 py-2 rounded-xl font-bold text-xs hover:bg-neutral-800 transition-all shadow-sm"
                     >
-                        <RiAddLine className="w-3.5 h-3.5" />
-                        Add First Item
+                        <RiAddLine className="w-4 h-4" />
+                        + Add project
                     </button>
                 </div>
             ) : (
@@ -349,7 +350,7 @@ export default function MyWorkPage() {
                                     <label className="block text-[#0A0A0A] font-bold mb-1">Category</label>
                                     <select
                                         value={category}
-                                        onChange={(e) => setCategory(e.target.value as any)}
+                                        onChange={(e) => setCategory(e.target.value as WorkItem["category"])}
                                         className="w-full px-3.5 py-2.5 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#0A0A0A] focus:outline-none"
                                     >
                                         <option value="Project">Project</option>

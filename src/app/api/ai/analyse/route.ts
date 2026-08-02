@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { user as userTable, resumes as resumesTable, analysis as analysisTable } from "@/lib/schema";
-import { eq, sql, and } from "drizzle-orm";
-import { headers } from "next/headers";
+import { eq, sql } from "drizzle-orm";
 import { handleApiError } from "@/lib/api-error";
 import crypto from "crypto";
+import { analyseSchema } from "@/lib/validation";
+import { requireAuth, getUserOwnedResume, notFoundResponse } from "@/lib/auth-policy";
 
 // Initialize Gemini
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
@@ -14,17 +14,10 @@ const model = genAI.getGenerativeModel({
   model: process.env.GEMINI_MODEL || "gemma-4-31b-it" 
 });
 
-import { analyseSchema } from "@/lib/validation";
-
 export async function POST(req: NextRequest) {
   try {
-    const session = await auth.api.getSession({
-        headers: await headers(),
-    });
-
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { auth: authCtx, errorResponse } = await requireAuth();
+    if (errorResponse) return errorResponse;
 
     const body = await req.json();
     const validation = analyseSchema.safeParse(body);
@@ -34,16 +27,13 @@ export async function POST(req: NextRequest) {
     }
 
     const { resumeId } = validation.data;
-    const { content, title } = body; // content and title might be optional if resumeId exists, but we need to check if content is provided either via resume or body
+    const { content, title } = body;
 
-    // 1. Get Content: If resumeId provided, fetch it. Otherwise use content from body.
     let finalContent = content;
     
     if (resumeId) {
-        const resume = await db.query.resumes.findFirst({
-            where: and(eq(resumesTable.id, resumeId), eq(resumesTable.userId, session.user.id))
-        });
-        if (!resume) return NextResponse.json({ error: "Resume not found" }, { status: 404 });
+        const resume = await getUserOwnedResume(authCtx.user.id, resumeId);
+        if (!resume) return notFoundResponse("Resume");
         finalContent = resume.content;
     }
 
@@ -53,7 +43,7 @@ export async function POST(req: NextRequest) {
 
     // 1. Check user credits
     const userData = await db.query.user.findFirst({
-        where: eq(userTable.id, session.user.id)
+        where: eq(userTable.id, authCtx.user.id)
     });
 
     if (!userData || userData.credits <= 0) {
@@ -67,7 +57,7 @@ export async function POST(req: NextRequest) {
         activeResumeId = crypto.randomUUID();
         await db.insert(resumesTable).values({
             id: activeResumeId,
-            userId: session.user.id,
+            userId: authCtx.user.id,
             title: title || "Untitled Analysis",
             content: content,
             status: "Draft",
@@ -76,7 +66,7 @@ export async function POST(req: NextRequest) {
         });
     }
 
-    // 3. AI Prompt Construction: Detailed Content Analysis
+    // 3. AI Prompt Construction
     const prompt = `
       SYSTEM: You are a World-Class Executive Career Coach and Senior Talent Acquisition Consultant with 20+ years of experience auditing resumes for Fortune 500 companies, high-growth startups, and elite academic programs.
       Your mission is to perform a detailed, data-driven analysis of the provided Resume based on 45+ premium global metrics.
@@ -152,7 +142,6 @@ export async function POST(req: NextRequest) {
     // Robust JSON extraction
     let jsonFeedback;
     try {
-        // Find the first occurrence of { and the last occurrence of }
         const start = text.indexOf("{");
         const end = text.lastIndexOf("}");
         
@@ -172,12 +161,10 @@ export async function POST(req: NextRequest) {
 
     // 5. Atomic Update: Use Credits & Save Analysis
     await db.transaction(async (tx) => {
-        // Deduct credit
         await tx.update(userTable)
             .set({ credits: sql`${userTable.credits} - 1` })
-            .where(eq(userTable.id, session.user.id));
+            .where(eq(userTable.id, authCtx.user.id));
 
-        // Save analysis record
         await tx.insert(analysisTable).values({
             id: crypto.randomUUID(),
             resumeId: activeResumeId,
@@ -186,7 +173,6 @@ export async function POST(req: NextRequest) {
             createdAt: new Date(),
         });
         
-        // Update resume title if it was "Untitled"
         if (!title || title === "Untitled Analysis") {
             await tx.update(resumesTable)
                 .set({ title: jsonFeedback.summary.split(".")[0].slice(0, 50) + "..." })

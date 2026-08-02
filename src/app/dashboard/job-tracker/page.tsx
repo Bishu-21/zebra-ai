@@ -2,7 +2,7 @@ import React from "react";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/lib/db";
-import { jobs as jobsTable, resumes as resumesTable, resumeVersions as resumeVersionsTable } from "@/lib/schema";
+import { jobs as jobsTable, resumes as resumesTable, resumeVersions as resumeVersionsTable, applications as applicationsTable } from "@/lib/schema";
 import { eq, desc } from "drizzle-orm";
 import { JobBoard } from "@/components/dashboard/JobBoard";
 
@@ -18,7 +18,12 @@ export default async function JobTrackerPage() {
 
   if (!session) return null;
 
-  // 1. Fetch real jobs from database
+  // 1. Fetch applications from database
+  const userApplications = await db.query.applications.findMany({
+    where: eq(applicationsTable.userId, session.user.id),
+    orderBy: [desc(applicationsTable.createdAt)],
+  });
+
   const userJobs = await db.query.jobs.findMany({
     where: eq(jobsTable.userId, session.user.id),
     orderBy: [desc(jobsTable.updatedAt)],
@@ -34,18 +39,34 @@ export default async function JobTrackerPage() {
       orderBy: [desc(resumeVersionsTable.createdAt)],
   });
 
-  // Convert to type expected by JobBoard
-  const formattedJobs = userJobs.map(job => ({
-      id: job.id,
-      company: job.company,
-      position: job.position,
-      status: job.status as "Applied" | "Interviewing" | "Offers" | "Rejected",
-      salary: job.salary,
-      url: job.url,
-      resumeId: job.resumeId,
-      resumeVersionId: job.resumeVersionId,
-      updatedAt: job.updatedAt.toISOString(),
-  }));
+  // Combine applications and jobs, preferring applications
+  const appIds = new Set(userApplications.map(a => a.id));
+  const formattedJobs = [
+      ...userApplications.map(app => ({
+          id: app.id,
+          company: app.company,
+          position: app.position,
+          status: app.status as "Applied" | "Interviewing" | "Offers" | "Rejected",
+          description: app.jobDescription,
+          url: app.url,
+          resumeId: app.selectedResumeId,
+          resumeVersionId: app.resumeVersionId,
+          updatedAt: app.updatedAt.toISOString(),
+      })),
+      ...userJobs
+          .filter(j => !appIds.has(j.id))
+          .map(job => ({
+              id: job.id,
+              company: job.company,
+              position: job.position,
+              status: job.status as "Applied" | "Interviewing" | "Offers" | "Rejected",
+              salary: job.salary,
+              url: job.url,
+              resumeId: job.resumeId,
+              resumeVersionId: job.resumeVersionId,
+              updatedAt: job.updatedAt.toISOString(),
+          }))
+  ];
 
   return (
     <div className="p-10 max-w-[1600px] mx-auto">

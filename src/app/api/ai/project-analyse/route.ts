@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 import chromium from "@sparticuz/chromium-min";
 import puppeteer, { type Browser, type HTTPRequest } from "puppeteer-core";
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -9,6 +7,7 @@ import { MAX_URL_LENGTH } from "@/lib/validation";
 import { db } from "@/lib/db";
 import { projectAnalyses } from "@/lib/schema";
 import crypto from "crypto";
+import { requireAuth } from "@/lib/auth-policy";
 
 const projectAnalyseSchema = z.object({
     url: z.string().url("Invalid URL").max(MAX_URL_LENGTH),
@@ -16,13 +15,8 @@ const projectAnalyseSchema = z.object({
 
 export async function POST(req: NextRequest) {
     try {
-        const session = await auth.api.getSession({
-            headers: await headers(),
-        });
-
-        if (!session) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
+        const { auth: authCtx, errorResponse } = await requireAuth();
+        if (errorResponse) return errorResponse;
 
         const body = await req.json();
         const validation = projectAnalyseSchema.safeParse(body);
@@ -154,12 +148,9 @@ export async function POST(req: NextRequest) {
                     }
                 });
 
-                // Navigate
                 await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
 
-                // Specific handling for GitHub
                 if (url.includes("github.com")) {
-                    // Try to find README content
                     try {
                         await page.waitForSelector('#readme', { timeout: 5000 });
                         projectContent = await page.evaluate(() => {
@@ -170,7 +161,6 @@ export async function POST(req: NextRequest) {
                         projectContent = await page.evaluate(() => document.body.innerText);
                     }
                 } else {
-                    // Generic page content
                     projectContent = await page.evaluate(() => {
                         const unwanted = document.querySelectorAll('script, style, nav, footer, noscript');
                         unwanted.forEach(s => (s as HTMLElement).style.display = 'none');
@@ -230,7 +220,7 @@ export async function POST(req: NextRequest) {
             // Save to database
             await db.insert(projectAnalyses).values({
                 id: crypto.randomUUID(),
-                userId: session.user.id,
+                userId: authCtx.user.id,
                 url: url,
                 score: analysis.score,
                 data: analysis,

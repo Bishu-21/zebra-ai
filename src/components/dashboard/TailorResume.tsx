@@ -19,7 +19,8 @@ import {
 } from "react-icons/ri";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/Toast";
-import { RiSaveLine, RiBuildingLine, RiBriefcaseLine } from "react-icons/ri";
+import { RiSaveLine, RiBuildingLine, RiBriefcaseLine, RiRefreshLine } from "react-icons/ri";
+import { getErrorMessage } from "@/lib/async-error-handler";
 
 export interface Resume {
     id: string;
@@ -56,14 +57,19 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
     const refreshDashboard = () => {
         try {
             router.refresh();
-        } catch {
-            setError("Analysis completed, but the dashboard could not refresh automatically.");
+        } catch (err) {
+            const msg = getErrorMessage(err, "Dashboard refresh failed");
+            setError(msg);
         }
     };
 
     const handleTailor = async () => {
-        if (!formData.resumeId || !formData.jobDescription) {
-            setError("Please select a resume and paste the job description.");
+        if (loading) return;
+
+        if (!formData.resumeId || !formData.jobDescription.trim()) {
+            const msg = "Please select a base profile and enter the target job description.";
+            setError(msg);
+            showToast(msg, "error");
             return;
         }
 
@@ -86,19 +92,24 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
             });
             const data = await res.json();
 
-            if (data.success) {
+            if (res.ok && data.success) {
                 setTimeout(() => {
                     setAnalysis(data.analysis);
                     clearInterval(stepInterval);
                     setScanStep("Tailoring Complete.");
+                    showToast("Role match analysis complete!", "success");
                     refreshDashboard();
                 }, 800);
             } else {
-                setError(data.error || "Tailoring failed.");
+                const msg = data.error || "Role match analysis failed.";
+                setError(msg);
+                showToast(msg, "error");
                 clearInterval(stepInterval);
             }
-        } catch {
-            setError("Analysis failed. High traffic or invalid job description detected.");
+        } catch (err) {
+            const msg = getErrorMessage(err, "Analysis failed. Please check network connection and try again.");
+            setError(msg);
+            showToast(msg, "error");
             clearInterval(stepInterval);
         } finally {
             setLoading(false);
@@ -106,6 +117,7 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
     };
 
     const handleSaveVersion = async () => {
+        if (savingVersion) return;
         if (!formData.resumeId || !formData.jobDescription || !analysis) return;
         
         const baseResume = resumes.find(r => r.id === formData.resumeId);
@@ -129,14 +141,16 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
             });
             const data = await res.json();
 
-            if (data.success) {
-                showToast("Version saved successfully!");
+            if (res.ok && data.success) {
+                showToast("Version saved successfully!", "success");
                 router.refresh();
             } else {
-                showToast(data.error || "Failed to save version", "info");
+                const msg = data.error || "Failed to save version";
+                showToast(msg, "error");
             }
-        } catch {
-            showToast("Connection error. Try again later.", "info");
+        } catch (err) {
+            const msg = getErrorMessage(err, "Connection error. Try again later.");
+            showToast(msg, "error");
         } finally {
             setSavingVersion(false);
         }
@@ -216,7 +230,8 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                                                 </label>
                                                 <div className="relative">
                                                     <select 
-                                                        className="w-full bg-muted border-2 border-transparent focus:border-primary/20 rounded-[var(--radius-md)] px-6 py-5 text-sm font-bold outline-none transition-all appearance-none cursor-pointer text-foreground"
+                                                        disabled={loading}
+                                                        className="w-full bg-muted border-2 border-transparent focus:border-primary/20 rounded-[var(--radius-md)] px-6 py-5 text-sm font-bold outline-none transition-all appearance-none cursor-pointer text-foreground disabled:opacity-50"
                                                         value={formData.resumeId}
                                                         onChange={(e) => setFormData({...formData, resumeId: e.target.value})}
                                                     >
@@ -237,8 +252,9 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                                                     </label>
                                                     <input 
                                                         type="text"
+                                                        disabled={loading}
                                                         placeholder="e.g. Google"
-                                                        className="w-full bg-black/5 border-2 border-transparent focus:border-black/10 rounded-2xl px-6 py-5 text-sm font-bold outline-none transition-all text-black"
+                                                        className="w-full bg-black/5 border-2 border-transparent focus:border-black/10 rounded-2xl px-6 py-5 text-sm font-bold outline-none transition-all text-black disabled:opacity-50"
                                                         value={formData.company}
                                                         onChange={(e) => setFormData({...formData, company: e.target.value})}
                                                     />
@@ -250,8 +266,9 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                                                     </label>
                                                     <input 
                                                         type="text"
+                                                        disabled={loading}
                                                         placeholder="e.g. Frontend Dev"
-                                                        className="w-full bg-black/5 border-2 border-transparent focus:border-black/10 rounded-2xl px-6 py-5 text-sm font-bold outline-none transition-all text-black"
+                                                        className="w-full bg-black/5 border-2 border-transparent focus:border-black/10 rounded-2xl px-6 py-5 text-sm font-bold outline-none transition-all text-black disabled:opacity-50"
                                                         value={formData.targetRole}
                                                         onChange={(e) => setFormData({...formData, targetRole: e.target.value})}
                                                     />
@@ -312,10 +329,21 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                                             <m.div 
                                                 initial={{ opacity: 0, y: 10 }}
                                                 animate={{ opacity: 1, y: 0 }}
-                                                className="bg-error text-white p-6 rounded-[var(--radius-md)] flex items-center gap-3 text-sm font-black uppercase tracking-wider shadow-xl"
+                                                className="bg-error text-white p-6 rounded-[var(--radius-md)] flex items-center justify-between gap-4 text-sm font-black uppercase tracking-wider shadow-xl"
                                             >
-                                                <RiErrorWarningLine size={24} />
-                                                {error}
+                                                <div className="flex items-center gap-3">
+                                                    <RiErrorWarningLine size={24} className="shrink-0" />
+                                                    <span>{error}</span>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleTailor}
+                                                    disabled={loading}
+                                                    className="px-4 py-2 bg-white text-error rounded-xl font-extrabold text-xs uppercase tracking-wider hover:bg-white/90 transition-all flex items-center gap-1.5 shrink-0 shadow-sm disabled:opacity-50"
+                                                >
+                                                    <RiRefreshLine size={16} />
+                                                    Retry
+                                                </button>
                                             </m.div>
                                         )}
                                     </div>

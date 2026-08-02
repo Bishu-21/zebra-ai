@@ -9,10 +9,13 @@ import {
     RiCloseLine,
     RiFileTextLine,
     RiTerminalBoxLine,
-    RiArrowRightLine
+    RiArrowRightLine,
+    RiErrorWarningLine,
+    RiRefreshLine
 } from "react-icons/ri";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/Toast";
+import { getErrorMessage } from "@/lib/async-error-handler";
 
 export function ImportResume() {
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -20,6 +23,7 @@ export function ImportResume() {
     const [activeTab, setActiveTab] = useState<"file" | "raw">("file");
     const [isUploading, setIsUploading] = useState(false);
     const [uploadStep, setUploadStep] = useState("");
+    const [error, setError] = useState<string | null>(null);
     
     // Raw import states
     const [rawTitle, setRawTitle] = useState("");
@@ -32,7 +36,8 @@ export function ImportResume() {
         try {
             router.push(`/dashboard/resumes/${resumeId}`);
         } catch (err) {
-            const message = err instanceof Error ? err.message : "Could not open imported resume";
+            const message = getErrorMessage(err, "Could not open imported resume");
+            setError(message);
             showToast(message, "error");
             setIsUploading(false);
             setUploadStep("");
@@ -40,15 +45,20 @@ export function ImportResume() {
     };
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (isUploading) return;
         const file = e.target.files?.[0];
         if (!file) return;
 
         if (file.size > 5 * 1024 * 1024) {
-            showToast("File size exceeds 5MB limit", "error");
+            const msg = "File size exceeds 5MB limit";
+            setError(msg);
+            showToast(msg, "error");
+            if (fileInputRef.current) fileInputRef.current.value = "";
             return;
         }
 
         setIsUploading(true);
+        setError(null);
         setUploadStep("Establishing Secure Connection...");
         
         const formData = new FormData();
@@ -73,8 +83,9 @@ export function ImportResume() {
             }, 800);
 
         } catch (err) {
-            const error = err as Error;
-            showToast(error.message, "error");
+            const msg = getErrorMessage(err, "Failed to upload and extract document");
+            setError(msg);
+            showToast(msg, "error");
             setIsUploading(false);
             setUploadStep("");
         } finally {
@@ -84,16 +95,23 @@ export function ImportResume() {
 
     const handleRawImport = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (isUploading) return;
+
         if (!rawText.trim()) {
-            showToast("Please enter LaTeX or raw text content", "error");
+            const msg = "Please enter LaTeX or raw text content";
+            setError(msg);
+            showToast(msg, "error");
             return;
         }
         if (rawText.length < 50) {
-            showToast("Content is too short (min 50 characters)", "error");
+            const msg = "Content is too short (min 50 characters)";
+            setError(msg);
+            showToast(msg, "error");
             return;
         }
 
         setIsUploading(true);
+        setError(null);
         setUploadStep("Ingesting Raw Text...");
 
         try {
@@ -118,8 +136,9 @@ export function ImportResume() {
                 openImportedResume(data.id);
             }, 800);
         } catch (err) {
-            const error = err as Error;
-            showToast(error.message, "error");
+            const msg = getErrorMessage(err, "Failed to import raw text");
+            setError(msg);
+            showToast(msg, "error");
             setIsUploading(false);
             setUploadStep("");
         }
@@ -222,7 +241,8 @@ export function ImportResume() {
                             {/* Tabs Switcher */}
                             <div className="flex border-b border-black/[0.04] px-8 bg-neutral-50/50">
                                 <button 
-                                    onClick={() => setActiveTab("file")}
+                                    disabled={isUploading}
+                                    onClick={() => { setError(null); setActiveTab("file"); }}
                                     className={`py-4 px-6 text-xs font-bold uppercase tracking-wider flex items-center gap-2 border-b-2 transition-all ${
                                         activeTab === "file" 
                                             ? "border-[#0A0A0A] text-[#0A0A0A]" 
@@ -233,7 +253,8 @@ export function ImportResume() {
                                     Document Upload
                                 </button>
                                 <button 
-                                    onClick={() => setActiveTab("raw")}
+                                    disabled={isUploading}
+                                    onClick={() => { setError(null); setActiveTab("raw"); }}
                                     className={`py-4 px-6 text-xs font-bold uppercase tracking-wider flex items-center gap-2 border-b-2 transition-all ${
                                         activeTab === "raw" 
                                             ? "border-[#0A0A0A] text-[#0A0A0A]" 
@@ -246,19 +267,46 @@ export function ImportResume() {
                             </div>
 
                             {/* Tab Content */}
-                            <div className="p-8 overflow-y-auto max-h-[60vh] custom-scrollbar flex-grow">
+                            <div className="p-8 overflow-y-auto max-h-[60vh] custom-scrollbar flex-grow space-y-6">
+                                {error && (
+                                    <div className="p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-2xl text-xs flex items-center justify-between gap-3 animate-in fade-in duration-200">
+                                        <div className="flex items-center gap-2">
+                                            <RiErrorWarningLine size={18} className="shrink-0 text-rose-600" />
+                                            <span>{error}</span>
+                                        </div>
+                                        <button
+                                            disabled={isUploading}
+                                            onClick={(e) => {
+                                                setError(null);
+                                                if (activeTab === "file") {
+                                                    fileInputRef.current?.click();
+                                                } else {
+                                                    handleRawImport(e);
+                                                }
+                                            }}
+                                            className="px-3.5 py-1.5 bg-rose-600 text-white rounded-xl font-bold text-[11px] hover:bg-rose-700 transition-all flex items-center gap-1 shrink-0 disabled:opacity-50"
+                                        >
+                                            <RiRefreshLine size={14} />
+                                            Retry
+                                        </button>
+                                    </div>
+                                )}
+
                                 {activeTab === "file" ? (
                                     /* Tab 1: File Upload */
                                     <div className="space-y-6">
                                         <div 
-                                            onClick={() => fileInputRef.current?.click()}
-                                            className="border-2 border-dashed border-black/[0.08] hover:border-black/30 bg-neutral-50/50 hover:bg-neutral-50 rounded-3xl p-12 flex flex-col items-center justify-center text-center cursor-pointer transition-all group"
+                                            onClick={() => !isUploading && fileInputRef.current?.click()}
+                                            className={`border-2 border-dashed border-black/[0.08] bg-neutral-50/50 rounded-3xl p-12 flex flex-col items-center justify-center text-center transition-all group ${
+                                                isUploading ? "opacity-50 cursor-not-allowed" : "hover:border-black/30 hover:bg-neutral-50 cursor-pointer"
+                                            }`}
                                         >
                                             <input 
                                                 type="file" 
                                                 ref={fileInputRef}
                                                 onChange={handleFileUpload}
                                                 accept=".pdf,.docx,.txt"
+                                                disabled={isUploading}
                                                 className="hidden"
                                             />
                                             <div className="w-16 h-16 bg-white border border-black/[0.04] rounded-2xl flex items-center justify-center text-[#737373] group-hover:scale-110 shadow-sm transition-all mb-4">
@@ -280,9 +328,10 @@ export function ImportResume() {
                                             <input 
                                                 type="text"
                                                 value={rawTitle}
+                                                disabled={isUploading}
                                                 onChange={(e) => setRawTitle(e.target.value)}
                                                 placeholder="e.g. LaTeX Master Resume, Raw Draft"
-                                                className="w-full h-12 bg-white border border-black/[0.08] rounded-2xl px-4 text-sm font-bold text-[#0A0A0A] focus:border-[#0A0A0A] focus:ring-1 focus:ring-[#0A0A0A] outline-none transition-all"
+                                                className="w-full h-12 bg-white border border-black/[0.08] rounded-2xl px-4 text-sm font-bold text-[#0A0A0A] focus:border-[#0A0A0A] focus:ring-1 focus:ring-[#0A0A0A] outline-none transition-all disabled:opacity-50"
                                             />
                                         </div>
 
@@ -292,16 +341,18 @@ export function ImportResume() {
                                             </label>
                                             <textarea 
                                                 value={rawText}
+                                                disabled={isUploading}
                                                 onChange={(e) => setRawText(e.target.value)}
                                                 rows={10}
                                                 placeholder="Paste your raw LaTeX markup or unformatted text resume here..."
-                                                className="w-full bg-white border border-black/[0.08] rounded-3xl p-5 text-xs font-mono text-[#0A0A0A] focus:border-[#0A0A0A] focus:ring-1 focus:ring-[#0A0A0A] outline-none transition-all resize-y min-h-[200px]"
+                                                className="w-full bg-white border border-black/[0.08] rounded-3xl p-5 text-xs font-mono text-[#0A0A0A] focus:border-[#0A0A0A] focus:ring-1 focus:ring-[#0A0A0A] outline-none transition-all resize-y min-h-[200px] disabled:opacity-50"
                                             />
                                         </div>
 
                                         <button 
                                             type="submit"
-                                            className="w-full h-14 bg-[#0A0A0A] text-white hover:bg-neutral-800 rounded-2xl font-bold text-sm tracking-wide transition-all active:scale-[0.99] flex items-center justify-center gap-2"
+                                            disabled={isUploading || !rawText.trim()}
+                                            className="w-full h-14 bg-[#0A0A0A] text-white hover:bg-neutral-800 rounded-2xl font-bold text-sm tracking-wide transition-all active:scale-[0.99] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             Import Narrative Source
                                             <RiArrowRightLine size={16} />

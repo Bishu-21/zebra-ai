@@ -16,14 +16,15 @@ import { InsightsFeed, type TailoringData } from "@/components/dashboard/Insight
 import { ResumeVault } from "@/components/dashboard/ResumeVault";
 import { ProjectAnalyzerCard } from "@/components/dashboard/ProjectAnalyzerCard";
 import { getSafeSession } from "@/lib/auth-helpers";
-import { db } from "@/lib/db";
+import { db, sanitizeSecretText } from "@/lib/db";
 import { 
     user as userTable,
     resumes as resumesTable, 
     analysis as analysisTable, 
     atsOptimisations as atsOptimisationsTable,
     resumeVersions as resumeVersionsTable,
-    projectAnalyses as projectAnalysesTable
+    projectAnalyses as projectAnalysesTable,
+    applications as applicationsTable
 } from "@/lib/schema";
 import { eq, desc, count, inArray } from "drizzle-orm";
 import { ResumeAnalysisData } from "@/components/compiler/types";
@@ -34,16 +35,93 @@ export default async function DashboardPage() {
   try {
       session = await getSafeSession();
   } catch (error) {
-      console.error("Dashboard Session Check Failed:", error);
+      const msg = sanitizeSecretText(error instanceof Error ? error.message : String(error));
+      console.error("Dashboard Session Check Failed:", msg);
       return (
         <div className="p-12 text-center">
             <h1 className="text-2xl font-bold mb-4">Connection Issue</h1>
-            <p className="text-sm text-[#737373]">Connecting to the terminal. Please wait or refresh.</p>
+            <p className="text-sm text-[#737373]">Unable to connect to the session server. Please try refreshing.</p>
         </div>
       );
   }
 
   if (!session) return null;
+
+  try {
+    return await renderDashboardContent(session);
+  } catch (error) {
+    const msg = sanitizeSecretText(error instanceof Error ? error.message : String(error));
+    console.error("[Dashboard Page] DB connectivity error:", msg);
+    return (
+      <div className="p-10 max-w-4xl mx-auto my-12 bg-amber-50 border border-amber-200 rounded-3xl text-center space-y-4 shadow-sm">
+        <h2 className="text-2xl font-bold text-amber-900">Database Service Temporarily Unavailable</h2>
+        <p className="text-sm text-amber-800 max-w-md mx-auto leading-relaxed">
+          We are currently experiencing transient connectivity issues with our database service. Your data is safe. Please refresh the page in a few moments.
+        </p>
+        <a 
+          href="/dashboard"
+          className="inline-block px-5 py-2.5 bg-amber-900 text-white font-semibold text-xs rounded-xl hover:bg-amber-950 transition-colors shadow-xs"
+        >
+          Refresh Page
+        </a>
+      </div>
+    );
+  }
+}
+
+async function renderDashboardContent(session: NonNullable<Awaited<ReturnType<typeof getSafeSession>>>) {
+  // Fetch latest active application for primary user journey anchor
+  const latestApp = await db.query.applications.findFirst({
+      where: eq(applicationsTable.userId, session.user.id),
+      orderBy: [desc(applicationsTable.updatedAt)],
+      with: {
+          selectedResume: true,
+          changes: true,
+      }
+  });
+
+  const pendingChangesCount = latestApp?.changes?.filter(c => c.status === "pending").length || 0;
+
+  let nextAction = {
+      title: "Add application",
+      description: "Track a role you are applying for.",
+      actionLabel: "Add application",
+      actionHref: "/dashboard/job-tracker"
+  };
+
+  if (latestApp) {
+      if (pendingChangesCount > 0) {
+          nextAction = {
+              title: `Continue application: ${latestApp.position} @ ${latestApp.company}`,
+              description: `You have ${pendingChangesCount} suggestions ready for approval. Review before sending.`,
+              actionLabel: "Review suggestions",
+              actionHref: `/dashboard/applications/${latestApp.id}?step=suggestions`
+          };
+      } else if (!latestApp.selectedResumeId) {
+          nextAction = {
+              title: `Continue application: ${latestApp.position} @ ${latestApp.company}`,
+              description: "Attach or import a resume to tailor for this position.",
+              actionLabel: "Continue",
+              actionHref: `/dashboard/applications/${latestApp.id}?step=resume`
+          };
+      } else if (latestApp.status === "Tailoring" || latestApp.status === "Draft" || latestApp.status === "Preparing") {
+          nextAction = {
+              title: `Continue application: ${latestApp.position} @ ${latestApp.company}`,
+              description: "Your tailored profile is ready. Check final document and export.",
+              actionLabel: "Export resume",
+              actionHref: `/dashboard/applications/${latestApp.id}?step=export`
+          };
+      } else {
+          nextAction = {
+              title: `Application: ${latestApp.position} @ ${latestApp.company}`,
+              description: `Status: ${latestApp.status}. Follow up or mark next interview stage.`,
+              actionLabel: "Continue",
+              actionHref: `/dashboard/applications/${latestApp.id}`
+          };
+      }
+  }
+
+
 
   // Fetch project analyses for feed
   const projectResults = await db.query.projectAnalyses.findMany({
@@ -143,11 +221,12 @@ export default async function DashboardPage() {
   };
 
   const stats: StatItem[] = [
-    { label: "Total Resumes", value: resumeCount.value, icon: RiFileTextLine },
-    { label: "AI Analyses", value: analysisCount.value, icon: RiCheckboxCircleLine },
-    { label: "Role Matches", value: optimisationCount.value, icon: RiFlashlightLine },
-    { label: "AI Credits", icon: RiRadarLine, customValue: credits },
+    { label: "My Resumes", value: resumeCount.value, icon: RiFileTextLine },
+    { label: "Resume Reviews", value: analysisCount.value, icon: RiCheckboxCircleLine },
+    { label: "Tailored Applications", value: optimisationCount.value, icon: RiFlashlightLine },
+    { label: "Credits", icon: RiRadarLine, customValue: credits },
   ];
+
 
   const vaultItems = resumesWithStatus.map(r => ({
       id: r.id,
@@ -219,7 +298,7 @@ export default async function DashboardPage() {
   return (
     <div className="p-6 md:p-10 pb-32 max-w-[90rem] mx-auto overflow-x-hidden">
       {/* Welcome Banner + Compact Cute Metrics Widget */}
-      <div className="mb-10 flex flex-col xl:flex-row xl:items-center justify-between gap-6 bg-[#FAF9F6] p-6 md:p-8 rounded-3xl border border-neutral-200/70 shadow-xs">
+      <div className="mb-8 flex flex-col xl:flex-row xl:items-center justify-between gap-6 bg-[#FAF9F6] p-6 md:p-8 rounded-3xl border border-neutral-200/70 shadow-xs">
         {/* Left: Greeting */}
         <div className="space-y-1">
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-[#0A0A0A]">
@@ -230,7 +309,7 @@ export default async function DashboardPage() {
           </p>
         </div>
 
-        {/* Right: Cute Compact Metrics Cards (Inspired by Flow UI) */}
+        {/* Right: Metrics Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-white p-3 rounded-2xl border border-neutral-200/80 shadow-xs shrink-0">
           {stats.map((stat, i) => (
             <div key={i} className="flex flex-col p-3 rounded-xl bg-[#FAF9F6] border border-neutral-200/60 hover:bg-neutral-100/80 transition-colors min-w-[110px]">
@@ -247,6 +326,31 @@ export default async function DashboardPage() {
           ))}
         </div>
       </div>
+
+      {/* Primary User Journey Hero Anchor: Continue Your Application */}
+      <div className="mb-10 p-6 md:p-8 bg-[#0A0A0A] text-white rounded-3xl shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div className="space-y-2 max-w-2xl">
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full text-xs font-bold text-neutral-300">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            Next Step
+          </div>
+          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-white">
+            {nextAction.title}
+          </h2>
+          <p className="text-xs md:text-sm text-neutral-400 font-normal leading-relaxed">
+            {nextAction.description}
+          </p>
+        </div>
+
+        <Link
+          href={nextAction.actionHref}
+          className="inline-flex items-center gap-2 bg-white text-[#0A0A0A] px-6 py-3 rounded-xl font-bold text-xs hover:bg-neutral-100 transition-all shadow-md active:scale-95 shrink-0"
+        >
+          <span>{nextAction.actionLabel}</span>
+          <RiArrowRightSLine size={16} />
+        </Link>
+      </div>
+
 
       {/* Action Cards Grid - 3-Top / 2-Bottom Olympic Rings Layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-5 mb-12">
@@ -292,12 +396,12 @@ export default async function DashboardPage() {
         <ResumeVault items={vaultItems} />
       </div>
 
-      {/* Performance Insights Section */}
+      {/* Recent Activity Section */}
       <div className="mt-16">
         <div className="flex items-center gap-2 mb-6 pb-4 border-b border-neutral-200/70">
-            <h2 className="text-xl md:text-2xl font-bold text-[#0A0A0A] tracking-tight">Performance Insights</h2>
-            <span className="text-xs font-medium text-neutral-400">(Recent Activity)</span>
+            <h2 className="text-xl md:text-2xl font-bold text-[#0A0A0A] tracking-tight">Recent Activity</h2>
         </div>
+
         
         {intelligenceReports.length === 0 ? (
             <div className="py-14 bg-white rounded-3xl border border-neutral-200/80 p-8 flex flex-col items-center justify-center text-center shadow-xs">

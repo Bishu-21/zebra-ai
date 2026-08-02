@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 import { generateResumeHtml } from "@/lib/resume-renderer";
 import { handleApiError } from "@/lib/api-error";
+import { requireAuth } from "@/lib/auth-policy";
 
 /**
  * HARDENED EXPORT API — Server-Side PDF Generation Gate
@@ -25,16 +24,11 @@ const PREMIUM_TEMPLATES = ["executive", "advanced-pro", "fortune500"];
 
 export async function POST(req: NextRequest) {
     try {
-        const session = await auth.api.getSession({
-            headers: await headers(),
-        });
-
-        if (!session) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
+        const { auth: authCtx, errorResponse } = await requireAuth();
+        if (errorResponse) return errorResponse;
 
         const { resumeData, template = "modern" } = await req.json();
-        const user = session.user as unknown as { plan?: string };
+        const user = authCtx.user as unknown as { plan?: string };
         const userPlan = user.plan || "Free";
 
         // PAYWALL GATE: Premium templates require paid plan

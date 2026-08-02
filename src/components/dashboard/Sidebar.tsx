@@ -125,19 +125,19 @@ export function Sidebar({ plan, credits, userName, userImage, onOpenSettingsActi
                         
                         <div className="space-y-1">
                             <DashboardLink href="/dashboard" icon={<RiHome5Line size={18} />}>
-                                Resumes
+                                Home
                             </DashboardLink>
-                            <DashboardLink href="/dashboard/work" icon={<RiBriefcaseLine size={18} />}>
+                            <DashboardLink href="/dashboard/job-tracker" icon={<RiBriefcaseLine size={18} />}>
+                                My Applications
+                            </DashboardLink>
+                            <DashboardLink href="/dashboard/resumes" icon={<RiFileTextLine size={18} />}>
+                                My Resume
+                            </DashboardLink>
+                            <DashboardLink href="/dashboard/work" icon={<RiFileTextLine size={18} />}>
                                 My Work
                             </DashboardLink>
-                            <DashboardLink href="/dashboard/job-tracker" icon={<RiFileTextLine size={18} />}>
-                                Applications
-                            </DashboardLink>
-                            <DashboardLink href="/dashboard/cover-letters" icon={<RiFileTextLine size={18} />}>
-                                Cover Letters
-                            </DashboardLink>
-                            <DashboardLink href="/dashboard/analytics" icon={<RiBarChartGroupedLine size={18} />}>
-                                Analytics
+                            <DashboardLink href="/dashboard/portfolio" icon={<RiBarChartGroupedLine size={18} />}>
+                                Portfolio
                             </DashboardLink>
                             <button 
                                 onClick={onOpenSettingsAction}

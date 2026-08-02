@@ -1,25 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { resumes as resumesTable, analysis as analysisTable } from "@/lib/schema";
 import { eq, desc, and } from "drizzle-orm";
-import { headers } from "next/headers";
 import { handleApiError } from "@/lib/api-error";
 import crypto from "crypto";
+import { resumeSchema } from "@/lib/validation";
+import { requireAuth, notFoundResponse } from "@/lib/auth-policy";
 
 export async function GET() {
   try {
-    const session = await auth.api.getSession({
-        headers: await headers(),
-    });
-
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { auth: authCtx, errorResponse } = await requireAuth();
+    if (errorResponse) return errorResponse;
 
     // Fetch resumes with their latest analysis
     const userResumes = await db.query.resumes.findMany({
-        where: eq(resumesTable.userId, session.user.id),
+        where: eq(resumesTable.userId, authCtx.user.id),
         orderBy: [desc(resumesTable.updatedAt)],
     });
 
@@ -41,17 +36,10 @@ export async function GET() {
   }
 }
 
-import { resumeSchema } from "@/lib/validation";
-
 export async function POST(req: NextRequest) {
     try {
-      const session = await auth.api.getSession({
-          headers: await headers(),
-      });
-  
-      if (!session) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
+      const { auth: authCtx, errorResponse } = await requireAuth();
+      if (errorResponse) return errorResponse;
   
       const body = await req.json();
       const validation = resumeSchema.safeParse(body);
@@ -63,8 +51,7 @@ export async function POST(req: NextRequest) {
       const { id, title, content } = validation.data;
   
       if (id) {
-          // Update existing — ownership check: only update if resume belongs to this user
-          const result = await db.update(resumesTable)
+          const [updated] = await db.update(resumesTable)
               .set({ 
                   title: title || "Untitled", 
                   content, 
@@ -73,21 +60,21 @@ export async function POST(req: NextRequest) {
               .where(
                   and(
                       eq(resumesTable.id, id),
-                      eq(resumesTable.userId, session.user.id)
+                      eq(resumesTable.userId, authCtx.user.id)
                   )
-              );
+              )
+              .returning({ id: resumesTable.id });
           
-          if (result.rowCount === 0) {
-              return NextResponse.json({ error: "Resume not found" }, { status: 404 });
+          if (!updated) {
+              return notFoundResponse("Resume");
           }
 
           return NextResponse.json({ success: true, id });
       } else {
-          // Create new
           const newId = crypto.randomUUID();
           await db.insert(resumesTable).values({
               id: newId,
-              userId: session.user.id,
+              userId: authCtx.user.id,
               title: title || "Untitled Resume",
               content: content || "",
               createdAt: new Date(),

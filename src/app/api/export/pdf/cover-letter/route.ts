@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateCoverLetterHtml } from "@/lib/cover-letter-renderer";
 import chromium from "@sparticuz/chromium-min";
 import puppeteer, { type Browser } from "puppeteer-core";
+import { requireAuth } from "@/lib/auth-policy";
 
 /**
  * COVER LETTER PDF EXPORT API
@@ -11,6 +12,9 @@ import puppeteer, { type Browser } from "puppeteer-core";
 
 export async function POST(req: NextRequest) {
     try {
+        const { errorResponse } = await requireAuth();
+        if (errorResponse) return errorResponse;
+
         const { content, title } = await req.json();
         
         if (!content) {

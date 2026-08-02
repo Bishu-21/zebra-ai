@@ -1,71 +1,43 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 import chromium from "@sparticuz/chromium-min";
 import puppeteer, { type Browser, type HTTPRequest } from "puppeteer-core";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-
-/**
- * JOB SCRAPER API
- * 
- * Scrapes job listing pages (LinkedIn, Indeed, etc.) using Puppeteer
- * and extracts relevant details using Gemini AI.
- */
-
 import { scrapeSchema } from "@/lib/validation";
+import { requireAuth } from "@/lib/auth-policy";
+import { validateUrlForSsrf } from "@/lib/ssrf";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { sanitizeSecretText } from "@/lib/db";
 
 export async function POST(req: NextRequest) {
     try {
-        const session = await auth.api.getSession({
-            headers: await headers(),
-        });
+        const { auth: authCtx, errorResponse } = await requireAuth();
+        if (errorResponse) return errorResponse;
 
-        if (!session) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        // Rate limiting boundary (max 5 scrape requests per minute per user)
+        const rateCheck = checkRateLimit(`scrape:${authCtx.user.id}`, 5, 60000);
+        if (!rateCheck.success) {
+            return NextResponse.json({ 
+                error: "Rate limit exceeded. Please wait a minute before scraping another job URL." 
+            }, { status: 429 });
         }
 
         const body = await req.json();
         const validation = scrapeSchema.safeParse(body);
 
         if (!validation.success) {
-            return NextResponse.json({ error: validation.error.issues[0].message }, { status: 400 });
+            return NextResponse.json({ error: validation.error.issues[0]?.message || "Invalid payload" }, { status: 400 });
         }
 
         const { url } = validation.data;
 
-        // SSRF Protection: Enforce protocol and block private/local addresses
-        try {
-            const parsedUrl = new URL(url);
-            if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
-                return NextResponse.json({ error: "Only HTTP and HTTPS protocols are allowed." }, { status: 400 });
-            }
-
-            const hostname = parsedUrl.hostname.toLowerCase();
-            const privatePatterns = [
-                /^localhost$/,
-                /^127\./,
-                /^10\./,
-                /^172\.(1[6-9]|2[0-9]|3[0-1])\./,
-                /^192\.168\./,
-                /^0\./,
-                /^169\.254\./, // Link-local / Metadata
-                /^::1$/,
-                /^fd[0-9a-f]{2}:/i, // IPv6 ULA
-                /^fe80:/i, // IPv6 link-local
-            ];
-
-            if (privatePatterns.some(pattern => pattern.test(hostname))) {
-                return NextResponse.json({ 
-                    error: "Access to local or private network addresses is prohibited for security reasons." 
-                }, { status: 400 });
-            }
-        } catch {
-            return NextResponse.json({ error: "Invalid URL format." }, { status: 400 });
+        // SSRF Protection
+        const ssrfCheck = validateUrlForSsrf(url);
+        if (!ssrfCheck.valid) {
+            return NextResponse.json({ error: ssrfCheck.error }, { status: 400 });
         }
 
         let browser: Browser | null = null;
         try {
-            // 1. Launch headless browser
             const isLocal = process.env.NODE_ENV === 'development' || process.platform === 'win32';
             
             browser = await puppeteer.launch({
@@ -78,11 +50,8 @@ export async function POST(req: NextRequest) {
             });
 
             const page = await browser.newPage();
-            
-            // Set a realistic user agent
             await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36');
             
-            // Block images and extra resources to speed up
             await page.setRequestInterception(true);
             page.on('request', (request: HTTPRequest) => {
                 try {
@@ -93,28 +62,23 @@ export async function POST(req: NextRequest) {
                         request.continue().catch(() => {});
                     }
                 } catch {
-                    // Ignore errors if the request was already handled or page is closed
+                    // Ignore errors if request was handled
                 }
             });
 
-            // Handle page errors to prevent unhandled rejections
             page.on('error', (err: Error) => {
-                console.error('Puppeteer page error:', err);
-            });
-            page.on('pageerror', (err: unknown) => {
-                console.error('Puppeteer page crash:', err);
+                console.error('Puppeteer page error:', sanitizeSecretText(err.message));
             });
 
-            // Navigate to URL
-            await page.goto(url, { waitUntil: 'networkidle2', timeout: 25000 });
+            // Enforce bounded navigation timeout (20s)
+            await page.goto(url, { waitUntil: 'networkidle2', timeout: 20000 });
 
             try {
-                await page.waitForSelector('main, article, .job-description, #job-description, .posting-content, [role="main"]', { timeout: 8000 });
+                await page.waitForSelector('main, article, .job-description, #job-description, .posting-content, [role="main"]', { timeout: 5000 });
             } catch {
-                console.log("Selector timeout, proceeding with current state");
+                // Proceed with current DOM state
             }
 
-            // 1. Extract metadata first (often more reliable)
             const metaData = await page.evaluate(() => {
                 const getMeta = (name: string) => 
                     document.querySelector(`meta[property="${name}"], meta[name="${name}"]`)?.getAttribute('content');
@@ -128,9 +92,7 @@ export async function POST(req: NextRequest) {
                 };
             });
 
-            // 2. Extract visible text content, focusing on common job containers
             const pageContent = await page.evaluate(() => {
-                // Focus on meaningful text regions
                 const unwanted = document.querySelectorAll('script, style, nav, footer, iframe, noscript, .ad, .ads, #header, .nav, .menu, #footer');
                 unwanted.forEach(s => (s as HTMLElement).style.display = 'none');
                 
@@ -156,8 +118,7 @@ export async function POST(req: NextRequest) {
             await browser.close();
             browser = null;
 
-            // 3. Use Gemini to extract details
-            const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+            const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "dummy");
             const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" });
 
             const prompt = `
@@ -172,24 +133,18 @@ export async function POST(req: NextRequest) {
                 {
                     "company": "Extracted Company Name",
                     "position": "Extracted Job Title",
-                    "salary": "Extracted salary if found (e.g. $120k - $150k), else null",
-                    "location": "Extracted location (e.g. Remote, New York, etc.), else null",
-                    "jobType": "Full-time, Contract, Internship, etc., else null",
-                    "description": "A very brief 1-sentence summary of the job"
+                    "salary": "Extracted salary if found, else null",
+                    "location": "Extracted location, else null",
+                    "jobType": "Full-time, Contract, etc., else null",
+                    "description": "A brief summary of the job"
                 }
-                Guidelines:
-                - Be surgical and precise.
-                - If you cannot find a field, use null. 
-                - Look at the metadata first for company and position.
-                - Clean up any "Apply now" or extra text from titles.
-                - Only return the JSON.
             `;
 
             const result = await model.generateContent(prompt);
             const aiResponse = result.response.text();
             
             const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-            if (!jsonMatch) throw new Error("AI failed to extract structured data");
+            if (!jsonMatch) throw new Error("Failed to extract structured job data");
             
             const jobData = JSON.parse(jsonMatch[0]);
 
@@ -205,30 +160,27 @@ export async function POST(req: NextRequest) {
             });
 
         } catch (err: unknown) {
-            console.error("Scrape Operation Failed:", err || "Undefined Rejection");
-            const errorMessage = err instanceof Error ? err.message : String(err || "Unknown error");
-            const isProd = process.env.NODE_ENV === "production";
+            const sanitizedMsg = sanitizeSecretText(err instanceof Error ? err.message : String(err));
+            console.error("Scrape Operation Error:", sanitizedMsg);
             
             return NextResponse.json({ 
                 error: "Failed to scrape job listing automatically.",
-                details: isProd ? "Internal trace omitted." : errorMessage,
-                suggestion: "Please try copying and pasting the job details manually into the form if the URL scraping continues to fail."
+                suggestion: "Please try copying and pasting the job details manually if URL scraping fails."
             }, { status: 500 });
         } finally {
             if (browser) {
                 try {
                     await browser.close();
                 } catch {
-                    console.error("Error closing browser");
+                    // Ignore cleanup error
                 }
             }
         }
     } catch (outerError: unknown) {
-        console.error("Fatal Scrape Error:", outerError || "Undefined Fatal Error");
-        const isProd = process.env.NODE_ENV === "production";
+        const sanitizedMsg = sanitizeSecretText(outerError instanceof Error ? outerError.message : String(outerError));
+        console.error("Fatal Scrape Error:", sanitizedMsg);
         return NextResponse.json({ 
-            error: "Internal Server Error",
-            details: isProd ? "Internal trace omitted." : (outerError instanceof Error ? outerError.message : "Fatal error with no details")
+            error: "Internal server error during scraping operation."
         }, { status: 500 });
     }
 }

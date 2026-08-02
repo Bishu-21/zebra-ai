@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { jobs as jobsTable, resumes as resumesTable, resumeVersions as resumeVersionsTable } from "@/lib/schema";
+import { jobs as jobsTable } from "@/lib/schema";
 import { eq, desc, and } from "drizzle-orm";
-import { headers } from "next/headers";
 import { handleApiError } from "@/lib/api-error";
 import { idSchema, jobSchema } from "@/lib/validation";
 import crypto from "crypto";
+import { 
+    requireAuth, 
+    getUserOwnedResume, 
+    getUserOwnedResumeVersion, 
+    notFoundResponse 
+} from "@/lib/auth-policy";
 
 const jobPatchSchema = jobSchema.partial().extend({ id: idSchema });
 
@@ -28,19 +32,13 @@ async function validateLinkedAsset({
     }
 
     if (resumeId) {
-        const resume = await db.query.resumes.findFirst({
-            where: and(eq(resumesTable.id, resumeId), eq(resumesTable.userId, userId)),
-            columns: { id: true },
-        });
-        if (!resume) return "Resume not found or unauthorized";
+        const resume = await getUserOwnedResume(userId, resumeId);
+        if (!resume) return "Resume not found";
     }
 
     if (resumeVersionId) {
-        const version = await db.query.resumeVersions.findFirst({
-            where: and(eq(resumeVersionsTable.id, resumeVersionId), eq(resumeVersionsTable.userId, userId)),
-            columns: { id: true },
-        });
-        if (!version) return "Resume version not found or unauthorized";
+        const version = await getUserOwnedResumeVersion(userId, resumeVersionId);
+        if (!version) return "Resume version not found";
     }
 
     return null;
@@ -48,16 +46,11 @@ async function validateLinkedAsset({
 
 export async function GET() {
   try {
-    const session = await auth.api.getSession({
-        headers: await headers(),
-    });
-
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { auth: authCtx, errorResponse } = await requireAuth();
+    if (errorResponse) return errorResponse;
 
     const userJobs = await db.query.jobs.findMany({
-        where: eq(jobsTable.userId, session.user.id),
+        where: eq(jobsTable.userId, authCtx.user.id),
         orderBy: [desc(jobsTable.updatedAt)],
     });
 
@@ -70,13 +63,8 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
     try {
-      const session = await auth.api.getSession({
-          headers: await headers(),
-      });
-  
-      if (!session) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
+      const { auth: authCtx, errorResponse } = await requireAuth();
+      if (errorResponse) return errorResponse;
   
       const body = await req.json();
       const validation = jobSchema.safeParse(body);
@@ -87,13 +75,13 @@ export async function POST(req: NextRequest) {
 
       const { company, position, status, salary, url, location, jobType, description, resumeId, resumeVersionId } = validation.data;
 
-      const linkError = await validateLinkedAsset({ resumeId, resumeVersionId, userId: session.user.id });
-      if (linkError) return NextResponse.json({ error: linkError }, { status: 400 });
+      const linkError = await validateLinkedAsset({ resumeId, resumeVersionId, userId: authCtx.user.id });
+      if (linkError) return NextResponse.json({ error: linkError }, { status: 404 });
 
       const id = crypto.randomUUID();
       await db.insert(jobsTable).values({
           id,
-          userId: session.user.id,
+          userId: authCtx.user.id,
           company,
           position,
           status: status || "Applied",
@@ -117,13 +105,8 @@ export async function POST(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
     try {
-        const session = await auth.api.getSession({
-            headers: await headers(),
-        });
-    
-        if (!session) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
+        const { auth: authCtx, errorResponse } = await requireAuth();
+        if (errorResponse) return errorResponse;
     
         const body = await req.json();
         const validation = jobPatchSchema.safeParse(body);
@@ -134,8 +117,8 @@ export async function PATCH(req: NextRequest) {
 
         const { id, status, company, position, salary, url, location, jobType, description, resumeId, resumeVersionId } = validation.data;
 
-        const linkError = await validateLinkedAsset({ resumeId, resumeVersionId, userId: session.user.id });
-        if (linkError) return NextResponse.json({ error: linkError }, { status: 400 });
+        const linkError = await validateLinkedAsset({ resumeId, resumeVersionId, userId: authCtx.user.id });
+        if (linkError) return NextResponse.json({ error: linkError }, { status: 404 });
 
         const updateValues = {
             ...(status !== undefined ? { status } : {}),
@@ -156,13 +139,13 @@ export async function PATCH(req: NextRequest) {
             .where(
                 and(
                     eq(jobsTable.id, id),
-                    eq(jobsTable.userId, session.user.id)
+                    eq(jobsTable.userId, authCtx.user.id)
                 )
             )
             .returning({ id: jobsTable.id });
         
         if (updated.length === 0) {
-            return NextResponse.json({ error: "Job not found" }, { status: 404 });
+            return notFoundResponse("Job");
         }
 
         return NextResponse.json({ success: true });
@@ -174,13 +157,8 @@ export async function PATCH(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
     try {
-        const session = await auth.api.getSession({
-            headers: await headers(),
-        });
-    
-        if (!session) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
+        const { auth: authCtx, errorResponse } = await requireAuth();
+        if (errorResponse) return errorResponse;
     
         const body = await req.json();
         const validation = idSchema.safeParse(body.id);
@@ -195,13 +173,13 @@ export async function DELETE(req: NextRequest) {
             .where(
                 and(
                     eq(jobsTable.id, id),
-                    eq(jobsTable.userId, session.user.id)
+                    eq(jobsTable.userId, authCtx.user.id)
                 )
             )
             .returning({ id: jobsTable.id });
         
         if (deleted.length === 0) {
-            return NextResponse.json({ error: "Job not found" }, { status: 404 });
+            return notFoundResponse("Job");
         }
 
         return NextResponse.json({ success: true });

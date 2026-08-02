@@ -1,10 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { portfolios as portfoliosTable, workItems as workItemsTable } from "@/lib/schema";
-import { eq, and } from "drizzle-orm";
+import { portfolios as portfoliosTable } from "@/lib/schema";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
+import { requireAuth, validateSelectedWorkIds, notFoundResponse } from "@/lib/auth-policy";
 
 const portfolioSchema = z.object({
     slug: z.string().min(3, "Slug must be at least 3 characters").max(50).regex(/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens"),
@@ -15,43 +14,40 @@ const portfolioSchema = z.object({
     theme: z.string().default("default"),
 });
 
-export async function GET(req: NextRequest) {
+export async function GET() {
     try {
-        const session = await auth.api.getSession({
-            headers: await headers(),
-        });
-
-        if (!session?.user) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
+        const { auth: authCtx, errorResponse } = await requireAuth();
+        if (errorResponse) return errorResponse;
 
         const portfolio = await db.query.portfolios.findFirst({
-            where: eq(portfoliosTable.userId, session.user.id),
+            where: eq(portfoliosTable.userId, authCtx.user.id),
         });
 
         return NextResponse.json({ portfolio: portfolio || null });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("GET /api/portfolio Error:", error);
-        return NextResponse.json({ error: error.message || "Failed to fetch portfolio" }, { status: 500 });
+        return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to fetch portfolio" }, { status: 500 });
     }
 }
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
     try {
-        const session = await auth.api.getSession({
-            headers: await headers(),
-        });
-
-        if (!session?.user) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
+        const { auth: authCtx, errorResponse } = await requireAuth();
+        if (errorResponse) return errorResponse;
 
         const body = await req.json();
         const parsed = portfolioSchema.parse(body);
         const now = new Date();
 
+        if (parsed.selectedWorkIds && parsed.selectedWorkIds.length > 0) {
+            const valid = await validateSelectedWorkIds(authCtx.user.id, parsed.selectedWorkIds);
+            if (!valid) {
+                return notFoundResponse("One or more selected work items");
+            }
+        }
+
         const existing = await db.query.portfolios.findFirst({
-            where: eq(portfoliosTable.userId, session.user.id),
+            where: eq(portfoliosTable.userId, authCtx.user.id),
         });
 
         if (existing) {
@@ -72,7 +68,7 @@ export async function POST(req: NextRequest) {
             const id = `port_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
             const [created] = await db.insert(portfoliosTable).values({
                 id,
-                userId: session.user.id,
+                userId: authCtx.user.id,
                 slug: parsed.slug,
                 title: parsed.title,
                 bio: parsed.bio || null,
@@ -84,11 +80,12 @@ export async function POST(req: NextRequest) {
             }).returning();
             return NextResponse.json({ portfolio: created });
         }
-    } catch (error: any) {
+    } catch (error: unknown) {
         if (error instanceof z.ZodError) {
             return NextResponse.json({ error: error.issues?.[0]?.message || "Validation failed" }, { status: 400 });
         }
         console.error("POST /api/portfolio Error:", error);
-        return NextResponse.json({ error: error.message || "Failed to save portfolio" }, { status: 500 });
+        return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to save portfolio" }, { status: 500 });
     }
 }
+

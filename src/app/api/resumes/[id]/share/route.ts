@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { resumes } from "@/lib/schema";
 import { eq, and } from "drizzle-orm";
-import { headers } from "next/headers";
 import crypto from "crypto";
 import { handleApiError } from "@/lib/api-error";
+import { shareSchema } from "@/lib/validation";
+import { requireAuth, getUserOwnedResume, notFoundResponse } from "@/lib/auth-policy";
 
 /**
  * POST /api/resumes/[id]/share — Generate a share token for public viewing
@@ -13,14 +13,12 @@ import { handleApiError } from "@/lib/api-error";
  * GET /api/resumes/[id]/share — Get current share status
  */
 
-import { shareSchema } from "@/lib/validation";
-
 export async function POST(req: NextRequest, { params: paramsPromise }: { params: Promise<{ id: string }> }) {
     const params = await paramsPromise;
     
     try {
-        const session = await auth.api.getSession({ headers: await headers() });
-        if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        const { auth: authCtx, errorResponse } = await requireAuth();
+        if (errorResponse) return errorResponse;
 
         const body = await req.json();
         const validation = shareSchema.safeParse(body);
@@ -32,10 +30,8 @@ export async function POST(req: NextRequest, { params: paramsPromise }: { params
         const { isPublic } = validation.data;
 
         // Verify ownership
-        const resume = await db.query.resumes.findFirst({
-            where: and(eq(resumes.id, params.id), eq(resumes.userId, session.user.id)),
-        });
-        if (!resume) return NextResponse.json({ error: "Not found" }, { status: 404 });
+        const resume = await getUserOwnedResume(authCtx.user.id, params.id);
+        if (!resume) return notFoundResponse("Resume");
 
         // Generate token if it doesn't exist
         let shareToken = resume.shareToken;
@@ -49,7 +45,7 @@ export async function POST(req: NextRequest, { params: paramsPromise }: { params
                 isPublic: isPublic ?? resume.isPublic,
                 updatedAt: new Date() 
             })
-            .where(eq(resumes.id, params.id));
+            .where(and(eq(resumes.id, params.id), eq(resumes.userId, authCtx.user.id)));
 
         const shareUrl = `${getBaseUrl(req)}/share/${shareToken}`;
         return NextResponse.json({ shareToken, shareUrl, isPublic: isPublic ?? resume.isPublic });
@@ -61,12 +57,17 @@ export async function POST(req: NextRequest, { params: paramsPromise }: { params
 export async function DELETE(req: NextRequest, { params: paramsPromise }: { params: Promise<{ id: string }> }) {
     const params = await paramsPromise;
     try {
-        const session = await auth.api.getSession({ headers: await headers() });
-        if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        const { auth: authCtx, errorResponse } = await requireAuth();
+        if (errorResponse) return errorResponse;
 
-        await db.update(resumes)
+        const [updated] = await db.update(resumes)
             .set({ shareToken: null, isPublic: false, updatedAt: new Date() })
-            .where(and(eq(resumes.id, params.id), eq(resumes.userId, session.user.id)));
+            .where(and(eq(resumes.id, params.id), eq(resumes.userId, authCtx.user.id)))
+            .returning({ id: resumes.id });
+
+        if (!updated) {
+            return notFoundResponse("Resume");
+        }
 
         return NextResponse.json({ revoked: true });
     } catch (error: unknown) {
@@ -77,14 +78,11 @@ export async function DELETE(req: NextRequest, { params: paramsPromise }: { para
 export async function GET(req: NextRequest, { params: paramsPromise }: { params: Promise<{ id: string }> }) {
     const params = await paramsPromise;
     try {
-        const session = await auth.api.getSession({ headers: await headers() });
-        if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        const { auth: authCtx, errorResponse } = await requireAuth();
+        if (errorResponse) return errorResponse;
 
-        const resume = await db.query.resumes.findFirst({
-            where: and(eq(resumes.id, params.id), eq(resumes.userId, session.user.id)),
-            columns: { shareToken: true, isPublic: true },
-        });
-        if (!resume) return NextResponse.json({ error: "Not found" }, { status: 404 });
+        const resume = await getUserOwnedResume(authCtx.user.id, params.id);
+        if (!resume) return notFoundResponse("Resume");
 
         if (resume.shareToken) {
             const shareUrl = `${getBaseUrl(req)}/share/${resume.shareToken}`;
@@ -107,6 +105,5 @@ function getBaseUrl(req: NextRequest): string {
     
     if (host) return `${proto}://${host}`;
     
-    // Fallback to env var or localhost
     return process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 }

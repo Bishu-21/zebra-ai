@@ -85,7 +85,7 @@ export function ResumeVault({ items }: ResumeVaultProps) {
             {/* Clean Section Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-neutral-200/70">
                 <div className="flex items-center gap-2">
-                    <h2 className="text-xl md:text-2xl font-bold text-[#0A0A0A] tracking-tight">Resume Vault</h2>
+                    <h2 className="text-xl md:text-2xl font-bold text-[#0A0A0A] tracking-tight">My Resumes</h2>
                     <span className="text-xs font-medium text-neutral-400">({items.length} resumes)</span>
                 </div>
 
@@ -93,7 +93,7 @@ export function ResumeVault({ items }: ResumeVaultProps) {
                     <RiSearchLine className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-[#0A0A0A] transition-colors" size={16} />
                     <input 
                         type="text"
-                        placeholder="Search your vault..."
+                        placeholder="Search your resumes..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         className="bg-neutral-100/70 border border-neutral-200/80 rounded-xl pl-10 pr-4 py-2 text-xs font-medium outline-none focus:bg-white focus:border-[#0A0A0A] focus:ring-2 focus:ring-black/5 transition-all w-full sm:w-64"

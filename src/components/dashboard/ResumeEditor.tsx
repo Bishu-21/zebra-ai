@@ -35,10 +35,24 @@ interface ResumeEditorProps {
 
 export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps) {
     const [resume, setResume] = useState<ResumeData>(() => parseResumeData(initialData));
-    const [selectedTemplate, setSelectedTemplate] = useState<TemplateType>(() => {
-        const saved = localStorage.getItem(`resume-template-${initialData?.id || 'new'}`);
-        return (saved as TemplateType) || 'modern';
-    });
+    const [selectedTemplate, setSelectedTemplate] = useState<TemplateType>("modern");
+
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const saved = localStorage.getItem(`resume-template-${initialData?.id || "new"}`);
+            if (saved === "modern" || saved === "professional" || saved === "minimal" || saved === "executive") {
+                setSelectedTemplate(saved as TemplateType);
+            }
+        }
+    }, [initialData?.id]);
+
+
+    useEffect(() => {
+        if (typeof window !== "undefined" && initialData?.id) {
+            localStorage.setItem(`resume-template-${initialData.id}`, selectedTemplate);
+        }
+    }, [initialData?.id, selectedTemplate]);
+
     const [isSaving, setIsSaving] = useState(false);
     const [activeSection, setActiveSection] = useState<SectionId>("basics");
     const [viewMode, setViewMode] = useState<"sheet" | "source">("sheet");
@@ -577,7 +591,7 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                         className="hidden sm:flex h-7 px-2 sm:px-3 rounded-[var(--radius-md)] text-[10px] font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-all items-center gap-1.5 disabled:opacity-50"
                     >
                         {isGeneratingPdf ? <RiLoader4Line size={12} className="animate-spin" /> : <RiFileDownloadLine size={12} />}
-                        <span>{isGeneratingPdf ? "Exporting..." : "Export"}</span>
+                        <span>{isGeneratingPdf ? "Exporting..." : "Export resume"}</span>
                     </button>
                     <button 
                         onClick={() => setIsZenMode(!isZenMode)}

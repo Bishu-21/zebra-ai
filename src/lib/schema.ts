@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, integer, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, integer, jsonb, index } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
 export const user = pgTable("user", {
@@ -95,7 +95,9 @@ export const resumes = pgTable("resumes", {
     shareToken: text("share_token"), // Unique token for public sharing
     createdAt: timestamp("created_at").notNull(),
     updatedAt: timestamp("updated_at").notNull(),
-});
+}, (table) => [
+    index("resumes_user_id_idx").on(table.userId),
+]);
 
 export const resumesRelations = relations(resumes, ({ one, many }) => ({
     user: one(user, { fields: [resumes.userId], references: [user.id] }),
@@ -183,7 +185,9 @@ export const atsOptimisations = pgTable("ats_optimisations", {
     matchScore: integer("match_score").notNull(),
     feedback: jsonb("feedback").notNull(), // Keywords found, recommendations
     createdAt: timestamp("created_at").notNull(),
-});
+}, (table) => [
+    index("ats_optimisations_user_id_idx").on(table.userId),
+]);
 
 export const atsOptimisationsRelations = relations(atsOptimisations, ({ one }) => ({
     user: one(user, { fields: [atsOptimisations.userId], references: [user.id] }),
@@ -205,7 +209,10 @@ export const transactions = pgTable("transactions", {
     status: text("status").notNull(), // "pending", "success", "failed"
     createdAt: timestamp("created_at").notNull(),
     updatedAt: timestamp("updated_at").notNull(),
-});
+}, (table) => [
+    index("transactions_order_id_idx").on(table.orderId),
+    index("transactions_user_id_idx").on(table.userId),
+]);
 
 export const transactionsRelations = relations(transactions, ({ one }) => ({
     user: one(user, { fields: [transactions.userId], references: [user.id] }),
@@ -243,7 +250,9 @@ export const resumeVersions = pgTable("resume_versions", {
     feedback: jsonb("feedback"),
     createdAt: timestamp("created_at").notNull(),
     updatedAt: timestamp("updated_at").notNull(),
-});
+}, (table) => [
+    index("resume_versions_resume_user_idx").on(table.resumeId, table.userId),
+]);
 
 export const resumeVersionsRelations = relations(resumeVersions, ({ one }) => ({
     user: one(user, { fields: [resumeVersions.userId], references: [user.id] }),
@@ -269,7 +278,9 @@ export const workItems = pgTable("work_items", {
     lastReviewedAt: timestamp("last_reviewed_at").notNull().defaultNow(),
     createdAt: timestamp("created_at").notNull(),
     updatedAt: timestamp("updated_at").notNull(),
-});
+}, (table) => [
+    index("work_items_user_id_idx").on(table.userId),
+]);
 
 export const workItemsRelations = relations(workItems, ({ one }) => ({
     user: one(user, { fields: [workItems.userId], references: [user.id] }),
@@ -312,7 +323,9 @@ export const applications = pgTable("applications", {
     outcome: text("outcome"),
     createdAt: timestamp("created_at").notNull(),
     updatedAt: timestamp("updated_at").notNull(),
-});
+}, (table) => [
+    index("applications_user_id_idx").on(table.userId),
+]);
 
 export const applicationsRelations = relations(applications, ({ one, many }) => ({
     user: one(user, { fields: [applications.userId], references: [user.id] }),
@@ -338,7 +351,9 @@ export const applicationChanges = pgTable("application_changes", {
     status: text("status").notNull().default("pending"), // pending, approved, rejected
     createdAt: timestamp("created_at").notNull(),
     updatedAt: timestamp("updated_at").notNull(),
-});
+}, (table) => [
+    index("application_changes_app_user_idx").on(table.applicationId, table.userId),
+]);
 
 export const applicationChangesRelations = relations(applicationChanges, ({ one }) => ({
     application: one(applications, { fields: [applicationChanges.applicationId], references: [applications.id] }),
