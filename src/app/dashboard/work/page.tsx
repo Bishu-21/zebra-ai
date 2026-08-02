@@ -156,21 +156,20 @@ export default function MyWorkPage() {
     };
 
     return (
-        <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-8">
+        <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-8 pb-32">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-black text-[#0A0A0A] tracking-tight">My Work</h1>
-                    <p className="text-sm text-neutral-500 font-medium mt-1">
+                    <h1 className="text-2xl font-bold tracking-tight text-[#0A0A0A] mb-1">My Work</h1>
+                    <p className="text-xs font-normal text-neutral-500 leading-relaxed">
                         Organize your projects, hackathons, internships, certificates, and proof in one place.
                     </p>
                 </div>
                 <button
                     onClick={() => setIsAddModalOpen(true)}
-                    className="inline-flex items-center justify-center gap-2 bg-[#0A0A0A] text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-neutral-800 transition-all shadow-sm active:scale-95"
+                    className="inline-flex items-center justify-center gap-2 bg-[#0A0A0A] text-white px-4 py-2 rounded-full font-bold text-xs hover:bg-neutral-800 transition-all shadow-2xs active:scale-95 shrink-0"
                 >
-                    <RiAddLine className="w-4 h-4" />
-                    + Add project
+                    <RiAddLine size={16} /> Add project
                 </button>
             </div>
 

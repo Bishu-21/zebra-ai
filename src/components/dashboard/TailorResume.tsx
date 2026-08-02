@@ -184,131 +184,123 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
             {/* Tool Modal */}
             <AnimatePresence>
                 {isOpen && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 sm:p-10">
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
                         <m.div 
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="absolute inset-0 bg-black/60 backdrop-blur-sm" 
+                            className="fixed inset-0 bg-black/40 backdrop-blur-md" 
                             onClick={() => !loading && setIsOpen(false)}
-                        ></m.div>
+                        />
                         
                         <m.div 
-                            initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                            initial={{ scale: 0.96, opacity: 0, y: 12 }}
                             animate={{ scale: 1, opacity: 1, y: 0 }}
-                            exit={{ scale: 0.95, opacity: 0, y: 20 }}
-                            className="relative bg-background/90 backdrop-blur-xl w-full max-w-5xl max-h-[90vh] rounded-[var(--radius-xl)] shadow-2xl border border-white/50 flex flex-col overflow-hidden"
+                            exit={{ scale: 0.96, opacity: 0, y: 12 }}
+                            transition={{ duration: 0.2, ease: "easeOut" }}
+                            className="relative bg-white w-full max-w-2xl max-h-[85vh] rounded-3xl shadow-2xl border border-neutral-200/80 flex flex-col overflow-hidden z-10"
                         >
                             {/* Header */}
-                            <div className="p-6 sm:p-10 border-b border-black/[0.03] flex items-center justify-between bg-white/40 backdrop-blur-3xl sticky top-0 z-20">
-                                <div className="flex items-center gap-4 sm:gap-6">
-                                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-primary rounded-[1rem] sm:rounded-[1.5rem] flex items-center justify-center text-white shadow-2xl shadow-black/10">
-                                        <RiFlashlightLine size={24} className="sm:size-[28px]" />
+                            <div className="px-6 py-5 border-b border-neutral-200/60 flex items-center justify-between bg-white sticky top-0 z-20">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-[#0A0A0A] text-white flex items-center justify-center shadow-2xs shrink-0">
+                                        <RiFlashlightLine size={20} />
                                     </div>
                                     <div>
-                                        <div className="flex items-center gap-3 mb-1.5">
-                                            <h2 className="text-lg sm:text-2xl font-bold text-foreground tracking-tighter uppercase leading-none">Role Match Analysis</h2>
-                                        </div>
-                                        <p className="text-[0.6rem] sm:text-[0.7rem] font-bold text-accent-gray uppercase tracking-widest text-black/30">
-                                            Analyzing Profile <span className="mx-2 opacity-50">&amp;</span> Job Alignment
-                                        </p>
+                                        <h2 className="text-lg font-bold tracking-tight text-[#0A0A0A]">Role Match Analysis</h2>
+                                        <p className="text-xs font-normal text-neutral-500">Analyze profile &amp; job description alignment</p>
                                     </div>
                                 </div>
-                                <button onClick={() => !loading && setIsOpen(false)} className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center text-black/20 hover:text-black hover:bg-black/[0.03] rounded-full transition-all disabled:opacity-30" disabled={loading}>
-                                    <RiCloseCircleLine size={24} />
+                                <button 
+                                    onClick={() => !loading && setIsOpen(false)} 
+                                    className="w-8 h-8 rounded-full bg-neutral-100 text-neutral-500 hover:bg-neutral-200 hover:text-[#0A0A0A] flex items-center justify-center transition-all disabled:opacity-40" 
+                                    disabled={loading}
+                                >
+                                    <RiCloseCircleLine size={18} />
                                 </button>
                             </div>
 
-                            <div className="flex-grow overflow-y-auto p-10 no-scrollbar relative">
+                            <div className="flex-grow overflow-y-auto p-6 sm:p-8 space-y-6">
                                 {!analysis ? (
-                                    <div className="max-w-4xl mx-auto space-y-8">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                            <div className="space-y-3">
-                                                <label className="text-[0.65rem] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-2">
+                                    <div className="space-y-6">
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                            <div className="space-y-1.5 sm:col-span-1">
+                                                <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider flex items-center gap-1.5">
                                                     <RiFileTextLine size={14} />
                                                     Base Profile
                                                 </label>
                                                 <div className="relative">
                                                     <select 
                                                         disabled={loading}
-                                                        className="w-full bg-muted border-2 border-transparent focus:border-primary/20 rounded-[var(--radius-md)] px-6 py-5 text-sm font-bold outline-none transition-all appearance-none cursor-pointer text-foreground disabled:opacity-50"
+                                                        className="w-full bg-neutral-50 border border-neutral-200/80 focus:bg-white focus:border-[#0A0A0A] rounded-full px-4 py-2.5 text-xs font-semibold text-[#0A0A0A] outline-none transition-all appearance-none cursor-pointer disabled:opacity-50"
                                                         value={formData.resumeId}
                                                         onChange={(e) => setFormData({...formData, resumeId: e.target.value})}
                                                     >
                                                         {resumes.map(r => <option key={r.id} value={r.id}>{r.title}</option>)}
                                                         {resumes.length === 0 && <option value="">No Resumes Found</option>}
                                                     </select>
-                                                    <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-black/30">
-                                                        <RiArrowDropDownLine size={24} />
+                                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-400">
+                                                        <RiArrowDropDownLine size={20} />
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className="space-y-3">
-                                                    <label className="text-[0.65rem] font-black uppercase tracking-widest text-black/40 flex items-center gap-2">
-                                                        <RiBuildingLine size={14} />
-                                                        Company
-                                                    </label>
-                                                    <input 
-                                                        type="text"
-                                                        disabled={loading}
-                                                        placeholder="e.g. Google"
-                                                        className="w-full bg-black/5 border-2 border-transparent focus:border-black/10 rounded-2xl px-6 py-5 text-sm font-bold outline-none transition-all text-black disabled:opacity-50"
-                                                        value={formData.company}
-                                                        onChange={(e) => setFormData({...formData, company: e.target.value})}
-                                                    />
-                                                </div>
-                                                <div className="space-y-3">
-                                                    <label className="text-[0.65rem] font-black uppercase tracking-widest text-black/40 flex items-center gap-2">
-                                                        <RiBriefcaseLine size={14} />
-                                                        Role
-                                                    </label>
-                                                    <input 
-                                                        type="text"
-                                                        disabled={loading}
-                                                        placeholder="e.g. Frontend Dev"
-                                                        className="w-full bg-black/5 border-2 border-transparent focus:border-black/10 rounded-2xl px-6 py-5 text-sm font-bold outline-none transition-all text-black disabled:opacity-50"
-                                                        value={formData.targetRole}
-                                                        onChange={(e) => setFormData({...formData, targetRole: e.target.value})}
-                                                    />
-                                                </div>
+                                            <div className="space-y-1.5">
+                                                <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider flex items-center gap-1.5">
+                                                    <RiBuildingLine size={14} />
+                                                    Company
+                                                </label>
+                                                <input 
+                                                    type="text"
+                                                    disabled={loading}
+                                                    placeholder="e.g. Google"
+                                                    className="w-full bg-neutral-50 border border-neutral-200/80 focus:bg-white focus:border-[#0A0A0A] rounded-full px-4 py-2.5 text-xs font-semibold text-[#0A0A0A] outline-none transition-all disabled:opacity-50"
+                                                    value={formData.company}
+                                                    onChange={(e) => setFormData({...formData, company: e.target.value})}
+                                                />
+                                            </div>
+
+                                            <div className="space-y-1.5">
+                                                <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider flex items-center gap-1.5">
+                                                    <RiBriefcaseLine size={14} />
+                                                    Role
+                                                </label>
+                                                <input 
+                                                    type="text"
+                                                    disabled={loading}
+                                                    placeholder="e.g. Frontend Dev"
+                                                    className="w-full bg-neutral-50 border border-neutral-200/80 focus:bg-white focus:border-[#0A0A0A] rounded-full px-4 py-2.5 text-xs font-semibold text-[#0A0A0A] outline-none transition-all disabled:opacity-50"
+                                                    value={formData.targetRole}
+                                                    onChange={(e) => setFormData({...formData, targetRole: e.target.value})}
+                                                />
                                             </div>
                                         </div>
 
-                                        <div className="space-y-3 relative">
-                                            <label className="text-[0.65rem] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-2">
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider flex items-center gap-1.5">
                                                 <RiInformationLine size={14} />
                                                 Target Job Description
                                             </label>
                                             
-                                            {/* Input Area */}
-                                            <div className="relative group/input overflow-hidden rounded-[var(--radius-xl)] border border-border-subtle shadow-inner bg-muted/20">
-                                                {/* Cinematic Scan Animation Overlay */}
+                                            <div className="relative overflow-hidden rounded-2xl border border-neutral-200/80 bg-neutral-50/50">
                                                 <AnimatePresence>
                                                     {loading && (
                                                         <m.div 
                                                             initial={{ opacity: 0 }}
                                                             animate={{ opacity: 1 }}
                                                             exit={{ opacity: 0 }}
-                                                            className="absolute inset-0 z-30 pointer-events-none overflow-hidden rounded-[var(--radius-xl)]"
+                                                            className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-white/80 backdrop-blur-xs gap-4 p-6"
                                                         >
-                                                            <div className="absolute inset-0 bg-white/60 backdrop-blur-[4px]"></div>
-                                                            
-                                                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-6">
-                                                                <div className="scale-150 text-foreground/80">
-                                                                    <RiLoader4Line className="animate-spin" size={40} />
-                                                                </div>
-                                                                <div className="flex flex-col items-center gap-2">
-                                                                    <span className="text-sm font-bold uppercase tracking-[0.2em] text-foreground animate-pulse">{scanStep}</span>
-                                                                    <div className="w-48 h-2 bg-muted rounded-full overflow-hidden">
-                                                                        <m.div 
-                                                                            className="h-full bg-primary"
-                                                                            initial={{ width: "0%" }}
-                                                                            animate={{ width: "100%" }}
-                                                                            transition={{ duration: 6, ease: "linear" }}
-                                                                        />
-                                                                    </div>
+                                                            <RiLoader4Line className="animate-spin text-[#0A0A0A]" size={32} />
+                                                            <div className="flex flex-col items-center gap-2 text-center">
+                                                                <span className="text-xs font-bold text-[#0A0A0A]">{scanStep}</span>
+                                                                <div className="w-40 h-1.5 bg-neutral-200 rounded-full overflow-hidden">
+                                                                    <m.div 
+                                                                        className="h-full bg-[#0A0A0A]"
+                                                                        initial={{ width: "0%" }}
+                                                                        animate={{ width: "100%" }}
+                                                                        transition={{ duration: 6, ease: "linear" }}
+                                                                    />
                                                                 </div>
                                                             </div>
                                                         </m.div>
@@ -317,7 +309,7 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
 
                                                 <textarea 
                                                     placeholder="Paste the full job requirements from the recruiter..."
-                                                    className={`w-full min-h-[300px] sm:min-h-[350px] px-6 sm:px-8 py-6 sm:py-8 text-[0.85rem] sm:text-[0.95rem] font-medium outline-none transition-all resize-none leading-relaxed text-black bg-transparent ${loading ? "blur-[2px]" : ""}`}
+                                                    className="w-full min-h-[220px] p-4 text-xs font-medium text-[#0A0A0A] focus:outline-none transition-all resize-none leading-relaxed bg-transparent placeholder:text-neutral-400"
                                                     value={formData.jobDescription}
                                                     onChange={(e) => setFormData({...formData, jobDescription: e.target.value})}
                                                     disabled={loading}
@@ -327,73 +319,73 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
 
                                         {error && (
                                             <m.div 
-                                                initial={{ opacity: 0, y: 10 }}
+                                                initial={{ opacity: 0, y: 8 }}
                                                 animate={{ opacity: 1, y: 0 }}
-                                                className="bg-error text-white p-6 rounded-[var(--radius-md)] flex items-center justify-between gap-4 text-sm font-black uppercase tracking-wider shadow-xl"
+                                                className="p-3 bg-red-50 border border-red-200/80 rounded-xl flex items-center justify-between gap-3 text-xs font-medium text-red-700"
                                             >
-                                                <div className="flex items-center gap-3">
-                                                    <RiErrorWarningLine size={24} className="shrink-0" />
+                                                <div className="flex items-center gap-2">
+                                                    <RiErrorWarningLine size={16} className="shrink-0 text-red-600" />
                                                     <span>{error}</span>
                                                 </div>
                                                 <button
                                                     type="button"
                                                     onClick={handleTailor}
                                                     disabled={loading}
-                                                    className="px-4 py-2 bg-white text-error rounded-xl font-extrabold text-xs uppercase tracking-wider hover:bg-white/90 transition-all flex items-center gap-1.5 shrink-0 shadow-sm disabled:opacity-50"
+                                                    className="px-3 py-1.5 bg-white text-red-700 border border-red-200 rounded-full font-bold text-xs hover:bg-red-100/50 transition-all flex items-center gap-1 shrink-0"
                                                 >
-                                                    <RiRefreshLine size={16} />
+                                                    <RiRefreshLine size={14} />
                                                     Retry
                                                 </button>
                                             </m.div>
                                         )}
                                     </div>
                                 ) : (
-                                    <div className="space-y-10 animate-in slide-in-from-bottom-8 duration-500 max-w-4xl mx-auto">
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                            <div className="bg-[#0A0A0A] text-white p-8 rounded-[2.5rem] flex flex-col justify-between aspect-square md:aspect-auto shadow-2xl shadow-black/20">
-                                                <p className="text-[0.65rem] font-bold uppercase tracking-widest text-white/40 mb-2 text-center">Match Potential</p>
-                                                <h3 className="text-7xl font-bold text-primary text-center">{analysis.matchScore}%</h3>
-                                                <div className="mt-4 w-full h-1 bg-white/10 rounded-full overflow-hidden">
+                                    <div className="space-y-6">
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                            <div className="bg-[#0A0A0A] text-white p-6 rounded-2xl flex flex-col items-center justify-center text-center">
+                                                <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 mb-1">Match Potential</p>
+                                                <h3 className="text-5xl font-black text-white">{analysis.matchScore}%</h3>
+                                                <div className="mt-3 w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
                                                     <m.div 
                                                         initial={{ width: 0 }}
                                                         animate={{ width: `${analysis.matchScore}%` }}
-                                                        transition={{ duration: 1.5, ease: "easeOut" }}
-                                                        className="h-full bg-white" 
+                                                        transition={{ duration: 1.2, ease: "easeOut" }}
+                                                        className="h-full bg-emerald-400" 
                                                     />
                                                 </div>
                                             </div>
                                             
-                                            <div className="md:col-span-2 bg-background border border-border-subtle p-10 rounded-[var(--radius-xl)] flex flex-col justify-center shadow-sm">
-                                                <h4 className="text-sm font-black uppercase tracking-widest mb-4 text-muted-foreground/30">Role Fit Assessment</h4>
-                                                <p className="text-foreground/70 leading-relaxed font-bold text-lg">
+                                            <div className="sm:col-span-2 bg-neutral-50 border border-neutral-200/80 p-5 rounded-2xl flex flex-col justify-center">
+                                                <h4 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">Role Fit Assessment</h4>
+                                                <p className="text-xs font-semibold text-[#0A0A0A] leading-relaxed">
                                                     {analysis.roleFit}
                                                 </p>
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                            <div className="space-y-6">
-                                                <h4 className="font-black flex items-center gap-2 text-[0.65rem] uppercase tracking-[0.2em] text-muted-foreground/30">
-                                                    <RiCheckboxCircleLine size={18} className="text-success" />
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <h4 className="font-semibold flex items-center gap-1.5 text-xs text-neutral-500">
+                                                    <RiCheckboxCircleLine size={16} className="text-emerald-600" />
                                                     Target Keywords Found
                                                 </h4>
-                                                <div className="flex flex-wrap gap-2">
+                                                <div className="flex flex-wrap gap-1.5">
                                                     {(analysis.keywordsFound || []).map((kw: string, i: number) => (
-                                                        <span key={i} className="px-5 py-2.5 bg-success/5 text-success rounded-[var(--radius-md)] text-[0.7rem] font-black uppercase tracking-wider border border-success/10">
+                                                        <span key={i} className="px-3 py-1 bg-emerald-50 text-emerald-800 rounded-full text-xs font-semibold border border-emerald-200/60">
                                                             {kw}
                                                         </span>
                                                     ))}
                                                 </div>
                                             </div>
 
-                                            <div className="space-y-6">
-                                                <h4 className="font-black flex items-center gap-2 text-[0.65rem] uppercase tracking-[0.2em] text-muted-foreground/30">
-                                                    <RiErrorWarningLine size={18} className="text-warning" />
+                                            <div className="space-y-2">
+                                                <h4 className="font-semibold flex items-center gap-1.5 text-xs text-neutral-500">
+                                                    <RiErrorWarningLine size={16} className="text-amber-600" />
                                                     Critical Profile Gaps
                                                 </h4>
-                                                <div className="flex flex-wrap gap-2">
+                                                <div className="flex flex-wrap gap-1.5">
                                                     {(analysis.keywordsMissing || []).map((kw: string, i: number) => (
-                                                        <span key={i} className="px-5 py-2.5 bg-warning/5 text-warning rounded-[var(--radius-md)] text-[0.7rem] font-bold uppercase tracking-wider border border-warning/10">
+                                                        <span key={i} className="px-3 py-1 bg-amber-50 text-amber-800 rounded-full text-xs font-semibold border border-amber-200/60">
                                                             {kw}
                                                         </span>
                                                     ))}
@@ -401,20 +393,18 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                                             </div>
                                         </div>
 
-                                        <div className="bg-muted/50 border border-border-subtle p-10 rounded-[var(--radius-xl)]">
-                                            <h4 className="font-black text-foreground flex items-center gap-3 mb-8 uppercase tracking-widest text-sm">
-                                                <RiMagicLine size={20} className="text-foreground/60" />
+                                        <div className="bg-neutral-50 border border-neutral-200/80 p-5 rounded-2xl space-y-3">
+                                            <h4 className="font-bold text-xs text-[#0A0A0A] flex items-center gap-2">
+                                                <RiMagicLine size={16} className="text-neutral-500" />
                                                 Priority Recommendations
                                             </h4>
-                                            <div className="grid grid-cols-1 gap-4">
+                                            <div className="space-y-2">
                                                 {(analysis.tailoringSuggestions || []).map((tip: string, i: number) => (
-                                                    <div key={i} className="flex items-start gap-6 p-6 bg-white rounded-2xl border border-black/5 hover:border-black/20 transition-all group">
-                                                        <span className="w-10 h-10 bg-primary text-white rounded-xl flex items-center justify-center text-xs font-bold shadow-lg flex-shrink-0">
-                                                            0{i + 1}
+                                                    <div key={i} className="flex items-start gap-3 p-3 bg-white rounded-xl border border-neutral-200/60 text-xs font-medium text-neutral-700 leading-relaxed">
+                                                        <span className="w-5 h-5 bg-[#0A0A0A] text-white rounded-full flex items-center justify-center text-[10px] font-bold shrink-0">
+                                                            {i + 1}
                                                         </span>
-                                                        <p className="text-[0.9rem] font-bold text-foreground/70 leading-relaxed pt-1">
-                                                            {tip}
-                                                        </p>
+                                                        <span>{tip}</span>
                                                     </div>
                                                 ))}
                                             </div>
@@ -424,52 +414,52 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                             </div>
 
                             {/* Footer */}
-                            <div className="p-6 sm:p-8 border-t border-black/5 flex flex-col sm:flex-row items-center justify-between bg-white/30 backdrop-blur-xl sticky bottom-0 gap-4">
-                                <div className="flex items-center gap-3 px-6 py-3 bg-black/5 rounded-2xl border border-black/5 w-full sm:w-auto justify-center sm:justify-start">
-                                    <RiBarChartLine size={18} className="text-black/60 theme-pulse" />
-                                    <span className="text-[0.65rem] font-black uppercase tracking-widest text-[#737373]">Analysis Hub</span>
+                            <div className="px-6 py-4 border-t border-neutral-200/60 flex items-center justify-between bg-white sticky bottom-0 z-20 gap-3">
+                                <div className="px-3 py-1.5 bg-neutral-100 rounded-full text-xs font-semibold text-neutral-600 flex items-center gap-2">
+                                    <RiBarChartLine size={16} className="text-neutral-500" />
+                                    <span>Analysis Hub</span>
                                 </div>
 
-                                <div className="flex items-center gap-4 w-full sm:w-auto">
+                                <div className="flex items-center gap-3">
                                     {!analysis ? (
                                         <>
                                             <button 
                                                 onClick={() => setIsOpen(false)}
-                                                className="flex-grow sm:flex-grow-0 px-8 py-4 text-[0.7rem] font-black uppercase tracking-widest text-black/40 hover:text-black transition-colors"
+                                                className="px-5 py-2.5 rounded-full text-xs font-semibold text-neutral-500 hover:text-[#0A0A0A] transition-all"
                                             >
                                                 Cancel
                                             </button>
                                             <button 
                                                 onClick={handleTailor}
                                                 disabled={loading || !formData.jobDescription.trim()}
-                                                className="flex-grow sm:flex-grow-0 bg-primary text-white px-10 py-5 rounded-[1.25rem] font-bold text-sm hover:bg-primary-dark hover:scale-[1.02] active:scale-[0.98] transition-all shadow-2xl shadow-black/10 disabled:opacity-30 flex items-center justify-center gap-3"
+                                                className="px-6 py-2.5 bg-[#0A0A0A] text-white rounded-full text-xs font-bold shadow-2xs hover:bg-neutral-800 active:scale-95 transition-all inline-flex items-center gap-2 disabled:opacity-40"
                                             >
                                                 {loading ? "Analyzing..." : "Run Analysis"}
-                                                {!loading && <RiArrowRightLine size={18} />}
+                                                {!loading && <RiArrowRightLine size={15} />}
                                             </button>
                                         </>
                                     ) : (
-                                        <div className="flex flex-col sm:flex-row-reverse items-center gap-3 w-full sm:w-auto">
-                                            <button 
-                                                onClick={handleSaveVersion}
-                                                disabled={savingVersion}
-                                                className="w-full sm:w-auto bg-primary text-white px-8 py-5 rounded-[1.25rem] font-bold text-sm hover:bg-primary-dark hover:scale-[1.02] transition-all shadow-xl shadow-black/10 flex items-center justify-center gap-3 disabled:opacity-50"
-                                            >
-                                                {savingVersion ? (
-                                                    <RiLoader4Line className="animate-spin" size={20} />
-                                                ) : (
-                                                    <RiSaveLine size={20} />
-                                                )}
-                                                {savingVersion ? "Saving..." : "Save Version"}
-                                            </button>
+                                        <div className="flex items-center gap-2">
                                             <button 
                                                 onClick={() => {
                                                     setAnalysis(null);
                                                     setIsOpen(false);
                                                 }}
-                                                className="w-full sm:w-auto bg-black/5 text-black/60 hover:text-black hover:bg-black/10 px-12 py-5 rounded-[1.25rem] font-bold text-[0.7rem] transition-all uppercase tracking-widest"
+                                                className="px-5 py-2.5 rounded-full text-xs font-semibold text-neutral-500 hover:text-[#0A0A0A] transition-all"
                                             >
                                                 Close
+                                            </button>
+                                            <button 
+                                                onClick={handleSaveVersion}
+                                                disabled={savingVersion}
+                                                className="px-6 py-2.5 bg-[#0A0A0A] text-white rounded-full text-xs font-bold shadow-2xs hover:bg-neutral-800 active:scale-95 transition-all inline-flex items-center gap-2 disabled:opacity-40"
+                                            >
+                                                {savingVersion ? (
+                                                    <RiLoader4Line className="animate-spin" size={15} />
+                                                ) : (
+                                                    <RiSaveLine size={15} />
+                                                )}
+                                                {savingVersion ? "Saving..." : "Save Version"}
                                             </button>
                                         </div>
                                     )}

@@ -244,8 +244,8 @@ export function JobBoard({
                                     {status === 'Withdrawn' && <RiInboxArchiveLine size={16} />}
                                 </div>
                                 <div>
-                                    <h3 className="font-black text-[0.65rem] uppercase tracking-widest text-foreground leading-none mb-1">{status}</h3>
-                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">{columnJobs.length} {columnJobs.length === 1 ? 'Entry' : 'Entries'}</p>
+                                    <h3 className="font-bold text-xs uppercase tracking-wider text-[#0A0A0A] leading-none mb-1">{status}</h3>
+                                    <p className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">{columnJobs.length} {columnJobs.length === 1 ? 'Entry' : 'Entries'}</p>
                                 </div>
                             </div>
                             <button className="p-1.5 rounded-[var(--radius-sm)] text-muted-foreground hover:bg-foreground/5 transition-all opacity-0 group-hover/column:opacity-100"><RiMore2Fill size={16} /></button>

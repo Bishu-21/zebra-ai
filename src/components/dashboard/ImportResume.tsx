@@ -184,11 +184,11 @@ export function ImportResume() {
 
                         {/* Modal Box */}
                         <m.div 
-                            initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                            transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                            className="relative bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl border border-black/[0.05] overflow-hidden flex flex-col max-h-[90vh]"
+                            initial={{ scale: 0.96, opacity: 0, y: 12 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.96, opacity: 0, y: 12 }}
+                            transition={{ duration: 0.2, ease: "easeOut" }}
+                            className="relative bg-white w-full max-w-2xl max-h-[85vh] rounded-3xl shadow-2xl border border-neutral-200/80 overflow-hidden flex flex-col z-10"
                         >
                             {/* Cinematic In-Modal Loading Screen */}
                             <AnimatePresence>
@@ -199,14 +199,14 @@ export function ImportResume() {
                                         exit={{ opacity: 0 }}
                                         className="absolute inset-0 z-50 bg-white/90 backdrop-blur-md flex flex-col items-center justify-center gap-6 p-8 text-center"
                                     >
-                                        <div className="w-16 h-16 bg-[#0A0A0A]/5 rounded-2xl flex items-center justify-center text-[#0A0A0A]">
-                                            <RiLoader4Line size={32} className="animate-spin" />
+                                        <div className="w-12 h-12 bg-[#0A0A0A] rounded-full flex items-center justify-center text-white">
+                                            <RiLoader4Line size={24} className="animate-spin" />
                                         </div>
                                         <div className="space-y-2">
-                                            <span className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-[#0A0A0A] animate-pulse">
+                                            <span className="text-xs font-bold text-[#0A0A0A] animate-pulse">
                                                 {uploadStep}
                                             </span>
-                                            <div className="w-40 h-1 bg-black/[0.05] rounded-full overflow-hidden mx-auto">
+                                            <div className="w-40 h-1.5 bg-neutral-200 rounded-full overflow-hidden mx-auto">
                                                 <m.div 
                                                     className="h-full bg-[#0A0A0A]"
                                                     initial={{ width: "0%" }}
@@ -220,58 +220,58 @@ export function ImportResume() {
                             </AnimatePresence>
 
                             {/* Header */}
-                            <div className="p-8 border-b border-black/[0.04] flex items-center justify-between">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-black/[0.03] rounded-2xl flex items-center justify-center text-[#0A0A0A]">
-                                        <RiUploadCloud2Line size={24} />
+                            <div className="px-6 py-5 border-b border-neutral-200/60 flex items-center justify-between bg-white sticky top-0 z-20">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-[#0A0A0A] text-white flex items-center justify-center shadow-2xs shrink-0">
+                                        <RiUploadCloud2Line size={20} />
                                     </div>
                                     <div>
-                                        <h2 className="text-xl font-bold text-[#0A0A0A] tracking-tight">Import Professional Source</h2>
-                                        <p className="text-[0.7rem] font-bold text-[#737373] uppercase tracking-wider">Sync structured details or compile raw text</p>
+                                        <h2 className="text-lg font-bold tracking-tight text-[#0A0A0A]">Import Resume</h2>
+                                        <p className="text-xs font-normal text-neutral-500">Sync structured details or compile raw text</p>
                                     </div>
                                 </div>
                                 <button 
                                     onClick={() => setIsModalOpen(false)}
-                                    className="w-10 h-10 bg-black/[0.03] rounded-full flex items-center justify-center text-[#737373] hover:text-[#0A0A0A] hover:bg-black/[0.06] transition-all"
+                                    className="w-8 h-8 rounded-full bg-neutral-100 text-neutral-500 hover:bg-neutral-200 hover:text-[#0A0A0A] flex items-center justify-center transition-all"
                                 >
-                                    <RiCloseLine size={20} />
+                                    <RiCloseLine size={18} />
                                 </button>
                             </div>
 
                             {/* Tabs Switcher */}
-                            <div className="flex border-b border-black/[0.04] px-8 bg-neutral-50/50">
+                            <div className="flex border-b border-neutral-200/60 px-6 sm:px-8 bg-neutral-50/50">
                                 <button 
                                     disabled={isUploading}
                                     onClick={() => { setError(null); setActiveTab("file"); }}
-                                    className={`py-4 px-6 text-xs font-bold uppercase tracking-wider flex items-center gap-2 border-b-2 transition-all ${
+                                    className={`py-3.5 px-4 text-xs font-semibold tracking-tight flex items-center gap-2 border-b-2 transition-all ${
                                         activeTab === "file" 
                                             ? "border-[#0A0A0A] text-[#0A0A0A]" 
-                                            : "border-transparent text-[#737373] hover:text-[#0A0A0A]"
+                                            : "border-transparent text-neutral-500 hover:text-[#0A0A0A]"
                                     }`}
                                 >
-                                    <RiFileTextLine size={16} />
+                                    <RiFileTextLine size={15} />
                                     Document Upload
                                 </button>
                                 <button 
                                     disabled={isUploading}
                                     onClick={() => { setError(null); setActiveTab("raw"); }}
-                                    className={`py-4 px-6 text-xs font-bold uppercase tracking-wider flex items-center gap-2 border-b-2 transition-all ${
+                                    className={`py-3.5 px-4 text-xs font-semibold tracking-tight flex items-center gap-2 border-b-2 transition-all ${
                                         activeTab === "raw" 
                                             ? "border-[#0A0A0A] text-[#0A0A0A]" 
-                                            : "border-transparent text-[#737373] hover:text-[#0A0A0A]"
+                                            : "border-transparent text-neutral-500 hover:text-[#0A0A0A]"
                                     }`}
                                 >
-                                    <RiTerminalBoxLine size={16} />
+                                    <RiTerminalBoxLine size={15} />
                                     LaTeX / Raw Text
                                 </button>
                             </div>
 
                             {/* Tab Content */}
-                            <div className="p-8 overflow-y-auto max-h-[60vh] custom-scrollbar flex-grow space-y-6">
+                            <div className="p-6 sm:p-8 overflow-y-auto max-h-[60vh] flex-grow space-y-6">
                                 {error && (
-                                    <div className="p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-2xl text-xs flex items-center justify-between gap-3 animate-in fade-in duration-200">
+                                    <div className="p-3 bg-red-50 border border-red-200/80 text-red-700 rounded-xl text-xs font-medium flex items-center justify-between gap-3">
                                         <div className="flex items-center gap-2">
-                                            <RiErrorWarningLine size={18} className="shrink-0 text-rose-600" />
+                                            <RiErrorWarningLine size={16} className="shrink-0 text-red-600" />
                                             <span>{error}</span>
                                         </div>
                                         <button
@@ -284,7 +284,7 @@ export function ImportResume() {
                                                     handleRawImport(e);
                                                 }
                                             }}
-                                            className="px-3.5 py-1.5 bg-rose-600 text-white rounded-xl font-bold text-[11px] hover:bg-rose-700 transition-all flex items-center gap-1 shrink-0 disabled:opacity-50"
+                                            className="px-3 py-1.5 bg-white text-red-700 border border-red-200 rounded-full font-bold text-xs hover:bg-red-100/50 transition-all flex items-center gap-1 shrink-0 disabled:opacity-50"
                                         >
                                             <RiRefreshLine size={14} />
                                             Retry
@@ -297,8 +297,8 @@ export function ImportResume() {
                                     <div className="space-y-6">
                                         <div 
                                             onClick={() => !isUploading && fileInputRef.current?.click()}
-                                            className={`border-2 border-dashed border-black/[0.08] bg-neutral-50/50 rounded-3xl p-12 flex flex-col items-center justify-center text-center transition-all group ${
-                                                isUploading ? "opacity-50 cursor-not-allowed" : "hover:border-black/30 hover:bg-neutral-50 cursor-pointer"
+                                            className={`border-2 border-dashed border-neutral-200/80 bg-neutral-50/50 rounded-2xl p-8 sm:p-12 flex flex-col items-center justify-center text-center transition-all group ${
+                                                isUploading ? "opacity-50 cursor-not-allowed" : "hover:border-[#0A0A0A] hover:bg-neutral-50 cursor-pointer"
                                             }`}
                                         >
                                             <input 
@@ -309,20 +309,20 @@ export function ImportResume() {
                                                 disabled={isUploading}
                                                 className="hidden"
                                             />
-                                            <div className="w-16 h-16 bg-white border border-black/[0.04] rounded-2xl flex items-center justify-center text-[#737373] group-hover:scale-110 shadow-sm transition-all mb-4">
-                                                <RiUploadCloud2Line size={28} />
+                                            <div className="w-12 h-12 bg-white border border-neutral-200/80 rounded-full flex items-center justify-center text-neutral-600 group-hover:scale-105 shadow-2xs transition-all mb-3">
+                                                <RiUploadCloud2Line size={24} />
                                             </div>
-                                            <h3 className="font-bold text-lg text-[#0A0A0A] mb-1">Click to Upload Document</h3>
-                                            <p className="text-xs text-[#737373] max-w-xs leading-relaxed">
+                                            <h3 className="font-bold text-sm text-[#0A0A0A] mb-1">Click to Upload Document</h3>
+                                            <p className="text-xs text-neutral-500 max-w-xs leading-relaxed">
                                                 Supports PDF, DOCX, or TXT up to 5MB. Make sure files contain readable text rather than image scans.
                                             </p>
                                         </div>
                                     </div>
                                 ) : (
                                     /* Tab 2: Raw LaTeX / Text */
-                                    <form onSubmit={handleRawImport} className="space-y-6">
-                                        <div className="space-y-2">
-                                            <label className="text-[0.65rem] font-bold text-[#737373] uppercase tracking-[0.2em] block">
+                                    <form onSubmit={handleRawImport} className="space-y-5">
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider block">
                                                 Document Title
                                             </label>
                                             <input 
@@ -330,32 +330,32 @@ export function ImportResume() {
                                                 value={rawTitle}
                                                 disabled={isUploading}
                                                 onChange={(e) => setRawTitle(e.target.value)}
-                                                placeholder="e.g. LaTeX Master Resume, Raw Draft"
-                                                className="w-full h-12 bg-white border border-black/[0.08] rounded-2xl px-4 text-sm font-bold text-[#0A0A0A] focus:border-[#0A0A0A] focus:ring-1 focus:ring-[#0A0A0A] outline-none transition-all disabled:opacity-50"
+                                                placeholder="e.g. Master Resume Draft"
+                                                className="w-full bg-neutral-50 border border-neutral-200/80 focus:bg-white focus:border-[#0A0A0A] rounded-full px-4 py-2.5 text-xs font-semibold text-[#0A0A0A] outline-none transition-all disabled:opacity-50"
                                             />
                                         </div>
 
-                                        <div className="space-y-2">
-                                            <label className="text-[0.65rem] font-bold text-[#737373] uppercase tracking-[0.2em] block">
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider block">
                                                 LaTeX Code / Raw Text
                                             </label>
                                             <textarea 
                                                 value={rawText}
                                                 disabled={isUploading}
                                                 onChange={(e) => setRawText(e.target.value)}
-                                                rows={10}
+                                                rows={8}
                                                 placeholder="Paste your raw LaTeX markup or unformatted text resume here..."
-                                                className="w-full bg-white border border-black/[0.08] rounded-3xl p-5 text-xs font-mono text-[#0A0A0A] focus:border-[#0A0A0A] focus:ring-1 focus:ring-[#0A0A0A] outline-none transition-all resize-y min-h-[200px] disabled:opacity-50"
+                                                className="w-full bg-neutral-50 border border-neutral-200/80 focus:bg-white focus:border-[#0A0A0A] rounded-2xl p-4 text-xs font-mono text-[#0A0A0A] outline-none transition-all resize-y min-h-[180px] disabled:opacity-50"
                                             />
                                         </div>
 
                                         <button 
                                             type="submit"
                                             disabled={isUploading || !rawText.trim()}
-                                            className="w-full h-14 bg-[#0A0A0A] text-white hover:bg-neutral-800 rounded-2xl font-bold text-sm tracking-wide transition-all active:scale-[0.99] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="w-full px-6 py-3 bg-[#0A0A0A] text-white rounded-full text-xs font-bold shadow-2xs hover:bg-neutral-800 active:scale-95 transition-all inline-flex items-center justify-center gap-2 disabled:opacity-40"
                                         >
                                             Import Narrative Source
-                                            <RiArrowRightLine size={16} />
+                                            <RiArrowRightLine size={15} />
                                         </button>
                                     </form>
                                 )}

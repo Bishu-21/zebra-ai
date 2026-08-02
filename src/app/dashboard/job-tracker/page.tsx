@@ -46,7 +46,7 @@ export default async function JobTrackerPage() {
           id: app.id,
           company: app.company,
           position: app.position,
-          status: app.status as "Applied" | "Interviewing" | "Offers" | "Rejected",
+          status: app.status as "Draft" | "Applied" | "Preparing" | "Tailoring" | "Interviewing" | "Offer" | "Rejected" | "Withdrawn",
           description: app.jobDescription,
           url: app.url,
           resumeId: app.selectedResumeId,
@@ -59,7 +59,7 @@ export default async function JobTrackerPage() {
               id: job.id,
               company: job.company,
               position: job.position,
-              status: job.status as "Applied" | "Interviewing" | "Offers" | "Rejected",
+              status: job.status as "Draft" | "Applied" | "Preparing" | "Tailoring" | "Interviewing" | "Offer" | "Rejected" | "Withdrawn",
               salary: job.salary,
               url: job.url,
               resumeId: job.resumeId,
@@ -69,29 +69,29 @@ export default async function JobTrackerPage() {
   ];
 
   return (
-    <div className="p-10 max-w-[1600px] mx-auto">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+    <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-8 pb-32">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-4">
         <div className="max-w-2xl">
-          <h1 className="text-[2.5rem] font-black tracking-[-0.04em] leading-tight mb-3 text-[#0A0A0A]">Job Tracker</h1>
-          <p className="text-[#737373] text-[1.05rem] font-medium leading-relaxed">
+          <h1 className="text-2xl font-bold tracking-tight text-[#0A0A0A] mb-1">Job Tracker</h1>
+          <p className="text-xs font-normal text-neutral-500 leading-relaxed">
             Manage your applications and interview stages in one place. Focus on the hunt, not the spreadsheet.
           </p>
         </div>
         
         {/* Quick Stats */}
         <div className="flex items-center gap-4">
-            <div className="bg-white border border-black/[0.04] p-4 pr-10 rounded-[2rem] shadow-sm">
-                <p className="text-[0.6rem] font-black text-[#A3A3A3] uppercase tracking-widest mb-1">Applications</p>
+            <div className="bg-white border border-neutral-200/70 p-4 pr-8 rounded-2xl shadow-2xs">
+                <p className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider mb-1">Applications</p>
                 <div className="flex items-center gap-2">
-                    <span className="text-2xl font-black text-[#0A0A0A]">{userJobs.length}</span>
+                    <span className="text-xl font-bold text-[#0A0A0A]">{formattedJobs.length}</span>
                 </div>
             </div>
-            <div className="bg-white border border-black/[0.04] p-4 pr-10 rounded-[2rem] shadow-sm">
-                <p className="text-[0.6rem] font-black text-[#A3A3A3] uppercase tracking-widest mb-1">Interview Rate</p>
+            <div className="bg-white border border-neutral-200/70 p-4 pr-8 rounded-2xl shadow-2xs">
+                <p className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider mb-1">Interview Rate</p>
                 <div className="flex items-center gap-2">
-                    <span className="text-2xl font-black text-[#0A0A0A]">
-                        {userJobs.length > 0 
-                            ? Math.round((userJobs.filter(j => j.status !== 'Applied').length / userJobs.length) * 100) 
+                    <span className="text-xl font-bold text-[#0A0A0A]">
+                        {formattedJobs.length > 0 
+                            ? Math.round((formattedJobs.filter(j => String(j.status) === 'Interviewing' || String(j.status) === 'Offer' || String(j.status) === 'Offers').length / formattedJobs.length) * 100) 
                             : 0}%
                     </span>
                 </div>

@@ -169,152 +169,146 @@ export function AnalyzeResume() {
       </div>
 
       {/* Tool Modal */}
-      {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 sm:p-10">
-            <div className="absolute inset-0 bg-foreground/60 backdrop-blur-sm" onClick={() => !isProcessing && setIsOpen(false)}></div>
-            <div className="relative bg-background/90 backdrop-blur-xl w-full max-w-5xl max-h-[90vh] rounded-[var(--radius-xl)] shadow-[var(--shadow-2xl)] border border-border-subtle flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                
-                {/* Header */}
-                <div className="p-6 sm:p-10 border-b border-black/[0.03] flex items-center justify-between bg-white/40 backdrop-blur-3xl sticky top-0 z-20">
-                    <div className="flex items-center gap-4 sm:gap-6">
-                        <div className="w-12 h-12 sm:w-16 sm:h-16 bg-primary rounded-[1rem] sm:rounded-[1.5rem] flex items-center justify-center text-white shadow-2xl shadow-black/10">
-                            <RiRadarLine size={24} className="sm:size-[28px]" />
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-3 mb-1.5">
-                                <h2 className="text-lg sm:text-2xl font-bold text-foreground tracking-tighter uppercase leading-none">Resume Analysis</h2>
-                            </div>
-                            <p className="text-[0.6rem] sm:text-[0.7rem] font-bold text-accent-gray uppercase tracking-widest">
-                                Content Review <span className="mx-2 opacity-50">&</span> Optimization
-                            </p>
-                        </div>
-                    </div>
-                    <button onClick={() => !isProcessing && setIsOpen(false)} className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center text-black/20 hover:text-black hover:bg-black/[0.03] rounded-full transition-all disabled:opacity-30" disabled={isProcessing}>
-                        <RiCloseCircleLine size={24} />
-                    </button>
-                </div>
+      <AnimatePresence>
+        {isOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+              <m.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 bg-black/40 backdrop-blur-md" 
+                  onClick={() => !isProcessing && setIsOpen(false)}
+              />
+              <m.div 
+                  initial={{ scale: 0.96, opacity: 0, y: 12 }}
+                  animate={{ scale: 1, opacity: 1, y: 0 }}
+                  exit={{ scale: 0.96, opacity: 0, y: 12 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                  className="relative bg-white w-full max-w-2xl max-h-[85vh] rounded-3xl shadow-2xl border border-neutral-200/80 flex flex-col overflow-hidden z-10"
+              >
+                  {/* Header */}
+                  <div className="px-6 py-5 border-b border-neutral-200/60 flex items-center justify-between bg-white sticky top-0 z-20">
+                      <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-[#0A0A0A] text-white flex items-center justify-center shadow-2xs shrink-0">
+                              <RiRadarLine size={20} />
+                          </div>
+                          <div>
+                              <h2 className="text-lg font-bold tracking-tight text-[#0A0A0A]">Resume Analysis</h2>
+                              <p className="text-xs font-normal text-neutral-500">Analyze structure, content, and improvement gaps</p>
+                          </div>
+                      </div>
+                      <button 
+                          onClick={() => !isProcessing && setIsOpen(false)} 
+                          className="w-8 h-8 rounded-full bg-neutral-100 text-neutral-500 hover:bg-neutral-200 hover:text-[#0A0A0A] flex items-center justify-center transition-all disabled:opacity-40" 
+                          disabled={isProcessing}
+                      >
+                          <RiCloseCircleLine size={18} />
+                      </button>
+                  </div>
 
-                <div className="flex-grow overflow-y-auto p-10 no-scrollbar relative">
-                    <div className="max-w-4xl mx-auto space-y-8">
-                        <div className="flex items-center justify-between">
-                            <div className="space-y-1">
-                                <h4 className="text-sm font-black uppercase tracking-widest text-muted-foreground/60">Resume Content</h4>
-                                <p className="text-xs font-bold text-muted-foreground/40 italic">Paste plain text or import a document below.</p>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <input 
-                                    type="file" 
-                                    ref={fileInputRef}
-                                    onChange={handleFileUpload}
-                                    accept=".pdf,.docx,.txt"
-                                    className="hidden"
-                                />
-                                <button 
-                                    onClick={() => fileInputRef.current?.click()}
-                                    disabled={isProcessing}
-                                    className="flex items-center gap-2 px-6 py-3 bg-white border border-black/10 rounded-xl text-[0.6rem] sm:text-[0.7rem] font-bold transition-all shadow-sm disabled:opacity-30 text-black uppercase tracking-wider hover:border-black/20"
-                                >
-                                    {isUploading ? <RiLoader4Line size={18} className="animate-spin" /> : <RiUploadCloud2Line size={18} />}
-                                    <span className="hidden sm:inline">Upload Document</span>
-                                    <span className="sm:hidden">Upload</span>
-                                </button>
-                            </div>
-                        </div>
+                  {/* Body Content */}
+                  <div className="flex-grow overflow-y-auto p-6 sm:p-8 space-y-6">
+                      <div className="flex items-center justify-between">
+                          <div>
+                              <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Resume Content</h4>
+                              <p className="text-xs text-neutral-500 mt-0.5">Paste plain text or import a document below</p>
+                          </div>
+                          <div>
+                              <input 
+                                  type="file" 
+                                  ref={fileInputRef}
+                                  onChange={handleFileUpload}
+                                  accept=".pdf,.docx,.txt"
+                                  className="hidden"
+                              />
+                              <button 
+                                  onClick={() => fileInputRef.current?.click()}
+                                  disabled={isProcessing}
+                                  className="inline-flex items-center gap-2 px-4 py-2 bg-neutral-100 hover:bg-neutral-200 border border-neutral-200/80 rounded-full text-xs font-semibold text-[#0A0A0A] transition-all disabled:opacity-40"
+                              >
+                                  {isUploading ? <RiLoader4Line size={14} className="animate-spin" /> : <RiUploadCloud2Line size={14} />}
+                                  <span>Upload Document</span>
+                              </button>
+                          </div>
+                      </div>
 
-                        {/* Input Area */}
-                        <div className="relative group/input overflow-hidden rounded-[var(--radius-xl)] border border-border-subtle shadow-inner bg-muted/20">
-                            <div className="absolute top-8 left-8 text-muted-foreground/20 z-20">
-                                <RiFileTextLine size={32} />
-                            </div>
-                            
-                            {/* Cinematic Scan Animation Overlay */}
-                            <AnimatePresence>
-                                {isProcessing && (
-                                    <m.div 
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        exit={{ opacity: 0 }}
-                                        className="absolute inset-0 z-30 pointer-events-none overflow-hidden rounded-[var(--radius-xl)]"
-                                    >
-                                        <div className="absolute inset-0 bg-background/60 backdrop-blur-[4px]"></div>
-                                        
-                                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-6">
-                                            <div className="scale-150 text-foreground/80">
-                                                <RiLoader4Line className="animate-spin" size={40} />
-                                            </div>
-                                            <div className="flex flex-col items-center gap-2">
-                                                <span className="text-sm font-bold uppercase tracking-[0.2em] text-foreground animate-pulse">{scanStep}</span>
-                                                <div className="w-48 h-2 bg-muted rounded-full overflow-hidden">
-                                                    <m.div 
-                                                        className="h-full bg-primary"
-                                                        initial={{ width: "0%" }}
-                                                        animate={{ width: "100%" }}
-                                                        transition={{ duration: 6, ease: "linear" }}
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
+                      {/* Input Area */}
+                      <div className="relative overflow-hidden rounded-2xl border border-neutral-200/80 bg-neutral-50/50">
+                          {/* Scan Overlay */}
+                          <AnimatePresence>
+                              {isProcessing && (
+                                  <m.div 
+                                      initial={{ opacity: 0 }}
+                                      animate={{ opacity: 1 }}
+                                      exit={{ opacity: 0 }}
+                                      className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-white/80 backdrop-blur-xs gap-4 p-6"
+                                  >
+                                      <RiLoader4Line className="animate-spin text-[#0A0A0A]" size={32} />
+                                      <div className="flex flex-col items-center gap-2 text-center">
+                                          <span className="text-xs font-bold text-[#0A0A0A]">{scanStep}</span>
+                                          <div className="w-40 h-1.5 bg-neutral-200 rounded-full overflow-hidden">
+                                              <m.div 
+                                                  className="h-full bg-[#0A0A0A]"
+                                                  initial={{ width: "0%" }}
+                                                  animate={{ width: "100%" }}
+                                                  transition={{ duration: 6, ease: "linear" }}
+                                              />
+                                          </div>
+                                      </div>
+                                  </m.div>
+                              )}
+                          </AnimatePresence>
 
-                                        {/* Laser Audit Line */}
-                                        <m.div 
-                                            animate={{ top: ["0%", "100%", "0%"] }}
-                                            transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
-                                            className="absolute left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent shadow-[0_0_30px_rgba(10,10,10,0.6)] z-40 opacity-50"
-                                        />
-                                    </m.div>
-                                )}
-                            </AnimatePresence>
+                          <textarea 
+                              value={content}
+                              onChange={(e) => setContent(e.target.value)}
+                              placeholder="Paste your resume content here..."
+                              className="w-full min-h-[260px] p-4 bg-transparent text-xs font-medium text-[#0A0A0A] focus:outline-none transition-all resize-none leading-relaxed placeholder:text-neutral-400"
+                              disabled={isProcessing}
+                          />
+                          
+                          {error && (
+                              <m.div 
+                                  initial={{ opacity: 0, y: 8 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  className="m-4 p-3 bg-red-50 border border-red-200/80 rounded-xl flex items-center gap-2 text-xs font-medium text-red-700"
+                              >
+                                  <RiInformationLine size={16} className="shrink-0 text-red-600" />
+                                  <span>{error}</span>
+                              </m.div>
+                          )}
+                      </div>
+                  </div>
 
-                            <textarea 
-                                value={content}
-                                onChange={(e) => setContent(e.target.value)}
-                                placeholder="Paste your resume content here..."
-                                className={`w-full min-h-[400px] pl-20 pr-10 py-10 bg-transparent text-[1rem] font-medium focus:outline-none transition-all resize-none leading-relaxed placeholder:text-muted-foreground/20 text-foreground relative z-10 ${isProcessing ? "blur-[2px]" : ""}`}
-                                disabled={isProcessing}
-                            />
-                            
-                            {error && (
-                                <m.div 
-                                    initial={{ opacity: 0, scale: 0.95 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    className="absolute bottom-10 left-10 right-10 flex items-center gap-3 text-white text-[0.75rem] font-black uppercase tracking-widest bg-error p-6 rounded-[var(--radius-lg)] shadow-[var(--shadow-2xl)] z-40"
-                                >
-                                    <RiInformationLine size={20} />
-                                    {error}
-                                </m.div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Footer */}
-                <div className="p-6 sm:p-8 border-t border-black/5 flex flex-col sm:flex-row items-center justify-between bg-white/30 backdrop-blur-xl sticky bottom-0 gap-4">
-                    <div className="flex items-center gap-3 px-6 py-3 bg-black/5 rounded-2xl border border-black/5 w-full sm:w-auto justify-center sm:justify-start">
-                        <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                        <span className="text-[0.65rem] font-black uppercase tracking-widest text-accent-gray">Analyzer Ready</span>
-                    </div>
-                    
-                    <div className="flex items-center gap-4 w-full sm:w-auto">
-                        <button 
-                            onClick={() => setIsOpen(false)}
-                            disabled={isProcessing}
-                            className="flex-grow sm:flex-grow-0 px-8 py-4 text-sm font-black uppercase tracking-widest text-black/40 hover:text-black transition-colors disabled:opacity-20"
-                        >
-                            Cancel
-                        </button>
-                        <button 
-                            onClick={handleManualAnalyze}
-                            disabled={isProcessing || !content.trim()}
-                            className="flex-grow sm:flex-grow-0 bg-primary text-white px-10 sm:px-12 py-5 rounded-[1.25rem] font-bold text-sm hover:bg-primary-dark hover:scale-[1.02] active:scale-[0.98] transition-all shadow-2xl shadow-black/10 disabled:opacity-30 flex items-center justify-center gap-3 group"
-                        >
-                            {isAnalyzing ? "Processing..." : "Run Analysis"}
-                            {!isAnalyzing && <RiArrowRightLine size={18} className="group-hover:translate-x-1 transition-transform" />}
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-      )}
+                  {/* Footer */}
+                  <div className="px-6 py-4 border-t border-neutral-200/60 flex items-center justify-between bg-white sticky bottom-0 z-20 gap-3">
+                      <div className="px-3 py-1.5 bg-neutral-100 rounded-full text-xs font-semibold text-neutral-600 flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                          <span>Analyzer Ready</span>
+                      </div>
+                      
+                      <div className="flex items-center gap-3">
+                          <button 
+                              onClick={() => setIsOpen(false)}
+                              disabled={isProcessing}
+                              className="px-5 py-2.5 rounded-full text-xs font-semibold text-neutral-500 hover:text-[#0A0A0A] transition-all disabled:opacity-40"
+                          >
+                              Cancel
+                          </button>
+                          <button 
+                              onClick={handleManualAnalyze}
+                              disabled={isProcessing || !content.trim()}
+                              className="px-6 py-2.5 bg-[#0A0A0A] text-white rounded-full text-xs font-bold shadow-2xs hover:bg-neutral-800 active:scale-95 transition-all inline-flex items-center gap-2 disabled:opacity-40"
+                          >
+                              {isAnalyzing ? "Processing..." : "Run Analysis"}
+                              {!isAnalyzing && <RiArrowRightLine size={15} />}
+                          </button>
+                      </div>
+                  </div>
+              </m.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {isResultsModalOpen && analysisResult && (
         <ResumeResultsModal 

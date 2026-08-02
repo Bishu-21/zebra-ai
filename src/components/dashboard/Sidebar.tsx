@@ -16,7 +16,8 @@ import {
     RiSettings4Line, 
     RiLogoutBoxRLine,
     RiMenuLine,
-    RiCloseLine
+    RiCloseLine,
+    RiArticleLine
 } from "react-icons/ri";
 
 interface SidebarProps {
@@ -135,6 +136,9 @@ export function Sidebar({ plan, credits, userName, userImage, onOpenSettingsActi
                             </DashboardLink>
                             <DashboardLink href="/dashboard/work" icon={<RiFileTextLine size={18} />}>
                                 My Work
+                            </DashboardLink>
+                            <DashboardLink href="/dashboard/cover-letters" icon={<RiArticleLine size={18} />}>
+                                Cover Letters
                             </DashboardLink>
                             <DashboardLink href="/dashboard/portfolio" icon={<RiBarChartGroupedLine size={18} />}>
                                 Portfolio

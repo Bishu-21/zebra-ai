@@ -46,11 +46,11 @@ export default async function CoverLettersPage() {
   });
 
   return (
-    <div className="p-6 md:p-10 max-w-7xl pb-32">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-12 md:mb-16">
+    <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-8 pb-32">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-4">
         <div className="max-w-2xl">
-          <h1 className="text-4xl md:text-[3rem] font-black tracking-[-0.04em] leading-tight mb-4 text-[#0A0A0A]">Cover Letter Vault</h1>
-          <p className="text-[#6B6B6B] text-[1rem] md:text-[1.1rem] leading-relaxed font-medium">
+          <h1 className="text-2xl font-bold tracking-tight text-[#0A0A0A] mb-1">Cover Letter Vault</h1>
+          <p className="text-xs font-normal text-neutral-500 leading-relaxed">
             AI-generated cover letters tailored to specific job descriptions. High conversion, surgically precise.
           </p>
         </div>
