@@ -203,7 +203,7 @@ export function ImportResume() {
                                             <RiLoader4Line size={24} className="animate-spin" />
                                         </div>
                                         <div className="space-y-2">
-                                            <span className="text-xs font-bold text-[#0A0A0A] animate-pulse">
+                                            <span className="text-xs font-bold text-[#0A0A0A]">
                                                 {uploadStep}
                                             </span>
                                             <div className="w-40 h-1.5 bg-neutral-200 rounded-full overflow-hidden mx-auto">
@@ -227,7 +227,7 @@ export function ImportResume() {
                                     </div>
                                     <div>
                                         <h2 className="text-lg font-bold tracking-tight text-[#0A0A0A]">Import Resume</h2>
-                                        <p className="text-xs font-normal text-neutral-500">Sync structured details or compile raw text</p>
+                                        <p className="text-xs font-normal text-neutral-500">Upload a document file or paste raw text</p>
                                     </div>
                                 </div>
                                 <button 
@@ -354,7 +354,7 @@ export function ImportResume() {
                                             disabled={isUploading || !rawText.trim()}
                                             className="w-full px-6 py-3 bg-[#0A0A0A] text-white rounded-full text-xs font-bold shadow-2xs hover:bg-neutral-800 active:scale-95 transition-all inline-flex items-center justify-center gap-2 disabled:opacity-40"
                                         >
-                                            Import Narrative Source
+                                            Import Resume
                                             <RiArrowRightLine size={15} />
                                         </button>
                                     </form>

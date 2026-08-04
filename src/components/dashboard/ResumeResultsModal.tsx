@@ -13,7 +13,7 @@ const IconBox = ({ children, className = "" }: { children: React.ReactNode, clas
 );
 
 const PulseIcon = () => (
-  <IconBox className="animate-pulse">
+  <IconBox>
     <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
   </IconBox>
 );
@@ -190,7 +190,7 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
                                 {actionItems.length > 0 && (
                                     <div className="bg-background border border-border-subtle p-6 sm:p-8 rounded-[var(--radius-xl)] space-y-5">
                                         <div className="flex items-center gap-3 px-6 py-3 bg-black/5 rounded-2xl border border-black/5">
-                                            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                                            <div className="w-2 h-2 rounded-full bg-primary" />
                                             <span className="text-[0.65rem] font-black uppercase tracking-widest text-accent-gray">Action Items</span>
                                         </div>
                                         <div className="space-y-3">

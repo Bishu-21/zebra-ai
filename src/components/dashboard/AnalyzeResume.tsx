@@ -283,7 +283,7 @@ export function AnalyzeResume() {
                   {/* Footer */}
                   <div className="px-6 py-4 border-t border-neutral-200/60 flex items-center justify-between bg-white sticky bottom-0 z-20 gap-3">
                       <div className="px-3 py-1.5 bg-neutral-100 rounded-full text-xs font-semibold text-neutral-600 flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                          <span className="w-2 h-2 rounded-full bg-emerald-500" />
                           <span>Analyzer Ready</span>
                       </div>
                       

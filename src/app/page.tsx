@@ -42,7 +42,7 @@ export default function Home() {
             <Link className="text-accent-gray hover:text-foreground text-xs font-bold uppercase tracking-widest transition-all duration-200" href="#pricing">Pricing</Link>
           </div>
           <Suspense fallback={
-            <div className="w-28 h-10 bg-black/5 animate-pulse rounded-xl" />
+            <div className="w-28 h-10 bg-black/5 rounded-xl" />
           }>
             <NavAuth />
           </Suspense>

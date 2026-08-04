@@ -330,10 +330,6 @@ async function renderDashboardContent(session: NonNullable<Awaited<ReturnType<ty
       {/* Primary User Journey Hero Anchor: Continue Your Application */}
       <div className="mb-10 p-6 md:p-8 bg-[#0A0A0A] text-white rounded-3xl shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="space-y-2 max-w-2xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full text-xs font-bold text-neutral-300">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            Next Step
-          </div>
           <h2 className="text-xl md:text-2xl font-bold tracking-tight text-white">
             {nextAction.title}
           </h2>

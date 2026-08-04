@@ -14,7 +14,7 @@ export function NavAuth() {
 
   // Use skeleton during hydration or while session is pending
   if (!mounted || isPending) {
-    return <div className="w-28 h-10 bg-black/5 animate-pulse rounded-xl" />;
+    return <div className="w-28 h-10 bg-black/5 rounded-xl" />;
   }
 
   return (

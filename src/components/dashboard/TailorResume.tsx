@@ -417,7 +417,7 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                             <div className="px-6 py-4 border-t border-neutral-200/60 flex items-center justify-between bg-white sticky bottom-0 z-20 gap-3">
                                 <div className="px-3 py-1.5 bg-neutral-100 rounded-full text-xs font-semibold text-neutral-600 flex items-center gap-2">
                                     <RiBarChartLine size={16} className="text-neutral-500" />
-                                    <span>Analysis Hub</span>
+                                    <span>Role Match</span>
                                 </div>
 
                                 <div className="flex items-center gap-3">

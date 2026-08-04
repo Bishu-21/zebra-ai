@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 
-interface Settings {
+export interface Settings {
     fontSize: string;
     spellcheck: boolean;
     lineWrapping: boolean;
@@ -10,11 +10,15 @@ interface Settings {
     autoSave: boolean;
     resumeFont: string;
     previewScale: number | "auto";
+    aiTone: "professional" | "bold" | "technical" | "executive";
+    theme: "system" | "light" | "dark";
+    autoFormatOnPaste: boolean;
 }
 
 interface SettingsContextType {
     settings: Settings;
     updateSettingsAction: (newSettings: Partial<Settings>) => void;
+    resetSettingsAction: () => void;
 }
 
 const defaultSettings: Settings = {
@@ -25,6 +29,9 @@ const defaultSettings: Settings = {
     autoSave: true,
     resumeFont: "Latin Modern Roman",
     previewScale: "auto",
+    aiTone: "professional",
+    theme: "light",
+    autoFormatOnPaste: true,
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -47,6 +54,9 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
                     autoSave: parsed.autoSave !== undefined ? parsed.autoSave : (parsed.autoFormatting !== undefined ? parsed.autoFormatting : defaultSettings.autoSave),
                     resumeFont: parsed.resumeFont || defaultSettings.resumeFont,
                     previewScale: parsed.previewScale || defaultSettings.previewScale,
+                    aiTone: parsed.aiTone || defaultSettings.aiTone,
+                    theme: parsed.theme || defaultSettings.theme,
+                    autoFormatOnPaste: parsed.autoFormatOnPaste !== undefined ? parsed.autoFormatOnPaste : defaultSettings.autoFormatOnPaste,
                 };
                 setSettings(migrated);
             } catch (e) {
@@ -63,8 +73,13 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         });
     };
 
+    const resetSettingsAction = () => {
+        setSettings(defaultSettings);
+        localStorage.removeItem("zebra_settings");
+    };
+
     return (
-        <SettingsContext.Provider value={{ settings, updateSettingsAction }}>
+        <SettingsContext.Provider value={{ settings, updateSettingsAction, resetSettingsAction }}>
             {children}
         </SettingsContext.Provider>
     );

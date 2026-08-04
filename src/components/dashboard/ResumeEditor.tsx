@@ -605,7 +605,7 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                     <div className="flex items-center gap-1 sm:gap-4">
                         {settings.autoSave && (
                             <div className={`hidden sm:flex items-center gap-1.5 transition-all duration-500 ${isSaving ? 'opacity-100' : 'opacity-40'}`}>
-                                <div className={`w-1.5 h-1.5 rounded-full ${isSaving ? 'bg-primary animate-pulse shadow-[0_0_8px_var(--primary)]' : 'bg-muted-foreground/30'}`} />
+                                <div className={`w-1.5 h-1.5 rounded-full ${isSaving ? 'bg-primary' : 'bg-muted-foreground/30'}`} />
                                 <span className="text-[0.65rem] font-bold text-muted-foreground/60 uppercase tracking-widest">{isSaving ? 'Saving' : 'Synced'}</span>
                             </div>
                         )}
@@ -627,7 +627,7 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                     >
                         <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-[var(--radius-md)] bg-primary/10 flex items-center justify-center text-primary">
-                                <RiMagicLine size={18} className="animate-pulse" />
+                                <RiMagicLine size={18} />
                             </div>
                             <div>
                                 <p className="text-xs font-black text-secondary">Incomplete Structure Detected</p>
@@ -650,7 +650,7 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                         className="bg-primary px-6 py-3 flex items-center justify-center gap-3"
                     >
                         <RiLoader4Line className="animate-spin text-white" size={18} />
-                        <span className="text-[10px] font-black text-white uppercase tracking-[0.2em] animate-pulse">Auto-Structuring document... analyzing content</span>
+                        <span className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Auto-Structuring document... analyzing content</span>
                     </m.div>
                 )}
             </AnimatePresence>

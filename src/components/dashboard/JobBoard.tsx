@@ -379,7 +379,7 @@ export function JobBoard({
                                                         </div>
                                                         {isScraping && (
                                                             <div className="flex items-center gap-2 px-3 py-1 bg-primary/5 rounded-full border border-primary/10">
-                                                                <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
+                                                                <div className="w-1.5 h-1.5 bg-primary rounded-full" />
                                                                 <span className="text-[8px] font-black text-primary uppercase tracking-widest">Processing</span>
                                                             </div>
                                                         )}

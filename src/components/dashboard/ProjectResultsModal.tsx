@@ -43,10 +43,9 @@ export function ProjectResultsModal({ isOpen, onCloseAction, data }: ProjectResu
                         <div className="flex flex-col">
                             <div className="flex items-center gap-3">
                                 <div className="flex items-center gap-2 px-2.5 py-1 bg-success/10 text-success rounded-full">
-                                    <RiShieldCheckLine size={14} className="animate-pulse" />
+                                    <RiShieldCheckLine size={14} />
                                     <span className="text-[0.55rem] font-bold uppercase tracking-widest">Project Verification Report</span>
                                 </div>
-                                <span className="text-[0.55rem] font-bold uppercase tracking-[0.3em] text-muted-foreground/60">Zebra Engine</span>
                             </div>
                             <h2 className="text-xl font-bold text-foreground tracking-tight">Proof Analysis</h2>
                         </div>
@@ -61,7 +60,7 @@ export function ProjectResultsModal({ isOpen, onCloseAction, data }: ProjectResu
 
                     <div className="p-8 border-t border-border-subtle flex items-center justify-between bg-background/30 backdrop-blur-xl sticky bottom-0">
                         <div className="flex items-center gap-3 px-6 py-3 bg-muted rounded-[var(--radius-2xl)] border border-border-subtle">
-                            <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
+                            <div className="w-2 h-2 rounded-full bg-success" />
                             <span className="text-[0.65rem] font-black uppercase tracking-widest text-muted-foreground">Verification complete</span>
                         </div>
                         
