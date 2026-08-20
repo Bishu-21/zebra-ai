@@ -1,17 +1,18 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { m } from "framer-motion";
-import { 
-    RiAddLine, 
-    RiBriefcase4Line, 
-    RiDeleteBin6Line, 
-    RiCheckboxCircleLine, 
-    RiMoneyDollarCircleLine, 
-    RiExternalLinkLine, 
-    RiInboxArchiveLine, 
-    RiChat3Line, 
-    RiCloseCircleLine, 
+import {
+    RiAddLine,
+    RiBriefcase4Line,
+    RiDeleteBin6Line,
+    RiCheckboxCircleLine,
+    RiMoneyDollarCircleLine,
+    RiExternalLinkLine,
+    RiInboxArchiveLine,
+    RiChat3Line,
+    RiCloseCircleLine,
     RiFileTextLine,
     RiArrowDropDownLine,
     RiMore2Fill,
@@ -55,20 +56,21 @@ export type Job = {
     updatedAt: string;
 };
 
-export function JobBoard({ 
-    initialJobs, 
-    resumes = [], 
-    versions = [] 
-}: { 
-    initialJobs: Job[], 
+export function JobBoard({
+    initialJobs,
+    resumes = [],
+    versions = []
+}: {
+    initialJobs: Job[],
     resumes?: { id: string; title: string }[],
     versions?: { id: string; title: string; company: string | null; targetRole: string | null }[]
 }) {
     const [jobs, setJobs] = useState<Job[]>(initialJobs);
+    const [activeStatusFilter, setActiveStatusFilter] = useState<string>("All");
     const [isAdding, setIsAdding] = useState(false);
-    const [newJob, setNewJob] = useState({ 
-        company: "", 
-        position: "", 
+    const [newJob, setNewJob] = useState({
+        company: "",
+        position: "",
         status: "Applied" as Job["status"],
         salary: "",
         url: "",
@@ -113,10 +115,10 @@ export function JobBoard({
 
             if (data.success || data.application) {
                 const addedId = data.application?.id || data.id;
-                const addedJob: Job = { 
-                    ...newJob, 
-                    id: addedId, 
-                    updatedAt: new Date().toISOString() 
+                const addedJob: Job = {
+                    ...newJob,
+                    id: addedId,
+                    updatedAt: new Date().toISOString()
                 };
                 setJobs([addedJob, ...jobs]);
                 setNewJob({ company: "", position: "", status: "Applied", salary: "", url: "", location: "", jobType: "", description: "", resumeId: "", resumeVersionId: "" });
@@ -220,14 +222,134 @@ export function JobBoard({
 
     return (
         <>
-        <div className="flex gap-6 overflow-x-auto pb-8 min-w-full">
+        {/* Mobile & Tablet Segmented Stream View (<1024px) */}
+        <div className="lg:hidden space-y-4 pb-12">
+            {/* Stage Selector Chips Bar */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-none">
+                <button
+                    onClick={() => setActiveStatusFilter("All")}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                        activeStatusFilter === "All"
+                            ? "bg-[#0A0A0A] text-white shadow-sm"
+                            : "bg-white text-neutral-600 border border-neutral-200/80 hover:bg-neutral-50"
+                    }`}
+                >
+                    <span>All</span>
+                    <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${activeStatusFilter === "All" ? "bg-white/20 text-white" : "bg-neutral-100 text-neutral-500"}`}>
+                        {jobs.length}
+                    </span>
+                </button>
+                {BOARD_STATUSES.map((st) => {
+                    const count = jobs.filter(j => (st === "Offer" ? j.status === "Offer" || j.status === "Offers" : j.status === st)).length;
+                    const isSelected = activeStatusFilter === st;
+                    return (
+                        <button
+                            key={st}
+                            onClick={() => setActiveStatusFilter(st)}
+                            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                                isSelected
+                                    ? "bg-[#0A0A0A] text-white shadow-sm"
+                                    : "bg-white text-neutral-600 border border-neutral-200/80 hover:bg-neutral-50"
+                            }`}
+                        >
+                            <span>{st}</span>
+                            <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${isSelected ? "bg-white/20 text-white" : "bg-neutral-100 text-neutral-500"}`}>
+                                {count}
+                            </span>
+                        </button>
+                    );
+                })}
+            </div>
+
+            {/* Filtered Application Cards */}
+            {jobs.filter(j => (activeStatusFilter === "All" ? true : activeStatusFilter === "Offer" ? j.status === "Offer" || j.status === "Offers" : j.status === activeStatusFilter)).length === 0 ? (
+                <div className="p-8 text-center bg-white rounded-2xl border border-neutral-200/80 space-y-2">
+                    <p className="text-sm font-bold text-[#0A0A0A]">No applications in this stage</p>
+                    <p className="text-xs text-neutral-500">Switch stages or add a new job application.</p>
+                </div>
+            ) : (
+                <div className="space-y-3">
+                    {jobs
+                        .filter(j => (activeStatusFilter === "All" ? true : activeStatusFilter === "Offer" ? j.status === "Offer" || j.status === "Offers" : j.status === activeStatusFilter))
+                        .map((job) => {
+                            const colors = getStatusColor(job.status);
+                            return (
+                                <div key={job.id} className="bg-white p-4 sm:p-5 rounded-2xl border border-neutral-200/80 shadow-xs space-y-3">
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div>
+                                            <p className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider mb-0.5">{job.company}</p>
+                                            <Link href={`/dashboard/applications/${job.id}`} className="font-extrabold text-base text-[#0A0A0A] hover:underline block leading-snug">
+                                                {job.position}
+                                            </Link>
+                                        </div>
+                                        <button
+                                            onClick={() => handleDeleteJob(job.id)}
+                                            className="p-2 text-neutral-400 hover:text-rose-600 rounded-lg transition-colors"
+                                            title="Delete application"
+                                        >
+                                            <RiDeleteBin6Line size={16} />
+                                        </button>
+                                    </div>
+
+                                    {(job.salary || job.resumeId || job.resumeVersionId) && (
+                                        <div className="flex flex-wrap items-center gap-2 pt-1">
+                                            {job.salary && (
+                                                <span className="px-2 py-1 bg-neutral-100 text-neutral-700 text-[11px] font-semibold rounded-lg flex items-center gap-1">
+                                                    <RiMoneyDollarCircleLine size={12} className="text-neutral-500" />
+                                                    {job.salary}
+                                                </span>
+                                            )}
+                                            {job.resumeId && (
+                                                <span className="px-2 py-1 bg-neutral-100 text-neutral-700 text-[11px] font-semibold rounded-lg flex items-center gap-1 truncate max-w-[180px]">
+                                                    <RiFileTextLine size={12} className="text-neutral-500" />
+                                                    {resumes.find(r => r.id === job.resumeId)?.title || "Resume"}
+                                                </span>
+                                            )}
+                                            {job.resumeVersionId && (
+                                                <span className="px-2 py-1 bg-indigo-50 text-indigo-700 text-[11px] font-semibold rounded-lg flex items-center gap-1 truncate max-w-[180px]">
+                                                    <RiMagicLine size={12} />
+                                                    {versions.find(v => v.id === job.resumeVersionId)?.title || "Tailored"}
+                                                </span>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    <div className="flex items-center justify-between gap-2 pt-2 border-t border-neutral-100">
+                                        <div className="relative">
+                                            <select
+                                                value={job.status}
+                                                onChange={(e) => handleUpdateStatus(job.id, e.target.value as Job["status"])}
+                                                className={`text-xs font-bold pl-2.5 pr-7 py-1.5 rounded-lg ${colors.light} ${colors.text} border border-neutral-200 appearance-none outline-none cursor-pointer`}
+                                            >
+                                                {BOARD_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                                            </select>
+                                            <RiArrowDropDownLine size={16} className={`absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none ${colors.text}`} />
+                                        </div>
+
+                                        <button
+                                            onClick={() => setSelectedAppModal({ id: job.id, company: job.company, position: job.position })}
+                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 rounded-lg text-xs font-bold text-[#0A0A0A] transition-colors"
+                                        >
+                                            <RiMagicLine size={14} className="text-indigo-600" />
+                                            <span>Suggestions</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                </div>
+            )}
+        </div>
+
+        {/* Desktop Kanban Board (>=1024px) */}
+        <div className="hidden lg:flex gap-6 overflow-x-auto pb-8 min-w-full">
             {BOARD_STATUSES.map((status) => {
                 const colors = getStatusColor(status);
                 const columnJobs = jobs.filter(j => {
                     if (status === "Offer") return j.status === "Offer" || j.status === "Offers";
                     return j.status === status;
                 });
-                
+
                 return (
                     <div key={status} className="flex flex-col h-full min-w-[280px] max-w-[340px] flex-1 group/column">
                         {/* Column Header */}
@@ -255,7 +377,7 @@ export function JobBoard({
                         <div className={`flex-grow p-3 rounded-[var(--radius-xl)] bg-muted/50 border-2 border-dashed border-border-subtle transition-all hover:bg-background/40 hover:border-foreground/5 group/board min-h-[400px]`}>
                             <div className="space-y-4 h-full">
                                 {columnJobs.map((job) => (
-                                    <div key={job.id} className="bg-white p-5 rounded-[var(--radius-xl)] border border-border-subtle shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] hover:-translate-y-1 transition-all group relative cursor-grab active:cursor-grabbing">
+                                    <div key={job.id} className="bg-white p-5 rounded-[var(--radius-xl)] border border-border-subtle shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] hover:-translate-y-1 transition-all group relative">
                                         <div className="flex items-start justify-between mb-4">
                                             <div className="flex-grow">
                                                 <div className="flex items-center gap-2 mb-1.5">
@@ -266,8 +388,8 @@ export function JobBoard({
                                                 </div>
                                                 <h4 className="font-black text-sm text-foreground leading-tight tracking-tight max-w-[80%]">{job.position}</h4>
                                             </div>
-                                            <button 
-                                                onClick={() => handleDeleteJob(job.id)} 
+                                            <button
+                                                onClick={() => handleDeleteJob(job.id)}
                                                 className="w-8 h-8 rounded-[var(--radius-md)] bg-error/10 text-error opacity-0 group-hover:opacity-100 transition-all hover:bg-error hover:text-white flex items-center justify-center -mr-1"
                                             >
                                                 <RiDeleteBin6Line size={14} />
@@ -332,8 +454,8 @@ export function JobBoard({
 
                                         <div className="flex items-center justify-between pt-4 border-t border-border-subtle">
                                             <div className="relative">
-                                                <select 
-                                                    value={job.status} 
+                                                <select
+                                                    value={job.status}
                                                     onChange={(e) => handleUpdateStatus(job.id, e.target.value as Job["status"])}
                                                     className={`text-[0.6rem] font-black uppercase tracking-widest pl-2 pr-8 py-1.5 rounded-[var(--radius-md)] ${colors.light} ${colors.text} border border-transparent hover:border-current transition-all appearance-none outline-none cursor-pointer`}
                                                 >
@@ -360,13 +482,13 @@ export function JobBoard({
                                                     <input autoFocus type="text" placeholder="Company..." className="w-full text-xs font-black p-3.5 bg-[#F5F5F5] rounded-2xl border-none focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-[#A3A3A3]" value={newJob.company} onChange={(e) => setNewJob({...newJob, company: e.target.value})} />
                                                     <input type="text" placeholder="Position..." className="w-full text-xs font-black p-3.5 bg-[#F5F5F5] rounded-2xl border-none focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-[#A3A3A3]" value={newJob.position} onChange={(e) => setNewJob({...newJob, position: e.target.value})} />
                                                 </div>
-                                                
+
                                                 <div className="grid grid-cols-2 gap-3">
                                                     <div className="space-y-2">
                                                         <label className="text-[0.6rem] font-black text-[#A3A3A3] uppercase tracking-widest ml-1">Salary</label>
                                                         <input type="text" placeholder="$120k..." className="w-full text-xs font-black p-3.5 bg-[#F5F5F5] rounded-2xl border-none focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-[#A3A3A3]" value={newJob.salary} onChange={(e) => setNewJob({...newJob, salary: e.target.value})} />
                                                     </div>
-                                                    
+
                                                     <div className="flex items-center justify-between relative">
                                                         <div className="flex items-center gap-3">
                                                             <div className="w-8 h-8 rounded-[var(--radius-md)] bg-gradient-to-tr from-primary to-primary-dark flex items-center justify-center text-white shadow-lg shadow-primary/20">
@@ -387,15 +509,15 @@ export function JobBoard({
 
                                                     <div className="flex gap-2.5 relative">
                                                         <div className="flex-grow relative group/input">
-                                                            <input 
-                                                                type="text" 
-                                                                placeholder="Paste LinkedIn or Indeed URL..." 
+                                                            <input
+                                                                type="text"
+                                                                placeholder="Paste LinkedIn or Indeed URL..."
                                                                 className="w-full text-[11px] font-bold p-4 bg-white rounded-[var(--radius-lg)] border border-border-subtle focus:border-primary/30 focus:ring-8 focus:ring-primary/[0.02] transition-all outline-none shadow-sm placeholder:text-muted-foreground/60"
                                                                 value={scrapeUrl}
                                                                 onChange={(e) => setScrapeUrl(e.target.value)}
                                                             />
                                                             {scrapeUrl && !isScraping && (
-                                                                <button 
+                                                                <button
                                                                     onClick={() => setScrapeUrl("")}
                                                                     className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors"
                                                                 >
@@ -403,14 +525,14 @@ export function JobBoard({
                                                                 </button>
                                                             )}
                                                         </div>
-                                                        <button 
+                                                        <button
                                                             onClick={handleScrape}
                                                             disabled={isScraping || !scrapeUrl}
                                                             className={`h-12 px-6 rounded-[var(--radius-lg)] flex items-center justify-center transition-all shadow-xl ${
-                                                                isScraping 
-                                                                ? 'bg-foreground text-background cursor-wait' 
-                                                                : scrapeUrl 
-                                                                    ? 'bg-primary text-white hover:bg-primary-dark hover:-translate-y-0.5 shadow-primary/20' 
+                                                                isScraping
+                                                                ? 'bg-foreground text-background cursor-wait'
+                                                                : scrapeUrl
+                                                                    ? 'bg-primary text-white hover:bg-primary-dark hover:-translate-y-0.5 shadow-primary/20'
                                                                     : 'bg-white text-muted-foreground cursor-not-allowed border border-border-subtle opacity-50'
                                                             }`}
                                                         >
@@ -433,7 +555,7 @@ export function JobBoard({
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    
+
                                                     <div className="grid grid-cols-2 gap-3">
                                                         <div className="space-y-2">
                                                             <label className="text-[0.6rem] font-black text-muted-foreground uppercase tracking-[0.2em] ml-1">Salary</label>
@@ -461,11 +583,11 @@ export function JobBoard({
 
                                                     <div className="space-y-2">
                                                         <label className="text-[0.6rem] font-black text-muted-foreground uppercase tracking-[0.2em] ml-1">Job Description</label>
-                                                        <textarea 
-                                                            placeholder="Brief summary of the role..." 
-                                                            className="w-full text-xs font-black p-4 bg-muted rounded-[var(--radius-lg)] border-none focus:ring-2 focus:ring-primary/20 transition-all min-h-[80px] resize-none outline-none" 
-                                                            value={newJob.description} 
-                                                            onChange={(e) => setNewJob({...newJob, description: e.target.value})} 
+                                                        <textarea
+                                                            placeholder="Brief summary of the role..."
+                                                            className="w-full text-xs font-black p-4 bg-muted rounded-[var(--radius-lg)] border-none focus:ring-2 focus:ring-primary/20 transition-all min-h-[80px] resize-none outline-none"
+                                                            value={newJob.description}
+                                                            onChange={(e) => setNewJob({...newJob, description: e.target.value})}
                                                         />
                                                     </div>
                                                 </div>
@@ -473,9 +595,9 @@ export function JobBoard({
                                                 <div className="space-y-2">
                                                     <label className="text-[0.6rem] font-black text-[#A3A3A3] uppercase tracking-widest ml-1">Attach Resume or Version</label>
                                                     <div className="relative">
-                                                        <select 
-                                                            className="w-full bg-[#F5F5F5] border-none rounded-2xl p-3.5 pl-10 text-xs font-black appearance-none cursor-pointer hover:bg-black/5 transition-all" 
-                                                            value={newJob.resumeVersionId ? `v:${newJob.resumeVersionId}` : (newJob.resumeId || "")} 
+                                                        <select
+                                                            className="w-full bg-[#F5F5F5] border-none rounded-2xl p-3.5 pl-10 text-xs font-black appearance-none cursor-pointer hover:bg-black/5 transition-all"
+                                                            value={newJob.resumeVersionId ? `v:${newJob.resumeVersionId}` : (newJob.resumeId || "")}
                                                             onChange={(e) => {
                                                                 const val = e.target.value;
                                                                 if (val.startsWith("v:")) {
@@ -515,7 +637,7 @@ export function JobBoard({
                                                 </div>
                                             </m.div>
                                         ) : (
-                                            <button 
+                                            <button
                                                 onClick={() => setIsAdding(true)}
                                                 className="w-full py-10 border-2 border-dashed border-black/[0.06] rounded-[2rem] text-[0.65rem] font-black uppercase tracking-[0.2em] text-[#A3A3A3] hover:bg-white hover:border-primary/20 hover:text-primary transition-all flex flex-col items-center justify-center gap-4 group/add"
                                             >
@@ -546,4 +668,3 @@ export function JobBoard({
         </>
     );
 }
-

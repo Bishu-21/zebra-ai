@@ -4,15 +4,17 @@ import { headers } from "next/headers";
 import { db } from "@/lib/db";
 import { resumes as resumesTable, analysis as analysisTable, jobs as jobsTable } from "@/lib/schema";
 import { eq, inArray, desc } from "drizzle-orm";
-import { 
-    RiBarChartGroupedLine, 
-    RiRadarLine, 
-    RiCompass3Line, 
+import {
+    RiBarChartGroupedLine,
+    RiRadarLine,
+    RiCompass3Line,
     RiFlashlightLine,
     RiArrowRightUpLine,
     RiStackLine,
     RiTimerFlashLine
 } from "react-icons/ri";
+
+import Link from "next/link";
 
 export default async function AnalyticsPage() {
   let session = null;
@@ -61,7 +63,7 @@ export default async function AnalyticsPage() {
     });
     chartScores = recentAnalyses.map(a => a.score).reverse();
   }
-  
+
   // Padding for chart if less than 10 entries
   const displayScores = chartScores.length > 0 ? chartScores : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
@@ -112,12 +114,12 @@ export default async function AnalyticsPage() {
                     <span className="text-[0.65rem] font-black uppercase tracking-widest">Live Tracking</span>
                 </div>
             </div>
-            
+
             <div className="flex-grow flex items-end justify-between gap-3 h-48 pb-4">
                 {displayScores.map((h, i) => (
                     <div key={i} className="flex-grow group/bar relative">
-                        <div 
-                            className={`w-full rounded-t-xl transition-all duration-700 ${i === displayScores.length - 1 && h > 0 ? 'bg-black' : 'bg-black/10 hover:bg-black/30'}`} 
+                        <div
+                            className={`w-full rounded-t-xl transition-all duration-700 ${i === displayScores.length - 1 && h > 0 ? 'bg-black' : 'bg-black/10 hover:bg-black/30'}`}
                             style={{ height: `${h || 2}%` }}
                         />
                         {h > 0 && (
@@ -130,20 +132,17 @@ export default async function AnalyticsPage() {
             </div>
             <div className="flex justify-between items-center mt-6 pt-6 border-t border-black/5">
                 <p className="text-xs font-bold text-[#737373]">
-                    {chartScores.length > 0 
+                    {chartScores.length > 0
                         ? `Tracking performance across your last ${chartScores.length} analyses.`
                         : "No analysis data available yet. Start by analyzing a resume."}
                 </p>
-                <button className="text-[0.65rem] font-black text-[#0A0A0A] uppercase tracking-[0.2em] flex items-center gap-1 hover:gap-2 transition-all">
-                    Full Report <RiArrowRightUpLine size={14} />
-                </button>
             </div>
         </div>
 
         {/* Intelligence Feed */}
         <div className="bg-[#171717] rounded-[2.5rem] p-10 text-white flex flex-col shadow-2xl shadow-black/10 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-bl-[4rem] -mr-8 -mt-8" />
-            
+
             <h4 className="text-xl font-black tracking-tight mb-8">Recent Activity</h4>
             <div className="space-y-6 flex-grow">
                 {userJobs.length > 0 ? userJobs.map((job) => (
@@ -162,10 +161,13 @@ export default async function AnalyticsPage() {
                     </div>
                 )}
             </div>
-            
-            <button className="mt-10 w-full py-4 bg-white/5 border border-white/10 rounded-2xl text-[0.65rem] font-black uppercase tracking-[0.2em] hover:bg-white hover:text-black transition-all">
-                View Activity Logs
-            </button>
+
+            <Link
+                href="/dashboard/job-tracker"
+                className="mt-10 w-full py-4 bg-white/5 border border-white/10 rounded-2xl text-[0.65rem] font-black uppercase tracking-[0.2em] hover:bg-white hover:text-black transition-all text-center flex items-center justify-center gap-1.5"
+            >
+                View all applications <RiArrowRightUpLine size={14} />
+            </Link>
         </div>
       </div>
     </div>

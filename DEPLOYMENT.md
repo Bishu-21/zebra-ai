@@ -1,93 +1,74 @@
-# Zebra AI Deployment Guide
+# Zebra AI deployment procedure
 
-This guide outlines the process for deploying Zebra AI to Vercel, its primary hosting platform.
+Use this checklist for staging first, then repeat it for production. Never use
+`drizzle-kit push --force` against either environment.
 
-## 1. Production Hosting: Vercel
+## 1. Verify the release
 
-> [!WARNING]
-> Never commit `.env.local` to source control. Always configure these variables securely via the Vercel Dashboard (Settings > Environment Variables).
-
-### Required Environment Variables
-
-```env
-# Database
-DATABASE_URL="postgresql://[user]:[password]@[host]/[dbname]?sslmode=require&channel_binding=require"
-
-# Better Auth Configuration
-BETTER_AUTH_SECRET="[secure-random-string]"
-BETTER_AUTH_URL="https://zebra-ai.app"
-BETTER_AUTH_TRUSTED_ORIGINS="https://zebra-ai.app,https://www.zebra-ai.app"
-NEXT_PUBLIC_APP_URL="https://zebra-ai.app"
-
-# Google OAuth
-GOOGLE_CLIENT_ID="[production-google-client-id]"
-GOOGLE_CLIENT_SECRET="[production-google-client-secret]"
-
-# Gemini AI Pipeline
-GEMINI_API_KEY="[production-gemini-key]"
-GEMINI_MODEL="gemma-4-31b-it"
-COPILOT_MODEL="gemini-2.5-flash-lite"
-RAG_MODEL="gemma-3-27b-it"
-
-# Razorpay Production Keys (Use test keys initially if verifying deployment)
-NEXT_PUBLIC_RAZORPAY_KEY_ID="[production-key-id]"
-RAZORPAY_KEY_ID="[production-key-id]"
-RAZORPAY_KEY_SECRET="[production-key-secret]"
-```
-
-### Build Configuration
-
-Ensure your Vercel project is configured to use **Node.js 20.x** (Settings > General > Node.js Version). Next.js 16 requires Node 20+.
-
-**Build Command**:
 ```bash
-npm run build
+npm ci
+npm audit --omit=dev --audit-level=high
+npm run check
 ```
-*(Dependencies are installed automatically via `npm install`)*
 
-### Domain Setup (zebra-ai.app)
+The Azure smoke test makes a billable external request, so run it explicitly
+with the target environment loaded:
 
-1. Go to your Vercel Project > **Settings** > **Domains**.
-2. Add `zebra-ai.app` and `www.zebra-ai.app`.
-3. Follow the DNS instructions provided by Vercel to point your domain (usually a CNAME for `www` and an A record for the apex).
-4. Vercel automatically provisions and manages the SSL certificate.
+```bash
+npm run azure:smoke
+```
 
-### Vercel Deployment Checklist
+## 2. Configure secrets
 
-- [ ] Visit `https://zebra-ai.app` and verify the landing page.
-- [ ] Confirm Google OAuth login works (ensure `https://zebra-ai.app/api/auth/callback/google` is in your Google Cloud Console).
-- [ ] Test a basic AI generation task in the Resume Editor.
-- [ ] Review the Vercel Runtime Logs for any startup warnings or 500 errors.
+Set every required variable from `.env.example` in the hosting platform. At a
+minimum, configure the database, Better Auth URL/secret/origins, application
+URL, and all three `AZURE_FOUNDRY_*` values. Keep API keys server-only. Configure
+`CHROMIUM_PACK_URL` or `CHROME_EXECUTABLE_PATH` when the host has no browser.
 
-## 2. Database Schema Management
+Use the API key belonging to the same Foundry resource or project host used by
+`AZURE_FOUNDRY_OPENAI_BASE_URL`. Do not use the `/api/projects/...` URL as the
+OpenAI base URL; the configured value must end with `/openai/v1/`.
 
-> [!IMPORTANT]
-> Database schema migrations (`npx drizzle-kit push`) should **not** be run automatically during the standard Vercel build pipeline. Never run `--force` automatically in CI to prevent accidental data loss.
+When credit purchases are enabled, create a separate Razorpay webhook secret,
+set `RAZORPAY_WEBHOOK_SECRET`, and register this public HTTPS endpoint in both
+Razorpay Test Mode and Live Mode:
 
-When schema changes occur:
-1. Run migrations manually from your local machine before deployment:
-   ```bash
-   npx drizzle-kit push
-   ```
-2. Once the schema is updated in the Neon database, push your application code to Vercel to align with the new schema.
+```text
+https://YOUR_APP_HOST/api/payments/webhook
+```
 
-## 3. Razorpay Test Checklist
+Subscribe to `payment.captured` and `order.paid`. The endpoint validates the
+raw-body signature and credits each order idempotently; do not reuse the API key
+secret as the webhook secret.
 
-Before swapping to production Razorpay keys, run a full payment test on the live deployment:
+## 3. Back up and migrate
 
-- [ ] Ensure `NEXT_PUBLIC_RAZORPAY_KEY_ID` uses the `rzp_test_...` prefix.
-- [ ] Go to the credits page and initialize a transaction.
-- [ ] Complete the checkout using Razorpay's test card details (e.g., Visa `4111 1111 1111 1111`).
-- [ ] Verify that the database registers the credit increment.
-- [ ] Ensure the webhook/verification endpoint successfully processed the order. 
-- [ ] Swap the environment variables in Vercel to use live credentials and redeploy.
+Create a provider snapshot or logical backup. Then run the reviewed, forward-
+only migrations with the target `DATABASE_URL`:
 
-## 4. Optional Azure Enhancements
+```bash
+npm run db:migrate
+npm run db:health
+```
 
-While Vercel acts as the primary deployment host, Zebra AI can leverage the following Azure ecosystem services to enhance architecture and observability:
+The current migration creates new evidence/compiler tables and does not delete
+or rewrite existing resumes. Do not deploy application code if migration or
+health verification fails.
 
-- **Application Insights / Azure Monitor**: For deep observability evidence, telemetry, and advanced trace logging.
-- **Azure Document Intelligence**: As a high-accuracy benchmark comparison against the existing resume parsing pipeline.
-- **Azure AI Search**: For advanced vector search capabilities in future Job and Resume RAG (Retrieval-Augmented Generation) features.
-- **Azure Key Vault**: For enterprise-grade secrets management comparison versus standard environment variables.
-- **Azure Translator / Speech**: As a reliable fallback or analytical comparison with the Sarvam integration for regional processing.
+## 4. Deploy and smoke-test
+
+Deploy one staging instance, then verify sign-in, resume upload and structure
+review, role-match upload, chat, cover-letter generation, project analysis,
+job import, PDF export, and payment test mode. Confirm that a failed resume
+parse saves nothing and refunds the reserved credit. Send a signed Razorpay test
+webhook twice and confirm credits are granted exactly once.
+
+Promote the exact verified commit to production. Monitor 4xx/5xx rates, Azure
+latency and token usage, database errors, and payment reconciliation.
+
+## 5. Roll back safely
+
+Roll back application code to the previous release if runtime checks fail. The
+new database objects are additive, so leave them in place during an application
+rollback. Restore a database backup only for confirmed data corruption; do not
+attempt a destructive schema rollback during an incident.

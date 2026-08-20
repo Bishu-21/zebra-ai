@@ -1,3 +1,9 @@
+import type { BackgroundJobRecord } from "@/lib/background-ops";
+import type { CandidateEvidenceNode } from "@/lib/evidence-graph";
+import type { DocumentArtifactRecord } from "@/lib/document-storage";
+import type { PreflightReport } from "@/lib/preflight-validator";
+import type { MatrixItem } from "@/lib/requirement-matrix";
+
 export interface TestUser {
     id: string;
     name: string;
@@ -65,6 +71,10 @@ export interface TestWorkItem {
     userId: string;
     title: string;
     category: string;
+    description?: string | null;
+    tools?: string[] | null;
+    result?: string | null;
+    proofUrl?: string | null;
 }
 
 export interface TestCertification {
@@ -81,6 +91,11 @@ class IntegrationTestStore {
     resumeVersions = new Map<string, TestResumeVersion>();
     workItems = new Map<string, TestWorkItem>();
     certifications = new Map<string, TestCertification>();
+    evidenceNodes = new Map<string, CandidateEvidenceNode>();
+    jobRequirementMatrices = new Map<string, MatrixItem>();
+    preflightChecks = new Map<string, PreflightReport>();
+    backgroundJobs = new Map<string, BackgroundJobRecord>();
+    documentArtifacts = new Map<string, DocumentArtifactRecord>();
 
     clear() {
         this.users.clear();
@@ -90,6 +105,11 @@ class IntegrationTestStore {
         this.resumeVersions.clear();
         this.workItems.clear();
         this.certifications.clear();
+        this.evidenceNodes.clear();
+        this.jobRequirementMatrices.clear();
+        this.preflightChecks.clear();
+        this.backgroundJobs.clear();
+        this.documentArtifacts.clear();
     }
 }
 

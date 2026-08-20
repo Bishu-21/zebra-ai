@@ -1,10 +1,10 @@
 "use client";
 import React, { useState } from "react";
-import { 
-    RiAddLine, 
-    RiCloseCircleLine, 
-    RiCheckboxCircleLine, 
-    RiStarLine, 
+import {
+    RiAddLine,
+    RiCloseLine,
+    RiCheckboxCircleLine,
+    RiStarLine,
     RiFlashlightLine,
     RiShieldCheckLine
 } from "react-icons/ri";
@@ -58,10 +58,13 @@ export function CreditTopUp() {
 
     React.useEffect(() => {
         setMounted(true);
+        const handleOpenCredits = () => setIsOpen(true);
+        window.addEventListener("open-credits", handleOpenCredits);
+
         const existingScript = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
         if (existingScript) {
             setScriptLoaded(true);
-            return;
+            return () => window.removeEventListener("open-credits", handleOpenCredits);
         }
 
         const script = document.createElement("script");
@@ -74,6 +77,10 @@ export function CreditTopUp() {
             console.error("Razorpay script load failed.");
         };
         document.body.appendChild(script);
+
+        return () => {
+            window.removeEventListener("open-credits", handleOpenCredits);
+        };
     }, []);
 
     React.useEffect(() => {
@@ -110,14 +117,21 @@ export function CreditTopUp() {
         setLoading(true);
 
         try {
+            if (typeof window.Razorpay === "undefined") {
+                throw new Error("Razorpay SDK is not loaded. Please refresh the page and try again.");
+            }
+
             const orderRes = await fetch("/api/payments/create-order", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ planId }),
             });
 
-            if (!orderRes.ok) throw new Error("Failed to create order");
-            const orderData = await orderRes.json();
+            const orderData = await orderRes.json().catch(() => ({}));
+
+            if (!orderRes.ok) {
+                throw new Error(orderData.error || "Failed to create order");
+            }
 
             const options: RazorpayOptions = {
                 key: orderData.key,
@@ -154,20 +168,22 @@ export function CreditTopUp() {
                             setIsOpen(false);
                         }, 2500);
                     } else {
-                        alert("Payment verification failed. Please try again or contact support.");
+                        const verifyData = await verifyRes.json().catch(() => ({}));
+                        alert(verifyData.error || "Payment verification failed. Please try again or contact support.");
                     }
                 },
             };
 
             const rzp = new window.Razorpay(options);
             rzp.on('payment.failed', function (response: { error: { description: string } }) {
-                alert(`Payment failed: ${response.error.description}`);
+                alert(`Payment failed: ${response.error?.description || "Transaction failed"}`);
             });
             rzp.open();
 
-        } catch (err) {
-            console.error(err);
-            alert("Could not reach payment server. Please try again.");
+        } catch (err: unknown) {
+            console.error("Payment initiation error:", err);
+            const msg = err instanceof Error ? err.message : "Could not reach payment server. Please try again.";
+            alert(msg);
         } finally {
             setLoading(false);
         }
@@ -175,7 +191,7 @@ export function CreditTopUp() {
 
     return (
         <>
-            <button 
+            <button
                 onClick={() => setIsOpen(true)}
                 className="w-full bg-[#0A0A0A] hover:bg-neutral-800 text-white px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"
             >
@@ -187,16 +203,16 @@ export function CreditTopUp() {
                 <AnimatePresence>
                     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-10">
                         {/* Backdrop */}
-                        <m.div 
+                        <m.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="absolute inset-0 bg-black/40 backdrop-blur-md" 
+                            className="absolute inset-0 bg-black/40 backdrop-blur-md"
                             onClick={() => !loading && setIsOpen(false)}
                         />
 
                         {/* Modal Dialog */}
-                        <m.div 
+                        <m.div
                             initial={{ opacity: 0, scale: 0.95, y: 10 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -204,80 +220,80 @@ export function CreditTopUp() {
                             className="relative bg-white w-full max-w-3xl rounded-3xl shadow-2xl border border-neutral-100 overflow-hidden flex flex-col max-h-[90vh]"
                         >
                             {/* Header */}
-                            <div className="p-8 border-b border-neutral-100 flex items-center justify-between bg-neutral-50/50 backdrop-blur-xl">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-[#0A0A0A] rounded-2xl flex items-center justify-center text-white shadow-md">
-                                        <RiFlashlightLine size={24} />
+                            <div className="px-6 py-5 border-b border-neutral-200/60 flex items-center justify-between bg-white shrink-0">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-[#0A0A0A] text-white flex items-center justify-center shadow-2xs shrink-0">
+                                        <RiFlashlightLine size={20} />
                                     </div>
                                     <div>
-                                        <h2 className="text-2xl font-black text-[#0A0A0A] tracking-tight">Get More Credits</h2>
-                                        <p className="text-xs font-medium text-neutral-500">Choose a pack to tailor applications and prepare better profiles.</p>
+                                        <h2 className="text-lg font-bold tracking-tight text-[#0A0A0A]">Get More Credits</h2>
+                                        <p className="text-xs font-normal text-neutral-500">Choose a pack to tailor applications and prepare better profiles.</p>
                                     </div>
                                 </div>
-                                <button 
-                                    onClick={() => setIsOpen(false)} 
-                                    className="w-10 h-10 rounded-xl bg-neutral-100 flex items-center justify-center text-neutral-400 hover:text-[#0A0A0A] hover:bg-neutral-200 transition-all"
+                                <button
+                                    onClick={() => setIsOpen(false)}
+                                    className="w-8 h-8 rounded-full bg-neutral-100 text-neutral-500 hover:bg-neutral-200 hover:text-[#0A0A0A] flex items-center justify-center transition-all"
                                 >
-                                    <RiCloseCircleLine size={22} />
+                                    <RiCloseLine size={18} />
                                 </button>
                             </div>
 
                             {/* Content */}
-                            <div className="p-8 overflow-y-auto no-scrollbar">
+                            <div className="p-6 sm:p-8 overflow-y-auto custom-scrollbar">
                                 {success ? (
-                                    <m.div 
-                                        initial={{ opacity: 0, scale: 0.9 }}
+                                    <m.div
+                                        initial={{ opacity: 0, scale: 0.95 }}
                                         animate={{ opacity: 1, scale: 1 }}
-                                        className="flex flex-col items-center justify-center py-16 text-center space-y-4"
+                                        className="flex flex-col items-center justify-center py-12 text-center space-y-3"
                                     >
-                                        <div className="w-16 h-16 bg-emerald-500 text-white rounded-2xl flex items-center justify-center shadow-lg">
-                                            <RiCheckboxCircleLine size={36} />
+                                        <div className="w-14 h-14 bg-[#0A0A0A] text-white rounded-full flex items-center justify-center shadow-2xs">
+                                            <RiCheckboxCircleLine size={32} />
                                         </div>
                                         <div>
-                                            <h3 className="text-xl font-black text-[#0A0A0A]">Credits Added Successfully!</h3>
-                                            <p className="text-xs text-neutral-500 font-medium mt-1">Your account balance has been updated.</p>
+                                            <h3 className="text-base font-bold text-[#0A0A0A]">Credits Added Successfully!</h3>
+                                            <p className="text-xs font-normal text-neutral-500 mt-0.5">Your account balance has been updated.</p>
                                         </div>
                                     </m.div>
                                 ) : (
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                                         {plans.map((p) => (
-                                            <m.div 
+                                            <m.div
                                                 key={p.id}
-                                                whileHover={{ y: -4, boxShadow: "0 20px 25px -5px rgba(0,0,0,0.05)" }}
-                                                className={`relative p-6 rounded-2xl border transition-all flex flex-col items-center text-center justify-between ${
-                                                    p.popular 
-                                                        ? 'border-[#0A0A0A] bg-neutral-50 shadow-md ring-2 ring-[#0A0A0A]/10' 
-                                                        : 'border-neutral-200/80 bg-white hover:border-neutral-300'
+                                                whileHover={{ y: -2 }}
+                                                className={`relative p-6 rounded-3xl border transition-all flex flex-col items-center text-center justify-between ${
+                                                    p.popular
+                                                        ? 'border-2 border-[#0A0A0A] bg-white shadow-xl'
+                                                        : 'border-neutral-200/80 bg-neutral-50/50 hover:bg-neutral-100/60 hover:border-neutral-300/80'
                                                 }`}
                                             >
                                                 {p.popular && (
-                                                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#0A0A0A] text-white text-[9px] font-black uppercase tracking-widest px-3.5 py-1 rounded-full shadow-md z-10 whitespace-nowrap">
+                                                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#0A0A0A] text-white text-[10px] font-bold uppercase tracking-wider px-3.5 py-0.5 rounded-full shadow-2xs z-10 whitespace-nowrap">
                                                         Most Popular
                                                     </div>
                                                 )}
-                                                <div className="w-full flex flex-col items-center space-y-4">
-                                                    <div className="w-12 h-12 rounded-xl bg-neutral-100 flex items-center justify-center shadow-inner">
+                                                <div className="w-full flex flex-col items-center">
+                                                    <div className="w-10 h-10 rounded-2xl bg-white border border-neutral-200/80 flex items-center justify-center text-[#0A0A0A] shadow-2xs mb-3">
                                                         {p.icon}
                                                     </div>
                                                     <div>
-                                                        <h4 className="font-black text-[#0A0A0A] text-xs uppercase tracking-wider">{p.name}</h4>
-                                                        <div className="mt-2">
-                                                            <span className="text-3xl font-black text-[#0A0A0A] tracking-tight">{p.displayPrice}</span>
+                                                        <h4 className="font-bold text-[#0A0A0A] text-xs">{p.name}</h4>
+                                                        <div className="mt-1">
+                                                            <span className="text-2xl font-extrabold text-[#0A0A0A] tracking-tight">{p.displayPrice}</span>
                                                         </div>
-                                                        <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 bg-neutral-100 rounded-full text-[11px] font-bold text-neutral-700">
+                                                        <div className="mt-2 inline-flex items-center px-3 py-1 bg-neutral-100 border border-neutral-200/60 rounded-full text-xs font-semibold text-neutral-600">
                                                             <span>{p.credits} Credits</span>
                                                         </div>
                                                     </div>
                                                 </div>
 
-                                                <button 
+                                                <button
                                                     disabled={loading}
                                                     onClick={() => handlePurchase(p.id)}
-                                                    className={`w-full mt-6 py-3 rounded-xl text-xs font-bold transition-all ${
-                                                        p.popular 
-                                                            ? 'bg-[#0A0A0A] text-white hover:bg-neutral-800 shadow-md' 
-                                                            : 'bg-neutral-100 text-[#0A0A0A] hover:bg-neutral-200'
-                                                    } disabled:opacity-50 active:scale-95`}
+                                                    className={`w-full mt-6 py-2.5 rounded-full text-xs font-bold transition-all shadow-2xs ${
+                                                        p.popular
+                                                            ? 'bg-[#0A0A0A] text-white hover:bg-neutral-800'
+                                                            : 'bg-white border border-neutral-200/80 text-[#0A0A0A] hover:bg-neutral-100'
+                                                    } disabled:opacity-40 active:scale-95`}
                                                 >
                                                     {loading ? "Processing..." : "Get Credits"}
                                                 </button>
@@ -288,8 +304,8 @@ export function CreditTopUp() {
                             </div>
 
                             {/* Footer */}
-                            <div className="p-4 bg-neutral-50 border-t border-neutral-100 text-center">
-                                <p className="text-[11px] font-medium text-neutral-400">
+                            <div className="px-6 py-4 bg-white border-t border-neutral-200/60 text-center shrink-0">
+                                <p className="text-xs font-medium text-neutral-400">
                                     Secure checkout via Razorpay • Instant credit activation
                                 </p>
                             </div>

@@ -2,16 +2,16 @@
 
 import React, { useState, useRef } from "react";
 import { m, AnimatePresence } from "framer-motion";
-import { 
-    RiScanLine, 
-    RiUploadCloud2Line, 
-    RiFileTextLine,
+import {
+    RiScanLine,
+    RiUploadCloud2Line,
     RiLoader4Line,
     RiArrowRightLine,
     RiArrowRightSLine,
     RiCloseCircleLine,
     RiInformationLine,
-    RiRadarLine
+    RiRadarLine,
+    RiCheckboxCircleLine
 } from "react-icons/ri";
 import { useRouter } from "next/navigation";
 import { ResumeResultsModal } from "./ResumeResultsModal";
@@ -26,8 +26,9 @@ export function AnalyzeResume() {
   const [error, setError] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<ResumeAnalysisData | null>(null);
   const [activeResumeId, setActiveResumeId] = useState<string | null>(null);
+  const [uploadedTitle, setUploadedTitle] = useState<string | null>(null);
   const [isResultsModalOpen, setIsResultsModalOpen] = useState(false);
-  
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
@@ -37,8 +38,8 @@ export function AnalyzeResume() {
     setIsUploading(false);
   };
 
-  const startAnalysis = (textToAnalyze: string) => {
-    void triggerAnalysis(textToAnalyze).catch(handleAnalysisFailure);
+  const startAnalysis = (textToAnalyze?: string, resumeId?: string) => {
+    void triggerAnalysis(textToAnalyze, resumeId).catch(handleAnalysisFailure);
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -61,17 +62,11 @@ export function AnalyzeResume() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Upload failed");
 
-      setContent(data.content);
-      setScanStep("Content Extracted.");
-      
-      // Auto-trigger analysis safely
-      setTimeout(() => {
-        try {
-          startAnalysis(data.content);
-        } catch (err) {
-          console.error("Auto-analysis execution error:", err);
-        }
-      }, 800);
+      setContent("");
+      setActiveResumeId(data.id);
+      setUploadedTitle(data.title || file.name);
+      setScanStep("Resume structured. Starting evidence audit...");
+      startAnalysis(undefined, data.id);
 
     } catch (err: unknown) {
       const error = err as Error;
@@ -82,7 +77,7 @@ export function AnalyzeResume() {
     }
   };
 
-  const triggerAnalysis = async (textToAnalyze: string) => {
+  const triggerAnalysis = async (textToAnalyze?: string, resumeId?: string) => {
     setIsAnalyzing(true);
     const steps = [
       "Initializing Analysis...",
@@ -93,7 +88,7 @@ export function AnalyzeResume() {
       "Finalizing Report..."
     ];
     let stepIdx = 0;
-    
+
     setScanStep(steps[0]);
     const stepInterval = setInterval(() => {
       stepIdx++;
@@ -106,7 +101,7 @@ export function AnalyzeResume() {
       const res = await fetch("/api/ai/analyse", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: textToAnalyze }),
+        body: JSON.stringify(resumeId ? { resumeId } : { content: textToAnalyze }),
       });
 
       const data = await res.json();
@@ -114,16 +109,14 @@ export function AnalyzeResume() {
 
       clearInterval(stepInterval);
       setScanStep("Analysis Complete.");
-      
-      setTimeout(() => {
-        setAnalysisResult(data.analysis);
-        setActiveResumeId(data.resumeId);
-        setIsResultsModalOpen(true);
-        setIsAnalyzing(false);
-        setIsUploading(false);
-        setIsOpen(false);
-        router.refresh();
-      }, 500);
+
+      setAnalysisResult(data.analysis);
+      setActiveResumeId(data.resumeId);
+      setIsResultsModalOpen(true);
+      setIsAnalyzing(false);
+      setIsUploading(false);
+      setIsOpen(false);
+      router.refresh();
 
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Analysis failed");
@@ -134,6 +127,10 @@ export function AnalyzeResume() {
   };
 
   const handleManualAnalyze = () => {
+    if (activeResumeId) {
+      startAnalysis(undefined, activeResumeId);
+      return;
+    }
     if (!content.trim()) {
       setError("Please paste your resume content or upload a file.");
       return;
@@ -146,7 +143,7 @@ export function AnalyzeResume() {
   return (
     <>
       {/* Launcher Card */}
-      <div 
+      <div
         onClick={() => setIsOpen(true)}
         className="group/card relative overflow-hidden flex flex-col justify-between w-full h-full cursor-pointer transition-all p-7 bg-white border border-neutral-200/80 rounded-3xl hover:border-neutral-300 hover:shadow-xl active:scale-[0.99] group shadow-xs"
       >
@@ -172,14 +169,14 @@ export function AnalyzeResume() {
       <AnimatePresence>
         {isOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
-              <m.div 
+              <m.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="fixed inset-0 bg-black/40 backdrop-blur-md" 
+                  className="fixed inset-0 bg-black/40 backdrop-blur-md"
                   onClick={() => !isProcessing && setIsOpen(false)}
               />
-              <m.div 
+              <m.div
                   initial={{ scale: 0.96, opacity: 0, y: 12 }}
                   animate={{ scale: 1, opacity: 1, y: 0 }}
                   exit={{ scale: 0.96, opacity: 0, y: 12 }}
@@ -197,9 +194,9 @@ export function AnalyzeResume() {
                               <p className="text-xs font-normal text-neutral-500">Analyze structure, content, and improvement gaps</p>
                           </div>
                       </div>
-                      <button 
-                          onClick={() => !isProcessing && setIsOpen(false)} 
-                          className="w-8 h-8 rounded-full bg-neutral-100 text-neutral-500 hover:bg-neutral-200 hover:text-[#0A0A0A] flex items-center justify-center transition-all disabled:opacity-40" 
+                      <button
+                          onClick={() => !isProcessing && setIsOpen(false)}
+                          className="w-8 h-8 rounded-full bg-neutral-100 text-neutral-500 hover:bg-neutral-200 hover:text-[#0A0A0A] flex items-center justify-center transition-all disabled:opacity-40"
                           disabled={isProcessing}
                       >
                           <RiCloseCircleLine size={18} />
@@ -214,14 +211,14 @@ export function AnalyzeResume() {
                               <p className="text-xs text-neutral-500 mt-0.5">Paste plain text or import a document below</p>
                           </div>
                           <div>
-                              <input 
-                                  type="file" 
+                              <input
+                                  type="file"
                                   ref={fileInputRef}
                                   onChange={handleFileUpload}
                                   accept=".pdf,.docx,.txt"
                                   className="hidden"
                               />
-                              <button 
+                              <button
                                   onClick={() => fileInputRef.current?.click()}
                                   disabled={isProcessing}
                                   className="inline-flex items-center gap-2 px-4 py-2 bg-neutral-100 hover:bg-neutral-200 border border-neutral-200/80 rounded-full text-xs font-semibold text-[#0A0A0A] transition-all disabled:opacity-40"
@@ -232,12 +229,22 @@ export function AnalyzeResume() {
                           </div>
                       </div>
 
+                      {uploadedTitle && activeResumeId && !isProcessing && (
+                        <div className="flex items-center justify-between gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-emerald-950 truncate">{uploadedTitle}</p>
+                            <p className="text-[10px] text-emerald-800">Structured draft saved. You can retry the audit without uploading again.</p>
+                          </div>
+                          <RiCheckboxCircleLine className="text-emerald-700 shrink-0" size={18} />
+                        </div>
+                      )}
+
                       {/* Input Area */}
                       <div className="relative overflow-hidden rounded-2xl border border-neutral-200/80 bg-neutral-50/50">
                           {/* Scan Overlay */}
                           <AnimatePresence>
                               {isProcessing && (
-                                  <m.div 
+                                  <m.div
                                       initial={{ opacity: 0 }}
                                       animate={{ opacity: 1 }}
                                       exit={{ opacity: 0 }}
@@ -247,7 +254,7 @@ export function AnalyzeResume() {
                                       <div className="flex flex-col items-center gap-2 text-center">
                                           <span className="text-xs font-bold text-[#0A0A0A]">{scanStep}</span>
                                           <div className="w-40 h-1.5 bg-neutral-200 rounded-full overflow-hidden">
-                                              <m.div 
+                                              <m.div
                                                   className="h-full bg-[#0A0A0A]"
                                                   initial={{ width: "0%" }}
                                                   animate={{ width: "100%" }}
@@ -259,16 +266,20 @@ export function AnalyzeResume() {
                               )}
                           </AnimatePresence>
 
-                          <textarea 
+                          <textarea
                               value={content}
-                              onChange={(e) => setContent(e.target.value)}
+                              onChange={(e) => {
+                                setContent(e.target.value);
+                                setActiveResumeId(null);
+                                setUploadedTitle(null);
+                              }}
                               placeholder="Paste your resume content here..."
                               className="w-full min-h-[260px] p-4 bg-transparent text-xs font-medium text-[#0A0A0A] focus:outline-none transition-all resize-none leading-relaxed placeholder:text-neutral-400"
                               disabled={isProcessing}
                           />
-                          
+
                           {error && (
-                              <m.div 
+                              <m.div
                                   initial={{ opacity: 0, y: 8 }}
                                   animate={{ opacity: 1, y: 0 }}
                                   className="m-4 p-3 bg-red-50 border border-red-200/80 rounded-xl flex items-center gap-2 text-xs font-medium text-red-700"
@@ -281,23 +292,18 @@ export function AnalyzeResume() {
                   </div>
 
                   {/* Footer */}
-                  <div className="px-6 py-4 border-t border-neutral-200/60 flex items-center justify-between bg-white sticky bottom-0 z-20 gap-3">
-                      <div className="px-3 py-1.5 bg-neutral-100 rounded-full text-xs font-semibold text-neutral-600 flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                          <span>Analyzer Ready</span>
-                      </div>
-                      
+                  <div className="px-6 py-4 border-t border-neutral-200/60 flex items-center justify-end bg-white sticky bottom-0 z-20 gap-3">
                       <div className="flex items-center gap-3">
-                          <button 
+                          <button
                               onClick={() => setIsOpen(false)}
                               disabled={isProcessing}
                               className="px-5 py-2.5 rounded-full text-xs font-semibold text-neutral-500 hover:text-[#0A0A0A] transition-all disabled:opacity-40"
                           >
                               Cancel
                           </button>
-                          <button 
+                          <button
                               onClick={handleManualAnalyze}
-                              disabled={isProcessing || !content.trim()}
+                              disabled={isProcessing || (!content.trim() && !activeResumeId)}
                               className="px-6 py-2.5 bg-[#0A0A0A] text-white rounded-full text-xs font-bold shadow-2xs hover:bg-neutral-800 active:scale-95 transition-all inline-flex items-center gap-2 disabled:opacity-40"
                           >
                               {isAnalyzing ? "Processing..." : "Run Analysis"}
@@ -311,7 +317,7 @@ export function AnalyzeResume() {
       </AnimatePresence>
 
       {isResultsModalOpen && analysisResult && (
-        <ResumeResultsModal 
+        <ResumeResultsModal
           isOpen={isResultsModalOpen}
           onCloseAction={() => setIsResultsModalOpen(false)}
           data={analysisResult}

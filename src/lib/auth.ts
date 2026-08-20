@@ -1,6 +1,6 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { db } from "./db";
+import { db, sanitizeSecretText } from "./db";
 import * as schema from "./schema";
 
 /**
@@ -62,6 +62,16 @@ export function getTrustedOrigins(): string[] {
 
 const hasGoogleAuth = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
 
+function authLogValue(value: unknown): string {
+	if (value instanceof Error) return value.stack || value.message;
+	if (typeof value === "string") return value;
+	try {
+		return JSON.stringify(value);
+	} catch {
+		return String(value);
+	}
+}
+
 export const auth = betterAuth({
 	baseURL: getAuthBaseURL(),
 	database: drizzleAdapter(db, {
@@ -79,6 +89,17 @@ export const auth = betterAuth({
 		},
 	},
 	trustedOrigins: getTrustedOrigins(),
+	logger: {
+		level: "warn",
+		disableColors: true,
+		log(level, message, ...args) {
+			const safeMessage = sanitizeSecretText(
+				[message, ...args.map(authLogValue)].join(" "),
+			);
+			if (level === "error") console.error(`[Better Auth] ${safeMessage}`);
+			else console.warn(`[Better Auth] ${safeMessage}`);
+		},
+	},
 	session: {
 		expiresIn: 60 * 60 * 24 * 7, // 7 days
 		updateAge: 60 * 60 * 24, // 1 day update age

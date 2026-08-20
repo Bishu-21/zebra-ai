@@ -1,13 +1,29 @@
 "use client";
 
 import { useEffect } from "react";
+import { isTransientNavigationError } from "@/lib/error-classification";
 
-export default function GlobalError(props: { error: Error & { digest?: string }; unstable_retry: () => void }) {
-    const { error, unstable_retry: unstable_retryAction } = props;
+export default function GlobalError(props: { error: Error & { digest?: string }; retry: () => void }) {
+    const { error, retry } = props;
+    const isTransient = isTransientNavigationError(error);
+
     useEffect(() => {
-        // Log the error to an error reporting service
-        console.error("Global Workspace Error:", error);
-    }, [error]);
+        if (!isTransient) {
+            console.error("Global Workspace Error:", error);
+            return;
+        }
+
+        const retryKey = `zebra-transient-retry:${window.location.pathname}:${error.digest || error.message}`;
+        try {
+            if (sessionStorage.getItem(retryKey)) return;
+            sessionStorage.setItem(retryKey, "1");
+        } catch {
+            // Storage can be unavailable in hardened/private browser contexts.
+        }
+
+        const retryTimer = window.setTimeout(() => retry(), 300);
+        return () => window.clearTimeout(retryTimer);
+    }, [error, isTransient, retry]);
 
     return (
         <html lang="en">
@@ -18,11 +34,15 @@ export default function GlobalError(props: { error: Error & { digest?: string };
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 15c-.77 1.333.192 3 1.732 3z" />
                         </svg>
                     </div>
-                    
+
                     <div className="space-y-2">
-                        <h2 className="text-xl font-black text-[#171717] tracking-tight">Kernel Panic</h2>
+                        <h2 className="text-xl font-black text-[#171717] tracking-tight">
+                            {isTransient ? "Reconnecting" : "Something went wrong"}
+                        </h2>
                         <p className="text-sm text-[#737373] leading-relaxed">
-                            The Zebra AI workspace encountered a critical environment failure. This is often caused by high-latency database synchronization or internal framework signals.
+                            {isTransient
+                                ? "The development server restarted or the navigation stream was interrupted. Retrying this page now."
+                                : "The Zebra AI workspace encountered an unexpected error. You can retry the request without losing your saved data."}
                         </p>
                         {error?.message && (
                             <div className="mt-4 p-3 bg-black/5 rounded-lg text-left">
@@ -38,10 +58,10 @@ export default function GlobalError(props: { error: Error & { digest?: string };
 
                     <div className="pt-4 flex flex-col gap-3">
                         <button
-                            onClick={() => unstable_retryAction()}
+                            onClick={() => retry()}
                             className="w-full h-12 bg-black hover:bg-zinc-900 text-white rounded-xl font-bold transition-all active:scale-[0.98] shadow-lg shadow-black/10"
                         >
-                            Attempt Recovery
+                            Retry Now
                         </button>
                         <button
                             onClick={() => window.location.reload()}

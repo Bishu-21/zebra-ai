@@ -72,12 +72,12 @@ export default async function JobTrackerPage() {
     <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-8 pb-32">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-4">
         <div className="max-w-2xl">
-          <h1 className="text-2xl font-bold tracking-tight text-[#0A0A0A] mb-1">Job Tracker</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-[#0A0A0A] mb-1">Applications</h1>
           <p className="text-xs font-normal text-neutral-500 leading-relaxed">
             Manage your applications and interview stages in one place. Focus on the hunt, not the spreadsheet.
           </p>
         </div>
-        
+
         {/* Quick Stats */}
         <div className="flex items-center gap-4">
             <div className="bg-white border border-neutral-200/70 p-4 pr-8 rounded-2xl shadow-2xs">
@@ -90,8 +90,8 @@ export default async function JobTrackerPage() {
                 <p className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider mb-1">Interview Rate</p>
                 <div className="flex items-center gap-2">
                     <span className="text-xl font-bold text-[#0A0A0A]">
-                        {formattedJobs.length > 0 
-                            ? Math.round((formattedJobs.filter(j => String(j.status) === 'Interviewing' || String(j.status) === 'Offer' || String(j.status) === 'Offers').length / formattedJobs.length) * 100) 
+                        {formattedJobs.length > 0
+                            ? Math.round((formattedJobs.filter(j => String(j.status) === 'Interviewing' || String(j.status) === 'Offer' || String(j.status) === 'Offers').length / formattedJobs.length) * 100)
                             : 0}%
                     </span>
                 </div>
@@ -99,9 +99,9 @@ export default async function JobTrackerPage() {
         </div>
       </div>
 
-      <JobBoard 
-        initialJobs={formattedJobs} 
-        resumes={userResumes} 
+      <JobBoard
+        initialJobs={formattedJobs}
+        resumes={userResumes}
         versions={userVersions}
       />
     </div>

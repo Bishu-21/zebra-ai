@@ -12,7 +12,7 @@ const createWorkItemSchema = z.object({
     description: z.string().optional(),
     tools: z.array(z.string()).optional(),
     result: z.string().optional(),
-    proofUrl: z.string().url().or(z.literal("")).optional(),
+    proofUrl: z.url().or(z.literal("")).optional(),
     isPublic: z.boolean().default(false),
 });
 
@@ -95,4 +95,3 @@ export async function DELETE(req: NextRequest) {
         return handleApiError(error, "DELETE /api/work");
     }
 }
-

@@ -387,7 +387,6 @@ async function renderDashboardContent(session: NonNullable<Awaited<ReturnType<ty
       </div>
 
       {/* Resume Vault Section */}
-      {/* Resume Vault Section */}
       <div className="mt-16">
         <ResumeVault items={vaultItems} />
       </div>

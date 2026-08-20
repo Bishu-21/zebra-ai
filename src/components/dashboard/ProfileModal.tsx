@@ -3,9 +3,9 @@
 import React, { useState } from "react";
 import { m, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { 
-    RiCloseLine, 
-    RiLogoutCircleRLine,
+import {
+    RiCloseLine,
+    RiLogoutBoxRLine,
     RiShieldLine,
     RiIdCardLine,
     RiArrowRightSLine,
@@ -38,6 +38,19 @@ export function ProfileModal({ isOpen, onCloseAction, userName, userImage }: Pro
     const [newName, setNewName] = useState(userName);
     const [isSaving, setIsSaving] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+
+    React.useEffect(() => {
+        if (!isOpen) return;
+        document.body.style.overflow = "hidden";
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape") onCloseAction();
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => {
+            document.body.style.overflow = "unset";
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [isOpen, onCloseAction]);
 
     const handleLogout = async () => {
         try {
@@ -79,13 +92,13 @@ export function ProfileModal({ isOpen, onCloseAction, userName, userImage }: Pro
     };
 
     const handleDeleteAccount = async () => {
-        if (!window.confirm("CRITICAL: This will permanently delete your Zebra AI account and all documents. This action cannot be undone. Proceed?")) return;
-        
+        if (!window.confirm("This will permanently delete your account. This action cannot be undone. Proceed?")) return;
+
         setIsDeleting(true);
         try {
             const { error } = await authClient.deleteUser();
             if (error) throw new Error(error.message);
-            
+
             showToast("Account deleted", "success");
             router.push("/");
         } catch {
@@ -95,57 +108,79 @@ export function ProfileModal({ isOpen, onCloseAction, userName, userImage }: Pro
         }
     };
 
+    const handleResetPassword = async () => {
+        if (!session?.user?.email) {
+            showToast("No email associated with account", "error");
+            return;
+        }
+        try {
+            const { error } = await authClient.requestPasswordReset({
+                email: session.user.email,
+                redirectTo: `${typeof window !== "undefined" ? window.location.origin : ""}/signin`,
+            });
+            if (error) throw new Error(error.message);
+            showToast("Password reset link sent to your email", "success");
+        } catch (err) {
+            showToast(err instanceof Error ? err.message : "Failed to send reset link", "error");
+        }
+    };
+
+    const handleUpgrade = () => {
+        onCloseAction();
+        window.dispatchEvent(new CustomEvent("open-credits"));
+    };
+
     const handleBack = () => setView("menu");
 
     return (
         <AnimatePresence>
             {isOpen && (
                 <div className="fixed inset-0 z-[150] overflow-hidden">
-                    <m.div 
+                    <m.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="absolute inset-0 bg-foreground/40 backdrop-blur-sm"
+                        className="fixed inset-0 bg-black/40 backdrop-blur-md"
                         onClick={onCloseAction}
                     />
-                    
-                    <m.div 
+
+                    <m.div
                         initial={{ x: "100%" }}
                         animate={{ x: 0 }}
                         exit={{ x: "100%" }}
-                        transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                        className="absolute top-0 right-0 h-full w-full max-w-[400px] bg-[var(--background)] shadow-[var(--shadow-2xl)] flex flex-col"
+                        transition={{ duration: 0.25, ease: "easeOut" }}
+                        className="absolute top-0 right-0 h-full w-full max-w-[380px] bg-white shadow-2xl border-l border-neutral-200/80 flex flex-col z-10"
                     >
                         {/* Header */}
-                        <div className="p-6 border-b border-border-subtle flex items-center justify-between">
+                        <div className="px-6 py-5 border-b border-neutral-200/60 flex items-center justify-between bg-white shrink-0">
                             <div className="flex items-center gap-3">
                                 {view !== "menu" && (
-                                    <button 
+                                    <button
                                         onClick={handleBack}
-                                        className="w-8 h-8 rounded-[var(--radius-sm)] hover:bg-muted flex items-center justify-center text-muted-foreground transition-all"
+                                        className="w-8 h-8 rounded-full bg-neutral-100 text-neutral-500 hover:bg-neutral-200 hover:text-[#0A0A0A] flex items-center justify-center transition-all"
                                     >
-                                        <RiArrowLeftLine size={20} />
+                                        <RiArrowLeftLine size={18} />
                                     </button>
                                 )}
-                                <h3 className="text-lg font-black text-[var(--secondary)] tracking-tighter">
-                                    {view === "menu" ? "Account Center" : 
-                                     view === "edit" ? "Edit Profile" : 
-                                     view === "security" ? "Security" : 
-                                     view === "billing" ? "Billing" : "Security"}
+                                <h3 className="text-base font-bold text-[#0A0A0A] tracking-tight">
+                                    {view === "menu" ? "Account Center" :
+                                     view === "edit" ? "Edit Profile" :
+                                     view === "security" ? "Security" :
+                                     view === "billing" ? "Billing" : "Account Center"}
                                 </h3>
                             </div>
-                            <button 
+                            <button
                                 onClick={onCloseAction}
-                                className="w-10 h-10 rounded-[var(--radius-md)] hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-secondary transition-all"
+                                className="w-8 h-8 rounded-full bg-neutral-100 text-neutral-500 hover:bg-neutral-200 hover:text-[#0A0A0A] flex items-center justify-center transition-all"
                             >
-                                <RiCloseLine size={24} />
+                                <RiCloseLine size={18} />
                             </button>
                         </div>
 
                         <div className="flex-grow overflow-y-auto custom-scrollbar">
                             <AnimatePresence mode="wait">
                                 {view === "menu" && (
-                                    <m.div 
+                                    <m.div
                                         key="menu"
                                         initial={{ opacity: 0, x: -10 }}
                                         animate={{ opacity: 1, x: 0 }}
@@ -153,104 +188,99 @@ export function ProfileModal({ isOpen, onCloseAction, userName, userImage }: Pro
                                         className="flex flex-col"
                                     >
                                         {/* Profile Card */}
-                                        <div className="p-8 flex flex-col items-center border-b border-[var(--border-subtle)] bg-[var(--background)]">
-                                            <div className="relative mb-5">
-                                                <div className="w-20 h-20 rounded-[var(--radius-lg)] bg-gradient-to-br from-primary to-primary-dark p-0.5 shadow-xl">
-                                                    <div className="w-full h-full rounded-[calc(var(--radius-lg)-2px)] bg-background overflow-hidden flex items-center justify-center">
-                                                        {userImage ? (
-                                                            <Image 
-                                                                src={userImage} 
-                                                                alt={userName} 
-                                                                width={80} 
-                                                                height={80} 
-                                                                className="w-full h-full object-cover" 
-                                                                unoptimized
-                                                            />
-                                                        ) : (
-                                                            <span className="text-2xl font-black text-primary">{userName.charAt(0).toUpperCase()}</span>
-                                                        )}
-                                                    </div>
-                                                </div>
+                                        <div className="p-6 flex flex-col items-center border-b border-neutral-200/60 bg-[#FAF9F6]">
+                                            <div className="w-20 h-20 rounded-2xl bg-[#0A0A0A] text-white flex items-center justify-center overflow-hidden shadow-2xs border border-neutral-200/80 mb-3">
+                                                {userImage ? (
+                                                    <Image
+                                                        src={userImage}
+                                                        alt={userName}
+                                                        width={80}
+                                                        height={80}
+                                                        className="w-full h-full object-cover"
+                                                        unoptimized
+                                                    />
+                                                ) : (
+                                                    <span className="text-2xl font-bold">{userName.charAt(0).toUpperCase()}</span>
+                                                )}
                                             </div>
-                                            <h4 className="text-lg font-black text-[var(--secondary)] tracking-tight">{userName}</h4>
-                                            <p className="text-xs font-bold text-[var(--muted-foreground)] mt-1">{session?.user?.email}</p>
+                                            <h4 className="text-base font-bold text-[#0A0A0A] tracking-tight">{userName}</h4>
+                                            <p className="text-xs font-normal text-neutral-500 mt-0.5">{session?.user?.email}</p>
                                         </div>
 
-                                        <div className="p-6 space-y-6">
-                                            <div className="space-y-1">
-                                                <h5 className="text-[0.6rem] font-black text-[var(--muted-foreground)] uppercase tracking-[0.2em] px-2 mb-2 opacity-60">Account Settings</h5>
-                                                <div className="space-y-1">
+                                        <div className="p-6 space-y-4">
+                                            <div>
+                                                <h5 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider px-1 mb-3">Account Settings</h5>
+                                                <div className="space-y-2">
                                                     <AccountAction icon={RiIdCardLine} title="Public Identity" subtitle="Update name and avatar" onClick={() => setView("edit")} />
                                                     <AccountAction icon={RiShieldLine} title="Security" subtitle="Password and account safety" onClick={() => setView("security")} />
-                                                    <AccountAction icon={RiMoneyDollarCircleLine} title="Billing" subtitle={user?.plan ? `Plan: ${user.plan}` : "Manage your subscription"} onClick={() => setView("billing")} />
+                                                    <AccountAction icon={RiMoneyDollarCircleLine} title="Billing" subtitle={user?.plan ? `Plan: ${user.plan}` : "Plan: Starter"} onClick={() => setView("billing")} />
                                                 </div>
                                             </div>
-
-                                         </div>
-                                     </m.div>
+                                        </div>
+                                    </m.div>
                                 )}
 
                                 {view === "edit" && (
-                                    <m.div 
+                                    <m.div
                                         key="edit"
                                         initial={{ opacity: 0, x: 10 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         exit={{ opacity: 0, x: -10 }}
-                                        className="p-8 space-y-6"
+                                        className="p-6 space-y-5"
                                     >
-                                        <div className="space-y-2">
-                                            <label className="text-[0.65rem] font-black text-[var(--muted-foreground)] uppercase tracking-[0.2em] px-1">Full Name</label>
-                                            <input 
-                                                type="text" 
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider block">Full Name</label>
+                                            <input
+                                                type="text"
                                                 value={newName}
                                                 onChange={(e) => setNewName(e.target.value)}
-                                                className="w-full h-12 bg-[var(--background)] border border-[var(--border-subtle)] rounded-[var(--radius-md)] px-4 font-bold text-[var(--secondary)] focus:border-[var(--primary)] outline-none transition-all"
+                                                className="w-full bg-neutral-50 border border-neutral-200/80 focus:bg-white focus:border-[#0A0A0A] rounded-full px-4 py-2.5 text-xs font-semibold text-[#0A0A0A] outline-none transition-all"
                                                 placeholder="Enter your name"
                                             />
                                         </div>
 
-                                        <button 
+                                        <button
                                             onClick={handleUpdateProfile}
                                             disabled={isSaving}
-                                            className="w-full h-12 bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-primary-foreground rounded-[var(--radius-md)] flex items-center justify-center gap-3 font-bold transition-all active:scale-[0.98] disabled:opacity-50"
+                                            className="w-full py-3 bg-[#0A0A0A] text-white rounded-full text-xs font-bold shadow-2xs hover:bg-neutral-800 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-40"
                                         >
-                                            {isSaving ? <RiLoader4Line className="animate-spin" size={20} /> : <RiCheckLine size={20} />}
+                                            {isSaving ? <RiLoader4Line className="animate-spin" size={16} /> : <RiCheckLine size={16} />}
                                             Update Profile
                                         </button>
                                     </m.div>
                                 )}
 
                                 {view === "security" && (
-                                    <m.div 
+                                    <m.div
                                         key="security"
                                         initial={{ opacity: 0, x: 10 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         exit={{ opacity: 0, x: -10 }}
-                                        className="p-8 space-y-6"
+                                        className="p-6 space-y-5"
                                     >
                                         <div className="space-y-4">
-                                            <div className="p-4 bg-primary/5 border border-primary/10 rounded-[var(--radius-xl)]">
-                                                <p className="text-[0.7rem] font-bold text-primary-dark leading-relaxed">
-                                                    Your account is protected by industry-standard encryption and secure session management.
+                                            <div className="p-4 bg-neutral-50 border border-neutral-200/80 rounded-2xl">
+                                                <p className="text-xs font-medium text-neutral-600 leading-relaxed">
+                                                    Your account is protected by encrypted session management and secure authentication.
                                                 </p>
                                             </div>
 
-                                            <button 
-                                                onClick={() => showToast("Password reset link sent to your email", "success")}
-                                                className="w-full h-12 border border-[var(--border-subtle)] hover:border-[var(--primary)] hover:text-[var(--primary)] rounded-[var(--radius-md)] flex items-center justify-between px-6 font-bold text-[var(--secondary)] transition-all"
+                                            <button
+                                                onClick={handleResetPassword}
+                                                className="w-full py-3 bg-neutral-50 border border-neutral-200/80 hover:bg-neutral-100 rounded-full text-xs font-bold text-[#0A0A0A] transition-all flex items-center justify-between px-5"
                                             >
                                                 <span>Reset Password</span>
-                                                <RiMailLine size={18} />
+                                                <RiMailLine size={16} />
                                             </button>
 
-                                            <div className="pt-6 border-t border-border-subtle">
-                                                <h5 className="text-[0.65rem] font-black text-destructive uppercase tracking-[0.2em] px-1 mb-4">Danger Zone</h5>
-                                                <button 
+                                            <div className="pt-4 border-t border-neutral-200/60">
+                                                <h5 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Danger Zone</h5>
+                                                <button
                                                     onClick={handleDeleteAccount}
                                                     disabled={isDeleting}
-                                                    className="w-full h-12 bg-destructive/5 hover:bg-destructive hover:text-destructive-foreground text-destructive rounded-[var(--radius-md)] flex items-center justify-center gap-3 font-bold transition-all active:scale-[0.98] disabled:opacity-50"
+                                                    className="w-full py-3 bg-red-50 text-red-700 border border-red-200/80 hover:bg-red-100 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-40"
                                                 >
-                                                    {isDeleting ? <RiLoader4Line className="animate-spin" size={20} /> : <RiDeleteBinLine size={20} />}
+                                                    {isDeleting ? <RiLoader4Line className="animate-spin" size={16} /> : <RiDeleteBinLine size={16} />}
                                                     Delete Account
                                                 </button>
                                             </div>
@@ -259,29 +289,29 @@ export function ProfileModal({ isOpen, onCloseAction, userName, userImage }: Pro
                                 )}
 
                                 {view === "billing" && (
-                                    <m.div 
+                                    <m.div
                                         key="billing"
                                         initial={{ opacity: 0, x: 10 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         exit={{ opacity: 0, x: -10 }}
-                                        className="p-8 space-y-6"
+                                        className="p-6 space-y-5"
                                     >
-                                        <div className="p-6 bg-[var(--background)] rounded-[var(--radius-lg)] border border-[var(--border-subtle)] flex flex-col items-center text-center">
-                                            <div className="w-12 h-12 bg-[var(--primary)]/10 rounded-full flex items-center justify-center text-[var(--primary)] mb-4">
-                                                <RiMoneyDollarCircleLine size={24} />
+                                        <div className="p-6 bg-neutral-50 border border-neutral-200/80 rounded-2xl flex flex-col items-center text-center">
+                                            <div className="w-10 h-10 bg-[#0A0A0A] text-white rounded-full flex items-center justify-center mb-3">
+                                                <RiMoneyDollarCircleLine size={20} />
                                             </div>
-                                            <h4 className="text-lg font-black text-[var(--secondary)]">
-                                                {user?.plan ? `${user.plan} Plan` : "Free Plan"}
+                                            <h4 className="text-base font-bold text-[#0A0A0A]">
+                                                 {user?.plan ? `${user.plan} Plan` : "Starter Plan"}
                                             </h4>
-                                            <p className="text-xs text-[var(--muted-foreground)] mt-2 mb-6">
-                                                {user?.plan && user.plan !== "Free"
-                                                    ? `You are currently on the premium ${user.plan} plan. Thank you for supporting Zebra AI!`
-                                                    : "You are currently on the Free plan. Upgrade to unlock premium resume tailoring and unlimited AI credits."}
+                                            <p className="text-xs font-normal text-neutral-500 mt-1 mb-5 leading-relaxed">
+                                                 {user?.plan && user.plan !== "Free" && user.plan !== "Starter"
+                                                     ? `You are currently on the ${user.plan} plan.`
+                                                     : "Upgrade your tier to unlock advanced resume tailoring and extra credits."}
                                             </p>
-                                            {(!user?.plan || user.plan === "Free") && (
-                                                <button 
-                                                    onClick={() => showToast("Upgrade functionality coming soon", "success")}
-                                                    className="w-full h-12 bg-[var(--primary)] text-primary-foreground rounded-[var(--radius-md)] font-bold hover:bg-[var(--primary-dark)] transition-all"
+                                            {(!user?.plan || user.plan === "Free" || user.plan === "Starter") && (
+                                                <button
+                                                    onClick={handleUpgrade}
+                                                    className="w-full py-2.5 bg-[#0A0A0A] text-white rounded-full text-xs font-bold shadow-2xs hover:bg-neutral-800 active:scale-95 transition-all"
                                                 >
                                                     Upgrade Plan
                                                 </button>
@@ -289,18 +319,16 @@ export function ProfileModal({ isOpen, onCloseAction, userName, userImage }: Pro
                                         </div>
                                     </m.div>
                                 )}
-
-
                             </AnimatePresence>
                         </div>
 
                         {/* Footer */}
-                        <div className="p-6 border-t border-border-subtle bg-background">
-                            <button 
+                        <div className="p-6 border-t border-neutral-200/60 bg-white sticky bottom-0 shrink-0">
+                            <button
                                 onClick={handleLogout}
-                                className="w-full h-12 bg-foreground hover:opacity-90 text-background rounded-[var(--radius-md)] flex items-center justify-center gap-3 font-bold transition-all active:scale-[0.98]"
+                                className="w-full py-3 bg-[#0A0A0A] text-white rounded-full text-xs font-bold shadow-2xs hover:bg-neutral-800 active:scale-95 transition-all flex items-center justify-center gap-2"
                             >
-                                <RiLogoutCircleRLine size={20} />
+                                <RiLogoutBoxRLine size={16} />
                                 Sign Out
                             </button>
                         </div>
@@ -313,18 +341,18 @@ export function ProfileModal({ isOpen, onCloseAction, userName, userImage }: Pro
 
 function AccountAction({ icon: Icon, title, subtitle, onClick }: { icon: React.ComponentType<{ size?: number }>; title: string; subtitle: string; onClick: () => void }) {
     return (
-        <button 
+        <button
             onClick={onClick}
-            className="w-full flex items-center gap-4 p-3 rounded-[var(--radius-md)] hover:bg-muted transition-all group text-left"
+            className="w-full flex items-center gap-3.5 p-3 rounded-2xl bg-neutral-50/50 border border-neutral-200/60 hover:bg-neutral-100/80 hover:border-neutral-300/80 transition-all group text-left"
         >
-            <div className="w-10 h-10 rounded-[var(--radius-sm)] bg-background border border-border-subtle flex items-center justify-center text-muted-foreground group-hover:text-primary group-hover:border-primary/20 shadow-sm transition-all">
+            <div className="w-9 h-9 rounded-xl bg-white border border-neutral-200/80 flex items-center justify-center text-[#0A0A0A] shadow-2xs group-hover:scale-105 transition-all shrink-0">
                 <Icon size={18} />
             </div>
-            <div className="flex-grow">
-                <p className="text-sm font-black text-[var(--secondary)]">{title}</p>
-                <p className="text-[0.65rem] text-[var(--muted-foreground)] font-bold">{subtitle}</p>
+            <div className="flex-grow min-w-0">
+                <p className="text-xs font-bold text-[#0A0A0A]">{title}</p>
+                <p className="text-[11px] font-normal text-neutral-500 truncate">{subtitle}</p>
             </div>
-            <RiArrowRightSLine className="text-muted-foreground/30 group-hover:text-primary transition-colors" size={20} />
+            <RiArrowRightSLine className="text-neutral-400 group-hover:text-[#0A0A0A] transition-colors shrink-0" size={18} />
         </button>
     );
 }

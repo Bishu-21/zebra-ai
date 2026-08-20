@@ -8,7 +8,7 @@ const loadFeatures = () =>
     import("@/lib/motion-features").then((res) => res.default);
 
 const isIgnorableRejection = (reason: unknown) => {
-    if (reason == null || reason === "") return true;
+    if (reason == null || reason === "" || reason === undefined) return true;
 
     if (typeof reason === "string") {
         return /(?:abort|cancel)(?:ed|led)?/i.test(reason);
@@ -22,21 +22,23 @@ const isIgnorableRejection = (reason: unknown) => {
 };
 
 const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-    // Some browser/framework cancellation paths reject without a reason. They
-    // are expected during navigation and should not trigger the dev overlay.
+    // Some browser/framework cancellation paths and background auth checks reject without a reason.
+    // Prevent dev server / browser noise for benign aborted rejections.
     if (isIgnorableRejection(event.reason)) {
         event.preventDefault();
+        if (typeof event.stopImmediatePropagation === "function") {
+            event.stopImmediatePropagation();
+        }
     }
 };
 
-// Register before React mounts. A useEffect-only listener can miss rejections
-// raised during hydration or while client modules are being loaded.
+// Register before React mounts with capture phase (true) to prevent unhandled rejection overlays.
 if (typeof window !== "undefined") {
     const rejectionKey = "__zebraUnhandledRejectionListenerInstalled";
     const runtime = window as Window & { [rejectionKey]?: boolean };
 
     if (!runtime[rejectionKey]) {
-        window.addEventListener("unhandledrejection", handleUnhandledRejection);
+        window.addEventListener("unhandledrejection", handleUnhandledRejection, true);
         runtime[rejectionKey] = true;
     }
 }

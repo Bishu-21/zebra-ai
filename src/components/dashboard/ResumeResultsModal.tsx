@@ -75,24 +75,38 @@ const CircularGauge = ({ value, label, icon: Icon }: { value: number; label: str
     );
 };
 
-export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: { 
-    isOpen: boolean; 
-    onCloseAction: () => void; 
-    resumeId?: string; 
-    data: ResumeAnalysisData; 
+export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
+    isOpen: boolean;
+    onCloseAction: () => void;
+    resumeId?: string;
+    data: ResumeAnalysisData;
 }) {
     const router = useRouter();
+
+    React.useEffect(() => {
+        if (!isOpen) return;
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") onCloseAction();
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => {
+            document.body.style.overflow = previousOverflow;
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [isOpen, onCloseAction]);
 
     if (!isOpen || !data) return null;
 
     // --- STRATEGIC DATA NORMALIZER ---
-    const score = data.score ?? data.overallScore ?? 0;
+    const score = Math.max(0, Math.min(100, Math.round(data.score ?? data.overallScore ?? 0)));
     const summary = data.summary ?? data.executiveSummary ?? "Analysis complete.";
-    
+
     // 1. Flatten Categorized Audit (from Direct Analysis API) or use flat arrays
-    let strengths: string[] = data.strengths ?? [];
-    let weaknesses: string[] = data.weaknesses ?? [];
-    let actionItems: string[] = data.actionItems ?? data.recommendations ?? [];
+    const strengths: string[] = [...(data.strengths ?? [])];
+    const weaknesses: string[] = [...(data.weaknesses ?? [])];
+    const actionItems: string[] = [...(data.actionItems ?? data.recommendations ?? [])];
 
     if (data.audit && !strengths.length && !weaknesses.length) {
         // Flatten the categorized audit object { formatting: [...], experience: [...] }
@@ -111,32 +125,17 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
         });
     }
 
-    let rewrites = data.suggestedBulletPoints ?? data.aiRewrites ?? [];
-    
-    // Fallback: If no rewrites but we have recruiter insights, synthesize a 'Improvement Logic'
-    if (!rewrites.length && data.recruiterInsights) {
-        const insights = data.recruiterInsights;
-        rewrites = [
-            { rationale: "Content Clarity", after: insights.soWhatTest ?? "Enhance value proposition quantification." },
-            { rationale: "Readability Optimization", after: insights.sevenSecondScan ?? "Improve visual hierarchy for top-fold reading." },
-            { rationale: "Aesthetic & Consistency", after: insights.readability ?? "Refine layout density and typeface consistency." }
-        ];
-    }
-
-    // 3. Absolute Safeguard for 'No Information' case
-    if (!strengths.length && score > 50) strengths = ["Professional formatting structure", "ATS-compliant heading hierarchy", "Strategic document naming convention"];
-    if (!weaknesses.length && score < 95) weaknesses = ["Quantifiable metrics count is below target", "Action verb diversity needs expansion"];
-    if (!actionItems.length) actionItems = ["Quantify every bullet point with numbers, % or $", "Remove generic 'Professional Summary' to save space"];
+    const rewrites = data.suggestedBulletPoints ?? data.aiRewrites ?? [];
 
     return (
         <AnimatePresence>
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                <m.div 
+                <m.div
                     initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                     onClick={onCloseAction} className="absolute inset-0 bg-white/60 backdrop-blur-md"
                 />
-                
-                <m.div 
+
+                <m.div
                     initial={{ opacity: 0, scale: 0.98, y: 10 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.98, y: 10 }}
@@ -161,7 +160,7 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
                     </div>
 
                     <div className="flex-grow overflow-y-auto no-scrollbar p-4 sm:p-10 pt-6 sm:pt-8 space-y-6 sm:space-y-10 bg-muted/30">
-                        
+
                         {/* Top: Score & Summary Column + Gauges */}
                         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8">
                             {/* Strategic Column (Left) */}
@@ -288,9 +287,9 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
                     </div>
 
                     <div className="p-4 sm:p-6 md:p-8 border-t border-black/5 flex flex-col md:flex-row items-center justify-end bg-white/30 backdrop-blur-xl sticky bottom-0 gap-4">
-                        
+
                         <div className="flex items-center gap-3 w-full md:w-auto flex-col sm:flex-row">
-                            <button 
+                            <button
                                 onClick={() => {
                                     router.push(`/dashboard/resumes/${resumeId || "new"}`);
                                     onCloseAction();
@@ -299,7 +298,7 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
                             >
                                 Refine Resume
                             </button>
-                            <button 
+                            <button
                                 onClick={onCloseAction}
                                 className="w-full sm:w-auto px-8 py-3.5 bg-muted hover:bg-[#EAEAEA] text-foreground text-[0.65rem] font-bold uppercase tracking-widest rounded-[var(--radius-md)] transition-all active:scale-[0.98]"
                             >

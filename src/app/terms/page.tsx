@@ -73,7 +73,7 @@ export default function TermsOfServicePage() {
                     </Section>
 
                     <Section title="7. AI Disclaimer">
-                        <p>AI features powered by Google Gemini and Gemma models are provided as an assistive tool:</p>
+                        <p>AI features powered primarily through Microsoft Azure Foundry, with an optional Google Gemini fallback, are provided as an assistive tool:</p>
                         <ul>
                             <li>AI suggestions may contain inaccuracies — always review before using.</li>
                             <li>Zebra AI is not responsible for hiring outcomes based on AI-generated content.</li>

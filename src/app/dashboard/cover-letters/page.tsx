@@ -1,13 +1,12 @@
-import React from "react";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import React, { Suspense } from "react";
+import { getSafeSession } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { resumes as resumesTable, coverLetters as coverLettersTable } from "@/lib/schema";
 import { eq, desc } from "drizzle-orm";
 import { GenerateCoverLetter } from "@/components/dashboard/GenerateCoverLetter";
-import { 
-    RiMagicLine, 
-    RiFileTextLine, 
+import {
+    RiMagicLine,
+    RiFileTextLine,
     RiTimeLine
 } from "react-icons/ri";
 import { CoverLetterActions } from "@/components/dashboard/CoverLetterActions";
@@ -21,29 +20,50 @@ function formatTimeAgo(date: Date) {
   return `${Math.floor(diffInSeconds / 86400)}d ago`;
 }
 
+function CoverLettersLoadingState() {
+  return (
+    <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-8 pb-32 animate-pulse">
+      <div className="flex items-center justify-between gap-6">
+        <div className="space-y-3">
+          <div className="h-7 w-52 rounded-lg bg-black/10" />
+          <div className="h-3 w-80 max-w-full rounded bg-black/5" />
+        </div>
+        <div className="h-10 w-40 rounded-xl bg-black/10" />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+        {[0, 1, 2].map((item) => (
+          <div key={item} className="h-72 rounded-[2rem] border border-black/5 bg-white" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default async function CoverLettersPage() {
-  let session = null;
-  try {
-    session = await auth.api.getSession({
-      headers: await headers(),
-    });
-  } catch {
-    console.error("Session fetch failed in cover-letters");
-  }
+  const session = await getSafeSession();
 
   if (!session) return null;
 
-  // Fetch resumes for the generator
-  const userResumes = await db.query.resumes.findMany({
-    where: eq(resumesTable.userId, session.user.id),
-    orderBy: [desc(resumesTable.updatedAt)],
-  });
+  return (
+    <Suspense fallback={<CoverLettersLoadingState />}>
+      <CoverLettersContent userId={session.user.id} />
+    </Suspense>
+  );
+}
 
-  // Fetch existing cover letters
-  const letters = await db.query.coverLetters.findMany({
-    where: eq(coverLettersTable.userId, session.user.id),
-    orderBy: [desc(coverLettersTable.createdAt)],
-  });
+async function CoverLettersContent({ userId }: { userId: string }) {
+  const [userResumes, letters] = await Promise.all([
+    db.query.resumes.findMany({
+      columns: { id: true, title: true },
+      where: eq(resumesTable.userId, userId),
+      orderBy: [desc(resumesTable.updatedAt)],
+    }),
+    db.query.coverLetters.findMany({
+      columns: { id: true, title: true, content: true, createdAt: true },
+      where: eq(coverLettersTable.userId, userId),
+      orderBy: [desc(coverLettersTable.createdAt)],
+    }),
+  ]);
 
   return (
     <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-8 pb-32">
@@ -73,8 +93,8 @@ export default async function CoverLettersPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
           {letters.map((letter) => (
-            <div 
-                key={letter.id} 
+            <div
+                key={letter.id}
                 className="group relative bg-white border border-[#EAEAEA] rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-8 flex flex-col hover:border-[#0A0A0A]/30 hover:shadow-xl hover:shadow-[#0A0A0A]/5 transition-all duration-300"
             >
                 <div className="flex items-start justify-between mb-8">

@@ -3,14 +3,16 @@ import { headers } from "next/headers";
 import { cache } from "react";
 import { sanitizeSecretText } from "@/lib/db";
 
-/**
- * Check if a session retrieval error is a transient database/network error that can be retried.
- * Explicitly returns false for 401 Unauthorized, invalid token, or credential failures.
- */
-function isRetryableSessionError(error: unknown): boolean {
-    if (!error) return false;
+const SESSION_LOOKUP_TIMEOUT_MS = 8_000;
 
-    // Extract all error messages and causes
+export class SessionUnavailableError extends Error {
+    constructor() {
+        super("The session store is temporarily unavailable.");
+        this.name = "SessionUnavailableError";
+    }
+}
+
+function collectErrorText(error: unknown): string {
     const values: unknown[] = [];
     const seen = new Set<unknown>();
     let current: unknown = error;
@@ -18,12 +20,8 @@ function isRetryableSessionError(error: unknown): boolean {
     while (current && !seen.has(current)) {
         seen.add(current);
         values.push(current);
-
         if (typeof current === "object" && current !== null) {
             const record = current as Record<string, unknown>;
-            if (record.status === 401 || record.statusCode === 401 || record.name === "APIError" && record.status === 401) {
-                return false; // Authentication/Authorization failures must NEVER be retried
-            }
             current = record.cause;
             if (record.body) values.push(record.body);
         } else {
@@ -31,7 +29,7 @@ function isRetryableSessionError(error: unknown): boolean {
         }
     }
 
-    const text = values
+    return values
         .map((value) => {
             if (typeof value === "string") return value;
             if (value instanceof Error) return value.message;
@@ -43,11 +41,44 @@ function isRetryableSessionError(error: unknown): boolean {
         })
         .join(" ")
         .toLowerCase();
+}
 
-    // Check for explicit auth failure markers
-    if (text.includes("unauthorized") || text.includes("invalid token") || text.includes("session expired") || text.includes("invalid_credentials")) {
-        return false;
+function isAuthenticationFailure(error: unknown): boolean {
+    const text = collectErrorText(error);
+    return [
+        "unauthorized",
+        "invalid token",
+        "session expired",
+        "invalid_credentials",
+    ].some((marker) => text.includes(marker));
+}
+
+async function withSessionTimeout<T>(operation: Promise<T>): Promise<T> {
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    try {
+        return await Promise.race([
+            operation,
+            new Promise<never>((_, reject) => {
+                timeout = setTimeout(
+                    () => reject(new Error("Session lookup timed out.")),
+                    SESSION_LOOKUP_TIMEOUT_MS,
+                );
+            }),
+        ]);
+    } finally {
+        if (timeout) clearTimeout(timeout);
     }
+}
+
+/**
+ * Check if a session retrieval error is a transient database/network error that can be retried.
+ * Explicitly returns false for 401 Unauthorized, invalid token, or credential failures.
+ */
+function isRetryableSessionError(error: unknown): boolean {
+    if (!error) return false;
+
+    if (isAuthenticationFailure(error)) return false;
+    const text = collectErrorText(error);
 
     // Check for transient network/Neon DB connection markers
     return [
@@ -56,6 +87,8 @@ function isRetryableSessionError(error: unknown): boolean {
         "websocket was closed",
         "failed_to_get_session",
         "failed to get session",
+        "failed query",
+        "session lookup timed out",
         "econnreset",
         "etimedout",
         "503",
@@ -92,23 +125,27 @@ async function fetchSessionWithRetry() {
         };
     }
 
-    const maxRetries = 2;
+    const maxRetries = 1;
     let attempt = 0;
 
     while (true) {
         try {
             const reqHeaders = await headers();
-            return await auth.api.getSession({
-                headers: reqHeaders,
-            });
+            return await withSessionTimeout(auth.api.getSession({ headers: reqHeaders }));
         } catch (err: unknown) {
             attempt++;
-            if (attempt > maxRetries || !isRetryableSessionError(err)) {
-                if (isRetryableSessionError(err)) {
-                    const msg = sanitizeSecretText(err instanceof Error ? err.message : String(err));
-                    console.error(`[Auth Session Error] Transient connection failure after ${maxRetries} retries: ${msg}`);
-                }
-                return null;
+            const retryable = isRetryableSessionError(err);
+            if (!retryable) {
+                if (isAuthenticationFailure(err)) return null;
+                const msg = sanitizeSecretText(err instanceof Error ? err.message : String(err));
+                console.error(`[Auth Session Error] Session lookup failed: ${msg}`);
+                throw new SessionUnavailableError();
+            }
+
+            if (attempt > maxRetries) {
+                const msg = sanitizeSecretText(err instanceof Error ? err.message : String(err));
+                console.error(`[Auth Session Error] Connection failure after ${maxRetries + 1} attempts: ${msg}`);
+                throw new SessionUnavailableError();
             }
 
             const delay = 150 * Math.pow(2, attempt - 1);

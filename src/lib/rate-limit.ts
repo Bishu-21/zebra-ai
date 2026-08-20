@@ -1,8 +1,15 @@
 /**
  * Rate Limiting Utility
- * 
- * Simple in-memory sliding window rate limiter to protect expensive server endpoints.
+ *
+ * Local/test requests use an in-memory sliding window. Production endpoint
+ * enforcement uses an atomic Postgres fixed-window bucket so limits are shared
+ * across every server instance.
  */
+
+import crypto from "crypto";
+import { sql } from "drizzle-orm";
+import { db, executeWithDbRetry } from "@/lib/db";
+import { rateLimitBuckets } from "@/lib/schema";
 
 interface RateLimitRecord {
     timestamps: number[];
@@ -52,6 +59,59 @@ export function checkRateLimit(
         limit,
         remaining: limit - record.timestamps.length,
         resetMs: windowMs,
+    };
+}
+
+/**
+ * Enforce a rate limit across all production instances.
+ *
+ * The stored key is a SHA-256 digest, so user IDs and endpoint identifiers are
+ * not retained in the rate-limit table. Rejected attempts increment the current
+ * bucket but can never extend it beyond the original fixed-window expiry.
+ */
+export async function checkDistributedRateLimit(
+    key: string,
+    limit: number = 20,
+    windowMs: number = 60000
+): Promise<{ success: boolean; limit: number; remaining: number; resetMs: number }> {
+    if (process.env.NODE_ENV !== "production") {
+        return checkRateLimit(key, limit, windowMs);
+    }
+
+    const nowMs = Date.now();
+    const windowStartedAtMs = Math.floor(nowMs / windowMs) * windowMs;
+    const expiresAtMs = windowStartedAtMs + windowMs;
+    const keyDigest = crypto.createHash("sha256").update(key).digest("hex");
+    const now = new Date(nowMs);
+    const windowStartedAt = new Date(windowStartedAtMs);
+    const expiresAt = new Date(expiresAtMs);
+
+    const [bucket] = await executeWithDbRetry(() =>
+        db.insert(rateLimitBuckets)
+            .values({
+                key: keyDigest,
+                count: 1,
+                windowStartedAt,
+                expiresAt,
+            })
+            .onConflictDoUpdate({
+                target: rateLimitBuckets.key,
+                set: {
+                    count: sql`CASE WHEN ${rateLimitBuckets.expiresAt} <= ${now} THEN 1 ELSE ${rateLimitBuckets.count} + 1 END`,
+                    windowStartedAt: sql`CASE WHEN ${rateLimitBuckets.expiresAt} <= ${now} THEN ${windowStartedAt} ELSE ${rateLimitBuckets.windowStartedAt} END`,
+                    expiresAt: sql`CASE WHEN ${rateLimitBuckets.expiresAt} <= ${now} THEN ${expiresAt} ELSE ${rateLimitBuckets.expiresAt} END`,
+                },
+            })
+            .returning({ count: rateLimitBuckets.count, expiresAt: rateLimitBuckets.expiresAt })
+    );
+
+    const count = bucket?.count ?? limit + 1;
+    const resetAtMs = bucket?.expiresAt?.getTime() ?? expiresAtMs;
+    return {
+        success: count <= limit,
+        limit,
+        remaining: Math.max(0, limit - count),
+        resetMs: Math.max(1000, resetAtMs - nowMs),
     };
 }
 

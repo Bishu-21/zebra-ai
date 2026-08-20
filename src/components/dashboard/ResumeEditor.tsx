@@ -3,7 +3,7 @@
 import React, { useState, useCallback } from "react";
 import { useDebounce } from "@/hooks/useDebounce";
 import { m, AnimatePresence } from "framer-motion";
-import { 
+import {
     RiArrowLeftLine, RiSave3Line, RiMagicLine, RiCodeSSlashLine,
     RiLoader4Line, RiCloseCircleLine, RiAddLine, RiRobot2Line,
     RiCloseLine, RiUser6Line, RiBriefcaseLine,
@@ -16,10 +16,12 @@ import {
 } from "react-icons/ri";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/components/ui/Toast";
+import { SafeMarkdown } from "@/components/ui/SafeMarkdown";
 import { useEffect } from "react";
 import { PreviewPane } from "@/components/compiler/PreviewPane";
 import { FieldInput, FieldTextarea } from "@/components/compiler/FieldInput";
 import { parseResumeData } from "@/components/compiler/parseResume";
+import { getResumeSourceText, normalizeResumeContent } from "@/lib/resume-content";
 import { ShareModal } from "@/components/compiler/ShareModal";
 import { useSettings } from "@/context/SettingsContext";
 import { BasicsEditor } from "./BasicsEditor";
@@ -58,11 +60,11 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
     const [viewMode, setViewMode] = useState<"sheet" | "source">("sheet");
     const [jsonError, setJsonError] = useState<string | null>(null);
     const [isAiLoading, setIsAiLoading] = useState(false);
-    const [aiSuggestions, setAiSuggestions] = useState<{ 
-        original: string; 
-        problem: string; 
-        after: string; 
-        rationale: string; 
+    const [aiSuggestions, setAiSuggestions] = useState<{
+        original: string;
+        problem: string;
+        after: string;
+        rationale: string;
     }[]>([]);
     const [showAiPanel, setShowAiPanel] = useState(false);
     const [aiContext, setAiContext] = useState<{ section: string; currentText: string; itemContext?: { id: number; idx: number } } | null>(null);
@@ -75,16 +77,16 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
     const [isResizing, setIsResizing] = useState(false);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isRenaming, setIsRenaming] = useState(false);
-    const [isMobile, setIsMobile] = useState(false);
-    const [mobileTab, setMobileTab] = useState<"editor" | "preview">("editor");
+    const [isNarrowLayout, setIsNarrowLayout] = useState(false);
+    const [editorTab, setEditorTab] = useState<"editor" | "preview">("editor");
 
     useEffect(() => {
-        const checkMobile = () => setIsMobile(window.innerWidth < 768);
-        checkMobile();
-        window.addEventListener('resize', checkMobile);
-        return () => window.removeEventListener('resize', checkMobile);
+        const checkLayout = () => setIsNarrowLayout(window.innerWidth < 1024);
+        checkLayout();
+        window.addEventListener('resize', checkLayout);
+        return () => window.removeEventListener('resize', checkLayout);
     }, []);
-    
+
     // Chat State
     const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'model'; content: string }[]>([]);
     const [chatInput, setChatInput] = useState("");
@@ -153,18 +155,18 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
     const getAiSuggestions = async (section: string, currentText: string, itemContext?: { id: number; idx: number }) => {
         setIsAiLoading(true); setShowAiPanel(true); setAiContext({ section, currentText, itemContext });
         try {
-            const res = await fetch("/api/ai/copilot", { 
-                method: "POST", 
-                headers: { "Content-Type": "application/json" }, 
-                body: JSON.stringify({ section, currentText, context: resume.content }) 
+            const res = await fetch("/api/ai/copilot", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ section, currentText, context: resume.content })
             });
             if (!res.ok) throw new Error("AI is currently unavailable");
             const data = await res.json();
             if (data.suggestions) setAiSuggestions(data.suggestions);
-        } catch { 
-            showToast("AI connection failed", "error"); 
-        } finally { 
-            setIsAiLoading(false); 
+        } catch {
+            showToast("AI connection failed", "error");
+        } finally {
+            setIsAiLoading(false);
         }
     };
 
@@ -182,17 +184,36 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
             const res = await fetch("/api/ai/chat", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ 
-                    message: userMsg, 
+                body: JSON.stringify({
+                    message: userMsg,
                     history: chatMessages,
-                    context: resume.content 
+                    context: resume.content
                 })
             });
-            if (!res.ok) throw new Error("Chat failed");
-            const data = await res.json();
+            const data = await res.json().catch(() => null);
+            if (!res.ok) {
+                throw new Error(
+                    typeof data?.error === "string"
+                        ? data.error
+                        : "ZE-AI could not finish that response. Please retry.",
+                );
+            }
+            if (typeof data?.response !== "string" || !data.response.trim()) {
+                throw new Error("ZE-AI returned an empty response. Please retry.");
+            }
             setChatMessages(prev => [...prev, { role: 'model', content: data.response }]);
-        } catch {
-            showToast("Chat system offline", "error");
+        } catch (error) {
+            setChatMessages(prev => {
+                const lastMessage = prev[prev.length - 1];
+                return lastMessage?.role === 'user' && lastMessage.content === userMsg
+                    ? prev.slice(0, -1)
+                    : prev;
+            });
+            setChatInput(userMsg);
+            showToast(
+                error instanceof Error ? error.message : "ZE-AI could not finish that response. Please retry.",
+                "error",
+            );
         } finally {
             setIsChatLoading(false);
         }
@@ -237,10 +258,10 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
             const res = await fetch("/api/resumes", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     id: isNew ? null : resume.id,
-                    title: resume.title, 
-                    content: JSON.stringify(resume.content) 
+                    title: resume.title,
+                    content: JSON.stringify(resume.content)
                 })
             });
 
@@ -257,25 +278,25 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                 router.replace(`/dashboard/resumes/${data.id}`);
                 setResume((p: ResumeData) => ({ ...p, id: data.id }));
                 showToast("Resume created", "success");
-            } else { 
-                showToast("Saved", "success"); 
+            } else {
+                showToast("Saved", "success");
             }
-        } catch (error: unknown) { 
-            showToast(error instanceof Error ? error.message : "Save failed", "error"); 
-        } finally { 
-            setIsSaving(false); 
+        } catch (error: unknown) {
+            showToast(error instanceof Error ? error.message : "Save failed", "error");
+        } finally {
+            setIsSaving(false);
         }
     };
 
     const handleSourceChange = (value: string) => {
-        try { setResume((p: ResumeData) => ({ ...p, content: JSON.parse(value) })); setJsonError(null); }
+        try { setResume((p: ResumeData) => ({ ...p, content: normalizeResumeContent(JSON.parse(value)) })); setJsonError(null); }
         catch (e) { const err = e as Error; setJsonError(err.message); }
     };
 
     useEffect(() => {
         if (!settings.autoSave) return;
         if (resume.id === "new") return;
-        
+
         const save = async (contentStr: string) => {
             setIsSaving(true);
             try {
@@ -306,9 +327,9 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
             const res = await fetch("/api/resumes", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ 
-                    title: `${resume.title} (Copy)`, 
-                    content: JSON.stringify(resume.content) 
+                body: JSON.stringify({
+                    title: `${resume.title} (Copy)`,
+                    content: JSON.stringify(resume.content)
                 })
             });
             const data = await res.json();
@@ -316,17 +337,57 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                 router.push(`/dashboard/resumes/${data.id}`);
                 showToast("Resume duplicated", "success");
             }
-        } catch (error: unknown) { 
-            showToast(error instanceof Error ? error.message : "Duplicate failed", "error"); 
-        } finally { 
-            setIsSaving(false); setIsMenuOpen(false); 
+        } catch (error: unknown) {
+            showToast(error instanceof Error ? error.message : "Duplicate failed", "error");
+        } finally {
+            setIsSaving(false); setIsMenuOpen(false);
+        }
+    };
+
+    const handleExportPdf = async () => {
+        setIsGeneratingPdf(true);
+        try {
+            const res = await fetch("/api/export/pdf", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    resumeData: resume.content,
+                    template: selectedTemplate,
+                    title: resume.title,
+                    fontFamily: settings.resumeFont
+                })
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                if (data.error === "PREMIUM_REQUIRED") {
+                    showToast("Pro plan required", "error");
+                    return;
+                }
+                throw new Error(data.error);
+            }
+
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `${resume.title || "resume"}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            showToast("PDF Downloaded!", "success");
+        } catch (err) {
+            const error = err as Error;
+            showToast(error.message || "Export failed", "error");
+        } finally {
+            setIsGeneratingPdf(false);
         }
     };
 
     const handleReconstruct = async () => {
-        const rawText = resume.content.basics.summary;
+        const rawText = getResumeSourceText(resume.content);
         if (!rawText || rawText.length < 100) {
-            showToast("Not enough content to reconstruct", "error");
+            showToast("The preserved source is too short to structure", "error");
             return;
         }
 
@@ -338,20 +399,14 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                 body: JSON.stringify({ text: rawText })
             });
 
-            if (!res.ok) throw new Error("Neural mapping failed");
+            const response = await res.json();
+            if (!res.ok) throw new Error(response.error || "Resume structuring failed");
 
-            const structuredData = await res.json();
             setResume(prev => ({
                 ...prev,
-                content: {
-                    ...structuredData,
-                    basics: {
-                        ...structuredData.basics,
-                        summary: "" // Explicitly remove summary per user strategy
-                    }
-                }
+                content: normalizeResumeContent(response),
             }));
-            showToast("Resume reconstructed successfully!", "success");
+            showToast("Sections mapped. Review them against the preserved source, then save.", "success");
         } catch (error: unknown) {
             showToast(error instanceof Error ? error.message : "AI Reconstruction failed", "error");
         } finally {
@@ -359,11 +414,14 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
         }
     };
 
-    const isFlatImport = 
-        resume.content.basics.summary.length > 200 && 
-        resume.content.experience.length === 0 && 
+    const isFlatImport =
+        resume.content._ingestionMeta?.parseStatus === "legacy" &&
+        getResumeSourceText(resume.content).length > 0 &&
+        resume.content.experience.length === 0 &&
         resume.content.education.length === 0 &&
         resume.content.projects.length === 0;
+
+    const needsReview = resume.content._ingestionMeta?.parseStatus === "needs_review";
 
     const handleDelete = async () => {
         if (!window.confirm("Are you sure you want to delete this resume?")) return;
@@ -374,10 +432,10 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                 router.push("/dashboard");
                 showToast("Resume deleted", "success");
             }
-        } catch (error: unknown) { 
-            showToast(error instanceof Error ? error.message : "Delete failed", "error"); 
-        } finally { 
-            setIsSaving(false); setIsMenuOpen(false); 
+        } catch (error: unknown) {
+            showToast(error instanceof Error ? error.message : "Delete failed", "error");
+        } finally {
+            setIsSaving(false); setIsMenuOpen(false);
         }
     };
 
@@ -416,10 +474,10 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
         const { section, itemContext } = aiContext;
         if (section === 'experience' && itemContext) {
             const exp = resume.content.experience.find(e => e.id === itemContext.id);
-            if (exp) { 
-                const nh = [...exp.highlights]; 
-                nh[itemContext.idx] = text; 
-                updateExperience(itemContext.id, 'highlights', nh); 
+            if (exp) {
+                const nh = [...exp.highlights];
+                nh[itemContext.idx] = text;
+                updateExperience(itemContext.id, 'highlights', nh);
             }
         } else if (section === 'projects' && itemContext) {
             const proj = (resume.content.projects || []).find(p => p.id === itemContext.id);
@@ -429,7 +487,7 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                 updateProject(itemContext.id, 'highlights', nh);
             }
         }
-        setShowAiPanel(false); 
+        setShowAiPanel(false);
         showToast("Impact applied!", "success");
     };
 
@@ -438,17 +496,17 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
     return (
         <div className="fixed inset-0 z-[100] flex flex-col bg-background font-sans text-foreground">
             {/* ── TOOLBAR (44px) ── */}
-            <header className="h-11 bg-background border-b border-border-subtle flex items-center justify-between px-3 shrink-0 select-none relative z-[150]">
+            <header className={`h-11 bg-background border-b border-border-subtle flex items-center justify-between px-3 shrink-0 select-none relative z-[150] transition-[padding] duration-300 ${showAiPanel ? "lg:pr-[432px]" : ""}`}>
                 <div className="flex items-center gap-3">
                     <button onClick={() => router.push('/dashboard')} className="w-7 h-7 rounded-[var(--radius-sm)] bg-muted flex items-center justify-center text-muted-foreground hover:bg-foreground hover:text-white transition-all">
                         <RiArrowLeftLine size={14} />
                     </button>
                     <div className="w-px h-5 bg-black/8" />
-                    
+
                     {/* Clean Project Menu Trigger */}
                     <div className="relative">
                         {!isRenaming ? (
-                            <button 
+                            <button
                                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                                 className="flex items-center gap-2 px-2 py-1 rounded-[var(--radius-sm)] hover:bg-muted transition-all group"
                             >
@@ -456,27 +514,27 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                                 <RiArrowDownSLine size={14} className={`text-muted-foreground transition-transform duration-200 ${isMenuOpen ? 'rotate-180' : ''}`} />
                             </button>
                         ) : (
-                            <input 
+                            <input
                                 id="resume-title-input"
-                                type="text" 
+                                type="text"
                                 autoFocus
-                                value={resume.title} 
+                                value={resume.title}
                                 onChange={(e) => setResume({...resume, title: e.target.value})}
                                 onBlur={() => { setIsRenaming(false); handleSave(); }}
                                 onKeyDown={(e) => { if (e.key === 'Enter') { setIsRenaming(false); handleSave(); } }}
-                                className="bg-muted text-sm font-semibold text-foreground outline-none px-2 py-1 rounded-[var(--radius-sm)] border border-primary w-32 sm:w-48 transition-all" 
+                                className="bg-muted text-sm font-semibold text-foreground outline-none px-2 py-1 rounded-[var(--radius-sm)] border border-primary w-32 sm:w-48 transition-all"
                             />
                         )}
 
                         <AnimatePresence>
                             {isMenuOpen && (
                                 <>
-                                    <m.div 
+                                    <m.div
                                         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                                         onClick={() => setIsMenuOpen(false)}
                                         className="fixed inset-0 z-[-1]"
                                     />
-                                    <m.div 
+                                    <m.div
                                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                                         animate={{ opacity: 1, y: 0, scale: 1 }}
                                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -486,6 +544,14 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                                         <button onClick={() => { setIsMenuOpen(false); setShowShareModal(true); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-secondary hover:bg-muted rounded-[var(--radius-md)] transition-all">
                                             <RiShareLine size={14} className="text-primary" />
                                             Share and collaborate
+                                        </button>
+                                        <button onClick={() => { setIsMenuOpen(false); handleExportPdf(); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-secondary hover:bg-muted rounded-[var(--radius-md)] transition-all">
+                                            <RiFileDownloadLine size={14} />
+                                            Export PDF
+                                        </button>
+                                        <button onClick={() => { setIsMenuOpen(false); copyToClipboard(); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-secondary hover:bg-muted rounded-[var(--radius-md)] transition-all">
+                                            <RiClipboardLine size={14} />
+                                            Copy text
                                         </button>
                                         <button onClick={() => { setIsMenuOpen(false); setIsRenaming(true); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-secondary hover:bg-muted rounded-[var(--radius-md)] transition-all">
                                             <RiEditLine size={14} />
@@ -531,14 +597,14 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                         <span className="hidden sm:block">Copy</span>
                     </button>
 
-                    <div className="hidden md:flex bg-muted p-0.5 rounded-[var(--radius-md)] items-center gap-0.5 border border-border-subtle">
+                    <div className="hidden lg:flex bg-muted p-0.5 rounded-[var(--radius-md)] items-center gap-0.5 border border-border-subtle">
                         {(['modern', 'professional', 'minimal'] as const).map((t) => (
-                            <button 
+                            <button
                                 key={t}
                                 onClick={() => {
                                     setSelectedTemplate(t);
                                     localStorage.setItem(`resume-template-${resume.id}`, t);
-                                }} 
+                                }}
                                 className={`px-2 py-1 rounded-[var(--radius-sm)] text-[9px] font-bold uppercase tracking-wider transition-all ${selectedTemplate === t ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
                             >
                                 {t}
@@ -546,54 +612,16 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                         ))}
                     </div>
 
-                    <button 
-                        onClick={async () => {
-                            setIsGeneratingPdf(true);
-                            try {
-                                const res = await fetch("/api/export/pdf", { 
-                                    method: "POST", 
-                                    headers: { "Content-Type": "application/json" }, 
-                                    body: JSON.stringify({ 
-                                        resumeData: resume.content, 
-                                        template: selectedTemplate,
-                                        title: resume.title,
-                                        fontFamily: settings.resumeFont
-                                    }) 
-                                });
-                                
-                                if (!res.ok) {
-                                    const data = await res.json();
-                                    if (data.error === "PREMIUM_REQUIRED") { 
-                                        showToast("Pro plan required", "error"); 
-                                        return; 
-                                    }
-                                    throw new Error(data.error);
-                                }
-
-                                const blob = await res.blob();
-                                const url = window.URL.createObjectURL(blob);
-                                const a = document.createElement("a");
-                                a.href = url;
-                                a.download = `${resume.title || "resume"}.pdf`;
-                                document.body.appendChild(a);
-                                a.click();
-                                window.URL.revokeObjectURL(url);
-                                showToast("PDF Downloaded!", "success");
-                            } catch (err) { 
-                                const error = err as Error;
-                                showToast(error.message || "Export failed", "error"); 
-                            } finally {
-                                setIsGeneratingPdf(false);
-                            }
-                        }} 
+                    <button
+                        onClick={handleExportPdf}
                         disabled={isGeneratingPdf}
                         title="Export PDF"
-                        className="hidden sm:flex h-7 px-2 sm:px-3 rounded-[var(--radius-md)] text-[10px] font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-all items-center gap-1.5 disabled:opacity-50"
+                        className="flex h-7 px-2 sm:px-3 rounded-[var(--radius-md)] text-[10px] font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-all items-center gap-1.5 disabled:opacity-50"
                     >
                         {isGeneratingPdf ? <RiLoader4Line size={12} className="animate-spin" /> : <RiFileDownloadLine size={12} />}
-                        <span>{isGeneratingPdf ? "Exporting..." : "Export resume"}</span>
+                        <span className="hidden sm:inline">{isGeneratingPdf ? "Exporting..." : "Export resume"}</span>
                     </button>
-                    <button 
+                    <button
                         onClick={() => setIsZenMode(!isZenMode)}
                         title="Focus Mode"
                         className={`hidden lg:flex h-7 px-3 rounded-[var(--radius-md)] text-[10px] font-semibold transition-all items-center gap-1.5 ${isZenMode ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
@@ -619,22 +647,22 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
 
             <AnimatePresence>
                 {isFlatImport && !isReconstructing && (
-                    <m.div 
+                    <m.div
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        className="bg-primary/5 border-b border-primary/10 px-6 py-3 flex items-center justify-between"
+                        className="bg-primary/5 border-b border-primary/10 px-4 sm:px-6 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                     >
                         <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-[var(--radius-md)] bg-primary/10 flex items-center justify-center text-primary">
                                 <RiMagicLine size={18} />
                             </div>
                             <div>
-                                <p className="text-xs font-black text-secondary">Incomplete Structure Detected</p>
-                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Use Auto-Structure to map this document into specific regions.</p>
+                                <p className="text-xs font-black text-secondary">Legacy import preserved</p>
+                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">The original text is safe. Map it into editable sections before reviewing.</p>
                             </div>
                         </div>
-                        <button 
+                        <button
                             onClick={handleReconstruct}
                             className="px-4 py-1.5 bg-primary hover:bg-primary-dark text-white text-[10px] font-black rounded-[var(--radius-md)] transition-all shadow-lg shadow-primary/20 active:scale-95"
                         >
@@ -643,8 +671,23 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                     </m.div>
                 )}
 
+                {needsReview && !isReconstructing && (
+                    <m.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="bg-amber-50 border-b border-amber-200 px-4 sm:px-6 py-2.5 flex items-center gap-3"
+                    >
+                        <RiCheckboxCircleFill className="text-amber-700 shrink-0" size={17} />
+                        <div>
+                            <p className="text-xs font-black text-amber-950">AI structure ready for review</p>
+                            <p className="text-[10px] font-semibold text-amber-800">Compare every section with the preserved source. Zebra AI will not apply role-match suggestions automatically.</p>
+                        </div>
+                    </m.div>
+                )}
+
                 {isReconstructing && (
-                    <m.div 
+                    <m.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         className="bg-primary px-6 py-3 flex items-center justify-center gap-3"
@@ -656,12 +699,12 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
             </AnimatePresence>
 
             {/* ── MAIN 3-COLUMN LAYOUT ── */}
-            <div className="flex-grow flex overflow-hidden bg-[#FBFBFB]">
+            <div className={`flex-grow flex overflow-hidden bg-[#FBFBFB] transition-[padding] duration-300 ${showAiPanel ? "lg:pr-[420px]" : ""}`}>
 
                 {/* COL 1: Section Nav (48px) */}
                 <AnimatePresence>
-                    {!isZenMode && !isMobile && (
-                        <m.aside 
+                    {!isZenMode && !isNarrowLayout && (
+                        <m.aside
                             initial={{ width: 0, opacity: 0 }}
                             animate={{ width: 48, opacity: 1 }}
                             exit={{ width: 0, opacity: 0 }}
@@ -683,14 +726,14 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                 </AnimatePresence>
 
                 {/* COL 2: Editor Pane (Dynamic Width) */}
-                {(!isMobile || mobileTab === "editor") && (
-                    <div 
-                        style={{ width: isMobile ? '100%' : (isZenMode ? '100%' : `${editorWidth}%`) }}
-                        className={`flex flex-col overflow-hidden transition-[padding,max-width] duration-500 bg-background ${isZenMode && !isMobile ? "max-w-3xl mx-auto border-x border-border-subtle" : "border-r border-border-subtle"}`}
+                {(!isNarrowLayout || editorTab === "editor") && (
+                    <div
+                        style={{ width: isNarrowLayout ? '100%' : (isZenMode ? '100%' : `${editorWidth}%`) }}
+                        className={`flex flex-col overflow-hidden transition-[padding,max-width] duration-500 bg-background ${isZenMode && !isNarrowLayout ? "max-w-3xl mx-auto border-x border-border-subtle" : "border-r border-border-subtle"}`}
                     >
                         <div className="h-8 bg-muted/30 border-b border-border-subtle flex items-center justify-between px-4 shrink-0">
                             <span className="text-[10px] font-semibold text-muted-foreground tracking-wide uppercase">{viewMode === "source" ? "JSON Source" : sections.find(s => s.id === activeSection)?.label}</span>
-                            {isZenMode && !isMobile && (
+                            {isZenMode && !isNarrowLayout && (
                                 <div className="flex items-center gap-3">
                                     {sections.map(s => (
                                         <button key={s.id} onClick={() => setActiveSection(s.id)}
@@ -701,7 +744,7 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                                 </div>
                             )}
                         </div>
-                        {isMobile && viewMode !== "source" && (
+                        {isNarrowLayout && viewMode !== "source" && (
                             <div className="flex items-center gap-2 overflow-x-auto px-4 py-2 bg-muted/30 border-b border-border-subtle shrink-0 custom-scrollbar" style={{ scrollbarWidth: 'none' }}>
                                 {sections.map(s => (
                                     <button key={s.id} onClick={() => setActiveSection(s.id)}
@@ -723,7 +766,7 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                                             <span className="text-[10px] font-bold text-white/40 tracking-widest uppercase">source.json</span>
                                         </div>
                                         <div className="flex items-center gap-1">
-                                            <button 
+                                            <button
                                                 onClick={() => {
                                                     try {
                                                         const formatted = JSON.stringify(JSON.parse(JSON.stringify(resume.content)), null, 2);
@@ -735,7 +778,7 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                                             >
                                                 <RiFormatClear size={12} /> Format
                                             </button>
-                                            <button 
+                                            <button
                                                 onClick={() => {
                                                     navigator.clipboard.writeText(JSON.stringify(resume.content, null, 2));
                                                     showToast("Copied to clipboard", "success");
@@ -755,24 +798,24 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                                                 <span key={i} className="text-[9px] font-mono text-white/20 leading-6 h-6">{i + 1}</span>
                                             ))}
                                         </div>
-                                        <textarea 
-                                            value={JSON.stringify(resume.content, null, 2)} 
+                                        <textarea
+                                            value={JSON.stringify(resume.content, null, 2)}
                                             onChange={(e) => handleSourceChange(e.target.value)}
                                             spellCheck={settings.spellcheck}
                                             wrap={settings.lineWrapping ? "soft" : "off"}
-                                            style={{ 
+                                            style={{
                                                 fontSize: settings.fontSize,
                                                 whiteSpace: settings.lineWrapping ? "pre-wrap" : "pre",
                                                 overflowX: settings.lineWrapping ? "hidden" : "auto"
                                             }}
-                                            className={`flex-grow bg-transparent text-emerald-400 font-mono p-4 outline-none transition-all resize-none leading-6 custom-scrollbar ${jsonError ? "text-red-400" : ""}`} 
+                                            className={`flex-grow bg-transparent text-emerald-400 font-mono p-4 outline-none transition-all resize-none leading-6 custom-scrollbar ${jsonError ? "text-red-400" : ""}`}
                                         />
                                     </div>
 
                                     {/* ERROR STATUS */}
                                     <AnimatePresence>
                                         {jsonError && (
-                                            <m.div 
+                                            <m.div
                                                 initial={{ y: 20, opacity: 0 }}
                                                 animate={{ y: 0, opacity: 1 }}
                                                 exit={{ y: 20, opacity: 0 }}
@@ -814,8 +857,8 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                 )}
 
                 {/* RESIZE DIVIDER */}
-                {!isZenMode && !isMobile && (
-                    <div 
+                {!isZenMode && !isNarrowLayout && (
+                    <div
                         onMouseDown={startResizing}
                         className={`w-1.5 h-full cursor-col-resize hover:bg-primary/30 transition-colors z-50 flex items-center justify-center group relative -ml-0.75 ${isResizing ? 'bg-primary/50' : 'bg-transparent'}`}
                     >
@@ -825,20 +868,19 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
 
                 {/* COL 3: Preview (Dynamic Width) */}
                 <AnimatePresence>
-                    {!isZenMode && (!isMobile || mobileTab === "preview") && (
-                        <m.div 
-                            initial={isMobile ? { opacity: 0 } : { width: 0, opacity: 0 }}
-                            animate={{ width: isMobile ? '100%' : `${100 - editorWidth}%`, opacity: 1 }}
-                            exit={isMobile ? { opacity: 0 } : { width: 0, opacity: 0 }}
+                    {!isZenMode && (!isNarrowLayout || editorTab === "preview") && (
+                        <m.div
+                            initial={isNarrowLayout ? { opacity: 0 } : { width: 0, opacity: 0 }}
+                            animate={{ width: isNarrowLayout ? '100%' : `${100 - editorWidth}%`, opacity: 1 }}
+                            exit={isNarrowLayout ? { opacity: 0 } : { width: 0, opacity: 0 }}
                             className="bg-muted h-full overflow-hidden flex flex-col"
                         >
-                            <PreviewPane 
-                                content={debouncedContent} 
+                            <PreviewPane
+                                content={debouncedContent}
                                 onJumpToSourceAction={jumpToSource}
                                 template={selectedTemplate}
                             />
                         </m.div>
-
                     )}
                 </AnimatePresence>
             </div>
@@ -847,9 +889,17 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
             <AnimatePresence>
                 {showAiPanel && (
                     <>
-                        <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowAiPanel(false)} className="fixed inset-0 bg-foreground/10 backdrop-blur-[2px] z-[180]" />
+                        <m.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setShowAiPanel(false)}
+                            className="fixed inset-0 bg-black/20 z-[180] lg:hidden"
+                        />
                         <m.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", damping: 30, stiffness: 300 }}
-                            className="fixed top-0 right-0 h-full w-full sm:w-[400px] bg-background border-l border-border-subtle shadow-[-20px_0_50px_rgba(0,0,0,0.08)] z-[200] flex flex-col">
+                            role="complementary"
+                            aria-label="ZE-AI resume assistant"
+                            className="fixed top-0 right-0 h-full w-full lg:w-[420px] bg-background border-l border-border-subtle shadow-[-16px_0_36px_rgba(0,0,0,0.08)] z-[200] flex flex-col">
                             <div className="h-11 border-b border-border-subtle flex items-center justify-between px-4 shrink-0 bg-background/80 backdrop-blur-md">
                                 <div className="flex items-center gap-2">
                                     <div className="w-5 h-5 rounded-[var(--radius-sm)] bg-primary/10 flex items-center justify-center">
@@ -878,11 +928,11 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                                         ) : (
                                             <div className="space-y-4">
                                                 {aiSuggestions.map((s, idx) => (
-                                                    <m.div 
-                                                        key={idx} 
-                                                        initial={{ opacity: 0, x: 10 }} 
-                                                        animate={{ opacity: 1, x: 0 }} 
-                                                        transition={{ delay: idx * 0.1 }} 
+                                                    <m.div
+                                                        key={idx}
+                                                        initial={{ opacity: 0, x: 10 }}
+                                                        animate={{ opacity: 1, x: 0 }}
+                                                        transition={{ delay: idx * 0.1 }}
                                                         className="overflow-hidden border border-border-subtle rounded-[var(--radius-lg)] bg-background shadow-sm hover:shadow-md hover:border-primary/30 transition-all group"
                                                     >
                                                         {/* Header with Dismiss */}
@@ -891,7 +941,7 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                                                                 <RiMagicLine size={10} className="text-primary" />
                                                                 <span className="text-[9px] font-black text-foreground uppercase tracking-widest">Suggestion #{idx + 1}</span>
                                                             </div>
-                                                            <button 
+                                                            <button
                                                                 onClick={() => setAiSuggestions(prev => prev.filter((_, i) => i !== idx))}
                                                                 className="text-muted-foreground/60 hover:text-red-500 transition-colors"
                                                             >
@@ -932,8 +982,8 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                                                                 </p>
                                                             </div>
 
-                                                            <button 
-                                                                onClick={() => applySuggestion(s.after)} 
+                                                            <button
+                                                                onClick={() => applySuggestion(s.after)}
                                                                 className="w-full h-8 bg-primary hover:bg-primary-dark text-white rounded-[var(--radius-md)] text-[10px] font-black uppercase tracking-widest transition-all shadow-md shadow-primary/10 active:scale-[0.98] flex items-center justify-center gap-2"
                                                             >
                                                                 <RiCheckLine size={12} />
@@ -957,16 +1007,18 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                                             </p>
                                         </div>
                                     )}
-                                    
+
                                     {chatMessages.map((msg, idx) => (
-                                        <m.div key={idx} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} 
+                                        <m.div key={idx} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                                             className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                            <div className={`max-w-[85%] p-3 rounded-[var(--radius-xl)] text-xs leading-relaxed ${
-                                                msg.role === 'user' 
-                                                ? 'bg-foreground text-white rounded-tr-none' 
+                                            <div className={`max-w-[90%] p-3 rounded-[var(--radius-xl)] text-[13px] ${
+                                                msg.role === 'user'
+                                                ? 'bg-foreground text-white rounded-tr-none'
                                                 : 'bg-muted text-secondary border border-border-subtle rounded-tl-none font-medium'
                                             }`}>
-                                                {msg.content}
+                                                {msg.role === 'model'
+                                                    ? <SafeMarkdown content={msg.content} />
+                                                    : <p className="whitespace-pre-wrap break-words leading-5">{msg.content}</p>}
                                             </div>
                                         </m.div>
                                     ))}
@@ -988,7 +1040,7 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                             {/* CHAT INPUT AREA */}
                             <div className="p-4 pb-[68px] sm:pb-4 border-t border-border-subtle bg-background shrink-0">
                                 <form onSubmit={handleSendMessage} className="relative group">
-                                    <input 
+                                    <input
                                         id="ze-ai-chat-input"
                                         name="ze-ai-chat-input"
                                         value={chatInput}
@@ -997,7 +1049,7 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                                         disabled={isChatLoading}
                                         className="w-full h-11 bg-muted border border-border-subtle rounded-[var(--radius-xl)] px-4 pr-12 text-xs font-medium focus:border-primary focus:bg-background transition-all outline-none placeholder:text-muted-foreground/60 disabled:opacity-50"
                                     />
-                                    <button 
+                                    <button
                                         type="submit"
                                         disabled={!chatInput.trim() || isChatLoading}
                                         className="absolute right-1.5 top-1.5 w-8 h-8 rounded-[var(--radius-md)] bg-foreground text-white flex items-center justify-center hover:bg-secondary transition-all disabled:opacity-0"
@@ -1010,10 +1062,10 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                     </>
                 )}
             </AnimatePresence>
- 
+
             {/* ── STATUS BAR ── */}
-            {!isMobile && (
-                <footer className="h-6 bg-primary flex items-center justify-between px-3 shrink-0 select-none">
+            {!isNarrowLayout && (
+                <footer className={`h-6 bg-primary flex items-center justify-between px-3 shrink-0 select-none transition-[padding] duration-300 ${showAiPanel ? "lg:pr-[432px]" : ""}`}>
                     <div className="flex items-center gap-3">
                         <div className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-white/70" /><span className="text-[9px] font-semibold text-white/80">Ready</span></div>
                         <span className="text-[9px] font-semibold text-white/50">{isSaving ? "Saving..." : "Synced"}</span>
@@ -1024,15 +1076,15 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                     </div>
                 </footer>
             )}
- 
-            {/* ── MOBILE TAB BAR ── */}
-            {isMobile && (
+
+            {/* ── MOBILE / TABLET TAB BAR (< 1024px) ── */}
+            {isNarrowLayout && (
                 <footer className="h-[52px] bg-background border-t border-border-subtle flex items-center justify-around px-2 shrink-0 select-none pb-safe z-[250] relative shadow-[0_-4px_20px_rgba(0,0,0,0.04)]">
-                    <button onClick={() => { setMobileTab("editor"); setShowAiPanel(false); }} className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-colors ${(mobileTab === 'editor' && !showAiPanel) ? 'text-primary' : 'text-muted-foreground'}`}>
+                    <button onClick={() => { setEditorTab("editor"); setShowAiPanel(false); }} className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-colors ${(editorTab === 'editor' && !showAiPanel) ? 'text-primary' : 'text-muted-foreground'}`}>
                         <RiBallPenLine size={18} />
                         <span className="text-[9px] font-bold uppercase tracking-widest">Editor</span>
                     </button>
-                    <button onClick={() => { setMobileTab("preview"); setShowAiPanel(false); }} className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-colors ${(mobileTab === 'preview' && !showAiPanel) ? 'text-primary' : 'text-muted-foreground'}`}>
+                    <button onClick={() => { setEditorTab("preview"); setShowAiPanel(false); }} className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-colors ${(editorTab === 'preview' && !showAiPanel) ? 'text-primary' : 'text-muted-foreground'}`}>
                         <RiClipboardLine size={18} />
                         <span className="text-[9px] font-bold uppercase tracking-widest">Preview</span>
                     </button>
@@ -1044,11 +1096,11 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
             )}
 
             {/* ── SHARE MODAL ── */}
-            <ShareModal 
-                isOpen={showShareModal} 
-                onCloseAction={() => setShowShareModal(false)} 
-                resumeId={resume.id} 
-                resumeTitle={resume.title} 
+            <ShareModal
+                isOpen={showShareModal}
+                onCloseAction={() => setShowShareModal(false)}
+                resumeId={resume.id}
+                resumeTitle={resume.title}
             />
         </div>
     );
@@ -1067,9 +1119,9 @@ function ProjectsEditor({ content, updateProject, addProject, removeItem, getAiS
                         <FieldInput label="Link" value={proj.link || ""} onChange={(v) => updateProject(proj.id, "link", v)} placeholder="https://..." />
                     </div>
                     <FieldInput label="Tech Stack" value={proj.techStack} onChange={(v) => updateProject(proj.id, "techStack", v)} placeholder="Python, SQL, React" />
-                    <BulletEditor 
-                        highlights={proj.highlights || []} 
-                        onUpdate={(nh) => updateProject(proj.id, "highlights", nh)} 
+                    <BulletEditor
+                        highlights={proj.highlights || []}
+                        onUpdate={(nh) => updateProject(proj.id, "highlights", nh)}
                         getAiSuggestions={(idx, text) => getAiSuggestions('projects', text, { id: proj.id, idx })}
                     />
                 </div>
@@ -1093,9 +1145,9 @@ function ExperienceEditor({ content, updateExperience, addExperience, removeItem
                         <FieldInput label="Role" value={exp.role} onChange={(v) => updateExperience(exp.id, "role", v)} placeholder="Campus Partner" />
                         <FieldInput label="Period" value={exp.period} onChange={(v) => updateExperience(exp.id, "period", v)} placeholder="Sep 2025 - Nov 2025" />
                     </div>
-                    <BulletEditor 
-                        highlights={exp.highlights} 
-                        onUpdate={(nh) => updateExperience(exp.id, "highlights", nh)} 
+                    <BulletEditor
+                        highlights={exp.highlights}
+                        onUpdate={(nh) => updateExperience(exp.id, "highlights", nh)}
                         getAiSuggestions={(idx, text) => getAiSuggestions('experience', text, { id: exp.id, idx })}
                     />
                 </div>
@@ -1130,20 +1182,20 @@ function BulletEditor({ highlights, onUpdate, getAiSuggestions }: { highlights: 
                 <div key={idx} className="flex gap-2 items-start group/bullet">
                     <span className="text-muted-foreground/60 text-xs mt-2 shrink-0">•</span>
                     <div className="flex-grow relative">
-                        <textarea 
-                            value={h} 
+                        <textarea
+                            value={h}
                             wrap={settings.lineWrapping ? "soft" : "off"}
                             spellCheck={settings.spellcheck}
-                            style={{ 
+                            style={{
                                 fontSize: settings.fontSize,
                                 whiteSpace: settings.lineWrapping ? "pre-wrap" : "pre",
                                 overflowX: settings.lineWrapping ? "hidden" : "auto"
-                            }} 
-                            onChange={(e) => { const nh = [...highlights]; nh[idx] = e.target.value; onUpdate(nh); }} 
-                            placeholder="Quantify your impact..." 
-                            className={`w-full ${settings.compactView ? 'min-h-[28px]' : 'min-h-[36px]'} pr-8 bg-muted rounded-[var(--radius-md)] p-2 text-foreground border border-border-subtle focus:border-primary outline-none resize-none placeholder:text-foreground/20 custom-scrollbar`} 
+                            }}
+                            onChange={(e) => { const nh = [...highlights]; nh[idx] = e.target.value; onUpdate(nh); }}
+                            placeholder="Quantify your impact..."
+                            className={`w-full ${settings.compactView ? 'min-h-[28px]' : 'min-h-[36px]'} pr-8 bg-muted rounded-[var(--radius-md)] p-2 text-foreground border border-border-subtle focus:border-primary outline-none resize-none placeholder:text-foreground/20 custom-scrollbar`}
                         />
-                        <button 
+                        <button
                             onClick={() => getAiSuggestions(idx, h)}
                             className="absolute right-1.5 top-1.5 w-6 h-6 rounded-[var(--radius-sm)] flex items-center justify-center text-primary hover:bg-background shadow-sm opacity-0 group-hover/bullet:opacity-100 transition-all border border-border-subtle"
                         >

@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { auditSchema } from "@/lib/validation";
 import { db } from "@/lib/db";
 import { user as userTable } from "@/lib/schema";
 import { eq, sql, and, gt } from "drizzle-orm";
 import { requireAuth } from "@/lib/auth-policy";
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+import { generateAiStream } from "@/lib/azure-foundry";
 
 export async function POST(req: NextRequest) {
   try {
@@ -40,57 +38,48 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Insufficient credits" }, { status: 403 });
     }
 
-    const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || "gemini-3.1-flash-lite" });
+    const systemPrompt = `You are Zebra AI's evidence-bound resume auditor.
 
-    const prompt = `You are Zebra AI, a premium XaaS (Everything-as-a-Service) resume strategist. Your goal is to bypass ATS filters using surgical precision.
-You do not write fluffy text. You provide mathematical, strict, and strategic feedback based on the Zebra AI philosophy: "Quantify everything, lead with action verbs, and eliminate generic fluff."
+Analyze only the resume and job description supplied by the user. Never invent employers, dates, education, skills, tools, seniority, metrics, achievements, or certifications. Clearly distinguish direct evidence from an inference.
 
-EXAMPLE 1:
-User: "Resume: 'Built a web app.' Job: 'Looking for a React developer with Next.js skills.'"
-Zebra AI: "CRITICAL FAILURE. Your metadata lacks specific framework identifiers and impact metrics. 
-REVISION: 'Architected a scalable web application utilizing React and Next.js, optimizing component rendering speed by 40%.'"
+When the resume lacks a useful metric, recommend collecting one or use a visible placeholder such as [add verified metric]. Never fabricate a number. Do not promise that a resume will bypass an ATS or guarantee an interview.
 
-EXAMPLE 2:
-User: "Resume: 'Managed a team of 5 people.' Job: 'Seeking a Lead Engineer with agile experience.'"
-Zebra AI: "WEAK MATCH. Missing methodology and scale metrics.
-REVISION: 'Directed a cross-functional agile engineering team of 5, increasing sprint velocity by 20% and reducing time-to-market by 2 weeks.'"
+Return a concise plain-text audit with these sections:
+1. Match score and short rationale
+2. Evidence-backed strengths
+3. Missing or weak requirements
+4. Suggested edits, each showing original text, proposed text, and reason
+5. Warnings and facts that require user verification
 
-EXAMPLE 3:
-User: "Resume: 'Good communication skills.' Job: 'Requires strong stakeholder management.'"
-Zebra AI: "FLUFF DETECTED. 'Good communication skills' is unmeasurable. Prove it with action.
-REVISION: 'Facilitated bi-weekly stakeholder reviews with C-level executives, securing buy-in for $500k project roadmap.'"
+All edits are suggestions only and require human approval before they are applied.`;
 
-Now, perform a strict audit on the following input.
+    const prompt = `Perform a strict audit on the following input:
 
 Resume: ${resumeText}
 
 Job: ${jobDescription}`;
 
-    let result;
-    try {
-      result = await model.generateContentStream(prompt);
-    } catch (modelError) {
-      // Refund the credit atomically if the AI initialization throws an exception
+    let creditRefunded = false;
+    const refundCredit = async () => {
+      if (creditRefunded) return;
+      creditRefunded = true;
       await db.update(userTable)
         .set({ credits: sql`${userTable.credits} + 1` })
         .where(eq(userTable.id, authCtx.user.id));
+    };
+
+    let stream: ReadableStream<Uint8Array>;
+    try {
+      stream = await generateAiStream({
+        task: "audit",
+        prompt,
+        systemPrompt,
+        onStreamFailure: refundCredit,
+      });
+    } catch (modelError) {
+      await refundCredit();
       throw modelError;
     }
-    
-    const stream = new ReadableStream({
-      async start(controller) {
-        try {
-          for await (const chunk of result.stream) {
-            const chunkText = chunk.text();
-            controller.enqueue(new TextEncoder().encode(chunkText));
-          }
-          controller.close();
-        } catch (streamError) {
-          console.error("Audit stream error:", streamError);
-          controller.error(new Error("Stream aborted"));
-        }
-      }
-    });
 
     return new Response(stream, {
       headers: {

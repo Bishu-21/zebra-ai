@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { resumes as resumesTable } from "@/lib/schema";
 import { eq, and } from "drizzle-orm";
 import { handleApiError } from "@/lib/api-error";
-import { resumeSchema } from "@/lib/validation";
+import { resumeUpdateSchema } from "@/lib/validation";
 import { requireAuth, notFoundResponse } from "@/lib/auth-policy";
 
 export async function PATCH(
@@ -16,7 +16,7 @@ export async function PATCH(
         if (errorResponse) return errorResponse;
 
         const body = await req.json();
-        const validation = resumeSchema.safeParse(body);
+        const validation = resumeUpdateSchema.safeParse(body);
 
         if (!validation.success) {
             return NextResponse.json({ error: validation.error.issues[0].message }, { status: 400 });

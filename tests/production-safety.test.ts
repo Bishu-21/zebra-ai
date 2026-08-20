@@ -5,6 +5,9 @@ import { checkRateLimit, clearRateLimits } from "../src/lib/rate-limit";
 import { reserveUserCredits, refundUserCredits } from "../src/lib/credit-policy";
 import { validateUploadedFile, MAX_RESUME_FILE_SIZE_BYTES } from "../src/lib/upload-safety";
 import { testStore } from "../src/lib/test-store";
+import { sanitizeSecretText } from "../src/lib/db";
+import { verifyRazorpayHmac } from "../src/lib/payment-policy";
+import crypto from "node:crypto";
 
 describe("Production Safety & Reliability Test Suite [Unit Test]", () => {
 
@@ -50,6 +53,12 @@ describe("Production Safety & Reliability Test Suite [Unit Test]", () => {
             assert.ok(res.url);
             assert.strictEqual(res.url.hostname, "stripe.com");
         });
+
+        test("1.6 Rejects IPv6 loopback, unique-local, and inline credentials", () => {
+            assert.strictEqual(validateUrlForSsrf("http://[::1]/admin").valid, false);
+            assert.strictEqual(validateUrlForSsrf("http://[fd00::1]/admin").valid, false);
+            assert.strictEqual(validateUrlForSsrf("https://user:password@example.com/jobs").valid, false);
+        });
     });
 
     describe("2. Rate Limiting Boundary Controls", () => {
@@ -66,6 +75,18 @@ describe("Production Safety & Reliability Test Suite [Unit Test]", () => {
             const rejected = checkRateLimit(key, 3, 60000);
             assert.strictEqual(rejected.success, false);
             assert.strictEqual(rejected.remaining, 0);
+        });
+    });
+
+    describe("2.2 Payment Webhook Authentication", () => {
+        test("accepts only a valid raw-body HMAC", () => {
+            const body = JSON.stringify({ event: "payment.captured", payload: { id: "pay_test" } });
+            const secret = "test-webhook-secret-that-is-not-used-in-production";
+            const signature = crypto.createHmac("sha256", secret).update(body).digest("hex");
+
+            assert.strictEqual(verifyRazorpayHmac(body, signature, secret), true);
+            assert.strictEqual(verifyRazorpayHmac(`${body} `, signature, secret), false);
+            assert.strictEqual(verifyRazorpayHmac(body, "not-a-valid-signature", secret), false);
         });
     });
 
@@ -100,6 +121,17 @@ describe("Production Safety & Reliability Test Suite [Unit Test]", () => {
             const res = validateUploadedFile(MAX_RESUME_FILE_SIZE_BYTES + 1, "application/pdf", "large.pdf");
             assert.strictEqual(res.valid, false);
             assert.match(String(res.error), /exceeds the maximum permitted limit/i);
+        });
+    });
+
+    describe("5. Secret Redaction", () => {
+        test("5.1 Redacts database parameters and authorization tokens", () => {
+            const message = sanitizeSecretText(
+                "Failed query\nparams: raw-session-token\nAuthorization: Bearer live-access-token",
+            );
+            assert.doesNotMatch(message, /raw-session-token|live-access-token/);
+            assert.match(message, /params: \[REDACTED\]/i);
+            assert.match(message, /Bearer \[REDACTED\]/i);
         });
     });
 

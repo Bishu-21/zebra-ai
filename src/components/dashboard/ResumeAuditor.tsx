@@ -13,7 +13,7 @@ export function ResumeAuditor() {
   const handleAudit = async () => {
     setIsAuditing(true);
     setResult(""); // Clear previous results
-    
+
     try {
       const response = await fetch("/api/ai/audit", {
         method: "POST",
@@ -27,7 +27,7 @@ export function ResumeAuditor() {
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder("utf-8");
-      
+
       if (!reader) {
         throw new Error("No reader available");
       }
@@ -54,14 +54,14 @@ export function ResumeAuditor() {
         </div>
         <div>
           <h2 className="text-2xl font-black tracking-tight text-[#0A0A0A]">Zebra Server Auditor</h2>
-          <p className="text-xs font-bold uppercase tracking-widest text-accent-gray">Powered by Gemini 1.5 Flash (Server-Side)</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-accent-gray">Azure Foundry AI · Server-side</p>
         </div>
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <div>
           <label className="text-[0.65rem] font-black uppercase tracking-[0.2em] text-[#A3A3A3] mb-2 block ml-1">Resume Summary</label>
-          <textarea 
+          <textarea
             className="w-full h-32 p-4 bg-[#F5F5F5] border-none rounded-2xl text-sm font-medium focus:ring-2 focus:ring-primary/20 resize-none outline-none custom-scrollbar"
             value={resumeText}
             onChange={(e) => setResumeText(e.target.value)}
@@ -69,7 +69,7 @@ export function ResumeAuditor() {
         </div>
         <div>
           <label className="text-[0.65rem] font-black uppercase tracking-[0.2em] text-[#A3A3A3] mb-2 block ml-1">Job Description</label>
-          <textarea 
+          <textarea
             className="w-full h-32 p-4 bg-[#F5F5F5] border-none rounded-2xl text-sm font-medium focus:ring-2 focus:ring-primary/20 resize-none outline-none custom-scrollbar"
             value={jobDescription}
             onChange={(e) => setJobDescription(e.target.value)}
@@ -77,7 +77,7 @@ export function ResumeAuditor() {
         </div>
       </div>
 
-      <button 
+      <button
         onClick={handleAudit}
         disabled={isAuditing}
         className="w-full py-4 rounded-xl font-bold tracking-wide transition-all active:scale-[0.98] disabled:opacity-50 bg-[#0A0A0A] text-white hover:bg-[#262626] shadow-lg shadow-black/10 flex items-center justify-center gap-2"
@@ -86,7 +86,7 @@ export function ResumeAuditor() {
       </button>
 
       {result && (
-        <m.div 
+        <m.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           className="mt-8 p-6 bg-white rounded-2xl border border-black/[0.04] shadow-[0_8px_30px_rgb(0,0,0,0.04)]"

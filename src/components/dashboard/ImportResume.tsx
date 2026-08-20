@@ -2,9 +2,9 @@
 
 import React, { useRef, useState } from "react";
 import { m, AnimatePresence } from "framer-motion";
-import { 
-    RiUploadCloud2Line, 
-    RiArrowRightSLine, 
+import {
+    RiUploadCloud2Line,
+    RiArrowRightSLine,
     RiLoader4Line,
     RiCloseLine,
     RiFileTextLine,
@@ -24,7 +24,7 @@ export function ImportResume() {
     const [isUploading, setIsUploading] = useState(false);
     const [uploadStep, setUploadStep] = useState("");
     const [error, setError] = useState<string | null>(null);
-    
+
     // Raw import states
     const [rawTitle, setRawTitle] = useState("");
     const [rawText, setRawText] = useState("");
@@ -44,6 +44,19 @@ export function ImportResume() {
         }
     };
 
+    React.useEffect(() => {
+        if (!isModalOpen) return;
+        document.body.style.overflow = "hidden";
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape" && !isUploading) setIsModalOpen(false);
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => {
+            document.body.style.overflow = "unset";
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [isModalOpen, isUploading]);
+
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (isUploading) return;
         const file = e.target.files?.[0];
@@ -59,13 +72,13 @@ export function ImportResume() {
 
         setIsUploading(true);
         setError(null);
-        setUploadStep("Establishing Secure Connection...");
-        
+        setUploadStep("Validating document...");
+
         const formData = new FormData();
         formData.append("file", file);
 
         try {
-            setUploadStep("Extracting Document Data...");
+            setUploadStep("Extracting and mapping resume sections...");
             const res = await fetch("/api/resumes/upload", {
                 method: "POST",
                 body: formData,
@@ -74,9 +87,9 @@ export function ImportResume() {
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || "Neural extraction failed");
 
-            setUploadStep("Mapping Document Structure...");
-            showToast("Resume imported successfully", "success");
-            
+            setUploadStep("Structured draft ready for review.");
+            showToast("Resume imported. Review the mapped sections before using suggestions.", "success");
+
             setTimeout(() => {
                 setIsModalOpen(false);
                 openImportedResume(data.id);
@@ -93,8 +106,8 @@ export function ImportResume() {
         }
     };
 
-    const handleRawImport = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleRawImport = async (e?: React.SyntheticEvent) => {
+        if (e) e.preventDefault();
         if (isUploading) return;
 
         if (!rawText.trim()) {
@@ -112,10 +125,10 @@ export function ImportResume() {
 
         setIsUploading(true);
         setError(null);
-        setUploadStep("Ingesting Raw Text...");
+        setUploadStep("Validating source text...");
 
         try {
-            setUploadStep("Writing Draft to Database...");
+            setUploadStep("Mapping source into resume sections...");
             const res = await fetch("/api/resumes/import-raw", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -128,8 +141,8 @@ export function ImportResume() {
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || "Failed to import raw text");
 
-            setUploadStep("Structuring Document...");
-            showToast("Narrative imported successfully", "success");
+            setUploadStep("Structured draft ready for review.");
+            showToast("Source imported. Review the mapped sections before using suggestions.", "success");
 
             setTimeout(() => {
                 setIsModalOpen(false);
@@ -147,7 +160,7 @@ export function ImportResume() {
     return (
         <>
             {/* The Trigger Card */}
-            <div 
+            <div
                 onClick={() => setIsModalOpen(true)}
                 className="group/card relative overflow-hidden flex flex-col justify-between h-full cursor-pointer transition-all p-7 bg-white border border-neutral-200/80 rounded-3xl hover:border-neutral-300 hover:shadow-xl active:scale-[0.99] group shadow-xs"
             >
@@ -174,7 +187,7 @@ export function ImportResume() {
                 {isModalOpen && (
                     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-10">
                         {/* Overlay backdrop */}
-                        <m.div 
+                        <m.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
@@ -183,7 +196,7 @@ export function ImportResume() {
                         />
 
                         {/* Modal Box */}
-                        <m.div 
+                        <m.div
                             initial={{ scale: 0.96, opacity: 0, y: 12 }}
                             animate={{ scale: 1, opacity: 1, y: 0 }}
                             exit={{ scale: 0.96, opacity: 0, y: 12 }}
@@ -193,7 +206,7 @@ export function ImportResume() {
                             {/* Cinematic In-Modal Loading Screen */}
                             <AnimatePresence>
                                 {isUploading && (
-                                    <m.div 
+                                    <m.div
                                         initial={{ opacity: 0 }}
                                         animate={{ opacity: 1 }}
                                         exit={{ opacity: 0 }}
@@ -207,7 +220,7 @@ export function ImportResume() {
                                                 {uploadStep}
                                             </span>
                                             <div className="w-40 h-1.5 bg-neutral-200 rounded-full overflow-hidden mx-auto">
-                                                <m.div 
+                                                <m.div
                                                     className="h-full bg-[#0A0A0A]"
                                                     initial={{ width: "0%" }}
                                                     animate={{ width: "100%" }}
@@ -230,7 +243,7 @@ export function ImportResume() {
                                         <p className="text-xs font-normal text-neutral-500">Upload a document file or paste raw text</p>
                                     </div>
                                 </div>
-                                <button 
+                                <button
                                     onClick={() => setIsModalOpen(false)}
                                     className="w-8 h-8 rounded-full bg-neutral-100 text-neutral-500 hover:bg-neutral-200 hover:text-[#0A0A0A] flex items-center justify-center transition-all"
                                 >
@@ -240,24 +253,24 @@ export function ImportResume() {
 
                             {/* Tabs Switcher */}
                             <div className="flex border-b border-neutral-200/60 px-6 sm:px-8 bg-neutral-50/50">
-                                <button 
+                                <button
                                     disabled={isUploading}
                                     onClick={() => { setError(null); setActiveTab("file"); }}
                                     className={`py-3.5 px-4 text-xs font-semibold tracking-tight flex items-center gap-2 border-b-2 transition-all ${
-                                        activeTab === "file" 
-                                            ? "border-[#0A0A0A] text-[#0A0A0A]" 
+                                        activeTab === "file"
+                                            ? "border-[#0A0A0A] text-[#0A0A0A]"
                                             : "border-transparent text-neutral-500 hover:text-[#0A0A0A]"
                                     }`}
                                 >
                                     <RiFileTextLine size={15} />
                                     Document Upload
                                 </button>
-                                <button 
+                                <button
                                     disabled={isUploading}
                                     onClick={() => { setError(null); setActiveTab("raw"); }}
                                     className={`py-3.5 px-4 text-xs font-semibold tracking-tight flex items-center gap-2 border-b-2 transition-all ${
-                                        activeTab === "raw" 
-                                            ? "border-[#0A0A0A] text-[#0A0A0A]" 
+                                        activeTab === "raw"
+                                            ? "border-[#0A0A0A] text-[#0A0A0A]"
                                             : "border-transparent text-neutral-500 hover:text-[#0A0A0A]"
                                     }`}
                                 >
@@ -295,14 +308,14 @@ export function ImportResume() {
                                 {activeTab === "file" ? (
                                     /* Tab 1: File Upload */
                                     <div className="space-y-6">
-                                        <div 
+                                        <div
                                             onClick={() => !isUploading && fileInputRef.current?.click()}
                                             className={`border-2 border-dashed border-neutral-200/80 bg-neutral-50/50 rounded-2xl p-8 sm:p-12 flex flex-col items-center justify-center text-center transition-all group ${
                                                 isUploading ? "opacity-50 cursor-not-allowed" : "hover:border-[#0A0A0A] hover:bg-neutral-50 cursor-pointer"
                                             }`}
                                         >
-                                            <input 
-                                                type="file" 
+                                            <input
+                                                type="file"
                                                 ref={fileInputRef}
                                                 onChange={handleFileUpload}
                                                 accept=".pdf,.docx,.txt"
@@ -314,7 +327,7 @@ export function ImportResume() {
                                             </div>
                                             <h3 className="font-bold text-sm text-[#0A0A0A] mb-1">Click to Upload Document</h3>
                                             <p className="text-xs text-neutral-500 max-w-xs leading-relaxed">
-                                                Supports PDF, DOCX, or TXT up to 5MB. Make sure files contain readable text rather than image scans.
+                                                PDF, DOCX, or TXT up to 5MB. Import uses one AI credit and preserves the original text for review.
                                             </p>
                                         </div>
                                     </div>
@@ -325,7 +338,7 @@ export function ImportResume() {
                                             <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider block">
                                                 Document Title
                                             </label>
-                                            <input 
+                                            <input
                                                 type="text"
                                                 value={rawTitle}
                                                 disabled={isUploading}
@@ -339,7 +352,7 @@ export function ImportResume() {
                                             <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider block">
                                                 LaTeX Code / Raw Text
                                             </label>
-                                            <textarea 
+                                            <textarea
                                                 value={rawText}
                                                 disabled={isUploading}
                                                 onChange={(e) => setRawText(e.target.value)}
@@ -349,7 +362,7 @@ export function ImportResume() {
                                             />
                                         </div>
 
-                                        <button 
+                                        <button
                                             type="submit"
                                             disabled={isUploading || !rawText.trim()}
                                             className="w-full px-6 py-3 bg-[#0A0A0A] text-white rounded-full text-xs font-bold shadow-2xs hover:bg-neutral-800 active:scale-95 transition-all inline-flex items-center justify-center gap-2 disabled:opacity-40"

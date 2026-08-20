@@ -42,11 +42,25 @@ export function ShareModal({ isOpen, onCloseAction, resumeId, resumeTitle }: Sha
         fetchShareStatus();
     }, [isOpen, resumeId, fetchShareStatus]);
 
+    // Handle Escape key and body scroll lock
+    useEffect(() => {
+        if (!isOpen) return;
+        document.body.style.overflow = "hidden";
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape") onCloseAction();
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => {
+            document.body.style.overflow = "unset";
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [isOpen, onCloseAction]);
+
     const generateShareLink = async () => {
         if (resumeId === "new") return;
         setLoading(true);
         try {
-            const res = await fetch(`/api/resumes/${resumeId}/share`, { 
+            const res = await fetch(`/api/resumes/${resumeId}/share`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ isPublic: true })
@@ -129,10 +143,10 @@ export function ShareModal({ isOpen, onCloseAction, resumeId, resumeTitle }: Sha
     return (
         <AnimatePresence>
             <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onCloseAction} className="fixed inset-0 bg-black/30 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
-                <m.div 
-                    initial={{ opacity: 0, scale: 0.95, y: 10 }} 
-                    animate={{ opacity: 1, scale: 1, y: 0 }} 
-                    exit={{ opacity: 0, scale: 0.95, y: 10 }} 
+                <m.div
+                    initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: 10 }}
                     transition={{ type: "spring", damping: 25, stiffness: 300 }}
                     onClick={(e) => e.stopPropagation()}
                     className="w-full max-w-md bg-white rounded-xl shadow-2xl overflow-hidden"
@@ -164,8 +178,8 @@ export function ShareModal({ isOpen, onCloseAction, resumeId, resumeTitle }: Sha
                                     <p className="text-sm font-semibold text-[#0A0A0A]">Create a shareable link</p>
                                     <p className="text-xs text-[#737373] mt-1">Anyone with the link can view your resume as a clean, formatted page.</p>
                                 </div>
-                                <button 
-                                    onClick={generateShareLink} 
+                                <button
+                                    onClick={generateShareLink}
                                     disabled={loading}
                                     className="mx-auto h-9 px-6 bg-[#0A0A0A] hover:bg-zinc-800 text-white text-xs font-bold rounded-lg transition-all flex items-center gap-2 disabled:opacity-50 active:scale-95"
                                 >
@@ -200,13 +214,13 @@ export function ShareModal({ isOpen, onCloseAction, resumeId, resumeTitle }: Sha
                                         <p className="text-[11px] font-bold text-[#0A0A0A]">Public Visibility</p>
                                         <p className="text-[10px] text-[#737373]">{isPublic ? "Visible to anyone with the link" : "Only visible to you"}</p>
                                     </div>
-                                    <button 
+                                    <button
                                         onClick={toggleVisibility}
                                         disabled={toggling}
                                         className={`w-9 h-5 rounded-full relative transition-all ${isPublic ? "bg-[#0A0A0A]" : "bg-black/15"} ${toggling ? "opacity-50" : ""}`}
                                     >
-                                        <m.div 
-                                            animate={{ x: isPublic ? 18 : 2 }} 
+                                        <m.div
+                                            animate={{ x: isPublic ? 18 : 2 }}
                                             className="absolute top-1 w-3 h-3 bg-white rounded-full shadow-sm"
                                         />
                                     </button>
@@ -216,13 +230,13 @@ export function ShareModal({ isOpen, onCloseAction, resumeId, resumeTitle }: Sha
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-semibold text-[#737373] tracking-wide uppercase">Share Link</label>
                                     <div className="flex gap-2">
-                                        <input 
-                                            type="text" 
-                                            readOnly 
-                                            value={shareUrl} 
+                                        <input
+                                            type="text"
+                                            readOnly
+                                            value={shareUrl}
                                             className="flex-grow h-9 bg-[#F5F5F5] rounded-lg px-3 text-xs text-[#0A0A0A] font-mono border border-[#E5E5E5] outline-none truncate"
                                         />
-                                        <button 
+                                        <button
                                             onClick={copyLink}
                                             className={`h-9 px-4 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shrink-0 ${copied ? "bg-emerald-50 text-emerald-600 border border-emerald-200" : "bg-[#0A0A0A] text-white hover:bg-[#333]"}`}
                                         >
@@ -238,7 +252,7 @@ export function ShareModal({ isOpen, onCloseAction, resumeId, resumeTitle }: Sha
 
                                 {/* Revoke */}
                                 <div className="pt-3 border-t border-black/6">
-                                    <button 
+                                    <button
                                         onClick={revokeShareLink}
                                         disabled={revoking}
                                         className="w-full h-8 flex items-center justify-center gap-1.5 text-[10px] font-semibold text-red-500 hover:bg-red-50 rounded-lg transition-all disabled:opacity-50"

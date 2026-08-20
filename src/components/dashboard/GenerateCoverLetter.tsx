@@ -118,9 +118,7 @@ export function GenerateCoverLetter({ resumes }: { resumes: { id: string; title:
             const data = await res.json();
             if (data.success) {
                 setIntelligence(data.data);
-            } else if (data.fallback) {
-                console.log("Azure not configured, skipping enrichment.");
-            } else {
+            } else if (!data.fallback) {
                 setError(data.error || "Enrichment failed.");
             }
         } catch {

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSafeSession } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
-import { 
+import {
     resumes as resumesTable,
     applications as applicationsTable,
     resumeVersions as resumeVersionsTable,
@@ -31,7 +31,18 @@ export interface AuthContext {
 export async function requireAuth(): Promise<
     { auth: AuthContext; errorResponse: null } | { auth: null; errorResponse: NextResponse }
 > {
-    const session = await getSafeSession();
+    let session;
+    try {
+        session = await getSafeSession();
+    } catch {
+        return {
+            auth: null,
+            errorResponse: NextResponse.json(
+                { error: "Authentication service is temporarily unavailable" },
+                { status: 503 },
+            ),
+        };
+    }
     if (!session || !session.user) {
         return { auth: null, errorResponse: unauthorizedResponse() };
     }
@@ -112,6 +123,57 @@ export async function validateSelectedWorkIds(userId: string, workIds?: string[]
         columns: { id: true },
     });
     return items.length === workIds.length;
+}
+
+export interface OwnedWorkEvidenceItem {
+    id: string;
+    title: string;
+    description?: string | null;
+    tools?: string[] | null;
+    result?: string | null;
+    proofUrl?: string | null;
+}
+
+/** Load selected work owned by the user for evidence seeding. */
+export async function getUserOwnedWorkItems(
+    userId: string,
+    workIds?: string[] | null,
+): Promise<OwnedWorkEvidenceItem[]> {
+    if (!userId || !workIds?.length) return [];
+
+    if (isTestStoreActive()) {
+        return workIds.flatMap((id) => {
+            const item = testStore.workItems.get(id);
+            if (!item || item.userId !== userId) return [];
+            return [{
+                id: item.id,
+                title: item.title,
+                description: item.description ?? null,
+                tools: item.tools ?? null,
+                result: item.result ?? null,
+                proofUrl: item.proofUrl ?? null,
+            }];
+        });
+    }
+
+    const items = await db.query.workItems.findMany({
+        where: and(eq(workItemsTable.userId, userId), inArray(workItemsTable.id, workIds)),
+        columns: {
+            id: true,
+            title: true,
+            description: true,
+            tools: true,
+            result: true,
+            proofUrl: true,
+        },
+    });
+
+    return items.map((item) => ({
+        ...item,
+        tools: Array.isArray(item.tools)
+            ? item.tools.filter((tool): tool is string => typeof tool === "string")
+            : null,
+    }));
 }
 
 /**

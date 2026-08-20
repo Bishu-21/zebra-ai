@@ -40,7 +40,7 @@ export default function PrivacyPolicyPage() {
                     </Section>
 
                     <Section title="3. AI & Data Processing">
-                        <p>Zebra AI uses third-party AI models (Google Gemini, Gemma) to provide intelligent features. When you use AI features:</p>
+                        <p>Zebra AI uses Microsoft Azure Foundry as its primary AI provider and may use Google Gemini as a transient-error fallback. When you use AI features:</p>
                         <ul>
                             <li>Your resume content is sent to AI models for processing.</li>
                             <li>AI responses are not stored beyond your active session unless you explicitly save them.</li>
@@ -67,7 +67,8 @@ export default function PrivacyPolicyPage() {
                         <p>We integrate with:</p>
                         <ul>
                             <li><strong>Google OAuth</strong> — for authentication.</li>
-                            <li><strong>Google Gemini / Gemma</strong> — for AI processing.</li>
+                            <li><strong>Microsoft Azure Foundry</strong> — for primary AI processing.</li>
+                            <li><strong>Google Gemini</strong> — for optional transient-error fallback processing.</li>
                             <li><strong>Razorpay</strong> — for payment processing.</li>
                             <li><strong>Neon</strong> — for database hosting.</li>
                         </ul>

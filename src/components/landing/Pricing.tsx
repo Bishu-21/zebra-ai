@@ -66,7 +66,7 @@ export function Pricing() {
       icon: <CrownIcon />,
       price: PLANS.pro.displayPrice,
       description: "Strategic edge for active job seekers.",
-      features: [`${PLANS.pro.credits} Monthly Credits`, "Deep AI Resume Audit", "Job Description Matching", "Priority Support"],
+      features: [`${PLANS.pro.credits} AI Credits`, "Deep AI Resume Audit", "Job Description Matching", "Priority Support"],
       cta: "Go Mountain",
       featured: true
     },
@@ -111,8 +111,8 @@ export function Pricing() {
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
               className={`p-10 pt-14 rounded-[28px] border-[1.5px] transition-all duration-300 relative ${
-                plan.featured 
-                ? "bg-white border-primary shadow-[0px_24px_60px_-15px_rgba(0,0,0,0.1)] scale-105 z-10" 
+                plan.featured
+                ? "bg-white border-primary shadow-[0px_24px_60px_-15px_rgba(0,0,0,0.1)] scale-105 z-10"
                 : "bg-white/60 border-black/5 hover:border-black/30"
               }`}
             >
@@ -132,7 +132,7 @@ export function Pricing() {
                 <span className="text-[#737373] text-sm font-medium">/ pack</span>
               </div>
               <p className="text-[#4A4A4A] text-sm mb-10">{plan.description}</p>
-              
+
               <div className="space-y-4 mb-10">
                 {plan.features.map((feature) => (
                   <div key={feature} className="flex items-center gap-3">
@@ -144,12 +144,12 @@ export function Pricing() {
                 ))}
               </div>
 
-              <button 
+              <button
                 onClick={() => handleSubscription(plan.id)}
                 disabled={loading !== null}
                 className={`w-full py-4 rounded-xl font-bold text-sm tracking-wide transition-all active:scale-[0.98] disabled:opacity-50 ${
-                plan.featured 
-                ? "bg-[#0A0A0A] text-white hover:bg-[#262626] shadow-lg shadow-black/15" 
+                plan.featured
+                ? "bg-[#0A0A0A] text-white hover:bg-[#262626] shadow-lg shadow-black/15"
                 : "bg-white text-[#0A0A0A] border-[1.5px] border-black/10 hover:border-black/30 hover:bg-neutral-50"
               }`}>
                 {loading === plan.id ? "Processing..." : plan.cta}
@@ -161,7 +161,3 @@ export function Pricing() {
     </section>
   );
 }
-
-
-
-

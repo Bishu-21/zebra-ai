@@ -7,7 +7,7 @@ import { getPdfBrowserConfig } from "@/lib/pdf-browser";
 
 /**
  * PREMIUM PDF EXPORT API
- * 
+ *
  * Generates a high-quality PDF using a headless browser.
  * This provides a direct "Download" experience without the browser print dialog.
  */
@@ -37,12 +37,14 @@ export async function POST(req: NextRequest) {
             });
 
             const page = await browser.newPage();
-            
+
             // Handle page errors
             page.on('error', (err: unknown) => console.error('PDF page error:', err));
             page.on('pageerror', (err: unknown) => console.error('PDF page crash:', err));
 
-            await page.setContent(html, { waitUntil: 'networkidle0' });
+            await page.setContent(html, { waitUntil: "domcontentloaded" });
+            await page.waitForNetworkIdle({ idleTime: 500, timeout: 10_000 });
+            await page.evaluate(() => document.fonts.ready);
 
             // 3. Generate PDF buffer with zero margin (renderer handles padding)
             const pdfBuffer = await page.pdf({

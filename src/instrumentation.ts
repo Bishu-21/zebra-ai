@@ -1,4 +1,5 @@
 import { type Instrumentation } from 'next'
+import { isExpectedRequestAbort } from '@/lib/error-classification'
 
 export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
@@ -30,6 +31,10 @@ export const onRequestError: Instrumentation.onRequestError = async (
   request,
   context
 ) => {
+  // Client navigation, tab closure, and dev-server restarts can cancel an RSC
+  // response after rendering has begun. This is not an application failure.
+  if (isExpectedRequestAbort(err)) return;
+
   const message = err instanceof Error ? err.message : String(err);
   const digest = (err as { digest?: string })?.digest || 'N/A';
 
@@ -61,4 +66,3 @@ export const onRequestError: Instrumentation.onRequestError = async (
     }
   }
 }
-

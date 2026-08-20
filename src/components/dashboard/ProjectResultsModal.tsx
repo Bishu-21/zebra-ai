@@ -2,8 +2,8 @@
 
 import React from "react";
 import { m, AnimatePresence } from "framer-motion";
-import { 
-    RiShieldCheckLine, 
+import {
+    RiShieldCheckLine,
     RiCloseLine,
     RiArrowRightLine
 } from "react-icons/ri";
@@ -24,15 +24,15 @@ export function ProjectResultsModal({ isOpen, onCloseAction, data }: ProjectResu
     return (
         <AnimatePresence>
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                <m.div 
-                    initial={{ opacity: 0 }} 
-                    animate={{ opacity: 1 }} 
+                <m.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    onClick={onCloseAction} 
+                    onClick={onCloseAction}
                     className="absolute inset-0 bg-background/60 backdrop-blur-md"
                 />
-                
-                <m.div 
+
+                <m.div
                     initial={{ opacity: 0, scale: 0.98, y: 10 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.98, y: 10 }}
@@ -58,14 +58,9 @@ export function ProjectResultsModal({ isOpen, onCloseAction, data }: ProjectResu
                         <ProjectAnalysisResults result={data} />
                     </div>
 
-                    <div className="p-8 border-t border-border-subtle flex items-center justify-between bg-background/30 backdrop-blur-xl sticky bottom-0">
-                        <div className="flex items-center gap-3 px-6 py-3 bg-muted rounded-[var(--radius-2xl)] border border-border-subtle">
-                            <div className="w-2 h-2 rounded-full bg-success" />
-                            <span className="text-[0.65rem] font-black uppercase tracking-widest text-muted-foreground">Verification complete</span>
-                        </div>
-                        
-                        <div className="flex items-center gap-4">
-                            <button 
+                    <div className="p-6 border-t border-neutral-200/60 flex items-center justify-end bg-white sticky bottom-0 z-20 gap-3">
+                        <div className="flex items-center gap-3">
+                            <button
                                 onClick={() => {
                                     router.push(`/dashboard/resumes/new`);
                                     onCloseAction();
@@ -74,7 +69,7 @@ export function ProjectResultsModal({ isOpen, onCloseAction, data }: ProjectResu
                             >
                                 Use in Resume <RiArrowRightLine />
                             </button>
-                            <button 
+                            <button
                                 onClick={onCloseAction}
                                 className="px-8 py-4 bg-foreground text-background text-[0.65rem] font-bold uppercase tracking-widest rounded-[var(--radius-2xl)] hover:opacity-90 transition-all active:scale-[0.98]"
                             >

@@ -1,18 +1,18 @@
 import React from "react";
 import { getSafeSession } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
-import { 
-    workItems as workItemsTable, 
+import {
+    workItems as workItemsTable,
     certifications as certificationsTable,
     user as userTable
 } from "@/lib/schema";
 import { eq, desc } from "drizzle-orm";
 import Link from "next/link";
-import { 
-    RiExternalLinkLine, 
-    RiAddLine, 
-    RiStackLine, 
-    RiAwardLine, 
+import {
+    RiExternalLinkLine,
+    RiAddLine,
+    RiStackLine,
+    RiAwardLine,
     RiShareBoxLine,
     RiCheckLine
 } from "react-icons/ri";
@@ -46,7 +46,7 @@ export default async function PortfolioDashboardPage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight text-[#0A0A0A] mb-1">
-                        Portfolio & Proof Vault
+                        Portfolio
                     </h1>
                     <p className="text-xs font-normal text-neutral-500 leading-relaxed">
                         Manage public proof items, project evidence, and credentials showcased in your shareable portfolio.

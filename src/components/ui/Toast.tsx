@@ -56,7 +56,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         if (cleanMessage.includes("Failed query") || cleanMessage.includes("relation \"") || cleanMessage.includes("code: '42P01'")) {
             cleanMessage = "Database operation pending. Please refresh in a moment.";
         }
-        
+
         const id = Math.random().toString(36).substring(2, 9);
         setToasts((prev) => [...prev, { id, message: cleanMessage, type }]);
         setTimeout(() => {
@@ -67,7 +67,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     return (
         <ToastContext.Provider value={{ showToast }}>
             {children}
-            <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[200] flex flex-col gap-2.5 max-w-lg w-[90vw] pointer-events-none items-center">
+            <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[300] flex flex-col gap-2.5 max-w-lg w-[90vw] pointer-events-none items-center">
                 <AnimatePresence mode="popLayout">
                     {toasts.map((toast) => (
                         <m.div
@@ -77,11 +77,11 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                             exit={{ opacity: 0, y: -10, scale: 0.95, transition: { duration: 0.15 } }}
                             className={`
                                 pointer-events-auto
-                                flex items-center gap-3 px-4 py-3 
+                                flex items-center gap-3 px-4 py-3
                                 rounded-2xl shadow-xl border backdrop-blur-xl
                                 max-w-full text-xs font-semibold leading-snug
-                                ${toast.type === "success" 
-                                    ? "bg-[#0A0A0A] text-white border-white/10 shadow-black/20" 
+                                ${toast.type === "success"
+                                    ? "bg-[#0A0A0A] text-white border-white/10 shadow-black/20"
                                     : toast.type === "error"
                                     ? "bg-red-950/90 text-red-100 border-red-500/30 shadow-red-950/30"
                                     : "bg-white text-[#0A0A0A] border-neutral-200 shadow-neutral-200/50"}
@@ -95,7 +95,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                                 {toast.message}
                             </span>
 
-                            <button 
+                            <button
                                 onClick={() => setToasts(prev => prev.filter(t => t.id !== toast.id))}
                                 className="ml-1 opacity-60 hover:opacity-100 transition-opacity shrink-0 p-1"
                                 aria-label="Close notification"

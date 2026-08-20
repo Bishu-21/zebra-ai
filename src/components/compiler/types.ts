@@ -41,6 +41,20 @@ export interface Education {
     highlights: string[];
 }
 
+export type ResumeParseStatus = "legacy" | "needs_review" | "verified";
+
+export interface ResumeIngestionMeta {
+    schemaVersion: 2;
+    parserVersion: string;
+    parseStatus: ResumeParseStatus;
+    sourceText: string;
+    parseWarnings: string[];
+    parsedAt?: string;
+    originalFileName?: string;
+    mimeType?: string;
+    sourceTruncatedForAi?: boolean;
+}
+
 export interface ResumeContent {
     basics: {
         name: string;
@@ -56,6 +70,8 @@ export interface ResumeContent {
     skills: SkillCategory[];
     projects: Project[];
     certifications: Achievement[];
+    /** Full import source kept outside visible resume fields for safe recovery. */
+    _ingestionMeta?: ResumeIngestionMeta;
 }
 
 export interface ResumeData {
@@ -75,7 +91,7 @@ export interface RewriteItem {
 export interface AuditItem {
     checkpoint?: string;
     message?: string;
-    status?: "Pass" | "Fail";
+    status?: "Pass" | "Fail" | "Not Assessed";
     fix?: string;
 }
 

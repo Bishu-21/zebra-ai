@@ -1,6 +1,6 @@
 /**
  * COVER LETTER RENDERER
- * 
+ *
  * Generates clean HTML for server-side PDF export.
  */
 
@@ -67,7 +67,7 @@ export function generateCoverLetterHtml(content: string, title: string): string 
             background: white;
             -webkit-font-smoothing: antialiased;
         }
-        
+
         .letterhead {
             margin-bottom: 20mm;
             display: flex;
@@ -110,21 +110,21 @@ export function generateCoverLetterHtml(content: string, title: string): string 
             line-height: 1.5;
         }
 
-        .cl-para { 
-            margin-bottom: 1.2rem; 
+        .cl-para {
+            margin-bottom: 1.2rem;
             text-align: justify;
         }
-        
+
         .cl-list {
             margin-bottom: 1.2rem;
             padding-left: 1.2rem;
         }
-        
+
         .cl-list li {
             margin-bottom: 0.5rem;
             text-align: justify;
         }
-        
+
         strong { font-weight: 700; color: #000; }
 
         .signature {
@@ -163,7 +163,7 @@ export function generateCoverLetterHtml(content: string, title: string): string 
         </div>
         <div style="text-align: right; font-size: 8pt; color: #6b7280; font-weight: 500;">
             Generated via Zebra AI Suite<br>
-            Verification ID: CL-${Math.random().toString(36).substr(2, 9).toUpperCase()}
+            Verification ID: CL-${Math.random().toString(36).slice(2, 11).toUpperCase()}
         </div>
     </div>
 

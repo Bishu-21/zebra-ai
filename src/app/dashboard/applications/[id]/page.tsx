@@ -15,7 +15,7 @@ export default async function ApplicationDetailPage({ params }: { params: Promis
     });
 
     if (!session?.user) {
-        redirect("/auth/signin");
+        redirect(`/signin?returnTo=${encodeURIComponent(`/dashboard/applications/${id}`)}`);
     }
 
     const application = await db.query.applications.findFirst({

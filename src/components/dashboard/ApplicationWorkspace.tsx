@@ -3,9 +3,9 @@
 import React, { useState, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { 
-    RiArrowLeftLine, RiBriefcaseLine, RiFileTextLine, RiMagicLine, 
-    RiCheckLine, RiDownloadLine, RiExternalLinkLine, 
+import {
+    RiArrowLeftLine, RiBriefcaseLine, RiFileTextLine, RiMagicLine,
+    RiCheckLine, RiDownloadLine, RiExternalLinkLine,
     RiSave3Line, RiStackLine, RiAddLine, RiRefreshLine,
     RiAlertLine, RiEyeLine, RiSearchLine,
     RiArrowRightLine
@@ -13,6 +13,7 @@ import {
 import { useToast } from "@/components/ui/Toast";
 import { ApplicationSuggestionsModal } from "@/components/dashboard/ApplicationSuggestionsModal";
 import { analyzeEvidenceCoverage } from "@/lib/requirement-extractor";
+import { RequirementEvidenceMatrixView } from "@/components/compiler/RequirementEvidenceMatrixView";
 
 export interface ApplicationData {
     id: string;
@@ -79,7 +80,7 @@ export function ApplicationWorkspace({ initialApplication, resumes, workItems, c
     const { showToast } = useToast();
 
     const [app, setApp] = useState<ApplicationData>(initialApplication);
-    
+
     const initialTabParam = searchParams.get("step") as WorkspaceTab | null;
     const [activeTab, setActiveTab] = useState<WorkspaceTab>(
         initialTabParam || "overview"
@@ -257,11 +258,11 @@ export function ApplicationWorkspace({ initialApplication, resumes, workItems, c
             {/* Header / Navigation */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-neutral-200 pb-6">
                 <div>
-                    <Link 
+                    <Link
                         href="/dashboard/job-tracker"
                         className="inline-flex items-center text-xs font-semibold text-neutral-500 hover:text-neutral-900 transition-colors mb-2 gap-1"
                     >
-                        <RiArrowLeftLine className="w-4 h-4" /> Back to My Applications
+                        <RiArrowLeftLine className="w-4 h-4" /> Back to Applications
                     </Link>
                     <div className="flex items-center gap-3 flex-wrap">
                         <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">
@@ -419,10 +420,10 @@ export function ApplicationWorkspace({ initialApplication, resumes, workItems, c
                                     className="w-full px-3.5 py-2.5 border border-neutral-200 rounded-xl font-medium focus:ring-2 focus:ring-[#0A0A0A] outline-none text-xs"
                                 />
                                 {url && (
-                                    <a 
-                                        href={url} 
-                                        target="_blank" 
-                                        rel="noopener noreferrer" 
+                                    <a
+                                        href={url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
                                         className="p-2.5 bg-neutral-100 text-neutral-700 rounded-xl hover:bg-neutral-200 transition-colors flex items-center justify-center"
                                     >
                                         <RiExternalLinkLine className="w-4 h-4" />
@@ -496,8 +497,8 @@ export function ApplicationWorkspace({ initialApplication, resumes, workItems, c
                                             handleSave({ selectedResumeId: r.id });
                                         }}
                                         className={`p-4 border-2 rounded-2xl cursor-pointer transition-all ${
-                                            isSelected 
-                                                ? "border-[#0A0A0A] bg-neutral-50 shadow-sm" 
+                                            isSelected
+                                                ? "border-[#0A0A0A] bg-neutral-50 shadow-sm"
                                                 : "border-neutral-200 hover:border-neutral-400 bg-white"
                                         }`}
                                     >
@@ -573,8 +574,8 @@ export function ApplicationWorkspace({ initialApplication, resumes, workItems, c
                                         key={item.id}
                                         onClick={() => toggleWorkSelection(item.id)}
                                         className={`p-4 border rounded-2xl cursor-pointer transition-all flex items-start gap-3 ${
-                                            isChecked 
-                                                ? "border-[#0A0A0A] bg-neutral-50" 
+                                            isChecked
+                                                ? "border-[#0A0A0A] bg-neutral-50"
                                                 : "border-neutral-200 hover:border-neutral-300"
                                         }`}
                                     >
@@ -645,8 +646,8 @@ export function ApplicationWorkspace({ initialApplication, resumes, workItems, c
                                             key={cert.id}
                                             onClick={() => toggleCertSelection(cert.id)}
                                             className={`p-3.5 border rounded-2xl cursor-pointer transition-all flex items-center justify-between gap-3 ${
-                                                isSelected 
-                                                    ? "border-[#0A0A0A] bg-neutral-50" 
+                                                isSelected
+                                                    ? "border-[#0A0A0A] bg-neutral-50"
                                                     : "border-neutral-200 hover:border-neutral-300 bg-white"
                                             }`}
                                         >
@@ -725,70 +726,12 @@ export function ApplicationWorkspace({ initialApplication, resumes, workItems, c
                         </div>
                     ) : (
                         <div className="space-y-6">
-                            {/* Summary Cards */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div className="p-4 bg-neutral-50 border border-neutral-200 rounded-2xl">
-                                    <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider">Identified Skills</span>
-                                    <p className="text-2xl font-black text-[#0A0A0A] mt-1">{evidenceAnalysis.requirements.length}</p>
-                                    <p className="text-[11px] text-neutral-500 mt-0.5">Found in job description</p>
-                                </div>
-
-                                <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl">
-                                    <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider">Covered by Proof</span>
-                                    <p className="text-2xl font-black text-emerald-900 mt-1">{evidenceAnalysis.covered.length}</p>
-                                    <p className="text-[11px] text-emerald-700 mt-0.5">Backed by work or resume</p>
-                                </div>
-
-                                <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl">
-                                    <span className="text-xs font-bold text-rose-700 uppercase tracking-wider">Missing Evidence Gaps</span>
-                                    <p className="text-2xl font-black text-rose-900 mt-1">{evidenceAnalysis.missing.length}</p>
-                                    <p className="text-[11px] text-rose-700 mt-0.5">Needs proof or AI framing</p>
-                                </div>
-                            </div>
-
-                            {/* Unattached Work Recommendations */}
-                            {evidenceAnalysis.unattachedRecommendations.length > 0 && (
-                                <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-2xl space-y-3">
-                                    <h3 className="font-extrabold text-xs text-indigo-900 flex items-center gap-1.5">
-                                        <RiStackLine className="w-4 h-4 text-indigo-700" /> Library Proof Recommendation
-                                    </h3>
-                                    <div className="space-y-2">
-                                        {evidenceAnalysis.unattachedRecommendations.map(rec => (
-                                            <div key={rec.itemId} className="flex items-center justify-between bg-white p-3 rounded-xl border border-indigo-100 text-xs">
-                                                <span>You have <strong>{rec.itemTitle}</strong> in your library which matches <strong>{rec.req}</strong>.</span>
-                                                <button
-                                                    onClick={() => toggleWorkSelection(rec.itemId)}
-                                                    className="px-3 py-1 bg-indigo-600 text-white rounded-lg font-bold text-[11px] hover:bg-indigo-700"
-                                                >
-                                                    Attach Now
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Missing Requirements List */}
-                            {evidenceAnalysis.missing.length > 0 ? (
-                                <div className="p-5 border border-neutral-200 rounded-2xl space-y-3">
-                                    <h3 className="font-extrabold text-sm text-[#0A0A0A]">Identified Missing Requirements</h3>
-                                    <div className="flex flex-wrap gap-2">
-                                        {evidenceAnalysis.missing.map(req => (
-                                            <span key={req} className="px-3 py-1.5 bg-rose-100 text-rose-800 font-bold text-xs rounded-xl border border-rose-200">
-                                                Missing Proof: {req}
-                                            </span>
-                                        ))}
-                                    </div>
-                                    <p className="text-xs text-neutral-600 leading-relaxed pt-2">
-                                        Run AI Suggestions in the next step to reframe existing achievements to highlight these competencies.
-                                    </p>
-                                </div>
-                            ) : (
-                                <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-center text-xs font-bold text-emerald-900">
-                                    <RiCheckLine className="w-5 h-5 text-emerald-600 inline mr-1" />
-                                    All identified key requirements are backed by your attached work or master resume!
-                                </div>
-                            )}
+                            <RequirementEvidenceMatrixView
+                                applicationId={app.id}
+                                onCompileSuccess={() => {
+                                    showToast("Compiled ATS Document successfully!", "success");
+                                }}
+                            />
                         </div>
                     )}
 

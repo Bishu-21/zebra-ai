@@ -30,6 +30,9 @@ export const userRelations = relations(user, ({ many, one }) => ({
     portfolios: one(portfolios),
     interviewNotes: many(interviewNotes),
     aiUsage: many(aiUsage),
+    evidenceNodes: many(evidenceNodes),
+    backgroundJobs: many(backgroundJobs),
+    documentArtifacts: many(documentArtifacts),
 }));
 
 export const session = pgTable("session", {
@@ -217,6 +220,15 @@ export const transactions = pgTable("transactions", {
 export const transactionsRelations = relations(transactions, ({ one }) => ({
     user: one(user, { fields: [transactions.userId], references: [user.id] }),
 }));
+
+export const rateLimitBuckets = pgTable("rate_limit_buckets", {
+    key: text("key").primaryKey(),
+    count: integer("count").notNull().default(1),
+    windowStartedAt: timestamp("window_started_at").notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
+}, (table) => [
+    index("rate_limit_buckets_expires_at_idx").on(table.expiresAt),
+]);
 
 export const projectAnalyses = pgTable("project_analyses", {
     id: text("id").primaryKey(),
@@ -419,4 +431,135 @@ export const aiUsage = pgTable("ai_usage", {
 
 export const aiUsageRelations = relations(aiUsage, ({ one }) => ({
     user: one(user, { fields: [aiUsage.userId], references: [user.id] }),
+}));
+
+// --- EVIDENCE COMPILER & PLATFORM BOUNDARY ENTITIES ---
+
+export const evidenceNodes = pgTable("evidence_nodes", {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+        .notNull()
+        .references(() => user.id),
+    workItemId: text("work_item_id").references(() => workItems.id),
+    companyOrProject: text("company_or_project").notNull(),
+    roleOrContext: text("role_or_context"),
+    skill: text("skill").notNull(),
+    action: text("action").notNull(),
+    measurableOutcome: text("measurable_outcome"),
+    startDate: timestamp("start_date"),
+    endDate: timestamp("end_date"),
+    durationMonths: integer("duration_months"),
+    proofUrl: text("proof_url"),
+    confidence: text("confidence").notNull().default("asserted"), // verified, asserted, imported
+    source: text("source").notNull().default("manual"), // work_item, manual, git, resume
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => [
+    index("evidence_nodes_user_id_idx").on(table.userId),
+    index("evidence_nodes_skill_idx").on(table.skill),
+]);
+
+export const evidenceNodesRelations = relations(evidenceNodes, ({ one }) => ({
+    user: one(user, { fields: [evidenceNodes.userId], references: [user.id] }),
+    workItem: one(workItems, { fields: [evidenceNodes.workItemId], references: [workItems.id] }),
+}));
+
+export const jobRequirementMatrices = pgTable("job_requirement_matrices", {
+    id: text("id").primaryKey(),
+    applicationId: text("application_id")
+        .notNull()
+        .references(() => applications.id),
+    userId: text("user_id")
+        .notNull()
+        .references(() => user.id),
+    requirementKey: text("requirement_key").notNull(),
+    canonicalRequirement: text("canonical_requirement").notNull(),
+    requirementCategory: text("requirement_category").notNull().default("tech_skill"), // hard_eligibility, tech_skill, domain_experience, soft_skill
+    evidenceNodeId: text("evidence_node_id").references(() => evidenceNodes.id),
+    matchStatus: text("match_status").notNull().default("missing_evidence"), // exact_match, terminology_mismatch, weak_evidence, missing_evidence
+    confidenceScore: integer("confidence_score").notNull().default(0),
+    suggestedPhrasing: text("suggested_phrasing"),
+    candidatePrompt: text("candidate_prompt"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => [
+    index("job_req_matrix_app_user_idx").on(table.applicationId, table.userId),
+]);
+
+export const jobRequirementMatricesRelations = relations(jobRequirementMatrices, ({ one }) => ({
+    application: one(applications, { fields: [jobRequirementMatrices.applicationId], references: [applications.id] }),
+    user: one(user, { fields: [jobRequirementMatrices.userId], references: [user.id] }),
+    evidenceNode: one(evidenceNodes, { fields: [jobRequirementMatrices.evidenceNodeId], references: [evidenceNodes.id] }),
+}));
+
+export const preflightChecks = pgTable("preflight_checks", {
+    id: text("id").primaryKey(),
+    applicationId: text("application_id")
+        .notNull()
+        .references(() => applications.id),
+    userId: text("user_id")
+        .notNull()
+        .references(() => user.id),
+    atsSafetyScore: integer("ats_safety_score").notNull().default(100),
+    evidenceCoverageScore: integer("evidence_coverage_score").notNull().default(0),
+    parsingRiskFlags: jsonb("parsing_risk_flags"), // string[]
+    hardEligibilityFlags: jsonb("hard_eligibility_flags"), // string[]
+    terminologyMismatchCount: integer("terminology_mismatch_count").notNull().default(0),
+    isClean: boolean("is_clean").notNull().default(false),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const preflightChecksRelations = relations(preflightChecks, ({ one }) => ({
+    application: one(applications, { fields: [preflightChecks.applicationId], references: [applications.id] }),
+    user: one(user, { fields: [preflightChecks.userId], references: [user.id] }),
+}));
+
+export const backgroundJobs = pgTable("background_jobs", {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+        .notNull()
+        .references(() => user.id),
+    applicationId: text("application_id").references(() => applications.id),
+    operationType: text("operation_type").notNull(), // job_extraction, evidence_mapping, tailored_compilation, preflight_validation
+    status: text("status").notNull().default("pending"), // pending, processing, completed, failed
+    progressPercent: integer("progress_percent").notNull().default(0),
+    payload: jsonb("payload"),
+    result: jsonb("result"),
+    errorMessage: text("error_message"),
+    startedAt: timestamp("started_at"),
+    completedAt: timestamp("completed_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => [
+    index("background_jobs_user_id_idx").on(table.userId),
+]);
+
+export const backgroundJobsRelations = relations(backgroundJobs, ({ one }) => ({
+    user: one(user, { fields: [backgroundJobs.userId], references: [user.id] }),
+    application: one(applications, { fields: [backgroundJobs.applicationId], references: [applications.id] }),
+}));
+
+export const documentArtifacts = pgTable("document_artifacts", {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+        .notNull()
+        .references(() => user.id),
+    applicationId: text("application_id").references(() => applications.id),
+    resumeVersionId: text("resume_version_id").references(() => resumeVersions.id),
+    documentType: text("document_type").notNull(), // ats_html, ats_txt, pdf_export
+    contentHash: text("content_hash").notNull(),
+    content: text("content").notNull(),
+    storagePath: text("storage_path"),
+    evidenceLineage: jsonb("evidence_lineage"), // Map of section/line -> evidenceNodeId
+    isCanonical: boolean("is_canonical").notNull().default(true),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [
+    index("document_artifacts_user_app_idx").on(table.userId, table.applicationId),
+]);
+
+export const documentArtifactsRelations = relations(documentArtifacts, ({ one }) => ({
+    user: one(user, { fields: [documentArtifacts.userId], references: [user.id] }),
+    application: one(applications, { fields: [documentArtifacts.applicationId], references: [applications.id] }),
+    resumeVersion: one(resumeVersions, { fields: [documentArtifacts.resumeVersionId], references: [resumeVersions.id] }),
 }));

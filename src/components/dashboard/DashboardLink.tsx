@@ -8,22 +8,41 @@ interface DashboardLinkProps {
   href: string;
   icon: React.ReactNode;
   children: React.ReactNode;
+  match?: (pathname: string) => boolean;
+  onClick?: () => void;
 }
 
-export function DashboardLink({ href, icon, children }: DashboardLinkProps) {
+export function DashboardLink({
+  href,
+  icon,
+  children,
+  match,
+  onClick,
+}: DashboardLinkProps) {
   const pathname = usePathname();
-  const isActive = pathname === href;
+  const isActive = match
+    ? match(pathname)
+    : href === "/dashboard"
+    ? pathname === "/dashboard"
+    : pathname.startsWith(href);
 
   return (
-    <Link 
+    <Link
       href={href}
+      onClick={onClick}
       className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 relative group ${
-        isActive 
-          ? "bg-[#0A0A0A] text-white shadow-sm font-semibold" 
+        isActive
+          ? "bg-[#0A0A0A] text-white shadow-sm font-semibold"
           : "text-neutral-600 hover:text-[#0A0A0A] hover:bg-neutral-100"
       }`}
     >
-      <span className={`transition-transform duration-200 ${isActive ? "text-white" : "text-neutral-400 group-hover:text-[#0A0A0A]"}`}>
+      <span
+        className={`transition-transform duration-200 ${
+          isActive
+            ? "text-white"
+            : "text-neutral-400 group-hover:text-[#0A0A0A]"
+        }`}
+      >
         {icon}
       </span>
       <span className="tracking-tight">{children}</span>

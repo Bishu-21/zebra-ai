@@ -4,10 +4,10 @@ import { db } from "@/lib/db";
 import { resumes as resumesTable, resumeVersions as resumeVersionsTable } from "@/lib/schema";
 import { eq, desc } from "drizzle-orm";
 import Link from "next/link";
-import { 
-    RiFileTextLine, 
-    RiAddLine, 
-    RiTimeLine, 
+import {
+    RiFileTextLine,
+    RiAddLine,
+    RiTimeLine,
     RiArrowRightLine,
     RiMagicLine,
     RiShieldCheckLine,
@@ -52,7 +52,7 @@ export default async function ResumesPage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight text-[#0A0A0A] mb-1">
-                        My Resumes
+                        Resumes
                     </h1>
                     <p className="text-xs font-normal text-neutral-500 leading-relaxed">
                         Manage your master base resumes and compiled tailored versions.

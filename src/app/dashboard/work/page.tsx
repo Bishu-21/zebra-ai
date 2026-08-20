@@ -2,16 +2,16 @@
 
 import React, { useState, useEffect } from "react";
 import { m, AnimatePresence } from "framer-motion";
-import { 
-    RiAddLine, 
-    RiFolder2Line, 
-    RiAwardLine, 
-    RiBriefcase4Line, 
-    RiExternalLinkLine, 
-    RiDeleteBin6Line, 
-    RiMagicLine, 
-    RiCheckboxCircleLine, 
-    RiLockLine, 
+import {
+    RiAddLine,
+    RiFolder2Line,
+    RiAwardLine,
+    RiBriefcase4Line,
+    RiExternalLinkLine,
+    RiDeleteBin6Line,
+    RiMagicLine,
+    RiCheckboxCircleLine,
+    RiLockLine,
     RiGlobalLine,
     RiSearchLine,
     RiBookOpenLine,
@@ -71,7 +71,7 @@ export default function MyWorkPage() {
     }, [fetchItems]);
 
 
-    const handleCreate = async (e: React.FormEvent) => {
+    const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!title.trim()) {
             showToast("Title is required", "error");
@@ -160,7 +160,7 @@ export default function MyWorkPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-[#0A0A0A] mb-1">My Work</h1>
+                    <h1 className="text-2xl font-bold tracking-tight text-[#0A0A0A] mb-1">Work</h1>
                     <p className="text-xs font-normal text-neutral-500 leading-relaxed">
                         Organize your projects, hackathons, internships, certificates, and proof in one place.
                     </p>

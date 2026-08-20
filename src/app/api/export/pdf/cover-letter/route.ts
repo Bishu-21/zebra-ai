@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateCoverLetterHtml } from "@/lib/cover-letter-renderer";
-import chromium from "@sparticuz/chromium-min";
 import puppeteer, { type Browser } from "puppeteer-core";
 import { requireAuth } from "@/lib/auth-policy";
+import { getPdfBrowserConfig } from "@/lib/pdf-browser";
 
 /**
  * COVER LETTER PDF EXPORT API
- * 
+ *
  * Generates a high-quality PDF from cover letter content using Puppeteer.
  */
 
@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
         if (errorResponse) return errorResponse;
 
         const { content, title } = await req.json();
-        
+
         if (!content) {
             return NextResponse.json({ error: "Content is required" }, { status: 400 });
         }
@@ -28,16 +28,14 @@ export async function POST(req: NextRequest) {
 
         let browser: Browser | null = null;
         try {
-            // 2. Launch headless browser
-            const isLocal = process.env.NODE_ENV === 'development' || process.platform === 'win32';
-            
+            // 2. Launch the same validated browser configuration used by resume export.
+            const launchConfig = await getPdfBrowserConfig();
+
             browser = await puppeteer.launch({
-                args: isLocal ? [] : [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox'],
-                defaultViewport: (chromium as unknown as { defaultViewport: { width: number; height: number } }).defaultViewport,
-                executablePath: isLocal 
-                    ? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe' 
-                    : await chromium.executablePath(),
-                headless: (chromium as unknown as { headless: boolean | "shell" }).headless,
+                args: launchConfig.args,
+                defaultViewport: launchConfig.defaultViewport,
+                executablePath: launchConfig.executablePath,
+                headless: launchConfig.headless,
             });
 
             const page = await browser.newPage();
@@ -46,7 +44,9 @@ export async function POST(req: NextRequest) {
             page.on('error', (err: unknown) => console.error('CL page error:', err));
             page.on('pageerror', (err: unknown) => console.error('CL page crash:', err));
 
-            await page.setContent(html, { waitUntil: 'networkidle0' });
+            await page.setContent(html, { waitUntil: "domcontentloaded" });
+            await page.waitForNetworkIdle({ idleTime: 500, timeout: 10_000 });
+            await page.evaluate(() => document.fonts.ready);
 
             // 3. Generate PDF buffer
             const pdfBuffer = await page.pdf({
@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
 
         } catch (err: unknown) {
             console.error("Cover Letter PDF Export Failed:", err || "Undefined Rejection");
-            return NextResponse.json({ 
+            return NextResponse.json({
                 error: "Failed to generate Cover Letter PDF.",
                 details: err instanceof Error ? err.message : String(err || "Unknown error")
             }, { status: 500 });
@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
         }
     } catch (outerError: unknown) {
         console.error("Fatal Cover Letter PDF Error:", outerError || "Undefined Fatal Error");
-        return NextResponse.json({ 
+        return NextResponse.json({
             error: "Internal Server Error",
             details: outerError instanceof Error ? outerError.message : "Fatal error with no details"
         }, { status: 500 });

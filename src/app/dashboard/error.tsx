@@ -2,12 +2,15 @@
 
 import { useEffect } from "react";
 import { RiAlertLine, RiRestartLine } from "react-icons/ri";
+import { isTransientNavigationError } from "@/lib/error-classification";
 
-export default function DashboardError(props: { error: Error & { digest?: string }; unstable_retry: () => void }) {
-    const { error, unstable_retry: unstable_retryAction } = props;
+export default function DashboardError(props: { error: Error & { digest?: string }; retry: () => void }) {
+    const { error, retry } = props;
+    const isTransient = isTransientNavigationError(error);
+
     useEffect(() => {
-        console.error("Dashboard Runtime Exception:", error);
-    }, [error]);
+        if (!isTransient) console.error("Dashboard Runtime Exception:", error);
+    }, [error, isTransient]);
 
     return (
         <div className="flex-grow flex items-center justify-center bg-[#FBFBFB] p-6">
@@ -15,7 +18,7 @@ export default function DashboardError(props: { error: Error & { digest?: string
                 <div className="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center mx-auto text-red-500">
                     <RiAlertLine size={24} />
                 </div>
-                
+
                 <div className="space-y-2">
                     <h2 className="text-lg font-black text-[#171717] tracking-tight">Segment Isolation</h2>
                     <p className="text-sm text-[#737373] leading-relaxed">
@@ -24,7 +27,7 @@ export default function DashboardError(props: { error: Error & { digest?: string
                 </div>
 
                 <button
-                    onClick={() => unstable_retryAction()}
+                    onClick={() => retry()}
                     className="w-full h-11 bg-[#171717] hover:bg-[#0A0A0A] text-white rounded-xl font-bold transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                 >
                     <RiRestartLine size={16} />

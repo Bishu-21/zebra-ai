@@ -5,9 +5,10 @@ import { resumes as resumesTable, resumeVersions as resumeVersionsTable } from "
 import { eq, and } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { redirect, unstable_rethrow } from "next/navigation";
+import { redirect } from "next/navigation";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 
-export default async function ResumeEditorPage(props: { 
+export default async function ResumeEditorPage(props: {
     params: Promise<{ id: string }>;
     searchParams: Promise<{ version?: string }>;
 }) {
@@ -17,7 +18,10 @@ export default async function ResumeEditorPage(props: {
         headers: await headers(),
     });
 
-    if (!session) redirect("/login");
+    if (!session) {
+        const returnUrl = `/dashboard/resumes/${params.id}${searchParams.version ? `?version=${searchParams.version}` : ""}`;
+        redirect(`/signin?returnTo=${encodeURIComponent(returnUrl)}`);
+    }
 
     // Skip DB query for "new" — only fetch existing resumes
     let resume = null;
@@ -48,14 +52,14 @@ export default async function ResumeEditorPage(props: {
                 }
             }
         } catch (error) {
-            unstable_rethrow(error);
+            if (isRedirectError(error)) throw error;
             redirect("/dashboard");
         }
     }
 
     return (
         <div className="h-screen overflow-hidden bg-[#F8F9FA]">
-            <ResumeEditor 
+            <ResumeEditor
                 initialData={resume ? {
                     id: resume.id,
                     title: versionTitle || resume.title,

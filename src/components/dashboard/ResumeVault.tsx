@@ -1,15 +1,16 @@
 "use client";
 
 import React, { useState } from "react";
-import { 
-    RiFileTextLine, 
-    RiSearchLine, 
-    RiArrowRightSLine, 
+import {
+    RiFileTextLine,
+    RiSearchLine,
+    RiArrowRightSLine,
     RiTimeLine,
     RiCheckboxCircleLine,
     RiMagicLine,
     RiBuildingLine,
-    RiBriefcaseLine
+    RiBriefcaseLine,
+    RiDownloadLine
 } from "react-icons/ri";
 import Link from "next/link";
 import { m, AnimatePresence } from "framer-motion";
@@ -60,8 +61,8 @@ export function ResumeVault({ items }: ResumeVaultProps) {
 
     const rootIds = new Set(rootResumes.map(r => r.id));
     const ghostRoots = versions.filter(v => v.parentResumeId && !rootIds.has(v.parentResumeId));
-    
-    const finalRoots = [...rootResumes, ...ghostRoots].filter(item => 
+
+    const finalRoots = [...rootResumes, ...ghostRoots].filter(item =>
         item.title.toLowerCase().includes(search.toLowerCase()) ||
         item.targetRole?.toLowerCase().includes(search.toLowerCase()) ||
         item.targetCompany?.toLowerCase().includes(search.toLowerCase())
@@ -73,7 +74,7 @@ export function ResumeVault({ items }: ResumeVaultProps) {
         if (!isMounted) return "---";
         const now = new Date();
         const diffInSeconds = Math.floor((now.getTime() - new Date(date).getTime()) / 1000);
-        
+
         if (diffInSeconds < 60) return "Just now";
         if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
         if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
@@ -85,13 +86,13 @@ export function ResumeVault({ items }: ResumeVaultProps) {
             {/* Clean Section Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-neutral-200/70">
                 <div className="flex items-center gap-2">
-                    <h2 className="text-xl md:text-2xl font-bold text-[#0A0A0A] tracking-tight">My Resumes</h2>
+                    <h2 className="text-xl md:text-2xl font-bold text-[#0A0A0A] tracking-tight">Resumes</h2>
                     <span className="text-xs font-medium text-neutral-400">({items.length} resumes)</span>
                 </div>
 
                 <div className="relative group">
                     <RiSearchLine className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-[#0A0A0A] transition-colors" size={16} />
-                    <input 
+                    <input
                         type="text"
                         placeholder="Search your resumes..."
                         value={search}
@@ -113,40 +114,39 @@ export function ResumeVault({ items }: ResumeVaultProps) {
                             key={item.id}
                             className="h-full"
                         >
-                            <Link 
-                                href={`/dashboard/resumes/${item.id}`}
-                                className="group relative bg-white border border-neutral-200/80 p-6 rounded-3xl hover:border-neutral-300 hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden h-full min-h-[170px] flex flex-col justify-between shadow-xs"
-                            >
-                                {/* Card Header */}
-                                <div>
+                            <div className="group relative bg-white border border-neutral-200/80 p-6 rounded-3xl hover:border-neutral-300 hover:shadow-xl transition-all duration-300 overflow-hidden h-full min-h-[170px] flex flex-col justify-between shadow-xs">
+                                {/* Card Header & Content Link */}
+                                <Link
+                                    href={`/dashboard/resumes/${item.id}`}
+                                    className="block group/link"
+                                >
                                     <div className="flex items-start justify-between mb-4">
-                                        <div className="w-10 h-10 bg-neutral-100 rounded-xl flex items-center justify-center text-neutral-600 group-hover:bg-[#0A0A0A] group-hover:text-white transition-colors duration-300 shadow-2xs">
+                                        <div className="w-10 h-10 bg-neutral-100 rounded-xl flex items-center justify-center text-neutral-600 group-hover/link:bg-[#0A0A0A] group-hover/link:text-white transition-colors duration-300 shadow-2xs">
                                             <RiFileTextLine size={20} />
                                         </div>
-                                        <RiArrowRightSLine className="text-neutral-400 group-hover:text-[#0A0A0A] group-hover:translate-x-1 transition-all" size={18} />
+                                        <RiArrowRightSLine className="text-neutral-400 group-hover/link:text-[#0A0A0A] group-hover/link:translate-x-1 transition-all" size={18} />
                                     </div>
 
-                                    <h4 className="font-bold text-[#0A0A0A] tracking-tight text-base line-clamp-1 mb-1">{item.title}</h4>
+                                    <h4 className="font-bold text-[#0A0A0A] tracking-tight text-base line-clamp-1 mb-1 group-hover/link:underline">{item.title}</h4>
                                     <div className="flex items-center gap-1.5 text-xs font-normal text-neutral-400">
                                         <RiTimeLine size={13} />
                                         <span>{formatTimeAgo(item.date)}</span>
                                     </div>
-                                </div>
+                                </Link>
 
                                 {/* Card Footer Badges */}
                                 <div className="flex items-center justify-between pt-4 mt-4 border-t border-neutral-200/60">
                                     <div className="flex items-center gap-2 flex-wrap">
                                         {item.hasAnalysis && (
                                             <button
-                                                onClick={(e) => {
+                                                type="button"
+                                                onClick={() => {
                                                     if (item.latestAnalysis) {
-                                                        e.preventDefault();
-                                                        e.stopPropagation();
                                                         setSelectedResumeId(item.id);
                                                         setSelectedAnalysisData(item.latestAnalysis.feedback);
                                                     }
                                                 }}
-                                                className="flex items-center gap-1.5 px-2.5 py-1 bg-neutral-100 text-[#0A0A0A] rounded-lg border border-neutral-200/80 transition-colors hover:bg-neutral-200/60"
+                                                className="flex items-center gap-1.5 px-2.5 py-1 bg-neutral-100 text-[#0A0A0A] rounded-lg border border-neutral-200/80 transition-colors hover:bg-neutral-200/60 cursor-pointer"
                                             >
                                                 <RiCheckboxCircleLine className="text-[#0A0A0A]" size={12} />
                                                 <span className="text-[11px] font-semibold">
@@ -164,8 +164,17 @@ export function ResumeVault({ items }: ResumeVaultProps) {
                                             </div>
                                         )}
                                     </div>
+
+                                    <Link
+                                        href={`/api/export/pdf?id=${item.id}`}
+                                        target="_blank"
+                                        className="p-1.5 text-neutral-400 hover:text-[#0A0A0A] hover:bg-neutral-100 rounded-lg transition-colors"
+                                        title="Export PDF"
+                                    >
+                                        <RiDownloadLine size={15} />
+                                    </Link>
                                 </div>
-                            </Link>
+                            </div>
                         </m.div>
                     ))}
                 </AnimatePresence>
@@ -174,7 +183,7 @@ export function ResumeVault({ items }: ResumeVaultProps) {
             {/* View All Resumes Action Button */}
             {finalRoots.length > 4 && (
                 <div className="flex justify-center pt-6">
-                    <button 
+                    <button
                         onClick={() => setIsExpanded(!isExpanded)}
                         className="px-6 py-2.5 bg-white border border-neutral-200/80 rounded-xl text-xs font-semibold text-[#0A0A0A] hover:bg-neutral-50 hover:border-neutral-300 transition-all shadow-xs flex items-center gap-2 active:scale-95"
                     >
@@ -192,14 +201,14 @@ export function ResumeVault({ items }: ResumeVaultProps) {
                     <div className="flex items-center gap-2 mb-6">
                         <h3 className="text-lg font-bold text-[#0A0A0A]">Recent Tailored Versions</h3>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {items
                             .flatMap(item => (item.versions || []).map(v => ({ ...v, resumeId: item.id })))
                             .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
                             .slice(0, 6)
                             .map(version => (
-                                <div 
+                                <div
                                     key={version.id}
                                     className="group relative bg-white border border-neutral-200/80 p-5 rounded-2xl hover:border-neutral-300 hover:shadow-md transition-all flex flex-col shadow-xs"
                                 >
@@ -224,7 +233,7 @@ export function ResumeVault({ items }: ResumeVaultProps) {
                                         </div>
 
                                         <h5 className="font-bold text-sm text-[#0A0A0A] mb-2 line-clamp-1">{version.title}</h5>
-                                        
+
                                         <div className="flex flex-wrap gap-2 mb-2 text-xs text-neutral-500 font-normal">
                                             {version.company && (
                                                 <div className="flex items-center gap-1">
@@ -241,7 +250,7 @@ export function ResumeVault({ items }: ResumeVaultProps) {
                                         </div>
                                     </div>
                                     <div className="mt-3 pt-3 border-t border-neutral-200/60 flex justify-end">
-                                        <Link 
+                                        <Link
                                             href={`/dashboard/resumes/${version.resumeId}?version=${version.id}`}
                                             className="text-xs font-semibold text-[#0A0A0A] hover:underline flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity"
                                         >

@@ -1,19 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { 
+import {
     applications as applicationsTable
 } from "@/lib/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { handleApiError } from "@/lib/api-error";
 import { z } from "zod";
-import { 
-    requireAuth, 
-    getUserOwnedApplication, 
-    getUserOwnedResume, 
-    getUserOwnedResumeVersion, 
-    validateSelectedWorkIds, 
-    validateSelectedCertIds, 
-    notFoundResponse 
+import {
+    requireAuth,
+    getUserOwnedApplication,
+    getUserOwnedResume,
+    getUserOwnedResumeVersion,
+    validateSelectedWorkIds,
+    validateSelectedCertIds,
+    notFoundResponse
 } from "@/lib/auth-policy";
 import { validateStatusTransition, ApplicationStatus } from "@/lib/application-state-machine";
 import { testStore, type TestApplication } from "@/lib/test-store";
@@ -23,7 +23,7 @@ const createApplicationSchema = z.object({
     position: z.string().min(1, "Position is required"),
     status: z.string().optional().default("Draft"),
     jobDescription: z.string().optional(),
-    url: z.string().url().or(z.literal("")).optional(),
+    url: z.url().or(z.literal("")).optional(),
     selectedResumeId: z.string().optional(),
     selectedWorkIds: z.array(z.string()).optional(),
     selectedCertIds: z.array(z.string()).optional(),
@@ -204,8 +204,8 @@ export async function PATCH(req: NextRequest) {
             };
 
             const transitionCheck = validateStatusTransition(
-                existingApp.status as ApplicationStatus, 
-                status, 
+                existingApp.status as ApplicationStatus,
+                status,
                 combinedData
             );
 
@@ -300,5 +300,3 @@ export async function DELETE(req: NextRequest) {
         return handleApiError(error, "DELETE /api/applications");
     }
 }
-
-

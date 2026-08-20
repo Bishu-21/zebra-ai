@@ -1,57 +1,68 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { resumes as resumesTable } from "@/lib/schema";
-import { handleApiError } from "@/lib/api-error";
 import crypto from "crypto";
-import { MAX_TITLE_LENGTH, MAX_CONTENT_LENGTH } from "@/lib/validation";
+import { db, sanitizeSecretText } from "@/lib/db";
+import { resumes as resumesTable } from "@/lib/schema";
 import { requireAuth } from "@/lib/auth-policy";
+import { MAX_CONTENT_LENGTH, MAX_STORED_RESUME_LENGTH, MAX_TITLE_LENGTH } from "@/lib/validation";
+import { reserveUserCredits, refundUserCredits } from "@/lib/credit-policy";
+import { ingestResumeText } from "@/lib/resume-ingestion";
+import { stringifyResumeContent } from "@/lib/resume-content";
 
 export async function POST(req: NextRequest) {
-  try {
     const { auth: authCtx, errorResponse } = await requireAuth();
     if (errorResponse) return errorResponse;
 
-    const { text, title } = await req.json();
-
-    if (!text || !text.trim()) {
-      return NextResponse.json({ error: "Content is required" }, { status: 400 });
-    }
+    const body = await req.json().catch(() => ({})) as { text?: unknown; title?: unknown };
+    const text = typeof body.text === "string" ? body.text.trim() : "";
+    const title = typeof body.title === "string" && body.title.trim() ? body.title.trim() : "Imported Resume";
 
     if (text.length < 50) {
-      return NextResponse.json({ error: "Content is too short (min 50 characters)" }, { status: 400 });
+        return NextResponse.json({ error: "Resume content must contain at least 50 characters." }, { status: 400 });
     }
-
     if (text.length > MAX_CONTENT_LENGTH) {
-      return NextResponse.json(
-        { error: `Content is too large (max ${MAX_CONTENT_LENGTH / 1024}KB of text).` },
-        { status: 400 }
-      );
+        return NextResponse.json({ error: `Content exceeds ${MAX_CONTENT_LENGTH.toLocaleString()} characters.` }, { status: 400 });
+    }
+    if (title.length > MAX_TITLE_LENGTH) {
+        return NextResponse.json({ error: `Title must be under ${MAX_TITLE_LENGTH} characters.` }, { status: 400 });
     }
 
-    const safeTitle = (title || "Imported LaTeX").trim();
-    if (safeTitle.length > MAX_TITLE_LENGTH) {
-      return NextResponse.json({ error: `Title must be under ${MAX_TITLE_LENGTH} characters.` }, { status: 400 });
+    const credit = await reserveUserCredits(authCtx.user.id, 1);
+    if (!credit.success) {
+        return NextResponse.json({ error: credit.error || "Insufficient credits." }, { status: 402 });
     }
 
-    // Create new resume record with raw text content
-    const newId = crypto.randomUUID();
-    await db.insert(resumesTable).values({
-      id: newId,
-      userId: authCtx.user.id,
-      title: safeTitle || "Imported LaTeX",
-      content: text,
-      status: "Draft",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
+    try {
+        const result = await ingestResumeText(text, { mimeType: "text/plain" });
+        const serialized = stringifyResumeContent(result.content);
+        if (serialized.length > MAX_STORED_RESUME_LENGTH) {
+            throw new Error("The structured resume is too large to store safely.");
+        }
 
-    return NextResponse.json({ 
-      success: true, 
-      id: newId, 
-      title: safeTitle 
-    });
+        const id = crypto.randomUUID();
+        await db.insert(resumesTable).values({
+            id,
+            userId: authCtx.user.id,
+            title,
+            content: serialized,
+            status: "Draft",
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        });
 
-  } catch (error: unknown) {
-    return handleApiError(error, "POST /api/resumes/import-raw");
-  }
+        return NextResponse.json({
+            success: true,
+            id,
+            title,
+            content: serialized,
+            parseStatus: result.content._ingestionMeta?.parseStatus,
+            warnings: result.warnings,
+        });
+    } catch (error: unknown) {
+        await refundUserCredits(authCtx.user.id, 1);
+        console.error("Raw resume ingestion failed:", sanitizeSecretText(error instanceof Error ? error.message : String(error)));
+        return NextResponse.json(
+            { error: "The resume could not be structured, so nothing was saved. Your credit was refunded." },
+            { status: 502 },
+        );
+    }
 }

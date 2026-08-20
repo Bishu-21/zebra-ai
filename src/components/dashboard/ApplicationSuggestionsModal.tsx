@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect } from "react";
 import { m, AnimatePresence } from "framer-motion";
-import { 
-    RiCloseLine, 
-    RiCheckLine, 
-    RiCloseCircleLine, 
-    RiEdit2Line, 
-    RiHistoryLine, 
+import {
+    RiCloseLine,
+    RiCheckLine,
+    RiCloseCircleLine,
+    RiEdit2Line,
+    RiHistoryLine,
     RiMagicLine,
     RiLoader4Line
 } from "react-icons/ri";
@@ -74,6 +74,19 @@ export function ApplicationSuggestionsModal({
         }
     }, [isOpen, applicationId, fetchChanges]);
 
+    useEffect(() => {
+        if (!isOpen) return;
+        document.body.style.overflow = "hidden";
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape") onCloseAction();
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => {
+            document.body.style.overflow = "unset";
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [isOpen, onCloseAction]);
+
     const handleUpdateStatus = async (id: string, newStatus: "approved" | "rejected" | "pending", userEdits?: string) => {
         try {
             setUpdatingId(id);
@@ -123,7 +136,7 @@ export function ApplicationSuggestionsModal({
     return (
         <AnimatePresence>
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm">
-                <m.div 
+                <m.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
@@ -170,7 +183,7 @@ export function ApplicationSuggestionsModal({
                                 const isEditing = editingId === item.id;
 
                                 return (
-                                    <div 
+                                    <div
                                         key={item.id}
                                         className={`p-4 rounded-2xl border transition-all space-y-3 ${
                                             item.status === "approved"
@@ -200,65 +213,117 @@ export function ApplicationSuggestionsModal({
                                             </span>
                                         </div>
 
-                                        {/* Original Text */}
-                                        {item.originalText && (
-                                            <div className="text-xs text-neutral-500 bg-neutral-50 p-3 rounded-xl border border-neutral-100">
-                                                <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-0.5">Original</p>
-                                                <p className="line-through">{item.originalText}</p>
-                                            </div>
-                                        )}
-
-                                        {/* Suggested / Edited Text */}
-                                        <div className="text-xs text-[#0A0A0A] bg-white p-3 rounded-xl border border-neutral-200/80 shadow-2xs space-y-2">
-                                            <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Suggested Improvement</p>
-                                            {isEditing ? (
-                                                <div className="space-y-2">
-                                                    <textarea 
-                                                        value={editText}
-                                                        onChange={(e) => setEditText(e.target.value)}
-                                                        className="w-full text-xs font-medium p-2.5 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0A0A0A]"
-                                                        rows={3}
-                                                    />
-                                                    <div className="flex justify-end gap-2">
-                                                        <button
-                                                            onClick={() => setEditingId(null)}
-                                                            className="px-3 py-1 text-xs font-semibold text-neutral-500 hover:text-[#0A0A0A]"
-                                                        >
-                                                            Cancel
-                                                        </button>
-                                                        <button
-                                                            onClick={() => saveEdit(item.id)}
-                                                            className="px-3 py-1 bg-[#0A0A0A] text-white text-xs font-bold rounded-md hover:bg-neutral-800"
-                                                        >
-                                                            Save &amp; Apply
-                                                        </button>
-                                                    </div>
+                                        {/* 4-Stage Section-Level Diff Lifecycle */}
+                                        <div className="space-y-3 pt-1">
+                                            {/* Stage 1: Original */}
+                                            <div className="text-xs bg-slate-900/80 p-3 rounded-xl border border-slate-800 text-slate-300">
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-slate-500"></span> 1. Original (Master Profile)
+                                                    </span>
                                                 </div>
-                                            ) : (
-                                                <p className="font-semibold leading-relaxed">
-                                                    {item.userEdits || item.suggestedText}
-                                                    {item.userEdits && <span className="ml-2 text-[10px] text-indigo-600 font-bold">(Edited by you)</span>}
+                                                <p className="font-mono text-[11px] leading-relaxed text-slate-400 bg-black/40 p-2 rounded border border-slate-800">
+                                                    {item.originalText || "No original text (New section addition)"}
                                                 </p>
+                                            </div>
+
+                                            {/* Stage 2: AI Evidence-Grounded Suggestion */}
+                                            <div className="text-xs bg-emerald-950/30 p-3 rounded-xl border border-emerald-800/60 text-emerald-100">
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <span className="text-[10px] font-extrabold text-emerald-400 uppercase tracking-wider flex items-center gap-1">
+                                                        <RiMagicLine className="text-emerald-400" /> 2. AI Evidence-Grounded Suggestion
+                                                    </span>
+                                                    <span className="text-[10px] bg-emerald-900/80 text-emerald-300 px-2 py-0.5 rounded font-mono">
+                                                        Evidence Lineage Grounded
+                                                    </span>
+                                                </div>
+                                                <p className="font-mono text-[11px] leading-relaxed text-emerald-200 bg-black/40 p-2 rounded border border-emerald-900">
+                                                    {item.suggestedText}
+                                                </p>
+                                            </div>
+
+                                            {/* Stage 3: Candidate Edit */}
+                                            <div className="text-xs bg-slate-900 p-3 rounded-xl border border-slate-800 text-slate-200 space-y-2">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-[10px] font-extrabold text-blue-400 uppercase tracking-wider flex items-center gap-1">
+                                                        <RiEdit2Line className="text-blue-400" /> 3. Candidate Manual Edit (Optional)
+                                                    </span>
+                                                    {!isEditing && (
+                                                        <button
+                                                            onClick={() => startEditing(item)}
+                                                            className="text-[10px] text-blue-400 hover:underline font-bold flex items-center gap-1"
+                                                        >
+                                                            <RiEdit2Line size={12} /> {item.userEdits ? "Edit your custom version" : "Customize suggestion"}
+                                                        </button>
+                                                    )}
+                                                </div>
+
+                                                {isEditing ? (
+                                                    <div className="space-y-2 pt-1">
+                                                        <textarea
+                                                            value={editText}
+                                                            onChange={(e) => setEditText(e.target.value)}
+                                                            className="w-full text-xs font-mono p-2.5 bg-black border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                                            rows={3}
+                                                            placeholder="Type candidate custom edit here..."
+                                                        />
+                                                        <div className="flex justify-end gap-2">
+                                                            <button
+                                                                onClick={() => setEditingId(null)}
+                                                                className="px-3 py-1 text-xs font-semibold text-slate-400 hover:text-white"
+                                                            >
+                                                                Cancel
+                                                            </button>
+                                                            <button
+                                                                onClick={() => saveEdit(item.id)}
+                                                                className="px-3 py-1 bg-emerald-600 text-white text-xs font-bold rounded-md hover:bg-emerald-500 flex items-center gap-1"
+                                                            >
+                                                                <RiCheckLine /> Save &amp; Approve
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <p className="font-mono text-[11px] leading-relaxed text-slate-300 bg-black/40 p-2 rounded border border-slate-800">
+                                                        {item.userEdits ? item.userEdits : "(No custom candidate edit applied. Using AI suggestion directly.)"}
+                                                    </p>
+                                                )}
+                                            </div>
+
+                                            {/* Stage 4: Approved Version Status */}
+                                            {item.status === "approved" && (
+                                                <div className="text-xs bg-emerald-950/60 p-3 rounded-xl border border-emerald-700 text-emerald-100 flex items-center justify-between">
+                                                    <div>
+                                                        <span className="text-[10px] font-extrabold text-emerald-300 uppercase tracking-wider flex items-center gap-1">
+                                                            <RiCheckLine className="text-emerald-400" /> 4. Candidate Approved Version
+                                                        </span>
+                                                        <p className="font-mono text-[11px] font-bold text-white mt-1">
+                                                            {item.userEdits || item.suggestedText}
+                                                        </p>
+                                                    </div>
+                                                    <span className="text-[10px] bg-emerald-600 text-white font-extrabold px-2.5 py-1 rounded-md uppercase">
+                                                        APPROVED &amp; APPLIED
+                                                    </span>
+                                                </div>
                                             )}
                                         </div>
 
-                                        {/* Action Buttons: Apply, Edit, Reject, Undo */}
-                                        <div className="flex items-center justify-end gap-2 pt-1">
+                                        {/* Action Buttons: Approve, Edit, Reject, Reset */}
+                                        <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
                                             {item.status !== "pending" ? (
                                                 <button
                                                     onClick={() => handleUpdateStatus(item.id, "pending")}
                                                     disabled={isUpdating}
-                                                    className="inline-flex items-center gap-1 text-xs font-bold text-neutral-500 hover:text-[#0A0A0A] px-3 py-1.5 rounded-lg border border-neutral-200 hover:bg-neutral-100 transition-colors"
+                                                    className="inline-flex items-center gap-1 text-xs font-bold text-slate-400 hover:text-white px-3 py-1.5 rounded-lg border border-slate-800 hover:bg-slate-800 transition-colors"
                                                 >
                                                     <RiHistoryLine size={14} />
-                                                    Undo
+                                                    Reset to Pending
                                                 </button>
                                             ) : (
                                                 <>
                                                     <button
                                                         onClick={() => handleUpdateStatus(item.id, "rejected")}
                                                         disabled={isUpdating}
-                                                        className="inline-flex items-center gap-1 text-xs font-bold text-neutral-500 hover:text-red-600 px-3 py-1.5 rounded-lg border border-neutral-200 hover:bg-red-50 transition-colors"
+                                                        className="inline-flex items-center gap-1 text-xs font-bold text-rose-400 hover:text-rose-300 px-3 py-1.5 rounded-lg border border-rose-900/50 hover:bg-rose-950/40 transition-colors"
                                                     >
                                                         <RiCloseCircleLine size={14} />
                                                         Reject
@@ -266,18 +331,18 @@ export function ApplicationSuggestionsModal({
                                                     <button
                                                         onClick={() => startEditing(item)}
                                                         disabled={isUpdating}
-                                                        className="inline-flex items-center gap-1 text-xs font-bold text-neutral-700 hover:text-[#0A0A0A] px-3 py-1.5 rounded-lg border border-neutral-200 hover:bg-neutral-100 transition-colors"
+                                                        className="inline-flex items-center gap-1 text-xs font-bold text-blue-400 hover:text-blue-300 px-3 py-1.5 rounded-lg border border-blue-900/50 hover:bg-blue-950/40 transition-colors"
                                                     >
                                                         <RiEdit2Line size={14} />
-                                                        Edit
+                                                        Custom Edit
                                                     </button>
                                                     <button
                                                         onClick={() => handleUpdateStatus(item.id, "approved")}
                                                         disabled={isUpdating}
-                                                        className="inline-flex items-center gap-1 text-xs font-bold bg-[#0A0A0A] text-white px-4 py-1.5 rounded-lg hover:bg-neutral-800 transition-all shadow-xs"
+                                                        className="inline-flex items-center gap-1 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 px-4 py-1.5 rounded-lg transition-colors shadow-xs"
                                                     >
                                                         <RiCheckLine size={14} />
-                                                        Apply
+                                                        Approve
                                                     </button>
                                                 </>
                                             )}

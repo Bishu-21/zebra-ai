@@ -1,80 +1,81 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { requireAuth } from "@/lib/auth-policy";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { checkDistributedRateLimit } from "@/lib/rate-limit";
 import { sanitizeSecretText } from "@/lib/db";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { generateAiResponse } from "@/lib/azure-foundry";
+import { resumeContentToPrompt } from "@/lib/resume-content";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "dummy");
+const copilotSuggestionsSchema = z.array(z.object({
+    original: z.string().max(10_000),
+    problem: z.string().min(1).max(500),
+    after: z.string().min(1).max(1_000),
+    rationale: z.string().min(1).max(500),
+})).min(1).max(3);
 
 export async function POST(req: NextRequest) {
     try {
         const { auth: authCtx, errorResponse } = await requireAuth();
         if (errorResponse) return errorResponse;
 
-        // Rate limiting boundary (max 15 copilot requests per minute per user)
-        const rateCheck = checkRateLimit(`ai-copilot:${authCtx.user.id}`, 15, 60000);
+        const rateCheck = await checkDistributedRateLimit(`ai-copilot:${authCtx.user.id}`, 15, 60_000);
         if (!rateCheck.success) {
-            return NextResponse.json({ 
-                error: "Rate limit exceeded for AI copilot. Please wait a minute." 
-            }, { status: 429 });
+            return NextResponse.json(
+                { error: "Rate limit exceeded for AI copilot. Please wait a minute." },
+                { status: 429 },
+            );
         }
 
-        const body = await req.json().catch(() => ({}));
-        const { section, context, currentText } = body;
+        const body = await req.json().catch(() => null);
+        if (!body || typeof body !== "object") {
+            return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+        }
 
+        const { section, context, currentText } = body as Record<string, unknown>;
         const cleanSection = String(section || "general").slice(0, 100);
-        const cleanText = String(currentText || "").slice(0, 10000);
+        const cleanText = String(currentText || "").slice(0, 10_000);
+        const storedContext = typeof context === "string"
+            ? context
+            : JSON.stringify(context ?? {});
+        const cleanContext = resumeContentToPrompt(storedContext).slice(0, 12_000);
 
-        const model = genAI.getGenerativeModel({ model: process.env.COPILOT_MODEL || "gemini-3.1-flash-lite" });
+        const systemPrompt = `You are Zebra (ZE-AI), an evidence-bound resume editor.
+SECTION: "${cleanSection}"
+CURRENT CONTENT: "${cleanText}"
+RESUME CONTEXT: ${cleanContext}
 
-        const prompt = `
-            SYSTEM: You are Zebra (ZE-AI), a hyper-focused AI Resume Strategist.
-            SECTION: "${cleanSection}"
-            CURRENT CONTENT: "${cleanText}"
-            USER CONTEXT: ${JSON.stringify(context || {}).slice(0, 2000)}
+Use only facts present in CURRENT CONTENT or RESUME CONTEXT. Never invent an employer, date, skill, achievement, or metric. If a metric is missing, use [add verified metric] or explain what evidence the user should provide. Every rewrite is a proposal requiring user approval.`;
 
-            INSTRUCTIONS:
-            1. Suggest 3 high-impact, ATS-optimized bullet points specifically for this section.
-            2. Use formula: [Action Verb] + [Quantifiable Result] + [Tech Used].
-            3. Keep each suggestion under 120 characters including spaces.
-            
-            OUTPUT: A JSON array of 3 objects with keys:
-            - "original": text being replaced
-            - "problem": 1-sentence critique
-            - "after": High-impact suggestion
-            - "rationale": Brief explanation
+        const prompt = `INSTRUCTIONS:
+1. Return up to 3 concise, ATS-aware rewrites specifically for this section.
+2. Prefer [Action Verb] + [verified Impact] + [Tech Used] when supported by the resume.
+3. Preserve the meaning of the source and never add an unsupported claim.
 
-            Return ONLY the JSON array.
-        `;
+OUTPUT: A JSON array of objects with keys:
+- "original": text being replaced
+- "problem": one-sentence critique
+- "after": evidence-grounded proposed wording
+- "rationale": brief explanation
 
-        const result = await model.generateContent(prompt);
-        const textText = result.response.text();
+Return ONLY the JSON array.`;
 
-        let suggestions = [];
-        try {
-            const jsonMatch = textText.match(/\[[\s\S]*\]/);
-            if (jsonMatch) {
-                suggestions = JSON.parse(jsonMatch[0]);
-            } else {
-                suggestions = textText.split('\n')
-                    .map(s => s.replace(/^[-*•\d.\s]+/, '').trim())
-                    .filter(s => s.length > 5)
-                    .slice(0, 3)
-                    .map(s => ({
-                        original: cleanText,
-                        problem: "Lacks quantification and action verbs.",
-                        after: s,
-                        rationale: "Used action verbs and focused on impact."
-                    }));
-            }
-        } catch (e) {
-            console.error("JSON Parse error in copilot:", e);
-        }
+        const text = (await generateAiResponse({
+            task: "copilot",
+            prompt,
+            systemPrompt,
+        })).trim();
+
+        const jsonMatch = text.match(/\[[\s\S]*\]/);
+        if (!jsonMatch) throw new Error("Copilot returned an invalid response shape.");
+        const suggestions = copilotSuggestionsSchema.parse(JSON.parse(jsonMatch[0]));
 
         return NextResponse.json({ suggestions });
     } catch (error: unknown) {
         const sanitizedMsg = sanitizeSecretText(error instanceof Error ? error.message : String(error));
         console.error("Fatal Copilot Error:", sanitizedMsg);
-        return NextResponse.json({ error: "Failed to generate copilot suggestions safely." }, { status: 500 });
+        return NextResponse.json(
+            { error: "Failed to generate evidence-grounded copilot suggestions." },
+            { status: 502 },
+        );
     }
 }

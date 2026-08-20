@@ -11,7 +11,7 @@ const createCertSchema = z.object({
     title: z.string().min(1, "Title is required"),
     issuer: z.string().min(1, "Issuer is required"),
     issueDate: z.string().optional(),
-    credentialUrl: z.string().url().or(z.literal("")).optional(),
+    credentialUrl: z.url().or(z.literal("")).optional(),
     skills: z.array(z.string()).optional(),
 });
 
