@@ -89,13 +89,16 @@ export interface RewriteItem {
 }
 
 export interface AuditItem {
+    id?: string;
     checkpoint?: string;
     message?: string;
     status?: "Pass" | "Fail" | "Not Assessed";
     fix?: string;
+    evidence?: string;
 }
 
 export interface ResumeAnalysisData {
+    rubricVersion?: string;
     score?: number;
     overallScore?: number;
     summary?: string;

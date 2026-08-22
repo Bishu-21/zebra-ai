@@ -57,7 +57,10 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
 
     const [isSaving, setIsSaving] = useState(false);
     const [activeSection, setActiveSection] = useState<SectionId>("basics");
-    const [viewMode, setViewMode] = useState<"sheet" | "source">("sheet");
+    const [viewMode, setViewMode] = useState<"sheet" | "source">(() => {
+        const parsed = parseResumeData(initialData);
+        return parsed.content._ingestionMeta?.parseStatus === "legacy" ? "source" : "sheet";
+    });
     const [jsonError, setJsonError] = useState<string | null>(null);
     const [isAiLoading, setIsAiLoading] = useState(false);
     const [aiSuggestions, setAiSuggestions] = useState<{
@@ -732,7 +735,7 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                         className={`flex flex-col overflow-hidden transition-[padding,max-width] duration-500 bg-background ${isZenMode && !isNarrowLayout ? "max-w-3xl mx-auto border-x border-border-subtle" : "border-r border-border-subtle"}`}
                     >
                         <div className="h-8 bg-muted/30 border-b border-border-subtle flex items-center justify-between px-4 shrink-0">
-                            <span className="text-[10px] font-semibold text-muted-foreground tracking-wide uppercase">{viewMode === "source" ? "JSON Source" : sections.find(s => s.id === activeSection)?.label}</span>
+                                            <span className="text-[10px] font-semibold text-muted-foreground tracking-wide uppercase">{viewMode === "source" ? (isFlatImport ? "Preserved Resume Source" : "JSON Source") : sections.find(s => s.id === activeSection)?.label}</span>
                             {isZenMode && !isNarrowLayout && (
                                 <div className="flex items-center gap-3">
                                     {sections.map(s => (
@@ -763,10 +766,10 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                                     <div className="h-10 bg-white/5 border-b border-white/5 flex items-center justify-between px-4 shrink-0">
                                         <div className="flex items-center gap-2">
                                             <RiFileCodeLine size={14} className="text-primary" />
-                                            <span className="text-[10px] font-bold text-white/40 tracking-widest uppercase">source.json</span>
+                                            <span className="text-[10px] font-bold text-white/40 tracking-widest uppercase">{isFlatImport ? "original-resume.txt" : "source.json"}</span>
                                         </div>
                                         <div className="flex items-center gap-1">
-                                            <button
+                                            {!isFlatImport && <button
                                                 onClick={() => {
                                                     try {
                                                         const formatted = JSON.stringify(JSON.parse(JSON.stringify(resume.content)), null, 2);
@@ -777,10 +780,14 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                                                 className="h-6 px-2 rounded hover:bg-white/10 text-[9px] font-bold text-white/40 hover:text-white transition-all flex items-center gap-1.5"
                                             >
                                                 <RiFormatClear size={12} /> Format
-                                            </button>
+                                            </button>}
                                             <button
                                                 onClick={() => {
-                                                    navigator.clipboard.writeText(JSON.stringify(resume.content, null, 2));
+                                                    navigator.clipboard.writeText(
+                                                        isFlatImport
+                                                            ? getResumeSourceText(resume.content)
+                                                            : JSON.stringify(resume.content, null, 2),
+                                                    );
                                                     showToast("Copied to clipboard", "success");
                                                 }}
                                                 className="h-6 px-2 rounded hover:bg-white/10 text-[9px] font-bold text-white/40 hover:text-white transition-all flex items-center gap-1.5"
@@ -794,13 +801,16 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                                     <div className="flex-grow flex relative overflow-hidden">
                                         {/* Gutter */}
                                         <div className="w-10 bg-white/[0.02] border-r border-white/5 flex flex-col items-center py-4 select-none shrink-0">
-                                            {Array.from({ length: Math.max(20, (JSON.stringify(resume.content, null, 2).match(/\n/g) || []).length + 2) }).map((_, i) => (
+                                            {Array.from({ length: Math.max(20, ((isFlatImport ? getResumeSourceText(resume.content) : JSON.stringify(resume.content, null, 2)).match(/\n/g) || []).length + 2) }).map((_, i) => (
                                                 <span key={i} className="text-[9px] font-mono text-white/20 leading-6 h-6">{i + 1}</span>
                                             ))}
                                         </div>
                                         <textarea
-                                            value={JSON.stringify(resume.content, null, 2)}
-                                            onChange={(e) => handleSourceChange(e.target.value)}
+                                            value={isFlatImport ? getResumeSourceText(resume.content) : JSON.stringify(resume.content, null, 2)}
+                                            onChange={(e) => {
+                                                if (!isFlatImport) handleSourceChange(e.target.value);
+                                            }}
+                                            readOnly={isFlatImport}
                                             spellCheck={settings.spellcheck}
                                             wrap={settings.lineWrapping ? "soft" : "off"}
                                             style={{

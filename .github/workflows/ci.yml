@@ -16,6 +16,20 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: zebra_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci -d zebra_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     env:
       DATABASE_URL: postgres://ci:ci@127.0.0.1:5432/zebra_ci
       BETTER_AUTH_SECRET: ci-only-secret-that-is-long-enough-for-build-validation
@@ -33,6 +47,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm audit --omit=dev --audit-level=high
+      - run: npm run db:prepare
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test

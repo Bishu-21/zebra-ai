@@ -264,9 +264,11 @@ export const aiParsedResumeSchema = z.object({
 });
 
 const auditItemSchema = z.object({
-    checkpoint: z.string().min(1),
+    id: aiPlainString,
+    checkpoint: aiPlainString,
     status: z.enum(["Pass", "Fail", "Not Assessed"]),
-    fix: z.string().default(""),
+    fix: aiPlainString,
+    evidence: aiPlainString,
 });
 
 export const aiResumeAnalysisSchema = z.object({
@@ -278,18 +280,21 @@ export const aiResumeAnalysisSchema = z.object({
         ats: z.number().min(0).max(100),
         branding: z.number().min(0).max(100),
     }),
-    audit: z.record(z.string(), z.array(auditItemSchema).max(20)),
-    recruiterInsights: z.object({
-        sevenSecondScan: z.string(),
-        soWhatTest: z.string(),
-        readability: z.string(),
-    }),
-    suggestedBulletPoints: z.array(z.object({
-        original: z.string(),
-        problem: z.string(),
-        after: z.string(),
-        rationale: z.string(),
-    })).max(10),
+    audit: z.preprocess(
+        (value) => value ?? {},
+        z.record(z.string(), z.array(auditItemSchema).max(20)),
+    ),
+    recruiterInsights: z.preprocess((value) => value ?? {}, z.object({
+        sevenSecondScan: aiPlainString,
+        soWhatTest: aiPlainString,
+        readability: aiPlainString,
+    })),
+    suggestedBulletPoints: z.preprocess((value) => value ?? [], z.array(z.object({
+        original: aiPlainString,
+        problem: aiPlainString,
+        after: aiPlainString,
+        rationale: aiPlainString,
+    })).max(10)),
 });
 
 export const aiRoleMatchSchema = z.object({

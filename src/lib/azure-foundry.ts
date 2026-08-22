@@ -19,9 +19,9 @@ export interface TaskBudget {
 export const TASK_BUDGETS: Record<TaskType, TaskBudget> = {
   chat: { maxOutputTokens: 1200, reasoningEffort: "low" },
   copilot: { maxOutputTokens: 500, reasoningEffort: "low" },
-  audit: { maxOutputTokens: 2500, reasoningEffort: "medium" },
+  audit: { maxOutputTokens: 8000, reasoningEffort: "low" },
   tailor: { maxOutputTokens: 3000, reasoningEffort: "medium" },
-  parse: { maxOutputTokens: 2500, reasoningEffort: "low" },
+  parse: { maxOutputTokens: 5000, reasoningEffort: "low" },
   "cover-letter": { maxOutputTokens: 2200, reasoningEffort: "medium" },
   "job-extraction": { maxOutputTokens: 900, reasoningEffort: "low" },
   project: { maxOutputTokens: 2000, reasoningEffort: "medium" },
@@ -281,15 +281,30 @@ function getErrorStatus(error: unknown): number | undefined {
 export function shouldFallbackToGemini(error: unknown): boolean {
   const status = getErrorStatus(error);
   if (status !== undefined) {
-    return status === 408 || status === 409 || status === 429 || status >= 500;
+    return status >= 400;
   }
 
   const name = error instanceof Error ? error.name : "";
   return [
     "APIConnectionError",
     "APIConnectionTimeoutError",
+    "AiProviderResponseError",
     "TimeoutError",
   ].includes(name);
+}
+
+function getConfiguredAzureOrFallback(
+  gemini: GoogleGenAI | null,
+): AzureFoundryConfig | null {
+  try {
+    return getAzureFoundryConfig();
+  } catch (error) {
+    if (!gemini || !(error instanceof AiProviderConfigurationError)) throw error;
+    console.warn(
+      `[AI] ${error.message} Using the configured Gemini fallback.`,
+    );
+    return null;
+  }
 }
 
 function logAzureFallback(task: TaskType, error: unknown): void {
@@ -342,8 +357,8 @@ async function generateGeminiResponse(
 export async function generateAiResponse(
   options: GenerationOptions,
 ): Promise<string> {
-  const azureConfig = getAzureFoundryConfig();
   const gemini = getGeminiClient();
+  const azureConfig = getConfiguredAzureOrFallback(gemini);
 
   if (azureConfig) {
     try {
@@ -391,8 +406,8 @@ async function notifyStreamFailure(
 export async function generateAiStream(
   options: GenerationOptions,
 ): Promise<ReadableStream<Uint8Array>> {
-  const azureConfig = getAzureFoundryConfig();
   const gemini = getGeminiClient();
+  const azureConfig = getConfiguredAzureOrFallback(gemini);
 
   if (!azureConfig && !gemini) {
     throw new AiProviderConfigurationError(

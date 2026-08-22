@@ -87,7 +87,6 @@ function isRetryableSessionError(error: unknown): boolean {
         "websocket was closed",
         "failed_to_get_session",
         "failed to get session",
-        "failed query",
         "session lookup timed out",
         "econnreset",
         "etimedout",

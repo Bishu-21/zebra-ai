@@ -1,7 +1,7 @@
 import { test, describe, before, after } from "node:test";
 import assert from "node:assert";
 import { validateUrlForSsrf } from "../src/lib/ssrf";
-import { checkRateLimit, clearRateLimits } from "../src/lib/rate-limit";
+import { checkRateLimit, clearRateLimits, isMissingRateLimitTableError } from "../src/lib/rate-limit";
 import { reserveUserCredits, refundUserCredits } from "../src/lib/credit-policy";
 import { validateUploadedFile, MAX_RESUME_FILE_SIZE_BYTES } from "../src/lib/upload-safety";
 import { testStore } from "../src/lib/test-store";
@@ -76,9 +76,20 @@ describe("Production Safety & Reliability Test Suite [Unit Test]", () => {
             assert.strictEqual(rejected.success, false);
             assert.strictEqual(rejected.remaining, 0);
         });
+
+        test("2.2 recognizes only the missing rate-limit migration", () => {
+            assert.strictEqual(isMissingRateLimitTableError({ code: "42P01" }), true);
+            assert.strictEqual(
+                isMissingRateLimitTableError({
+                    cause: { message: 'relation "rate_limit_buckets" does not exist' },
+                }),
+                true,
+            );
+            assert.strictEqual(isMissingRateLimitTableError({ code: "ECONNRESET" }), false);
+        });
     });
 
-    describe("2.2 Payment Webhook Authentication", () => {
+    describe("2.3 Payment Webhook Authentication", () => {
         test("accepts only a valid raw-body HMAC", () => {
             const body = JSON.stringify({ event: "payment.captured", payload: { id: "pay_test" } });
             const secret = "test-webhook-secret-that-is-not-used-in-production";

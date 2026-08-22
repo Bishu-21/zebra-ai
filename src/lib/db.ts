@@ -22,9 +22,14 @@ const globalForDb = global as unknown as {
   pool: Pool | undefined;
 };
 
+const configuredPoolMax = Number.parseInt(process.env.DATABASE_POOL_MAX || "5", 10);
+const poolMax = Number.isFinite(configuredPoolMax)
+  ? Math.min(10, Math.max(1, configuredPoolMax))
+  : 5;
+
 const pool = globalForDb.pool ?? new Pool({
   connectionString: process.env.DATABASE_URL,
-  max: 10,
+  max: poolMax,
   idleTimeoutMillis: 15000,
   connectionTimeoutMillis: 10000,
   allowExitOnIdle: true,
@@ -41,9 +46,10 @@ if (!globalForDb.pool) {
   });
 }
 
-if (process.env.NODE_ENV !== "production") {
-  globalForDb.pool = pool;
-}
+// Next.js can evaluate this module from multiple route bundles in the same
+// process. Reuse one pool in production as well as development so each bundle
+// does not create another independently configured group of Neon connections.
+globalForDb.pool = pool;
 
 export const db = drizzle(pool, { schema });
 
@@ -88,7 +94,6 @@ export function isTransientDbError(error: unknown): boolean {
     "connection terminated",
     "connection timeout",
     "websocket was closed",
-    "failed query",
     "econnreset",
     "etimedout",
     "neon_db_unavailable",

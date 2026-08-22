@@ -9,6 +9,7 @@ import {
   normalizeAzureFoundryBaseUrl,
   normalizeConversationHistory,
   shouldFallbackToGemini,
+  TASK_BUDGETS,
 } from "../src/lib/azure-foundry";
 
 describe("Azure Foundry provider configuration", () => {
@@ -124,6 +125,12 @@ describe("Azure Foundry provider configuration", () => {
 });
 
 describe("Azure Foundry request shaping", () => {
+  test("allows enough output for a complete structured resume", () => {
+    assert.ok(TASK_BUDGETS.parse.maxOutputTokens >= 5000);
+    assert.ok(TASK_BUDGETS.audit.maxOutputTokens >= 5000);
+    assert.equal(TASK_BUDGETS.audit.reasoningEffort, "low");
+  });
+
   test("keeps usable text from an incomplete response", () => {
     assert.equal(
       getUsableAzureResponseText({
@@ -192,9 +199,9 @@ describe("Azure Foundry fallback policy", () => {
     assert.equal(shouldFallbackToGemini({ status: 408 }), true);
     assert.equal(shouldFallbackToGemini({ status: 429 }), true);
     assert.equal(shouldFallbackToGemini({ status: 503 }), true);
-    assert.equal(shouldFallbackToGemini({ status: 400 }), false);
-    assert.equal(shouldFallbackToGemini({ status: 401 }), false);
-    assert.equal(shouldFallbackToGemini({ status: 403 }), false);
+    assert.equal(shouldFallbackToGemini({ status: 400 }), true);
+    assert.equal(shouldFallbackToGemini({ status: 401 }), true);
+    assert.equal(shouldFallbackToGemini({ status: 403 }), true);
   });
 
   test("falls back for connection and timeout errors", () => {
@@ -202,8 +209,11 @@ describe("Azure Foundry fallback policy", () => {
     connectionError.name = "APIConnectionError";
     const timeoutError = new Error("timed out");
     timeoutError.name = "APIConnectionTimeoutError";
+    const emptyResponseError = new Error("empty response");
+    emptyResponseError.name = "AiProviderResponseError";
 
     assert.equal(shouldFallbackToGemini(connectionError), true);
     assert.equal(shouldFallbackToGemini(timeoutError), true);
+    assert.equal(shouldFallbackToGemini(emptyResponseError), true);
   });
 });

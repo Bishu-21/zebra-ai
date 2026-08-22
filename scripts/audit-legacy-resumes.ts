@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 import { neon } from "@neondatabase/serverless";
+import crypto from "node:crypto";
 import { ingestResumeText } from "../src/lib/resume-ingestion";
 import {
     getResumeSourceText,
@@ -12,6 +13,7 @@ dotenv.config({ path: ".env" });
 
 interface ResumeAuditRecord {
     id: string;
+    userId: string;
     title: string;
     content: string;
 }
@@ -37,8 +39,8 @@ async function main() {
     // alive and trigger driver teardown errors after a completed audit.
     const sql = neon(connectionString, { readOnly: !apply });
     const queryResult = resumeId
-        ? await sql`select id, title, content from resumes where id = ${resumeId}`
-        : await sql`select id, title, content from resumes`;
+        ? await sql`select id, user_id as "userId", title, content from resumes where id = ${resumeId}`
+        : await sql`select id, user_id as "userId", title, content from resumes`;
     const records = queryResult as unknown as ResumeAuditRecord[];
 
     const legacy = records.filter((record) => {
@@ -79,12 +81,24 @@ async function main() {
     const ingestion = await ingestResumeText(source);
 
     const serializedContent = stringifyResumeContent(ingestion.content);
+    const backupVersionId = crypto.randomUUID();
     const updatedAt = new Date().toISOString();
-    await sql`update resumes
-        set content = ${serializedContent}, updated_at = ${updatedAt}
-        where id = ${record.id}`;
+    await sql.transaction([
+        sql`insert into resume_versions (
+                id, user_id, resume_id, title, content, created_at, updated_at
+            ) values (
+                ${backupVersionId}, ${record.userId}, ${record.id},
+                ${`${record.title} (pre-structure backup)`}, ${record.content},
+                ${updatedAt}, ${updatedAt}
+            )`,
+        sql`update resumes
+            set content = ${serializedContent}, updated_at = ${updatedAt}
+            where id = ${record.id}`,
+    ]);
 
-    console.log(`Repaired ${record.id}. Original source remains embedded in _ingestionMeta.sourceText.`);
+    console.log(`Repaired ${record.id}.`);
+    console.log(`- Immutable pre-structure version: ${backupVersionId}`);
+    console.log("- Original source remains embedded in _ingestionMeta.sourceText.");
 }
 
 main().catch((error: unknown) => {

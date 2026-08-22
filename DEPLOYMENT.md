@@ -22,8 +22,11 @@ npm run azure:smoke
 
 Set every required variable from `.env.example` in the hosting platform. At a
 minimum, configure the database, Better Auth URL/secret/origins, application
-URL, and all three `AZURE_FOUNDRY_*` values. Keep API keys server-only. Configure
+URL, and all three `AZURE_FOUNDRY_*` values. Keep API keys server-only. Set
+`GEMINI_API_KEY` in production when provider failover is required. Configure
 `CHROMIUM_PACK_URL` or `CHROME_EXECUTABLE_PATH` when the host has no browser.
+`DATABASE_POOL_MAX` defaults to 5 and is clamped to 1–10; start at 5 for a
+serverless deployment and lower it if Neon reports connection saturation.
 
 Use the API key belonging to the same Foundry resource or project host used by
 `AZURE_FOUNDRY_OPENAI_BASE_URL`. Do not use the `/api/projects/...` URL as the
@@ -47,13 +50,18 @@ Create a provider snapshot or logical backup. Then run the reviewed, forward-
 only migrations with the target `DATABASE_URL`:
 
 ```bash
-npm run db:migrate
-npm run db:health
+npm run db:prepare
 ```
 
 The current migration creates new evidence/compiler tables and does not delete
 or rewrite existing resumes. Do not deploy application code if migration or
 health verification fails.
+
+`db:health` checks connectivity plus the authentication, resume, analysis, and
+distributed-rate-limit tables. A successful ping by itself is not sufficient.
+During a code/schema rollout race, only a missing `rate_limit_buckets` table
+temporarily degrades to per-instance limiting; this is an availability guard,
+not a substitute for running migrations.
 
 ## 4. Deploy and smoke-test
 
@@ -65,6 +73,11 @@ webhook twice and confirm credits are granted exactly once.
 
 Promote the exact verified commit to production. Monitor 4xx/5xx rates, Azure
 latency and token usage, database errors, and payment reconciliation.
+
+Azure failures are sent to Gemini when `GEMINI_API_KEY` is configured and Azure
+has not emitted response text. Treat fallback log messages as an incident signal:
+fix the Azure key, endpoint, deployment name, quota, or networking rather than
+operating permanently on fallback.
 
 ## 5. Roll back safely
 

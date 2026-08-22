@@ -1,7 +1,7 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import crypto from "crypto";
-import { compileTailoredResumeContent } from "../src/app/api/applications/changes/route";
+import { compileTailoredResumeContent } from "../src/lib/tailored-resume-compiler";
 import { getUserOwnedResume, isTestStoreActive, validateSelectedCertIds } from "../src/lib/auth-policy";
 import { testStore } from "../src/lib/test-store";
 

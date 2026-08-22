@@ -8,12 +8,14 @@
     "build": "next build",
     "start": "next start",
     "azure:smoke": "tsx scripts/test-azure-foundry.ts",
+    "azure:audit-smoke": "tsx scripts/test-azure-audit.ts",
     "resumes:legacy-audit": "tsx scripts/audit-legacy-resumes.ts",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/**/*.test.ts",
     "db:migrate": "drizzle-kit migrate",
     "db:health": "tsx scripts/db-health.ts",
+    "db:prepare": "npm run db:migrate && npm run db:health",
     "check": "npm run lint && npm run typecheck && npm run test && npm run build"
   },
   "dependencies": {
@@ -73,5 +75,12 @@
     "last 2 versions",
     "not dead",
     "not ie 11"
-  ]
+  ],
+  "allowScripts": {
+    "esbuild@0.28.1": true,
+    "fsevents@2.3.3": true,
+    "unrs-resolver@1.12.2": true,
+    "@google/genai": false,
+    "core-js": false
+  }
 }

@@ -1,7 +1,7 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import crypto from "crypto";
-import { compileTailoredResumeContent } from "../src/app/api/applications/changes/route";
+import { compileTailoredResumeContent } from "../src/lib/tailored-resume-compiler";
 
 
 // Domain & Business Logic types

@@ -1,6 +1,6 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { aiParsedResumeSchema, resumeSchema, resumeUpdateSchema } from "../src/lib/validation";
+import { aiParsedResumeSchema, aiResumeAnalysisSchema, resumeSchema, resumeUpdateSchema } from "../src/lib/validation";
 
 describe("Resume validation", () => {
     test("accepts create payloads with an omitted or legacy null id", () => {
@@ -67,5 +67,23 @@ describe("Resume validation", () => {
         });
 
         assert.equal(result.success, false);
+    });
+
+    test("normalizes omitted optional audit descriptions without losing core scores", () => {
+        const result = aiResumeAnalysisSchema.parse({
+            score: 82,
+            summary: "Strong evidence with several clarity improvements available.",
+            metrics: { impact: 80, formatting: 70, ats: 90, branding: 75 },
+            audit: {
+                experience: [{ checkpoint: "Evidence uses outcomes", status: "Pass" }],
+            },
+            recruiterInsights: { sevenSecondScan: "Clear role alignment" },
+            suggestedBulletPoints: [{ after: "Built a reliable resume workflow." }],
+        });
+
+        assert.equal(result.recruiterInsights.readability, "");
+        assert.equal(result.audit.experience[0].fix, "");
+        assert.equal(result.suggestedBulletPoints[0].rationale, "");
+        assert.equal(result.score, 82);
     });
 });

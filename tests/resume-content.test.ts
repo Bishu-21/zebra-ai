@@ -18,6 +18,15 @@ describe("Lossless resume content handling", () => {
         assert.equal(parsed._ingestionMeta?.sourceText, source);
     });
 
+    it("keeps preserved legacy source available for display before structuring", () => {
+        const source = "Bishal Sarkar\nEXPERIENCE\nBuilt Zebra AI.\nSKILLS\nTypeScript";
+        const parsed = parseStoredResumeContent(source);
+
+        assert.equal(parsed._ingestionMeta?.sourceText, source);
+        assert.equal(parsed.basics.name, "");
+        assert.equal(parsed.experience.length, 0);
+    });
+
     it("preserves invalid JSON as recoverable legacy source", () => {
         const source = '{"basics": broken but important source text '.repeat(3);
         const parsed = parseStoredResumeContent(source);

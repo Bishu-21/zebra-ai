@@ -86,8 +86,10 @@ export async function checkDistributedRateLimit(
     const windowStartedAt = new Date(windowStartedAtMs);
     const expiresAt = new Date(expiresAtMs);
 
-    const [bucket] = await executeWithDbRetry(() =>
-        db.insert(rateLimitBuckets)
+    let bucket: { count: number; expiresAt: Date } | undefined;
+    try {
+        [bucket] = await executeWithDbRetry(() =>
+            db.insert(rateLimitBuckets)
             .values({
                 key: keyDigest,
                 count: 1,
@@ -102,8 +104,19 @@ export async function checkDistributedRateLimit(
                     expiresAt: sql`CASE WHEN ${rateLimitBuckets.expiresAt} <= ${now} THEN ${expiresAt} ELSE ${rateLimitBuckets.expiresAt} END`,
                 },
             })
-            .returning({ count: rateLimitBuckets.count, expiresAt: rateLimitBuckets.expiresAt })
-    );
+                .returning({ count: rateLimitBuckets.count, expiresAt: rateLimitBuckets.expiresAt })
+        );
+    } catch (error) {
+        // Keep a deployment available when application code reaches an instance
+        // just before migration 0006. Only the specific missing-table error is
+        // allowed to degrade to the per-instance limiter; connectivity and all
+        // other database failures still fail closed.
+        if (!isMissingRateLimitTableError(error)) throw error;
+        console.error(
+            "[Rate Limit] Migration 0006 is missing; using the local limiter until rate_limit_buckets is created.",
+        );
+        return checkRateLimit(key, limit, windowMs);
+    }
 
     const count = bucket?.count ?? limit + 1;
     const resetAtMs = bucket?.expiresAt?.getTime() ?? expiresAtMs;
@@ -113,6 +126,23 @@ export async function checkDistributedRateLimit(
         remaining: Math.max(0, limit - count),
         resetMs: Math.max(1000, resetAtMs - nowMs),
     };
+}
+
+export function isMissingRateLimitTableError(error: unknown): boolean {
+    const seen = new Set<unknown>();
+    let current: unknown = error;
+
+    while (current && !seen.has(current)) {
+        seen.add(current);
+        if (typeof current !== "object") break;
+        const record = current as Record<string, unknown>;
+        if (record.code === "42P01") return true;
+        const message = typeof record.message === "string" ? record.message.toLowerCase() : "";
+        if (message.includes('relation "rate_limit_buckets" does not exist')) return true;
+        current = record.cause;
+    }
+
+    return false;
 }
 
 /** Clear all rate limit records (useful for test resets). */

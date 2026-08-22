@@ -1,6 +1,6 @@
 import { test, describe } from "node:test";
 import assert from "node:assert";
-import { compileTailoredResumeContent } from "../src/app/api/applications/changes/route";
+import { compileTailoredResumeContent } from "../src/lib/tailored-resume-compiler";
 
 describe("AI Suggestion Approval Workflow Test Suite [Unit Test]", () => {
 
