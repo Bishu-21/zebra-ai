@@ -164,9 +164,9 @@ export async function executeCreateWorkItem(userId: string, rawArgs: Record<stri
   });
   if (!created) throw new Error("The work item could not be created.");
   return {
-    spokenResponse: `I added ${created.title} to your work evidence as a ${created.category.toLowerCase()}.`,
+    spokenResponse: `I added ${created.title} to Work as a ${created.category.toLowerCase()}.`,
     displayCards: [{ id: created.id, kind: "work", title: created.title, meta: created.category, href: "/dashboard/work" }],
-    followUp: ["Open my work evidence", "What should I add next?"],
+    followUp: ["Open Work", "What should I add next?"],
   };
 }
 

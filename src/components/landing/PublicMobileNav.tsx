@@ -1,92 +1,84 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { RiCloseLine, RiMenuLine } from "react-icons/ri";
+import { NavAuth } from "@/components/auth/NavAuth";
 
-interface SectionItem {
-  id: string;
-  label: string;
-}
-
-const SECTIONS: SectionItem[] = [
+const SECTIONS = [
   { id: "product", label: "Product" },
   { id: "compare", label: "Compare" },
   { id: "about", label: "Story" },
   { id: "pricing", label: "Pricing" },
   { id: "faq", label: "FAQ" },
-];
+] as const;
 
 export function PublicMobileNav() {
-  const [activeSection, setActiveSection] = useState<string>("product");
-  const [isNearFooter, setIsNearFooter] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    const observerCallback: IntersectionObserverCallback = (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          setActiveSection(entry.target.id);
-        }
-      });
+    if (!isOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsOpen(false);
     };
 
-    const sectionObserver = new IntersectionObserver(observerCallback, {
-      rootMargin: "-20% 0px -60% 0px",
-      threshold: 0.1,
-    });
-
-    SECTIONS.forEach(({ id }) => {
-      const el = document.getElementById(id);
-      if (el) sectionObserver.observe(el);
-    });
-
-    const footerEl = document.querySelector("footer");
-    const footerObserver = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          setIsNearFooter(entry.isIntersecting);
-        });
-      },
-      { threshold: 0.1 }
-    );
-
-    if (footerEl) footerObserver.observe(footerEl);
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", closeOnEscape);
 
     return () => {
-      sectionObserver.disconnect();
-      footerObserver.disconnect();
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
     };
-  }, []);
+  }, [isOpen]);
 
-  if (isNearFooter) {
-    return null;
-  }
+  const closeMenu = () => setIsOpen(false);
 
   return (
-    <nav
-      aria-label="Mobile Navigation"
-      className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-40 max-w-[94vw] bg-white/80 backdrop-blur-xl rounded-full border border-neutral-200/80 shadow-[0_8px_30px_rgb(0,0,0,0.12)] px-2 py-1.5 transition-all duration-300"
-      style={{
-        paddingBottom: "max(env(safe-area-inset-bottom, 0px), 6px)",
-      }}
-    >
-      <div className="flex items-center gap-1 overflow-x-auto no-scrollbar scroll-smooth">
-        {SECTIONS.map((section) => {
-          const isActive = activeSection === section.id;
-          return (
-            <Link
-              key={section.id}
-              href={`#${section.id}`}
-              className={`px-3.5 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap min-h-[38px] flex items-center justify-center ${
-                isActive
-                  ? "bg-primary text-white shadow-xs"
-                  : "text-neutral-500 hover:text-foreground hover:bg-neutral-100/60"
-              }`}
-            >
-              {section.label}
-            </Link>
-          );
-        })}
-      </div>
-    </nav>
+    <div className="md:hidden">
+      <button
+        type="button"
+        aria-label={isOpen ? "Close navigation menu" : "Open navigation menu"}
+        aria-controls="mobile-navigation-menu"
+        aria-expanded={isOpen}
+        onClick={() => setIsOpen((open) => !open)}
+        className="relative z-50 grid size-11 place-items-center rounded-xl border border-neutral-200 bg-white text-foreground shadow-sm transition-colors hover:bg-neutral-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+      >
+        {isOpen ? <RiCloseLine aria-hidden="true" size={24} /> : <RiMenuLine aria-hidden="true" size={24} />}
+      </button>
+
+      {isOpen && (
+        <>
+          <button
+            type="button"
+            aria-label="Close navigation menu"
+            className="fixed inset-0 top-20 z-30 bg-black/20 backdrop-blur-[2px]"
+            onClick={closeMenu}
+          />
+          <div
+            id="mobile-navigation-menu"
+            className="absolute inset-x-4 top-[calc(100%+0.75rem)] z-40 overflow-hidden rounded-3xl border border-neutral-200 bg-white p-3 shadow-2xl"
+          >
+            <div className="flex flex-col" aria-label="Mobile navigation">
+              {SECTIONS.map((section) => (
+                <Link
+                  key={section.id}
+                  href={`#${section.id}`}
+                  onClick={closeMenu}
+                  className="flex min-h-12 items-center justify-between rounded-2xl px-4 text-base font-semibold text-foreground transition-colors hover:bg-neutral-100 focus-visible:bg-neutral-100 focus-visible:outline-none"
+                >
+                  {section.label}
+                  <span aria-hidden="true" className="text-neutral-400">↘</span>
+                </Link>
+              ))}
+            </div>
+            <div className="mt-3 border-t border-neutral-100 pt-3 [&>*]:flex [&>*]:min-h-12 [&>*]:w-full [&>*]:items-center [&>*]:justify-center [&>*]:rounded-2xl">
+              <NavAuth />
+            </div>
+          </div>
+        </>
+      )}
+    </div>
   );
 }

@@ -17,11 +17,12 @@ interface HeaderProps {
     credits: number;
     userName: string;
     userImage?: string | null;
+    isNavOpen?: boolean;
     onOpenNavAction?: () => void;
     onOpenProfileAction: () => void;
 }
 
-export function Header({ credits, userName, userImage, onOpenNavAction, onOpenProfileAction }: HeaderProps) {
+export function Header({ credits, userName, userImage, isNavOpen = false, onOpenNavAction, onOpenProfileAction }: HeaderProps) {
     const pathname = usePathname();
     const zebu = useZebu();
     const breadcrumbInfo = getBreadcrumbForPath(pathname);
@@ -32,11 +33,14 @@ export function Header({ credits, userName, userImage, onOpenNavAction, onOpenPr
                 {/* Mobile Menu Toggle Button */}
                 {onOpenNavAction && (
                     <button
+                        type="button"
                         onClick={onOpenNavAction}
                         className="lg:hidden w-9 h-9 border border-neutral-200/80 rounded-xl flex items-center justify-center text-neutral-700 bg-neutral-50 hover:bg-neutral-100 hover:text-[#0A0A0A] transition-colors shrink-0 shadow-2xs"
                         aria-label="Open Navigation Menu"
+                        aria-controls="dashboard-navigation"
+                        aria-expanded={isNavOpen}
                     >
-                        <RiMenuLine size={18} />
+                        <RiMenuLine aria-hidden="true" size={18} />
                     </button>
                 )}
 
@@ -93,9 +97,11 @@ export function Header({ credits, userName, userImage, onOpenNavAction, onOpenPr
                 </Link>
 
                 {/* Profile Avatar (Visible on all breakpoints) */}
-                <div
+                <button
+                    type="button"
                     onClick={onOpenProfileAction}
-                    className="flex items-center gap-2.5 sm:gap-3 md:pl-3 md:border-l md:border-neutral-200/80 cursor-pointer group"
+                    className="flex items-center gap-2.5 rounded-xl sm:gap-3 md:pl-3 md:border-l md:border-neutral-200/80 cursor-pointer group focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
+                    aria-label={`Open profile for ${userName}`}
                 >
                     <span className="hidden md:inline text-xs font-semibold text-[#0A0A0A] group-hover:text-neutral-600 transition-colors">
                         {userName}
@@ -114,7 +120,7 @@ export function Header({ credits, userName, userImage, onOpenNavAction, onOpenPr
                             <span className="text-xs font-bold">{userName?.charAt(0)?.toUpperCase() || "U"}</span>
                         )}
                     </div>
-                </div>
+                </button>
             </div>
         </header>
     );

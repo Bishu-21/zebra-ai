@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 import { ProfileModal } from "./ProfileModal";
@@ -23,6 +23,28 @@ export function DashboardShell({ plan, credits, userName, userImage, shouldPromp
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const [isNavOpen, setIsNavOpen] = useState(false);
 
+    const openNav = useCallback(() => setIsNavOpen(true), []);
+    const closeNav = useCallback(() => setIsNavOpen(false), []);
+    const openProfile = useCallback(() => setIsProfileOpen(true), []);
+    const closeProfile = useCallback(() => setIsProfileOpen(false), []);
+
+    useEffect(() => {
+        if (!isNavOpen) return;
+
+        const previousOverflow = document.body.style.overflow;
+        const closeOnEscape = (event: KeyboardEvent) => {
+            if (event.key === "Escape") closeNav();
+        };
+
+        document.body.style.overflow = "hidden";
+        window.addEventListener("keydown", closeOnEscape);
+
+        return () => {
+            document.body.style.overflow = previousOverflow;
+            window.removeEventListener("keydown", closeOnEscape);
+        };
+    }, [closeNav, isNavOpen]);
+
     return (
         <SettingsProvider>
             <ZebuProvider>
@@ -34,16 +56,17 @@ export function DashboardShell({ plan, credits, userName, userImage, shouldPromp
                         userName={userName}
                         userImage={userImage}
                         isOpen={isNavOpen}
-                        onCloseAction={() => setIsNavOpen(false)}
-                        onOpenProfileAction={() => setIsProfileOpen(true)}
+                        onCloseAction={closeNav}
+                        onOpenProfileAction={openProfile}
                     />
                     <div className="flex-grow flex flex-col h-screen overflow-hidden relative">
                         <Header
                             userName={userName}
                             userImage={userImage}
                             credits={credits}
-                            onOpenNavAction={() => setIsNavOpen(true)}
-                            onOpenProfileAction={() => setIsProfileOpen(true)}
+                            isNavOpen={isNavOpen}
+                            onOpenNavAction={openNav}
+                            onOpenProfileAction={openProfile}
                         />
                         <main className="flex-grow overflow-y-auto w-full custom-scrollbar">
                             <div className="mx-auto max-w-7xl">
@@ -54,7 +77,7 @@ export function DashboardShell({ plan, credits, userName, userImage, shouldPromp
 
                     <ProfileModal
                         isOpen={isProfileOpen}
-                        onCloseAction={() => setIsProfileOpen(false)}
+                        onCloseAction={closeProfile}
                         userName={userName}
                         userImage={userImage}
                     />

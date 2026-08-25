@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useSettings } from "@/context/SettingsContext";
 import { useSession, authClient } from "@/lib/auth-client";
 import { useToast } from "@/components/ui/Toast";
@@ -36,7 +36,6 @@ const TABS: TabItem[] = [
 
 export function SettingsView() {
     const searchParams = useSearchParams();
-    const router = useRouter();
     const { settings, updateSettingsAction, resetSettingsAction } = useSettings();
     const { data: session } = useSession();
     const { showToast } = useToast();
@@ -54,11 +53,28 @@ export function SettingsView() {
         }
     }, [searchParams, activeTab]);
 
-    const handleTabChange = (tabId: TabType) => {
+    const handleTabChange = (tabId: TabType, trigger?: HTMLButtonElement) => {
         setActiveTab(tabId);
         const params = new URLSearchParams(searchParams.toString());
         params.set("tab", tabId);
-        router.replace(`/dashboard/settings?${params.toString()}`);
+        window.history.replaceState(null, "", `/dashboard/settings?${params.toString()}`);
+        trigger?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    };
+
+    const handleTabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
+        const lastIndex = TABS.length - 1;
+        let nextIndex: number | null = null;
+
+        if (event.key === "ArrowRight" || event.key === "ArrowDown") nextIndex = index === lastIndex ? 0 : index + 1;
+        if (event.key === "ArrowLeft" || event.key === "ArrowUp") nextIndex = index === 0 ? lastIndex : index - 1;
+        if (event.key === "Home") nextIndex = 0;
+        if (event.key === "End") nextIndex = lastIndex;
+        if (nextIndex === null) return;
+
+        event.preventDefault();
+        const nextTab = document.getElementById(`settings-tab-${TABS[nextIndex].id}`) as HTMLButtonElement | null;
+        nextTab?.focus();
+        nextTab?.click();
     };
 
     const triggerNotice = (msg: string) => {
@@ -103,18 +119,29 @@ export function SettingsView() {
             </div>
 
             {/* Main Settings Container */}
-            <div className="bg-white rounded-3xl border border-neutral-200/80 shadow-xs flex flex-col md:flex-row overflow-hidden min-h-[500px]">
+            <div className="bg-white rounded-3xl border border-neutral-200/80 shadow-xs flex flex-col md:flex-row overflow-visible md:overflow-hidden min-h-[500px]">
                 {/* Left Tab Navigation */}
-                <div className="w-full md:w-64 bg-[#FAF9F6] border-b md:border-b-0 md:border-r border-neutral-200/70 p-4 sm:p-5 flex flex-col justify-between shrink-0">
-                    <nav className="space-y-1.5" aria-label="Settings Tabs">
-                        {TABS.map((tab) => {
+                <div className="sticky top-0 z-20 w-full md:static md:w-64 bg-[#FAF9F6] border-b md:border-b-0 md:border-r border-neutral-200/70 p-2.5 md:p-5 shrink-0">
+                    <nav
+                        className="no-scrollbar flex gap-2 overflow-x-auto scroll-smooth md:block md:space-y-1.5"
+                        aria-label="Settings sections"
+                        role="tablist"
+                    >
+                        {TABS.map((tab, index) => {
                             const Icon = tab.icon;
                             const isActive = activeTab === tab.id;
                             return (
                                 <button
                                     key={tab.id}
-                                    onClick={() => handleTabChange(tab.id)}
-                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-bold transition-all text-left group ${
+                                    id={`settings-tab-${tab.id}`}
+                                    type="button"
+                                    role="tab"
+                                    aria-selected={isActive}
+                                    aria-controls={`settings-panel-${tab.id}`}
+                                    tabIndex={isActive ? 0 : -1}
+                                    onClick={(event) => handleTabChange(tab.id, event.currentTarget)}
+                                    onKeyDown={(event) => handleTabKeyDown(event, index)}
+                                    className={`flex min-h-10 w-auto shrink-0 items-center gap-2 rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all text-left group md:w-full md:gap-3 md:rounded-2xl md:px-4 md:py-3 ${
                                         isActive
                                             ? "bg-[#0A0A0A] text-white shadow-2xs"
                                             : "text-neutral-600 hover:text-[#0A0A0A] hover:bg-neutral-200/60"
@@ -126,17 +153,26 @@ export function SettingsView() {
                             );
                         })}
                     </nav>
-
-                    {savedNotice && (
-                        <div className="mt-4 p-3 bg-neutral-100 rounded-xl text-[11px] font-semibold text-neutral-600 border border-neutral-200/60">
-                            {savedNotice}
-                        </div>
-                    )}
                 </div>
 
                 {/* Right Content Panel */}
-                <div className="flex-grow p-6 sm:p-8 flex flex-col justify-between min-w-0">
+                <div
+                    id={`settings-panel-${activeTab}`}
+                    role="tabpanel"
+                    aria-labelledby={`settings-tab-${activeTab}`}
+                    className="flex-grow p-5 sm:p-8 flex flex-col justify-between min-w-0"
+                >
                     <div>
+                        {savedNotice && (
+                            <div
+                                role="status"
+                                aria-live="polite"
+                                className="mb-4 rounded-xl border border-neutral-200/60 bg-neutral-100 p-3 text-xs font-semibold text-neutral-600"
+                            >
+                                {savedNotice}
+                            </div>
+                        )}
+
                         {/* Tab Title Banner */}
                         <div className="border-b border-neutral-200/60 pb-4 mb-6">
                             <h2 className="text-base font-bold text-[#0A0A0A] tracking-tight">
@@ -350,6 +386,7 @@ function CareerProfileSettings() {
                 return response.json();
             })
             .then((value) => { if (active) setProfile(value); })
+            .catch(() => { if (active) setProfile(null); })
             .finally(() => { if (active) setLoading(false); });
         return () => { active = false; };
     }, []);
@@ -386,22 +423,24 @@ function SettingRow({ title, description, control }: { title: string; descriptio
 
 function SettingToggle({ title, description, checked, onChange }: { title: string; description: string; checked: boolean; onChange: (v: boolean) => void }) {
     return (
-        <div 
-            className="flex items-center justify-between gap-4 cursor-pointer group"
+        <button
+            type="button"
+            role="switch"
+            aria-checked={checked}
+            className="group flex w-full cursor-pointer items-center justify-between gap-4 text-left"
             onClick={() => onChange(!checked)}
         >
             <div className="space-y-0.5 pr-4">
                 <h4 className="text-xs font-bold text-[#0A0A0A] group-hover:text-neutral-700 transition-colors">{title}</h4>
                 <p className="text-xs font-normal text-neutral-500 leading-relaxed">{description}</p>
             </div>
-            <button 
-                type="button"
-                aria-label={title}
+            <span
+                aria-hidden="true"
                 className={`shrink-0 relative w-11 h-6 rounded-full transition-colors duration-200 ${checked ? "bg-[#0A0A0A]" : "bg-neutral-200"}`}
             >
-                <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform duration-200 shadow-2xs ${checked ? "translate-x-5" : ""}`} />
-            </button>
-        </div>
+                <span className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform duration-200 shadow-2xs ${checked ? "translate-x-5" : ""}`} />
+            </span>
+        </button>
     );
 }
 

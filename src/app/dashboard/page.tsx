@@ -223,7 +223,7 @@ async function renderDashboardContent(session: NonNullable<Awaited<ReturnType<ty
   const stats: StatItem[] = [
     { label: "My Resumes", value: resumeCount.value, icon: RiFileTextLine },
     { label: "Resume Reviews", value: analysisCount.value, icon: RiCheckboxCircleLine },
-    { label: "Tailored Applications", value: optimisationCount.value, icon: RiFlashlightLine },
+    { label: "Role Matches", value: optimisationCount.value, icon: RiFlashlightLine },
     { label: "Credits", icon: RiRadarLine, customValue: credits },
   ];
 
@@ -321,7 +321,7 @@ async function renderDashboardContent(session: NonNullable<Awaited<ReturnType<ty
                   {stat.customValue !== undefined ? stat.customValue : stat.value}
                 </span>
               </div>
-              <span className="text-[11px] font-medium text-neutral-500 truncate">{stat.label}</span>
+              <span className="text-xs font-medium text-neutral-500 truncate">{stat.label}</span>
             </div>
           ))}
         </div>
@@ -347,8 +347,31 @@ async function renderDashboardContent(session: NonNullable<Awaited<ReturnType<ty
         </Link>
       </div>
 
+      {/* Two secondary destinations keep the home page focused. */}
+      <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Link href="/dashboard/resumes" className="group flex min-h-24 items-center justify-between rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-xs transition hover:border-neutral-300 hover:shadow-md">
+          <div className="flex items-center gap-4">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-neutral-100 text-neutral-700"><RiFileTextLine size={19} /></span>
+            <div><h2 className="text-sm font-bold">Manage resumes</h2><p className="mt-1 text-xs text-neutral-500">Open, create, or review a resume.</p></div>
+          </div>
+          <RiArrowRightSLine className="text-neutral-400 transition-transform group-hover:translate-x-0.5" />
+        </Link>
+        <Link href="/dashboard/job-tracker" className="group flex min-h-24 items-center justify-between rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-xs transition hover:border-neutral-300 hover:shadow-md">
+          <div className="flex items-center gap-4">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-neutral-100 text-neutral-700"><RiFlashlightLine size={19} /></span>
+            <div><h2 className="text-sm font-bold">View applications</h2><p className="mt-1 text-xs text-neutral-500">Track roles, deadlines, and progress.</p></div>
+          </div>
+          <RiArrowRightSLine className="text-neutral-400 transition-transform group-hover:translate-x-0.5" />
+        </Link>
+      </div>
 
-      {/* Action Cards Grid - 3-Top / 2-Bottom Olympic Rings Layout */}
+      <details className="group rounded-3xl border border-neutral-200/70 bg-[#FAF9F6] shadow-xs [&>summary::-webkit-details-marker]:hidden">
+        <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between rounded-3xl px-5 py-4 transition hover:bg-white md:px-6">
+          <div><h2 className="text-sm font-bold">More tools</h2><p className="mt-1 text-xs text-neutral-500">Analysis, role matching, imports, projects, and recent work.</p></div>
+          <RiArrowRightSLine className="text-neutral-500 transition-transform group-open:rotate-90" size={18} />
+        </summary>
+        <div className="border-t border-neutral-200/70 px-4 pb-8 pt-6 md:px-6">
+      {/* Supporting tools stay available without competing with the primary task. */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-5 mb-12">
         <div className="lg:col-span-2 h-full">
           <AnalyzeResume />
@@ -412,6 +435,8 @@ async function renderDashboardContent(session: NonNullable<Awaited<ReturnType<ty
             <InsightsFeed data={intelligenceReports} />
         )}
       </div>
+        </div>
+      </details>
     </div>
   );
 }

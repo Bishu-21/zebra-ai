@@ -7,6 +7,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
+import { ZebuEntityContext } from "@/components/dashboard/ZebuEntityContext";
 
 export default async function ResumeEditorPage(props: {
     params: Promise<{ id: string }>;
@@ -59,6 +60,7 @@ export default async function ResumeEditorPage(props: {
 
     return (
         <div className="h-screen overflow-hidden bg-[#F8F9FA]">
+            <ZebuEntityContext kind="resume" id={params.id} title={versionTitle || resume?.title || "New resume"} />
             <ResumeEditor
                 initialData={resume ? {
                     id: resume.id,

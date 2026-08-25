@@ -75,7 +75,7 @@ function describeCaptureFailure(caught: unknown, stage: FailureStage, permission
   return "Microphone permission is allowed, but Zebu’s audio processor did not load. Refresh the dashboard and retry.";
 }
 
-export function useZebuLive(options: { onAction: (action: LiveUiAction) => void; onCards: (cards: ZebuDisplayCard[]) => void }) {
+export function useZebuLive(options: { currentPage: string; currentContext?: string; onAction: (action: LiveUiAction) => void; onCards: (cards: ZebuDisplayCard[]) => void }) {
   const sessionRef = useRef<Session | null>(null);
   const sessionPromiseRef = useRef<Promise<Session> | null>(null);
   const capturePromiseRef = useRef<Promise<void> | null>(null);
@@ -219,7 +219,11 @@ export function useZebuLive(options: { onAction: (action: LiveUiAction) => void;
       const response = await withZebuTimeout(fetch("/api/zebu/live-token", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }),
+        body: JSON.stringify({
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          currentPage: optionsRef.current.currentPage,
+          currentContext: optionsRef.current.currentContext,
+        }),
         signal: tokenAbort.signal,
       }), TOKEN_REQUEST_TIMEOUT_MS, "Zebu's authorization request timed out. Check your connection and retry.", {
         onTimeout: () => tokenAbort.abort(),
@@ -265,7 +269,13 @@ export function useZebuLive(options: { onAction: (action: LiveUiAction) => void;
                 });
               }
             }
-            if (message.toolCall) void executeToolCalls(message, liveSession);
+            if (message.toolCall) {
+              void executeToolCalls(message, liveSession).catch((caught) => {
+                if (connectionAttempt !== connectionAttemptRef.current || lifecycle !== lifecycleRef.current) return;
+                setError(caught instanceof Error ? caught.message : "The live workspace action ended before it completed. Retry the action.");
+                setState("error");
+              });
+            }
             if (message.serverContent?.turnComplete) {
               clearTurnTimeout();
               turnCompleteRef.current = true;
@@ -457,6 +467,18 @@ export function useZebuLive(options: { onAction: (action: LiveUiAction) => void;
     armTurnTimeout();
   }, [armTurnTimeout, connect]);
 
+  const syncPage = useCallback((pathname: string, currentContext?: string) => {
+    const session = sessionRef.current;
+    if (!session) return;
+    session.sendClientContent({
+      turns: [{
+        role: "user",
+        parts: [{ text: `[Zebra page context] The current route is now ${pathname}.${currentContext ? ` The selected item is ${currentContext}.` : ""} Use this route and selected item as the source of truth. Do not respond to this context update.` }],
+      }],
+      turnComplete: false,
+    });
+  }, []);
+
   const close = useCallback(() => {
     closingRef.current = true;
     lifecycleRef.current += 1;
@@ -533,6 +555,7 @@ export function useZebuLive(options: { onAction: (action: LiveUiAction) => void;
     stopListening,
     cancelPending,
     sendText,
+    syncPage,
     close,
   };
 }

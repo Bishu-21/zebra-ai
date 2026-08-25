@@ -19,6 +19,7 @@ import {
 import { signOut, authClient, useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/Toast";
+import { useDialogFocus } from "@/hooks/useDialogFocus";
 
 interface ProfileModalProps {
     isOpen: boolean;
@@ -30,6 +31,7 @@ interface ProfileModalProps {
 type ViewState = "menu" | "edit" | "security" | "billing";
 
 export function ProfileModal({ isOpen, onCloseAction, userName, userImage }: ProfileModalProps) {
+    const dialogRef = useDialogFocus(isOpen, onCloseAction);
     const router = useRouter();
     const { showToast } = useToast();
     const { data: session } = useSession();
@@ -137,6 +139,10 @@ export function ProfileModal({ isOpen, onCloseAction, userName, userImage }: Pro
             {isOpen && (
                 <div className="fixed inset-0 z-[150] overflow-hidden">
                     <m.div
+                        ref={dialogRef}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="account-center-title"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
@@ -162,7 +168,7 @@ export function ProfileModal({ isOpen, onCloseAction, userName, userImage }: Pro
                                         <RiArrowLeftLine size={18} />
                                     </button>
                                 )}
-                                <h3 className="text-base font-bold text-[#0A0A0A] tracking-tight">
+                                <h3 id="account-center-title" className="text-base font-bold text-[#0A0A0A] tracking-tight">
                                     {view === "menu" ? "Account Center" :
                                      view === "edit" ? "Edit Profile" :
                                      view === "security" ? "Security" :
@@ -170,6 +176,8 @@ export function ProfileModal({ isOpen, onCloseAction, userName, userImage }: Pro
                                 </h3>
                             </div>
                             <button
+                                type="button"
+                                aria-label="Close account center"
                                 onClick={onCloseAction}
                                 className="w-8 h-8 rounded-full bg-neutral-100 text-neutral-500 hover:bg-neutral-200 hover:text-[#0A0A0A] flex items-center justify-center transition-all"
                             >

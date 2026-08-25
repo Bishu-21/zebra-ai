@@ -2,7 +2,7 @@ import React from "react";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/lib/db";
-import { resumes as resumesTable, analysis as analysisTable, jobs as jobsTable } from "@/lib/schema";
+import { resumes as resumesTable, analysis as analysisTable, applications as applicationsTable } from "@/lib/schema";
 import { eq, inArray, desc } from "drizzle-orm";
 import {
     RiBarChartGroupedLine,
@@ -34,11 +34,14 @@ export default async function AnalyticsPage() {
     where: eq(resumesTable.userId, session.user.id),
   });
 
-  const userJobs = await db.query.jobs.findMany({
-    where: eq(jobsTable.userId, session.user.id),
-    orderBy: [desc(jobsTable.createdAt)],
-    limit: 5
+  const userApplications = await db.query.applications.findMany({
+    where: eq(applicationsTable.userId, session.user.id),
+    orderBy: [desc(applicationsTable.updatedAt)],
   });
+  const activeApplications = userApplications.filter((application) =>
+    !["Rejected", "Withdrawn", "Offer"].includes(application.status)
+  );
+  const recentApplications = userApplications.slice(0, 5);
 
   let avgScore = 0;
   let analysesCount = 0;
@@ -70,7 +73,7 @@ export default async function AnalyticsPage() {
 
   const stats = [
     { label: "Total Resumes", value: userResumes.length.toString(), sub: "Active Documents", icon: RiStackLine, color: "text-[#0A0A0A]" },
-    { label: "Active Applications", value: userJobs.length.toString(), sub: "Tracked in Pipeline", icon: RiRadarLine, color: "text-[#0A0A0A]" },
+    { label: "Active Applications", value: activeApplications.length.toString(), sub: "Tracked in Pipeline", icon: RiRadarLine, color: "text-[#0A0A0A]" },
     { label: "Average Match Score", value: `${avgScore}%`, sub: "ATS Alignment Score", icon: RiCompass3Line, color: "text-[#0A0A0A]" },
     { label: "Total Analyses", value: analysesCount.toString(), sub: "Analysis Reports", icon: RiBarChartGroupedLine, color: "text-[#0A0A0A]" }
   ];
@@ -141,14 +144,14 @@ export default async function AnalyticsPage() {
 
             <h2 className="text-lg font-bold tracking-tight mb-8">Recent activity</h2>
             <div className="space-y-6 flex-grow">
-                {userJobs.length > 0 ? userJobs.map((job) => (
-                    <div key={job.id} className="flex gap-4 items-start group">
+                {recentApplications.length > 0 ? recentApplications.map((application) => (
+                    <div key={application.id} className="flex gap-4 items-start group">
                         <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0 group-hover:bg-white group-hover:text-black transition-colors">
                             <RiFlashlightLine size={14} />
                         </div>
                         <div>
-                            <p className="text-xs font-bold tracking-tight line-clamp-1">{job.position}</p>
-                            <p className="text-[0.6rem] font-bold text-white/40 uppercase tracking-widest mt-1">{job.company}</p>
+                            <p className="text-xs font-bold tracking-tight line-clamp-1">{application.position}</p>
+                            <p className="text-[0.6rem] font-bold text-white/40 uppercase tracking-widest mt-1">{application.company} · {application.status}</p>
                         </div>
                     </div>
                 )) : (

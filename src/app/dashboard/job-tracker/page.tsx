@@ -2,7 +2,7 @@ import React from "react";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/lib/db";
-import { jobs as jobsTable, resumes as resumesTable, resumeVersions as resumeVersionsTable, applications as applicationsTable } from "@/lib/schema";
+import { resumes as resumesTable, resumeVersions as resumeVersionsTable, applications as applicationsTable } from "@/lib/schema";
 import { eq, desc } from "drizzle-orm";
 import { JobBoard } from "@/components/dashboard/JobBoard";
 import { DashboardPage, DashboardPageHeader, DashboardStat } from "@/components/dashboard/DashboardPage";
@@ -26,11 +26,6 @@ export default async function JobTrackerPage() {
     orderBy: [desc(applicationsTable.createdAt)],
   });
 
-  const userJobs = await db.query.jobs.findMany({
-    where: eq(jobsTable.userId, session.user.id),
-    orderBy: [desc(jobsTable.updatedAt)],
-  });
-
   const userResumes = await db.query.resumes.findMany({
       where: eq(resumesTable.userId, session.user.id),
       orderBy: [desc(resumesTable.updatedAt)],
@@ -41,10 +36,9 @@ export default async function JobTrackerPage() {
       orderBy: [desc(resumeVersionsTable.createdAt)],
   });
 
-  // Combine applications and jobs, preferring applications
-  const appIds = new Set(userApplications.map(a => a.id));
-  const formattedJobs = [
-      ...userApplications.map(app => ({
+  // Applications are the canonical pipeline records. Legacy jobs remain stored but
+  // are intentionally excluded so dashboard and analytics totals stay consistent.
+  const formattedJobs = userApplications.map(app => ({
           id: app.id,
           recordType: "application" as const,
           company: app.company,
@@ -56,22 +50,7 @@ export default async function JobTrackerPage() {
           resumeVersionId: app.resumeVersionId,
           deadline: app.deadline?.toISOString() || null,
           updatedAt: app.updatedAt.toISOString(),
-      })),
-      ...userJobs
-          .filter(j => !appIds.has(j.id))
-          .map(job => ({
-              id: job.id,
-              recordType: "job" as const,
-              company: job.company,
-              position: job.position,
-              status: job.status as "Draft" | "Applied" | "Preparing" | "Tailoring" | "Interviewing" | "Offer" | "Rejected" | "Withdrawn",
-              salary: job.salary,
-              url: job.url,
-              resumeId: job.resumeId,
-              resumeVersionId: job.resumeVersionId,
-              updatedAt: job.updatedAt.toISOString(),
-          }))
-  ];
+      }));
   const interviewRate = formattedJobs.length > 0
     ? Math.round((formattedJobs.filter((job) => ["Interviewing", "Offer", "Offers"].includes(String(job.status))).length / formattedJobs.length) * 100)
     : 0;

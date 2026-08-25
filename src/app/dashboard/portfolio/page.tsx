@@ -13,11 +13,11 @@ import {
     RiAddLine,
     RiStackLine,
     RiAwardLine,
-    RiShareBoxLine,
     RiCheckLine
 } from "react-icons/ri";
 
 import { getOrCreateUniquePortfolioSlug } from "@/lib/slug-generator";
+import { PortfolioStatusCard } from "@/components/dashboard/PortfolioStatusCard";
 
 export default async function PortfolioDashboardPage() {
     const session = await getSafeSession();
@@ -38,7 +38,9 @@ export default async function PortfolioDashboardPage() {
     });
 
     const portfolioSlug = await getOrCreateUniquePortfolioSlug(session.user.id, userData?.name);
-    const publicUrl = `/p/${portfolioSlug}`;
+    const portfolio = await db.query.portfolios.findFirst({
+        where: (table, { eq: equals }) => equals(table.userId, session.user.id),
+    });
 
     return (
         <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-8 pb-32">
@@ -52,37 +54,14 @@ export default async function PortfolioDashboardPage() {
                         Manage public proof items, project evidence, and credentials showcased in your shareable portfolio.
                     </p>
                 </div>
-                <div className="flex items-center gap-3">
-                    <Link
-                        href={publicUrl}
-                        target="_blank"
-                        className="px-4 py-2 bg-[#0A0A0A] text-white text-xs font-bold rounded-full hover:bg-neutral-800 transition-all flex items-center gap-2 shadow-2xs"
-                    >
-                        <RiExternalLinkLine size={14} /> View Public Portfolio
-                    </Link>
-                </div>
             </div>
 
-            {/* Public Share Card */}
-            <div className="p-6 bg-[#0A0A0A] text-white rounded-2xl space-y-4 shadow-sm border border-neutral-800">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="space-y-1">
-                        <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-400">
-                            Shareable Portfolio Link
-                        </span>
-                        <h3 className="text-base font-bold text-white flex items-center gap-2">
-                            <RiShareBoxLine size={18} /> zebra-ai.app{publicUrl}
-                        </h3>
-                    </div>
-                    <Link
-                        href={publicUrl}
-                        target="_blank"
-                        className="px-4 py-2 bg-white text-[#0A0A0A] text-xs font-bold rounded-full hover:bg-neutral-100 transition-colors inline-flex items-center gap-1.5 shrink-0"
-                    >
-                        Open Portfolio Page <RiExternalLinkLine size={14} />
-                    </Link>
-                </div>
-            </div>
+            <PortfolioStatusCard
+                slug={portfolioSlug}
+                title={portfolio?.title || userData?.name || "Portfolio"}
+                selectedWorkIds={((portfolio?.selectedWorkIds as string[] | null)?.length ? portfolio?.selectedWorkIds as string[] : workItems.map((item) => item.id))}
+                isPublished={portfolio?.isPublished ?? false}
+            />
 
             {/* Grid 1: Projects & Work Items */}
             <div className="space-y-4">
@@ -133,7 +112,7 @@ export default async function PortfolioDashboardPage() {
                                         href="/dashboard/work"
                                         className="text-xs font-semibold text-neutral-600 hover:text-[#0A0A0A]"
                                     >
-                                        Manage in Work Vault →
+                                        Manage in Work →
                                     </Link>
                                 </div>
                             </div>

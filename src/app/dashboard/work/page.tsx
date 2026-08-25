@@ -18,6 +18,7 @@ import {
     RiCloseLine
 } from "react-icons/ri";
 import { useToast } from "@/components/ui/Toast";
+import { ZebraLoader } from "@/components/ui/ZebraLoader";
 
 interface WorkItem {
     id: string;
@@ -205,9 +206,11 @@ export default function MyWorkPage() {
 
             {/* Content List */}
             {loading ? (
-                <div className="py-20 text-center text-neutral-400 text-sm font-medium">
-                    Loading your work...
-                </div>
+                <ZebraLoader
+                    variant="inline"
+                    label="Loading your work"
+                    detail="Gathering projects, achievements, and proof."
+                />
             ) : filteredItems.length === 0 ? (
                 <div className="py-16 px-6 border-2 border-dashed border-neutral-200 rounded-3xl text-center flex flex-col items-center justify-center space-y-4">
                     <div className="w-14 h-14 rounded-2xl bg-neutral-100 flex items-center justify-center text-neutral-400">

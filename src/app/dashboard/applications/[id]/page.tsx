@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { applications as applicationsTable, resumes as resumesTable, workItems as workItemsTable, certifications as certificationsTable } from "@/lib/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { ApplicationWorkspace } from "@/components/dashboard/ApplicationWorkspace";
+import { ZebuEntityContext } from "@/components/dashboard/ZebuEntityContext";
 
 export default async function ApplicationDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -76,11 +77,14 @@ export default async function ApplicationDetailPage({ params }: { params: Promis
 
 
     return (
+        <>
+        <ZebuEntityContext kind="application" id={application.id} title={`${application.position} at ${application.company}`} />
         <ApplicationWorkspace
             initialApplication={formattedApplication}
             resumes={formattedResumes}
             workItems={userWorkItems}
             certifications={userCertifications}
         />
+        </>
     );
 }

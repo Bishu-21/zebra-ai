@@ -70,7 +70,7 @@ export async function getOrCreateUniquePortfolioSlug(userId: string, userName?: 
             userId,
             slug: candidateSlug,
             title: userName || "Portfolio",
-            isPublished: true,
+            isPublished: false,
             theme: "default",
             createdAt: now,
             updatedAt: now,

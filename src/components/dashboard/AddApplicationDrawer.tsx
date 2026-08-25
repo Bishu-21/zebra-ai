@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, m } from "framer-motion";
 import { RiAddLine, RiArrowRightLine, RiCloseLine, RiLoader4Line, RiLink } from "react-icons/ri";
+import { useDialogFocus } from "@/hooks/useDialogFocus";
 
 type ResumeOption = { id: string; title: string };
 
@@ -15,6 +16,18 @@ export function AddApplicationDrawer({ resumes }: { resumes: ResumeOption[] }) {
   const [error, setError] = useState<string | null>(null);
   const [jobUrl, setJobUrl] = useState("");
   const [form, setForm] = useState({ company: "", position: "", deadline: "", jobDescription: "", selectedResumeId: "" });
+  const closeDrawer = useCallback(() => { if (!saving) setOpen(false); }, [saving]);
+  const dialogRef = useDialogFocus(open, closeDrawer);
+
+  useEffect(() => {
+    const openFromZebu = () => {
+      sessionStorage.removeItem("zebu:pending-event");
+      setOpen(true);
+    };
+    window.addEventListener("zebu:add-application", openFromZebu);
+    if (sessionStorage.getItem("zebu:pending-event") === "add_application") openFromZebu();
+    return () => window.removeEventListener("zebu:add-application", openFromZebu);
+  }, []);
 
   const update = (key: keyof typeof form, value: string) => setForm((current) => ({ ...current, [key]: value }));
 
@@ -52,9 +65,9 @@ export function AddApplicationDrawer({ resumes }: { resumes: ResumeOption[] }) {
       <AnimatePresence>
         {open ? (
           <div className="fixed inset-0 z-[120] flex justify-end">
-            <m.button aria-label="Close drawer" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => !saving && setOpen(false)} className="absolute inset-0 bg-black/35 backdrop-blur-sm" />
-            <m.aside initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ duration: 0.24, ease: "easeOut" }} className="relative flex h-full w-full max-w-lg flex-col border-l border-border-subtle bg-background shadow-[var(--shadow-2xl)]">
-              <header className="flex items-center justify-between border-b border-border-subtle px-6 py-5"><div><h2 className="text-lg font-bold">Add application</h2><p className="mt-1 text-xs text-muted-foreground">Start with a listing URL or enter the details manually.</p></div><button onClick={() => !saving && setOpen(false)} className="rounded-full bg-muted p-2 text-muted-foreground hover:text-foreground"><RiCloseLine size={18} /></button></header>
+            <m.button aria-label="Close drawer" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeDrawer} className="absolute inset-0 bg-black/35 backdrop-blur-sm" />
+            <m.aside ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="add-application-title" initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ duration: 0.24, ease: "easeOut" }} className="relative flex h-full w-full max-w-lg flex-col border-l border-border-subtle bg-background shadow-[var(--shadow-2xl)]">
+              <header className="flex items-center justify-between border-b border-border-subtle px-6 py-5"><div><h2 id="add-application-title" className="text-lg font-bold">Add application</h2><p className="mt-1 text-xs text-muted-foreground">Start with a listing URL or enter the details manually.</p></div><button type="button" aria-label="Close add application" onClick={closeDrawer} className="rounded-full bg-muted p-2 text-muted-foreground hover:text-foreground"><RiCloseLine size={18} /></button></header>
               <div className="flex-1 space-y-6 overflow-y-auto p-6">
                 <div className="rounded-[var(--radius-lg)] border border-border-subtle bg-muted/40 p-4">
                   <label className="text-xs font-bold text-foreground">Paste job URL</label>

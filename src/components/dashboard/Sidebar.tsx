@@ -105,6 +105,7 @@ export function Sidebar({
 
             {/* Sidebar Desktop & Mobile */}
             <m.aside
+                id="dashboard-navigation"
                 initial={false}
                 animate={{
                     x: isMobile ? (isDrawerOpen ? 0 : "-100%") : 0,
@@ -113,7 +114,7 @@ export function Sidebar({
                 transition={{ type: "spring", damping: 30, stiffness: 300 }}
             >
                 <div className="flex flex-col h-full">
-                    {/* Header Logo + Plan Pill */}
+                    {/* Header Logo */}
                     <div className="h-16 px-6 border-b border-neutral-200/70 flex items-center justify-between shrink-0">
                         <Link href="/dashboard" className="flex items-center gap-2.5 group" onClick={closeDrawer}>
                             <Image
@@ -123,12 +124,7 @@ export function Sidebar({
                                 height={28}
                                 className="w-7 h-7 object-contain group-hover:scale-105 transition-transform"
                             />
-                            <div className="flex items-center gap-2">
-                                <h1 className="text-lg font-bold tracking-tight text-[#0A0A0A]">Zebra AI</h1>
-                                <span className="px-2 py-0.5 text-[10px] font-semibold bg-neutral-200/80 text-[#0A0A0A] rounded-full border border-neutral-300">
-                                    {plan}
-                                </span>
-                            </div>
+                            <h1 className="text-lg font-bold tracking-tight text-[#0A0A0A]">Zebra AI</h1>
                         </Link>
 
                         {isMobile && (

@@ -40,6 +40,7 @@ export const zebuDisplayCardSchema = z.object({
 export const zebuTurnSchema = z.object({
   message: z.string().trim().min(1).max(2_000),
   currentPage: z.string().max(300).optional(),
+  currentContext: z.string().trim().max(300).optional(),
   history: z.array(z.object({
     role: z.enum(["user", "assistant"]), content: z.string().trim().min(1).max(2_000),
   })).max(20).optional().default([]),

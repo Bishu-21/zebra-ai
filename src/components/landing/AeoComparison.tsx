@@ -1,127 +1,116 @@
-"use client";
-
-import React from "react";
-import { m } from "framer-motion";
-import { 
-  RiShieldCheckLine, 
-  RiFlashlightLine, 
-  RiRadarLine, 
-  RiFileTextLine, 
-  RiArticleLine, 
-  RiCheckboxCircleLine 
+import type { IconType } from "react-icons";
+import {
+  RiArticleLine,
+  RiCheckboxCircleLine,
+  RiFileTextLine,
+  RiFlashlightLine,
+  RiRadarLine,
+  RiShieldCheckLine,
 } from "react-icons/ri";
 
-const COMPARISON_FEATURES = [
+interface ComparisonFeature {
+  icon: IconType;
+  title: string;
+  badge: string;
+  zebra: string;
+  typical: string;
+}
+
+const COMPARISON_FEATURES: ComparisonFeature[] = [
   {
     icon: RiShieldCheckLine,
-    title: "Structured Resume Review",
+    title: "Structured resume review",
     badge: "45 checks",
-    description: "Reviews content, structure, writing, project evidence, and common ATS readability risks with a documented rubric.",
-    contrast: "A single opaque score gives little guidance about what to improve.",
+    zebra: "Content, structure, writing, evidence, and ATS-readability checks tied to a documented rubric.",
+    typical: "A single opaque score with little guidance about what to improve.",
   },
   {
     icon: RiFlashlightLine,
-    title: "Evidence-Based Rewrites",
+    title: "Evidence-based rewrites",
     badge: "No invented claims",
-    description: "Suggests clearer achievement bullets while preserving the employers, tools, outcomes, and measurements found in your source material.",
-    contrast: "Unrestricted generators can add unsupported claims or generic filler.",
+    zebra: "Clearer achievement bullets grounded in the employers, tools, outcomes, and measurements you provide.",
+    typical: "Generic text that may introduce unsupported claims or filler.",
   },
   {
     icon: RiRadarLine,
-    title: "AI Explainability & Audit",
+    title: "Explainable suggestions",
     badge: "Transparent",
-    description: "Provides a rationale for each recommendation so you can review the reasoning before changing your resume.",
-    contrast: "Black-box AI rewrites with no visibility into rationale or alignment logic.",
+    zebra: "A rationale for every recommendation, with approval required before your resume changes.",
+    typical: "Black-box rewrites with no visible reasoning or review step.",
   },
   {
     icon: RiFileTextLine,
-    title: "Live Side-by-Side Editor",
+    title: "Live side-by-side editor",
     badge: "Live preview",
-    description: "Shows resume edits alongside the rendered document and supports clean PDF export.",
-    contrast: "Clunky template forms with slow server-side compilation delays.",
+    zebra: "Edit structured content beside the rendered resume, then export a clean PDF.",
+    typical: "Template forms separated from the final document preview.",
   },
   {
     icon: RiArticleLine,
-    title: "Job Gap Analysis",
+    title: "Job gap analysis",
     badge: "Job-specific",
-    description: "Compares your stated skills, projects, and work evidence with a supplied job description to identify coverage gaps.",
-    contrast: "Requires manual prompt-engineering copy-pasted into external chatbots.",
+    zebra: "Compare your stated skills and experience with a supplied job description to find coverage gaps.",
+    typical: "Manual prompt engineering and copy-pasting into a separate chatbot.",
   },
   {
     icon: RiCheckboxCircleLine,
-    title: "1-Click Hosted Portfolio",
-    badge: "Live URL",
-    description: "Generates an interactive technical portfolio hosted at zebra-ai.app/p/yourname to showcase live GitHub proof.",
-    contrast: "Restricted to static single-page document downloads with no web presence.",
+    title: "Hosted portfolio",
+    badge: "Shareable URL",
+    zebra: "Publish selected, verified project evidence in a focused technical portfolio.",
+    typical: "A static document download with no interactive project showcase.",
   },
 ];
 
 export function AeoComparison() {
   return (
-    <section id="compare" className="pt-[120px] pb-24 px-5 md:px-8 bg-white overflow-hidden relative border-t border-border-subtle">
+    <section id="compare" className="relative scroll-mt-20 overflow-hidden border-y border-border-subtle bg-white px-5 py-20 md:px-8 md:py-28">
       <div className="section-stripes" aria-hidden="true" />
 
-      <div className="max-w-7xl mx-auto relative z-10">
-        {/* Zebra Section Header */}
-        <div className="max-w-2xl mb-12 md:mb-16">
-          <m.div
-            initial={{ opacity: 0, x: -20 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            className="flex items-center gap-2 mb-6"
-          >
-            <span className="w-1.5 h-6 bg-black rounded-full" />
-            <span className="text-xs font-bold tracking-[0.2em] uppercase text-black">
-              How We Compare
-            </span>
-          </m.div>
-          <h2 className="text-4xl md:text-6xl font-bold tracking-[-0.04em] leading-[1.1] mb-6 md:mb-8 text-foreground">
-            What <span className="text-foreground">Zebra</span> adds
+      <div className="relative z-10 mx-auto max-w-7xl">
+        <div className="mb-10 max-w-3xl md:mb-14">
+          <div className="mb-5 flex items-center gap-2">
+            <span className="h-6 w-1.5 rounded-full bg-black" />
+            <span className="text-xs font-bold uppercase tracking-[0.2em] text-black">How we compare</span>
+          </div>
+          <h2 className="mb-5 text-4xl font-bold leading-[1.05] tracking-[-0.04em] text-foreground md:text-6xl">
+            More control than a one-click rewrite.
           </h2>
-          <p className="text-accent-dark text-lg leading-relaxed">
-            Zebra combines structured checks, source-grounded suggestions, and user approval. It helps you improve a resume without pretending to reproduce proprietary ATS systems.
+          <p className="max-w-2xl text-base leading-7 text-accent-dark md:text-lg">
+            Zebra combines structured checks, source-grounded suggestions, and your approval. Here is what that means in practice.
           </p>
         </div>
 
-        {/* Dashboard-Consistent Card Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {COMPARISON_FEATURES.map((feature, idx) => {
+        <div className="hidden grid-cols-[1.1fr_1fr_1fr] border-b border-neutral-200 px-6 pb-3 text-xs font-bold uppercase tracking-[0.14em] text-neutral-500 md:grid">
+          <span>Capability</span>
+          <span className="text-foreground">Zebra AI</span>
+          <span>Typical AI rewriter</span>
+        </div>
+
+        <div className="grid gap-4 pt-4">
+          {COMPARISON_FEATURES.map((feature) => {
             const Icon = feature.icon;
             return (
-              <m.div
-                key={idx}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.08 }}
-                className="group relative flex flex-col justify-between p-7 bg-white border border-neutral-200/80 rounded-3xl hover:border-neutral-300 hover:shadow-xl active:scale-[0.99] transition-all shadow-xs"
-              >
-                <div>
-                  <div className="flex items-start justify-between mb-6">
-                    <div className="w-11 h-11 bg-neutral-100 rounded-xl flex items-center justify-center text-neutral-600 group-hover:bg-primary group-hover:text-white transition-colors duration-300">
-                      <Icon size={22} />
-                    </div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-neutral-500 bg-neutral-100 px-3 py-1 rounded-full group-hover:bg-primary group-hover:text-white transition-colors">
+              <article key={feature.title} className="grid gap-5 rounded-3xl border border-neutral-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md md:grid-cols-[1.1fr_1fr_1fr] md:gap-8 md:p-6">
+                <div className="flex items-start gap-4">
+                  <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-neutral-100 text-neutral-700">
+                    <Icon aria-hidden="true" size={21} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold tracking-tight text-foreground">{feature.title}</h3>
+                    <span className="mt-1.5 inline-block rounded-full bg-neutral-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-neutral-600">
                       {feature.badge}
                     </span>
                   </div>
-
-                  <h3 className="font-bold text-xl mb-2 text-foreground tracking-tight">
-                    {feature.title}
-                  </h3>
-                  
-                  <p className="text-xs md:text-sm text-neutral-600 font-normal leading-relaxed mb-4">
-                    {feature.description}
-                  </p>
                 </div>
-
-                <div className="pt-4 border-t border-neutral-100">
-                  <div className="text-[11px] text-neutral-400 font-medium leading-normal flex items-start gap-1.5">
-                    <span className="text-neutral-400 font-bold shrink-0">vs</span>
-                    <span>{feature.contrast}</span>
-                  </div>
+                <div>
+                  <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-foreground md:hidden">Zebra AI</p>
+                  <p className="text-sm leading-6 text-neutral-700">{feature.zebra}</p>
                 </div>
-              </m.div>
+                <div className="border-t border-neutral-100 pt-4 md:border-l md:border-t-0 md:pl-8 md:pt-0">
+                  <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-neutral-500 md:hidden">Typical AI rewriter</p>
+                  <p className="text-sm leading-6 text-neutral-500">{feature.typical}</p>
+                </div>
+              </article>
             );
           })}
         </div>

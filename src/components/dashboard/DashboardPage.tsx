@@ -31,7 +31,7 @@ export function DashboardPageHeader({
 export function DashboardStat({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="min-w-28 rounded-[var(--radius-md)] border border-border-subtle bg-white px-4 py-3 shadow-[var(--shadow-sm)]">
-      <p className="text-[0.625rem] font-semibold uppercase tracking-[0.1em] text-muted-foreground">{label}</p>
+      <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.1em] text-muted-foreground">{label}</p>
       <p className="mt-0.5 text-lg font-bold tracking-tight text-foreground">{value}</p>
     </div>
   );

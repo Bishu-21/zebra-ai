@@ -1,6 +1,7 @@
 import React, { Suspense } from "react";
 import { SettingsView } from "@/components/dashboard/SettingsView";
 import { Metadata } from "next";
+import { ZebraLoader } from "@/components/ui/ZebraLoader";
 
 export const metadata: Metadata = {
   title: "Settings | Zebra AI",
@@ -9,7 +10,15 @@ export const metadata: Metadata = {
 
 export default function SettingsPage() {
   return (
-    <Suspense fallback={<div className="p-10 text-xs text-neutral-400">Loading settings...</div>}>
+    <Suspense
+      fallback={(
+        <ZebraLoader
+          variant="inline"
+          label="Loading settings"
+          detail="Checking your workspace preferences."
+        />
+      )}
+    >
       <SettingsView />
     </Suspense>
   );

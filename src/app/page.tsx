@@ -35,7 +35,7 @@ export default function Home() {
 
       {/* TopNavBar */}
       <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-[12px] border-b-[1px] border-border-subtle">
-        <div className="max-w-[1400px] mx-auto px-6 h-20 flex items-center justify-between">
+        <div className="relative max-w-[1400px] mx-auto px-5 md:px-6 h-20 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
             <Image
                 src="/zebra_star.png"
@@ -53,11 +53,14 @@ export default function Home() {
             <Link className="text-accent-gray hover:text-foreground text-xs font-bold uppercase tracking-widest transition-all duration-200" href="#pricing">Pricing</Link>
             <Link className="text-accent-gray hover:text-foreground text-xs font-bold uppercase tracking-widest transition-all duration-200" href="#faq">FAQ</Link>
           </div>
-          <Suspense fallback={
-            <div className="w-28 h-10 bg-black/5 rounded-xl" />
-          }>
-            <NavAuth />
-          </Suspense>
+          <div className="hidden md:block">
+            <Suspense fallback={
+              <div className="w-28 h-10 bg-black/5 rounded-xl" />
+            }>
+              <NavAuth />
+            </Suspense>
+          </div>
+          <PublicMobileNav />
         </div>
       </nav>
 
@@ -76,8 +79,8 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="w-full bg-white border-t border-border-subtle pb-12 md:pb-0">
-        <div className="flex flex-col md:flex-row justify-between items-center px-12 py-16 gap-12 max-w-7xl mx-auto">
+      <footer className="w-full bg-white border-t border-border-subtle">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center px-5 md:px-12 py-14 md:py-16 gap-10 md:gap-12 max-w-7xl mx-auto">
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <Image
@@ -115,8 +118,6 @@ export default function Home() {
           </div>
         </div>
       </footer>
-
-      <PublicMobileNav />
     </div>
   );
 }
