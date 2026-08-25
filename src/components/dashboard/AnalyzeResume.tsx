@@ -10,7 +10,6 @@ import {
     RiArrowRightSLine,
     RiCloseCircleLine,
     RiInformationLine,
-    RiRadarLine,
     RiCheckboxCircleLine
 } from "react-icons/ri";
 import { useRouter } from "next/navigation";
@@ -31,6 +30,16 @@ export function AnalyzeResume() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+
+  React.useEffect(() => {
+    const open = () => {
+      setIsOpen(true);
+      sessionStorage.removeItem("zebu:pending-tool");
+    };
+    window.addEventListener("zebu:open-resume_analysis", open);
+    if (sessionStorage.getItem("zebu:pending-tool") === "resume_analysis") open();
+    return () => window.removeEventListener("zebu:open-resume_analysis", open);
+  }, []);
 
   const handleAnalysisFailure = (err: unknown) => {
     setError(err instanceof Error ? err.message : "Analysis failed");
@@ -148,7 +157,7 @@ export function AnalyzeResume() {
         className="group/card relative overflow-hidden flex flex-col justify-between w-full h-full cursor-pointer transition-all p-7 bg-white border border-neutral-200/80 rounded-3xl hover:border-neutral-300 hover:shadow-xl active:scale-[0.99] group shadow-xs"
       >
         <div className="flex items-start justify-between mb-8">
-            <div className="w-11 h-11 bg-neutral-100 rounded-xl flex items-center justify-center text-neutral-600 group-hover/card:bg-[#0A0A0A] group-hover/card:text-white transition-colors duration-300">
+            <div className="w-11 h-11 bg-neutral-100 rounded-full flex items-center justify-center text-neutral-600 group-hover/card:bg-[#0A0A0A] group-hover/card:text-white transition-colors duration-300">
                 <RiScanLine size={22} />
             </div>
             <div className="flex items-center gap-1 opacity-0 group-hover/card:opacity-100 transition-opacity">
@@ -186,11 +195,11 @@ export function AnalyzeResume() {
                   {/* Header */}
                   <div className="px-6 py-5 border-b border-neutral-200/60 flex items-center justify-between bg-white sticky top-0 z-20">
                       <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-[#0A0A0A] text-white flex items-center justify-center shadow-2xs shrink-0">
-                              <RiRadarLine size={20} />
+                          <div className="w-11 h-11 rounded-full bg-[#0A0A0A] text-white flex items-center justify-center shadow-2xs shrink-0">
+                              <RiScanLine size={22} />
                           </div>
                           <div>
-                              <h2 className="text-lg font-bold tracking-tight text-[#0A0A0A]">Resume Analysis</h2>
+                              <h2 className="text-lg font-bold tracking-tight text-[#0A0A0A]">Check My Resume</h2>
                               <p className="text-xs font-normal text-neutral-500">Analyze structure, content, and improvement gaps</p>
                           </div>
                       </div>

@@ -6,22 +6,27 @@ import { Header } from "./Header";
 import { ProfileModal } from "./ProfileModal";
 import { ToastProvider } from "../ui/Toast";
 import { SettingsProvider } from "@/context/SettingsContext";
+import { CareerProfilePrompt } from "./CareerProfilePrompt";
+import { ZebuAssistant } from "./ZebuAssistant";
+import { ZebuProvider } from "@/context/ZebuContext";
 
 interface DashboardShellProps {
     plan: string;
     credits: number;
     userName: string;
     userImage?: string | null;
+    shouldPromptCareerProfile: boolean;
     children: React.ReactNode;
 }
 
-export function DashboardShell({ plan, credits, userName, userImage, children }: DashboardShellProps) {
+export function DashboardShell({ plan, credits, userName, userImage, shouldPromptCareerProfile, children }: DashboardShellProps) {
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const [isNavOpen, setIsNavOpen] = useState(false);
 
     return (
         <SettingsProvider>
-            <ToastProvider>
+            <ZebuProvider>
+              <ToastProvider>
                 <div className="min-h-screen bg-background flex font-sans text-foreground overflow-hidden">
                     <Sidebar
                         plan={plan}
@@ -53,8 +58,11 @@ export function DashboardShell({ plan, credits, userName, userImage, children }:
                         userName={userName}
                         userImage={userImage}
                     />
+                    <CareerProfilePrompt shouldPrompt={shouldPromptCareerProfile} />
+                    <ZebuAssistant />
                 </div>
-            </ToastProvider>
+              </ToastProvider>
+            </ZebuProvider>
         </SettingsProvider>
     );
 }

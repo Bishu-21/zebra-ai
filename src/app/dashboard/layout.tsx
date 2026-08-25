@@ -46,6 +46,7 @@ export default async function DashboardLayout({
     const { user } = session;
     let credits = 0;
     let plan = "Free";
+    let shouldPromptCareerProfile = false;
 
     try {
         // Fetch fresh user data from DB with fallback for transient DB outages
@@ -55,6 +56,7 @@ export default async function DashboardLayout({
         if (currentUser) {
             credits = currentUser.credits ?? 0;
             plan = currentUser.plan ?? "Free";
+            shouldPromptCareerProfile = currentUser.careerProfileStatus === "pending";
         }
     } catch (error) {
         const msg = sanitizeSecretText(error instanceof Error ? error.message : String(error));
@@ -67,6 +69,7 @@ export default async function DashboardLayout({
             credits={credits}
             userName={user.name}
             userImage={user.image}
+            shouldPromptCareerProfile={shouldPromptCareerProfile}
         >
             {children}
         </DashboardShell>

@@ -266,7 +266,7 @@ export const aiParsedResumeSchema = z.object({
 const auditItemSchema = z.object({
     id: aiPlainString,
     checkpoint: aiPlainString,
-    status: z.enum(["Pass", "Fail", "Not Assessed"]),
+    status: z.enum(["Pass", "Partial", "Fail", "Not Applicable", "Not Assessed"]),
     fix: aiPlainString,
     evidence: aiPlainString,
 });
@@ -294,7 +294,7 @@ export const aiResumeAnalysisSchema = z.object({
         problem: aiPlainString,
         after: aiPlainString,
         rationale: aiPlainString,
-    })).max(10)),
+    })).max(6)),
 });
 
 export const aiRoleMatchSchema = z.object({

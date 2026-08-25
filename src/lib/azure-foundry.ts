@@ -6,6 +6,7 @@ export type TaskType =
   | "audit"
   | "tailor"
   | "copilot"
+  | "zebu"
   | "parse"
   | "cover-letter"
   | "job-extraction"
@@ -19,13 +20,30 @@ export interface TaskBudget {
 export const TASK_BUDGETS: Record<TaskType, TaskBudget> = {
   chat: { maxOutputTokens: 1200, reasoningEffort: "low" },
   copilot: { maxOutputTokens: 500, reasoningEffort: "low" },
-  audit: { maxOutputTokens: 8000, reasoningEffort: "low" },
+  zebu: { maxOutputTokens: 500, reasoningEffort: "low" },
+  audit: { maxOutputTokens: 16_000, reasoningEffort: "medium" },
   tailor: { maxOutputTokens: 3000, reasoningEffort: "medium" },
   parse: { maxOutputTokens: 5000, reasoningEffort: "low" },
   "cover-letter": { maxOutputTokens: 2200, reasoningEffort: "medium" },
   "job-extraction": { maxOutputTokens: 900, reasoningEffort: "low" },
   project: { maxOutputTokens: 2000, reasoningEffort: "medium" },
 };
+
+export const DEFAULT_AZURE_REQUEST_OPTIONS = {
+  timeout: 45_000,
+  maxRetries: 1,
+} as const;
+
+export const AUDIT_AZURE_REQUEST_OPTIONS = {
+  timeout: 150_000,
+  maxRetries: 0,
+} as const;
+
+export function getAzureRequestOptions(task: TaskType) {
+  return task === "audit"
+    ? AUDIT_AZURE_REQUEST_OPTIONS
+    : DEFAULT_AZURE_REQUEST_OPTIONS;
+}
 
 const MAX_HISTORY_MESSAGES = 12;
 const MAX_HISTORY_MESSAGE_CHARS = 12_000;
@@ -48,7 +66,10 @@ export interface GenerationOptions {
   prompt: string;
   systemPrompt?: string;
   history?: unknown;
+  responseFormat?: OpenAI.Responses.ResponseFormatTextJSONSchemaConfig;
   onStreamFailure?: (error: unknown) => Promise<void> | void;
+  allowGeminiFallback?: boolean;
+  preferGemini?: boolean;
 }
 
 export class AiProviderConfigurationError extends Error {
@@ -162,8 +183,8 @@ export function createAzureFoundryClient(
       "api-key": config.apiKey,
       Authorization: null,
     },
-    maxRetries: 1,
-    timeout: 45_000,
+    maxRetries: DEFAULT_AZURE_REQUEST_OPTIONS.maxRetries,
+    timeout: DEFAULT_AZURE_REQUEST_OPTIONS.timeout,
     fetch: fetchImplementation,
   });
 }
@@ -252,6 +273,7 @@ function buildAzureRequest(
     input: buildAzureResponseInput(options),
     max_output_tokens: budget.maxOutputTokens,
     reasoning: { effort: budget.reasoningEffort },
+    text: options.responseFormat ? { format: options.responseFormat } : undefined,
     store: false,
   } satisfies OpenAI.Responses.ResponseCreateParamsNonStreaming;
 }
@@ -345,6 +367,8 @@ async function generateGeminiResponse(
     config: {
       maxOutputTokens: budget.maxOutputTokens,
       systemInstruction: options.systemPrompt,
+      responseMimeType: options.responseFormat ? "application/json" : undefined,
+      responseJsonSchema: options.responseFormat?.schema,
     },
   });
 
@@ -357,7 +381,8 @@ async function generateGeminiResponse(
 export async function generateAiResponse(
   options: GenerationOptions,
 ): Promise<string> {
-  const gemini = getGeminiClient();
+  const gemini = options.allowGeminiFallback === false ? null : getGeminiClient();
+  if (options.preferGemini && gemini) return generateGeminiResponse(options, gemini);
   const azureConfig = getConfiguredAzureOrFallback(gemini);
 
   if (azureConfig) {
@@ -365,6 +390,7 @@ export async function generateAiResponse(
       const client = getAzureFoundryClient(azureConfig);
       const response = await client.responses.create(
         buildAzureRequest(options, azureConfig),
+        getAzureRequestOptions(options.task),
       );
 
       const responseText = getUsableAzureResponseText(response);
@@ -430,6 +456,7 @@ export async function generateAiStream(
             const client = getAzureFoundryClient(azureConfig);
             const azureStream = client.responses.stream(
               buildAzureRequest(options, azureConfig),
+              getAzureRequestOptions(options.task),
             );
             activeAzureStream = azureStream;
 

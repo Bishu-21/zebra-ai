@@ -78,8 +78,8 @@ export function PublicMobileNav() {
               href={`#${section.id}`}
               className={`px-3.5 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap min-h-[38px] flex items-center justify-center ${
                 isActive
-                  ? "bg-[#0A0A0A] text-white shadow-xs"
-                  : "text-neutral-500 hover:text-[#0A0A0A] hover:bg-neutral-100/60"
+                  ? "bg-primary text-white shadow-xs"
+                  : "text-neutral-500 hover:text-foreground hover:bg-neutral-100/60"
               }`}
             >
               {section.label}

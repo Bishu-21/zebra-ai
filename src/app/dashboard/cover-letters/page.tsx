@@ -10,6 +10,7 @@ import {
     RiTimeLine
 } from "react-icons/ri";
 import { CoverLetterActions } from "@/components/dashboard/CoverLetterActions";
+import { DashboardPage, DashboardPageHeader } from "@/components/dashboard/DashboardPage";
 
 function formatTimeAgo(date: Date) {
   const now = new Date();
@@ -22,7 +23,7 @@ function formatTimeAgo(date: Date) {
 
 function CoverLettersLoadingState() {
   return (
-    <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-8 pb-32 animate-pulse">
+    <DashboardPage className="animate-pulse">
       <div className="flex items-center justify-between gap-6">
         <div className="space-y-3">
           <div className="h-7 w-52 rounded-lg bg-black/10" />
@@ -32,10 +33,10 @@ function CoverLettersLoadingState() {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
         {[0, 1, 2].map((item) => (
-          <div key={item} className="h-72 rounded-[2rem] border border-black/5 bg-white" />
+          <div key={item} className="h-64 rounded-[var(--radius-xl)] border border-border-subtle bg-white" />
         ))}
       </div>
-    </div>
+    </DashboardPage>
   );
 }
 
@@ -66,52 +67,46 @@ async function CoverLettersContent({ userId }: { userId: string }) {
   ]);
 
   return (
-    <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-8 pb-32">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-4">
-        <div className="max-w-2xl">
-          <h1 className="text-2xl font-bold tracking-tight text-[#0A0A0A] mb-1">Cover Letter Vault</h1>
-          <p className="text-xs font-normal text-neutral-500 leading-relaxed">
-            AI-generated cover letters tailored to specific job descriptions. High conversion, surgically precise.
-          </p>
-        </div>
-        <div className="w-full md:w-auto">
-          <GenerateCoverLetter resumes={userResumes} />
-        </div>
-      </div>
+    <DashboardPage>
+      <DashboardPageHeader
+        title="Cover Letters"
+        description="Create evidence-grounded drafts for a specific role, then review and edit every claim before use."
+        actions={<GenerateCoverLetter resumes={userResumes} />}
+      />
 
       {letters.length === 0 ? (
-        <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] border border-[#EAEAEA] p-12 md:p-24 flex flex-col items-center justify-center text-center shadow-sm">
-          <div className="w-20 h-20 md:w-24 md:h-24 bg-[#0A0A0A]/5 rounded-[1.5rem] md:rounded-[2.2rem] flex items-center justify-center text-[#0A0A0A] mb-8 md:mb-10 shadow-inner">
-            <RiMagicLine size={40} className="md:w-12 md:h-12" />
+        <div className="bg-white rounded-[var(--radius-xl)] border border-border-subtle p-10 md:p-16 flex flex-col items-center justify-center text-center shadow-[var(--shadow-sm)]">
+          <div className="w-14 h-14 bg-muted rounded-[var(--radius-lg)] flex items-center justify-center text-foreground mb-6">
+            <RiMagicLine size={26} />
           </div>
-          <h2 className="text-2xl md:text-3xl font-extrabold mb-4 md:mb-5 tracking-tight text-[#0A0A0A]">No Cover Letters Yet</h2>
-          <p className="text-[#6B6B6B] mb-8 md:mb-12 max-w-md leading-relaxed text-base md:text-lg">
+          <h2 className="text-lg font-bold mb-2 tracking-tight text-foreground">No cover letters yet</h2>
+          <p className="text-sm text-muted-foreground mb-6 max-w-md leading-6">
             Generate your first professional cover letter by matching your resume to a job description.
           </p>
           <GenerateCoverLetter resumes={userResumes} />
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
           {letters.map((letter) => (
             <div
                 key={letter.id}
-                className="group relative bg-white border border-[#EAEAEA] rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-8 flex flex-col hover:border-[#0A0A0A]/30 hover:shadow-xl hover:shadow-[#0A0A0A]/5 transition-all duration-300"
+                className="group relative bg-white border border-border-subtle rounded-[var(--radius-xl)] p-6 flex flex-col hover:border-neutral-300 hover:shadow-[var(--shadow-md)] transition-all"
             >
-                <div className="flex items-start justify-between mb-8">
-                    <div className="w-14 h-14 bg-[#F9F9F9] rounded-2xl flex items-center justify-center text-[#B5B5B5] border border-[#EAEAEA] group-hover:border-[#0A0A0A]/30 group-hover:bg-[#0A0A0A]/5 group-hover:text-[#0A0A0A] transition-all duration-500 shadow-sm">
-                        <RiFileTextLine size={28} />
+                <div className="flex items-start justify-between mb-6">
+                    <div className="w-11 h-11 bg-muted rounded-[var(--radius-md)] flex items-center justify-center text-muted-foreground border border-border-subtle group-hover:bg-foreground group-hover:text-white transition-colors">
+                        <RiFileTextLine size={20} />
                     </div>
-                    <div className="flex items-center gap-2 text-[0.6rem] font-black uppercase tracking-[0.15em] text-[#B5B5B5] bg-[#F9F9F9] px-4 py-2 rounded-full group-hover:text-[#0A0A0A] group-hover:bg-[#0A0A0A]/5 transition-all duration-300">
+                    <div className="flex items-center gap-1.5 text-[0.6875rem] font-semibold text-muted-foreground bg-muted px-3 py-1.5 rounded-full">
                         <RiTimeLine size={12} className="opacity-50" />
                         {formatTimeAgo(letter.createdAt)}
                     </div>
                 </div>
 
                 <div className="flex-grow">
-                    <h3 className="text-xl font-black text-[#0A0A0A] mb-4 leading-tight group-hover:text-[#0A0A0A] transition-colors line-clamp-2">
+                    <h3 className="text-base font-bold text-foreground mb-3 leading-snug line-clamp-2">
                         {letter.title}
                     </h3>
-                    <div className="relative text-[0.9rem] text-[#6B6B6B] line-clamp-4 leading-[1.6] font-medium mb-8 overflow-hidden h-24">
+                    <div className="relative text-sm text-muted-foreground line-clamp-4 leading-6 font-normal mb-6 overflow-hidden h-24">
                         {letter.content.replace(/\*/g, '')}
                         <div className="absolute bottom-0 left-0 w-full h-12 bg-gradient-to-t from-white to-transparent"></div>
                     </div>
@@ -127,6 +122,6 @@ async function CoverLettersContent({ userId }: { userId: string }) {
           ))}
         </div>
       )}
-    </div>
+    </DashboardPage>
   );
 }

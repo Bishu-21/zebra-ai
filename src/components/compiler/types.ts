@@ -92,7 +92,7 @@ export interface AuditItem {
     id?: string;
     checkpoint?: string;
     message?: string;
-    status?: "Pass" | "Fail" | "Not Assessed";
+    status?: "Pass" | "Partial" | "Fail" | "Not Applicable" | "Not Assessed";
     fix?: string;
     evidence?: string;
 }

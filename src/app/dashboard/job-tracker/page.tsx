@@ -5,6 +5,8 @@ import { db } from "@/lib/db";
 import { jobs as jobsTable, resumes as resumesTable, resumeVersions as resumeVersionsTable, applications as applicationsTable } from "@/lib/schema";
 import { eq, desc } from "drizzle-orm";
 import { JobBoard } from "@/components/dashboard/JobBoard";
+import { DashboardPage, DashboardPageHeader, DashboardStat } from "@/components/dashboard/DashboardPage";
+import { AddApplicationDrawer } from "@/components/dashboard/AddApplicationDrawer";
 
 export default async function JobTrackerPage() {
   let session = null;
@@ -44,6 +46,7 @@ export default async function JobTrackerPage() {
   const formattedJobs = [
       ...userApplications.map(app => ({
           id: app.id,
+          recordType: "application" as const,
           company: app.company,
           position: app.position,
           status: app.status as "Draft" | "Applied" | "Preparing" | "Tailoring" | "Interviewing" | "Offer" | "Rejected" | "Withdrawn",
@@ -51,12 +54,14 @@ export default async function JobTrackerPage() {
           url: app.url,
           resumeId: app.selectedResumeId,
           resumeVersionId: app.resumeVersionId,
+          deadline: app.deadline?.toISOString() || null,
           updatedAt: app.updatedAt.toISOString(),
       })),
       ...userJobs
           .filter(j => !appIds.has(j.id))
           .map(job => ({
               id: job.id,
+              recordType: "job" as const,
               company: job.company,
               position: job.position,
               status: job.status as "Draft" | "Applied" | "Preparing" | "Tailoring" | "Interviewing" | "Offer" | "Rejected" | "Withdrawn",
@@ -67,43 +72,23 @@ export default async function JobTrackerPage() {
               updatedAt: job.updatedAt.toISOString(),
           }))
   ];
+  const interviewRate = formattedJobs.length > 0
+    ? Math.round((formattedJobs.filter((job) => ["Interviewing", "Offer", "Offers"].includes(String(job.status))).length / formattedJobs.length) * 100)
+    : 0;
 
   return (
-    <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-8 pb-32">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-4">
-        <div className="max-w-2xl">
-          <h1 className="text-2xl font-bold tracking-tight text-[#0A0A0A] mb-1">Applications</h1>
-          <p className="text-xs font-normal text-neutral-500 leading-relaxed">
-            Manage your applications and interview stages in one place. Focus on the hunt, not the spreadsheet.
-          </p>
-        </div>
-
-        {/* Quick Stats */}
-        <div className="flex items-center gap-4">
-            <div className="bg-white border border-neutral-200/70 p-4 pr-8 rounded-2xl shadow-2xs">
-                <p className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider mb-1">Applications</p>
-                <div className="flex items-center gap-2">
-                    <span className="text-xl font-bold text-[#0A0A0A]">{formattedJobs.length}</span>
-                </div>
-            </div>
-            <div className="bg-white border border-neutral-200/70 p-4 pr-8 rounded-2xl shadow-2xs">
-                <p className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider mb-1">Interview Rate</p>
-                <div className="flex items-center gap-2">
-                    <span className="text-xl font-bold text-[#0A0A0A]">
-                        {formattedJobs.length > 0
-                            ? Math.round((formattedJobs.filter(j => String(j.status) === 'Interviewing' || String(j.status) === 'Offer' || String(j.status) === 'Offers').length / formattedJobs.length) * 100)
-                            : 0}%
-                    </span>
-                </div>
-            </div>
-        </div>
-      </div>
+    <DashboardPage className="space-y-6">
+      <DashboardPageHeader
+        title="Applications"
+        description="Track each opportunity, its documents, and the next stage from one workspace."
+        actions={<div className="flex flex-col gap-2 sm:flex-row sm:items-center"><div className="grid grid-cols-2 gap-2"><DashboardStat label="Applications" value={formattedJobs.length} /><DashboardStat label="Interview rate" value={`${interviewRate}%`} /></div><AddApplicationDrawer resumes={userResumes.map(({ id, title }) => ({ id, title }))} /></div>}
+      />
 
       <JobBoard
         initialJobs={formattedJobs}
         resumes={userResumes}
         versions={userVersions}
       />
-    </div>
+    </DashboardPage>
   );
 }

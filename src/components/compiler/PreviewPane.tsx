@@ -19,6 +19,18 @@ function ensureAbsoluteUrl(url: string): string {
     return `https://${url}`;
 }
 
+/** Renders markdown bold (**text**) in JSX safely */
+function renderMarkdownText(text: string) {
+    if (!text) return null;
+    const parts = text.split(/(\*\*.*?\*\*)/g);
+    return parts.map((part, i) => {
+        if (part.startsWith('**') && part.endsWith('**') && part.length >= 4) {
+            return <strong key={i} className="font-bold text-foreground">{part.slice(2, -2)}</strong>;
+        }
+        return part;
+    });
+}
+
 /** 
  * LaTeX-quality resume preview matching Overleaf output.
  * Uses serif font, centered header, underlined section titles, proper bullet indentation.
@@ -33,12 +45,12 @@ export function PreviewPane({ content, onJumpToSourceAction, template = "modern"
 
     const scaleOptions = [0.25, 0.5, 0.75, 1, 1.5, 2];
     const fontOptions = [
-        { name: "Latin Modern Roman", family: "'Latin Modern Roman', serif" },
-        { name: "Times New Roman", family: "'Times New Roman', serif" },
+        { name: "Latin Modern Roman", family: "'Latin Modern Roman', 'STIX Two Text', 'Times New Roman', Georgia, serif" },
+        { name: "Times New Roman", family: "'Times New Roman', Times, serif" },
+        { name: "STIX Two Text", family: "'STIX Two Text', serif" },
         { name: "Inter", family: "'Inter', sans-serif" },
         { name: "Roboto", family: "'Roboto', sans-serif" },
-        { name: "Outfit", family: "'Outfit', sans-serif" },
-        { name: "STIX Two Text", family: "'STIX Two Text', serif" }
+        { name: "Outfit", family: "'Outfit', sans-serif" }
     ];
 
     useEffect(() => {
@@ -113,7 +125,7 @@ export function PreviewPane({ content, onJumpToSourceAction, template = "modern"
                         <RiArrowDownSLine size={10} className="text-muted-foreground/50" />
                         
                         {isFontOpen && (
-                            <div className="absolute top-full left-0 pt-1 w-40 z-[100]">
+                            <div className="absolute top-full left-0 pt-1 w-44 z-[100]">
                                 <div className="bg-background shadow-xl border border-border-subtle rounded-[var(--radius-md)] py-1 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
                                     {fontOptions.map(f => (
                                         <button key={f.name} onClick={() => { updateSettingsAction({ resumeFont: f.name }); setIsFontOpen(false); }}
@@ -182,52 +194,52 @@ export function PreviewPane({ content, onJumpToSourceAction, template = "modern"
                             left: 0
                         }}
                     >
-                        <div className="p-[48px_54px] text-foreground leading-[1.45]">
+                        <div className="p-[48px_54px] text-foreground leading-[1.38]">
                         
                         {/* ── HEADER ── */}
                         <div 
-                            className={`mb-1 cursor-pointer hover:bg-primary/5 rounded px-1 transition-colors ${template === 'professional' ? 'text-left border-l-4 border-foreground pl-5' : 'text-center'}`} 
+                            className={`mb-2 cursor-pointer hover:bg-primary/5 rounded px-1 transition-colors ${template === 'professional' ? 'text-left' : 'text-center'}`} 
                             data-path="basics.name" 
                             onClick={() => onJumpToSourceAction('basics.name')}
                         >
-                            <h1 className="text-[22px] font-bold tracking-[0.01em] leading-tight">
+                            <h1 className="text-[24px] font-bold tracking-[0.01em] leading-tight text-foreground">
                                 {c.basics.name || "Your Name"}
                             </h1>
                             {hasContact && (
-                                <div className={`text-[10px] text-foreground/80 mt-1 leading-snug flex flex-wrap gap-x-1 ${template === 'professional' ? 'justify-start' : 'justify-center'}`}>
-                                    {/* Row 1: phone · email */}
-                                    <div className="flex flex-wrap gap-x-1">
+                                <div className={`text-[10.5px] text-foreground/85 mt-1 leading-snug flex flex-wrap gap-x-1.5 ${template === 'professional' ? 'justify-start' : 'justify-center'}`}>
+                                    {/* Row 1: location · phone · email */}
+                                    <div className="flex flex-wrap items-center gap-x-1.5">
+                                        {c.basics.location && (
+                                            <span className="cursor-pointer hover:text-primary" onClick={(e) => { e.stopPropagation(); onJumpToSourceAction('basics.location'); }}>
+                                                {c.basics.location}
+                                            </span>
+                                        )}
+                                        {c.basics.location && (c.basics.phone || c.basics.email) && <span className="text-muted-foreground/60 font-bold">·</span>}
                                         {c.basics.phone && (
                                             <span className="cursor-pointer hover:text-primary" onClick={(e) => { e.stopPropagation(); onJumpToSourceAction('basics.phone'); }}>
                                                 {c.basics.phone}
                                             </span>
                                         )}
-                                        {c.basics.phone && c.basics.email && <span className="text-muted-foreground/30"> · </span>}
+                                        {c.basics.phone && c.basics.email && <span className="text-muted-foreground/60 font-bold">·</span>}
                                         {c.basics.email && (
                                             <span className="cursor-pointer hover:text-primary" onClick={(e) => { e.stopPropagation(); onJumpToSourceAction('basics.email'); }}>
                                                 {c.basics.email}
                                             </span>
                                         )}
                                     </div>
-                                    <span className="text-muted-foreground/30"> · </span>
-                                    {/* Row 2: linkedin · portfolio · location */}
-                                    <div className="flex flex-wrap gap-x-1">
+                                    {(c.basics.linkedin || c.basics.portfolio) && <span className="text-muted-foreground/60 font-bold">·</span>}
+                                    {/* Row 2: linkedin · portfolio */}
+                                    <div className="flex flex-wrap items-center gap-x-1.5">
                                         {c.basics.linkedin && (
-                                            <a href={ensureAbsoluteUrl(c.basics.linkedin)} target="_blank" rel="noopener noreferrer" className="hover:text-primary" onClick={(e) => e.stopPropagation()}>
-                                                {c.basics.linkedin.replace(/^https?:\/\/(www\.)?/, "")}
+                                            <a href={ensureAbsoluteUrl(c.basics.linkedin)} target="_blank" rel="noopener noreferrer" className="hover:text-primary hover:underline" onClick={(e) => e.stopPropagation()}>
+                                                {c.basics.linkedin.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")}
                                             </a>
                                         )}
-                                        {c.basics.linkedin && c.basics.portfolio && <span className="text-muted-foreground/30"> · </span>}
+                                        {c.basics.linkedin && c.basics.portfolio && <span className="text-muted-foreground/60 font-bold">·</span>}
                                         {c.basics.portfolio && (
-                                            <a href={ensureAbsoluteUrl(c.basics.portfolio)} target="_blank" rel="noopener noreferrer" className="hover:text-primary" onClick={(e) => e.stopPropagation()}>
-                                                {c.basics.portfolio.replace(/^https?:\/\/(www\.)?/, "")}
+                                            <a href={ensureAbsoluteUrl(c.basics.portfolio)} target="_blank" rel="noopener noreferrer" className="hover:text-primary hover:underline" onClick={(e) => e.stopPropagation()}>
+                                                {c.basics.portfolio.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")}
                                             </a>
-                                        )}
-                                        {(c.basics.linkedin || c.basics.portfolio) && c.basics.location && <span className="text-muted-foreground/30"> · </span>}
-                                        {c.basics.location && (
-                                            <span className="cursor-pointer hover:text-primary" onClick={(e) => { e.stopPropagation(); onJumpToSourceAction('basics.location'); }}>
-                                                {c.basics.location}
-                                            </span>
                                         )}
                                     </div>
                                 </div>
@@ -235,26 +247,28 @@ export function PreviewPane({ content, onJumpToSourceAction, template = "modern"
                         </div>
 
 
-                        {/* ── EDUCATION ── */}
+                        {/* ── 1. EDUCATION ── */}
                         {c.education?.length > 0 && (
                             <ResumeSection title="Education" template={template}>
                                 {c.education.map((edu, idx) => (
                                     <div key={edu.id} className="mb-2 cursor-pointer hover:bg-primary/5 rounded px-0.5 -mx-0.5 transition-colors" onClick={() => onJumpToSourceAction(`education.${idx}.school`)}>
                                         <div className="flex justify-between items-baseline">
-                                            <span className="text-[11px] font-bold">{edu.school || "Institution"}</span>
-                                            <span className="text-[10px] text-muted-foreground">{edu.location || ""}</span>
+                                            <span className="text-[11px] font-bold text-foreground">{edu.school || "Institution"}</span>
+                                            <span className="text-[10px] text-foreground/80">{edu.location || ""}</span>
                                         </div>
                                         <div className="flex justify-between items-baseline">
-                                            <span className="text-[10px] italic text-foreground/80">
+                                            <span className="text-[10px] italic text-foreground/90">
                                                 {edu.degree || "Degree"}
-                                                {edu.gpa && ` | ${edu.gpa}`}
+                                                {edu.gpa && <span className="not-italic font-bold"> — CGPA: {edu.gpa}</span>}
                                             </span>
-                                            <span className="text-[10px] text-muted-foreground">{edu.period || ""}</span>
+                                            <span className="text-[10px] font-bold text-foreground/80">
+                                                {edu.period ? (edu.period.toLowerCase().startsWith('grad') ? edu.period : `Graduation: ${edu.period}`) : ""}
+                                            </span>
                                         </div>
                                         {edu.highlights?.length > 0 && edu.highlights.some(h => h.trim()) && (
-                                            <ul className="mt-0.5 ml-4 list-disc">
+                                            <ul className="mt-0.5 ml-4 list-disc space-y-0.5">
                                                 {edu.highlights.filter(h => h.trim()).map((h, hIdx) => (
-                                                    <li key={hIdx} className="text-[10px] text-foreground/80 leading-snug">{h}</li>
+                                                    <li key={hIdx} className="text-[10px] text-foreground/85 leading-snug">{renderMarkdownText(h)}</li>
                                                 ))}
                                             </ul>
                                         )}
@@ -263,43 +277,41 @@ export function PreviewPane({ content, onJumpToSourceAction, template = "modern"
                             </ResumeSection>
                         )}
 
-                        {/* ── SKILLS ── */}
+                        {/* ── 2. TECHNICAL SKILLS & COMPETENCIES ── */}
                         {c.skills?.length > 0 && c.skills.some(s => s.items.trim()) && (
-                            <ResumeSection title="Skills" template={template}>
+                            <ResumeSection title="Technical Skills & Competencies" template={template}>
                                 <ul className="ml-4 list-disc space-y-0.5">
                                     {c.skills.filter(s => s.items.trim()).map((skill) => (
-                                        <li key={skill.id} className="text-[10px] text-foreground/80 leading-snug cursor-pointer hover:bg-primary/5 rounded transition-colors" onClick={() => onJumpToSourceAction(`skills.${skill.id}`)}>
-                                            <span className="font-bold">{skill.category}:</span> {skill.items}
+                                        <li key={skill.id} className="text-[10px] text-foreground/85 leading-snug cursor-pointer hover:bg-primary/5 rounded transition-colors" onClick={() => onJumpToSourceAction(`skills.${skill.id}`)}>
+                                            <span className="font-bold text-foreground">{skill.category}:</span> {renderMarkdownText(skill.items)}
                                         </li>
                                     ))}
                                 </ul>
                             </ResumeSection>
                         )}
 
-                        {/* ── PROJECTS ── */}
+                        {/* ── 3. SOFTWARE DEVELOPMENT PROJECTS ── */}
                         {c.projects?.length > 0 && (
-                            <ResumeSection title="Projects" template={template}>
+                            <ResumeSection title="Software Development Projects" template={template}>
                                 {c.projects.map((proj, idx) => (
-                                    <div key={proj.id} className="mb-2 cursor-pointer hover:bg-primary/5 rounded px-0.5 -mx-0.5 transition-colors" onClick={() => onJumpToSourceAction(`projects.${idx}.title`)}>
+                                    <div key={proj.id} className="mb-2.5 cursor-pointer hover:bg-primary/5 rounded px-0.5 -mx-0.5 transition-colors" onClick={() => onJumpToSourceAction(`projects.${idx}.title`)}>
                                         <div className="flex justify-between items-baseline gap-2">
-                                            <div className="flex items-baseline gap-1.5">
-                                                <span className="text-[11px] font-bold">{proj.title || "Project"}</span>
-                                                {proj.link && (
-                                                    <a href={proj.link} target="_blank" rel="noopener noreferrer" className="text-muted-foreground/40 hover:text-primary" onClick={(e) => e.stopPropagation()}>
-                                                        <RiExternalLinkLine size={8} />
-                                                    </a>
+                                            <div className="flex items-baseline gap-1.5 flex-wrap">
+                                                <span className="text-[11px] font-bold text-foreground">{proj.title || "Project"}</span>
+                                                {proj.techStack && (
+                                                    <span className="text-[10px] text-foreground/90 font-bold"> — {proj.techStack}</span>
                                                 )}
                                             </div>
-                                            <span className="text-[10px] italic text-muted-foreground shrink-0">
-                                                {proj.techStack || ""}
-                                                {proj.techStack && proj.link && " · "}
-                                                {proj.link && <a href={ensureAbsoluteUrl(proj.link)} target="_blank" rel="noopener noreferrer" className="font-bold not-italic hover:text-primary" onClick={(e) => e.stopPropagation()}>Live Demo</a>}
-                                            </span>
+                                            {proj.link && (
+                                                <a href={ensureAbsoluteUrl(proj.link)} target="_blank" rel="noopener noreferrer" className="text-[10px] italic text-foreground/80 hover:text-primary hover:underline shrink-0" onClick={(e) => e.stopPropagation()}>
+                                                    GitHub — Live Demo
+                                                </a>
+                                            )}
                                         </div>
                                         {proj.highlights?.length > 0 && proj.highlights.some(h => h.trim()) && (
-                                            <ul className="mt-0.5 ml-4 list-disc">
+                                            <ul className="mt-0.5 ml-4 list-disc space-y-0.5">
                                                 {proj.highlights.filter(h => h.trim()).map((h, hIdx) => (
-                                                    <li key={hIdx} className="text-[10px] text-foreground/80 leading-snug">{h}</li>
+                                                    <li key={hIdx} className="text-[10px] text-foreground/85 leading-snug">{renderMarkdownText(h)}</li>
                                                 ))}
                                             </ul>
                                         )}
@@ -308,23 +320,23 @@ export function PreviewPane({ content, onJumpToSourceAction, template = "modern"
                             </ResumeSection>
                         )}
 
-                        {/* ── EXPERIENCE ── */}
+                        {/* ── 4. EXPERIENCE ── */}
                         {c.experience?.length > 0 && (
                             <ResumeSection title="Experience" template={template}>
                                 {c.experience.map((exp, idx) => (
                                     <div key={exp.id} className="mb-2 cursor-pointer hover:bg-primary/5 rounded px-0.5 -mx-0.5 transition-colors" data-path={`experience.${idx}.role`} onClick={() => onJumpToSourceAction(`experience.${idx}.role`)}>
                                         <div className="flex justify-between items-baseline">
-                                            <span className="text-[11px] font-bold">{exp.company || "Company"}</span>
-                                            <span className="text-[10px] text-muted-foreground">{exp.location || ""}</span>
+                                            <span className="text-[11px] font-bold text-foreground">{exp.company || "Company"}</span>
+                                            <span className="text-[10px] text-foreground/80">{exp.location || ""}</span>
                                         </div>
                                         <div className="flex justify-between items-baseline">
-                                            <span className="text-[10px] italic text-foreground/80">{exp.role || "Role"}</span>
-                                            <span className="text-[10px] text-muted-foreground">{exp.period || ""}</span>
+                                            <span className="text-[10px] italic text-foreground/90">{exp.role || "Role"}</span>
+                                            <span className="text-[10px] text-foreground/80">{exp.period || ""}</span>
                                         </div>
                                         {exp.highlights?.length > 0 && exp.highlights.some(h => h.trim()) && (
-                                            <ul className="mt-0.5 ml-4 list-disc">
+                                            <ul className="mt-0.5 ml-4 list-disc space-y-0.5">
                                                 {exp.highlights.filter(h => h.trim()).map((h, hIdx) => (
-                                                    <li key={hIdx} className="text-[10px] text-foreground/80 leading-snug">{h}</li>
+                                                    <li key={hIdx} className="text-[10px] text-foreground/85 leading-snug">{renderMarkdownText(h)}</li>
                                                 ))}
                                             </ul>
                                         )}
@@ -333,27 +345,31 @@ export function PreviewPane({ content, onJumpToSourceAction, template = "modern"
                             </ResumeSection>
                         )}
 
-                        {/* ── CERTIFICATIONS & ACHIEVEMENTS ── */}
+                        {/* ── 5. ACHIEVEMENTS & CERTIFICATIONS ── */}
                         {c.certifications?.length > 0 && c.certifications.some(a => a.items.trim()) && (
-                            <ResumeSection title="Certifications & Achievements">
+                            <ResumeSection title="Achievements & Certifications" template={template}>
                                 <ul className="ml-4 list-disc space-y-0.5">
                                     {c.certifications.filter(a => a.items.trim()).map((ach) => (
-                                        <li key={ach.id} className="text-[10px] text-foreground/80 leading-snug">
-                                            <span className="font-bold">{ach.category}:</span> {ach.items}
+                                        <li key={ach.id} className="text-[10px] text-foreground/85 leading-snug">
+                                            {ach.category && <span className="font-bold text-foreground">{ach.category}: </span>}
+                                            {renderMarkdownText(ach.items)}
                                         </li>
                                     ))}
                                 </ul>
                             </ResumeSection>
                         )}
 
-                        {/* ── SUMMARY (if present, rendered after sections like some LaTeX templates) ── */}
+                        {/* ── 6. SUMMARY ── */}
                         {c.basics.summary && (
                             <ResumeSection title="Summary" template={template}>
-                                <p className="text-[10px] text-foreground/80 leading-relaxed cursor-pointer hover:bg-primary/5 rounded transition-colors" onClick={() => onJumpToSourceAction('basics.summary')}>
-                                    {c.basics.summary}
+                                <p className="text-[10px] text-foreground/85 leading-relaxed cursor-pointer hover:bg-primary/5 rounded transition-colors" onClick={() => onJumpToSourceAction('basics.summary')}>
+                                    {renderMarkdownText(c.basics.summary)}
                                 </p>
                             </ResumeSection>
                         )}
+
+                        {/* Page Number */}
+                        <div className="text-center text-[10px] text-foreground/60 mt-4">1</div>
                     </div>
                 </div>
             </div>
@@ -362,14 +378,14 @@ export function PreviewPane({ content, onJumpToSourceAction, template = "modern"
     );
 }
 
-/** LaTeX-style section: bold uppercase title with full-width rule */
+/** LaTeX-style section: bold uppercase title with crisp full-width rule */
 function ResumeSection({ title, children, template }: { title: string; children: React.ReactNode; template?: string }) {
     const isMinimal = template === 'minimal';
     return (
-        <section className="mt-3 mb-1.5">
+        <section className="mt-2.5 mb-1.5">
             <h2 
-                className={`text-[13px] font-bold uppercase tracking-[0.02em] mb-1.5 ${isMinimal ? 'bg-muted px-2 py-1 rounded border-none' : 'border-b border-foreground pb-[1px]'}`}
-                style={{ lineHeight: 1.3 }}
+                className={`text-[11.5px] font-bold uppercase tracking-[0.03em] mb-1.5 ${isMinimal ? 'bg-muted px-2 py-0.5 rounded border-none' : 'border-b border-foreground pb-[1px]'}`}
+                style={{ lineHeight: 1.25 }}
             >
                 {title}
             </h2>
@@ -377,3 +393,4 @@ function ResumeSection({ title, children, template }: { title: string; children:
         </section>
     );
 }
+

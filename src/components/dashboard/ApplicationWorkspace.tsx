@@ -302,15 +302,22 @@ export function ApplicationWorkspace({ initialApplication, resumes, workItems, c
                 </div>
             </div>
 
-            {/* 7-Step Navigation Bar */}
-            <div className="flex items-center gap-2 overflow-x-auto border-b border-neutral-200 pb-3 text-xs font-semibold">
+            <div className="grid items-start gap-6 md:grid-cols-[260px_minmax(0,1fr)]">
+            <aside className="md:sticky md:top-6 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
+              <div className="grid grid-cols-3 gap-2 border-b border-neutral-100 pb-4 md:grid-cols-1">
+                <label className="block"><span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">Status</span><select value={status} onChange={(e) => { setStatus(e.target.value); handleSave({ status: e.target.value }); }} className="mt-1 w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs font-semibold outline-none">{STATUS_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+                <div><span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">Deadline</span><p className="mt-2 text-xs font-semibold">{deadline ? new Date(`${deadline}T00:00:00`).toLocaleDateString() : "Not set"}</p></div>
+                <div><span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">Attached</span><p className="mt-2 text-xs font-semibold">{selectedResumeId ? "Resume selected" : "No resume"} · {selectedWorkIds.length} work</p></div>
+              </div>
+              <p className="mt-4 px-2 text-[10px] font-bold uppercase tracking-wider text-neutral-400">Sections</p>
+              <nav className="mt-2 flex gap-2 overflow-x-auto md:flex-col">
                 <button
                     onClick={() => setActiveTab("overview")}
                     className={`px-3 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-1.5 ${
                         activeTab === "overview" ? "bg-[#0A0A0A] text-white" : "text-neutral-600 hover:bg-neutral-100"
                     }`}
                 >
-                    <RiBriefcaseLine className="w-4 h-4" /> 1. Job Details
+                    <span className={`h-2 w-2 rounded-full ${company && position ? "bg-emerald-500" : "border border-neutral-400"}`} /> Job details
                 </button>
 
                 <button
@@ -319,8 +326,7 @@ export function ApplicationWorkspace({ initialApplication, resumes, workItems, c
                         activeTab === "resume" ? "bg-[#0A0A0A] text-white" : "text-neutral-600 hover:bg-neutral-100"
                     }`}
                 >
-                    <RiFileTextLine className="w-4 h-4" /> 2. Selected Resume
-                    {selectedResumeId && <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />}
+                    <span className={`h-2 w-2 rounded-full ${selectedResumeId ? "bg-emerald-500" : "border border-neutral-400"}`} /> Resume
                 </button>
 
                 <button
@@ -329,7 +335,7 @@ export function ApplicationWorkspace({ initialApplication, resumes, workItems, c
                         activeTab === "work" ? "bg-[#0A0A0A] text-white" : "text-neutral-600 hover:bg-neutral-100"
                     }`}
                 >
-                    <RiStackLine className="w-4 h-4" /> 3. Matching Work ({selectedWorkIds.length})
+                    <span className={`h-2 w-2 rounded-full ${selectedWorkIds.length ? "bg-emerald-500" : "border border-neutral-400"}`} /> Work ({selectedWorkIds.length})
                 </button>
 
                 <button
@@ -338,7 +344,7 @@ export function ApplicationWorkspace({ initialApplication, resumes, workItems, c
                         activeTab === "evidence" ? "bg-[#0A0A0A] text-white" : "text-neutral-600 hover:bg-neutral-100"
                     }`}
                 >
-                    <RiSearchLine className="w-4 h-4" /> 4. Missing Evidence
+                    <span className={`h-2 w-2 rounded-full ${jobDescription ? "bg-emerald-500" : "border border-neutral-400"}`} /> Evidence
                     {evidenceAnalysis.missing.length > 0 && (
                         <span className="px-1.5 py-0.5 text-[9px] bg-rose-500 text-white rounded-full font-bold">
                             {evidenceAnalysis.missing.length}
@@ -352,7 +358,7 @@ export function ApplicationWorkspace({ initialApplication, resumes, workItems, c
                         activeTab === "suggestions" ? "bg-[#0A0A0A] text-white" : "text-neutral-600 hover:bg-neutral-100"
                     }`}
                 >
-                    <RiMagicLine className="w-4 h-4" /> 5. AI Suggestions
+                    <span className={`h-2 w-2 rounded-full ${(app.changes?.length || 0) > 0 ? "bg-emerald-500" : "border border-neutral-400"}`} /> AI suggestions
                     {pendingSuggestionsCount > 0 && (
                         <span className="px-1.5 py-0.5 text-[9px] bg-amber-500 text-white rounded-full font-bold">
                             {pendingSuggestionsCount}
@@ -366,7 +372,7 @@ export function ApplicationWorkspace({ initialApplication, resumes, workItems, c
                         activeTab === "review" ? "bg-[#0A0A0A] text-white" : "text-neutral-600 hover:bg-neutral-100"
                     }`}
                 >
-                    <RiEyeLine className="w-4 h-4" /> 6. Final Review
+                    <span className={`h-2 w-2 rounded-full ${app.resumeVersionId ? "bg-emerald-500" : "border border-neutral-400"}`} /> Final review
                 </button>
 
                 <button
@@ -375,9 +381,15 @@ export function ApplicationWorkspace({ initialApplication, resumes, workItems, c
                         activeTab === "export" ? "bg-[#0A0A0A] text-white" : "text-neutral-600 hover:bg-neutral-100"
                     }`}
                 >
-                    <RiDownloadLine className="w-4 h-4" /> 7. Export & Status
+                    <span className={`h-2 w-2 rounded-full ${selectedResumeId ? "bg-emerald-500" : "border border-neutral-400"}`} /> Export
                 </button>
-            </div>
+              </nav>
+              <div className="mt-5 space-y-4 border-t border-neutral-100 pt-4">
+                <label className="block"><span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">Notes</span><textarea value={notes} onChange={(e) => setNotes(e.target.value)} onBlur={() => handleSave({ notes })} rows={3} placeholder="Recruiter, referral, follow-up…" className="mt-2 w-full resize-none rounded-xl border border-neutral-200 px-3 py-2 text-xs outline-none" /></label>
+                <label className="block"><span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">Outcome</span><select value={outcome} onChange={(e) => { setOutcome(e.target.value); handleSave({ outcome: e.target.value }); }} className="mt-2 w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs font-semibold"><option value="">In progress</option><option value="Interview Scheduled">Interview scheduled</option><option value="Offer Received">Offer received</option><option value="Rejected">Rejected</option><option value="Withdrawn">Withdrawn</option></select></label>
+              </div>
+            </aside>
+            <main className="min-w-0">
 
             {/* TAB CONTENT */}
 
@@ -958,6 +970,9 @@ export function ApplicationWorkspace({ initialApplication, resumes, workItems, c
                     </div>
                 </div>
             )}
+
+            </main>
+            </div>
 
             {/* Application Suggestions Modal */}
             {showSuggestionsModal && (

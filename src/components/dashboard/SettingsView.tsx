@@ -12,10 +12,12 @@ import {
     RiMoneyDollarCircleLine,
     RiArrowDownSLine,
     RiMailLine,
-    RiFlashlightLine
+    RiFlashlightLine,
+    RiBriefcaseLine
 } from "react-icons/ri";
+import { CareerProfileForm } from "./CareerProfileForm";
 
-type TabType = "general" | "editor" | "billing" | "account";
+type TabType = "general" | "editor" | "career" | "billing" | "account";
 
 interface TabItem {
     id: TabType;
@@ -27,6 +29,7 @@ interface TabItem {
 const TABS: TabItem[] = [
     { id: "general", label: "General", description: "Editor preferences and defaults", icon: RiEqualizerLine },
     { id: "editor", label: "Editor & Preview", description: "Font selection, zoom and preview controls", icon: RiFileTextLine },
+    { id: "career", label: "Career Profile", description: "Career stage used for personalized scoring", icon: RiBriefcaseLine },
     { id: "billing", label: "Billing & Credits", description: "Credit pack balances and plan tier", icon: RiMoneyDollarCircleLine },
     { id: "account", label: "Account & Security", description: "Profile details and security preferences", icon: RiUser3Line },
 ];
@@ -241,6 +244,9 @@ export function SettingsView() {
                         )}
 
                         {/* Billing Tab */}
+                        {activeTab === "career" && <CareerProfileSettings />}
+
+                        {/* Billing Tab */}
                         {activeTab === "billing" && (
                             <div className="space-y-6 max-w-2xl">
                                 <div className="p-6 bg-[#FAF9F6] border border-neutral-200/80 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -328,6 +334,38 @@ export function SettingsView() {
                     </div>
                 </div>
             </div>
+        </div>
+    );
+}
+
+function CareerProfileSettings() {
+    const [profile, setProfile] = useState<{ careerStage: string | null; professionalExperienceYears: number | null } | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        let active = true;
+        fetch("/api/profile/career")
+            .then(async (response) => {
+                if (!response.ok) throw new Error("Could not load career profile");
+                return response.json();
+            })
+            .then((value) => { if (active) setProfile(value); })
+            .finally(() => { if (active) setLoading(false); });
+        return () => { active = false; };
+    }, []);
+
+    if (loading) return <p className="text-xs text-neutral-500">Loading career profile...</p>;
+
+    return (
+        <div className="max-w-2xl space-y-4">
+            <p className="text-xs leading-5 text-neutral-500">
+                Zebra uses this profile to apply fair expectations to students, freelancers, and experienced professionals. Resume evidence still takes priority when it shows internships or employment.
+            </p>
+            <CareerProfileForm
+                initialStage={profile?.careerStage}
+                initialYears={profile?.professionalExperienceYears}
+                onSaved={(saved) => setProfile(saved)}
+            />
         </div>
     );
 }

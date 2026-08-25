@@ -7,9 +7,11 @@ import { usePathname } from "next/navigation";
 import {
     RiSettings4Line,
     RiArrowRightSLine,
-    RiMenuLine
+    RiMenuLine,
+    RiMicLine
 } from "react-icons/ri";
 import { getBreadcrumbForPath } from "@/lib/constants/navigation";
+import { useZebu } from "@/context/ZebuContext";
 
 interface HeaderProps {
     credits: number;
@@ -21,6 +23,7 @@ interface HeaderProps {
 
 export function Header({ credits, userName, userImage, onOpenNavAction, onOpenProfileAction }: HeaderProps) {
     const pathname = usePathname();
+    const zebu = useZebu();
     const breadcrumbInfo = getBreadcrumbForPath(pathname);
 
     return (
@@ -65,6 +68,15 @@ export function Header({ credits, userName, userImage, onOpenNavAction, onOpenPr
             </div>
 
             <div className="flex items-center gap-2.5 sm:gap-3 md:gap-5 shrink-0">
+                <button
+                    type="button"
+                    onClick={() => zebu.open(true)}
+                    className="flex h-9 w-9 items-center justify-center rounded-xl border border-neutral-200 bg-neutral-50 text-neutral-800 transition hover:border-neutral-300 hover:bg-neutral-100"
+                    title="Talk to Zebu"
+                    aria-label="Open Zebu and start listening"
+                >
+                    <RiMicLine size={18} />
+                </button>
                 {/* Credits Badge (Hidden on Phone < 768px, available in drawer) */}
                 <div className="hidden md:flex bg-neutral-100 px-3 py-1.5 rounded-full items-center border border-neutral-200/80 shadow-xs">
                     <span className="text-xs font-semibold text-[#0A0A0A]">{credits} Credits</span>

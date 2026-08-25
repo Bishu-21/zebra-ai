@@ -4,6 +4,7 @@ import {
   AiProviderConfigurationError,
   buildAzureResponseInput,
   createAzureFoundryClient,
+  getAzureRequestOptions,
   getAzureFoundryConfig,
   getUsableAzureResponseText,
   normalizeAzureFoundryBaseUrl,
@@ -125,10 +126,28 @@ describe("Azure Foundry provider configuration", () => {
 });
 
 describe("Azure Foundry request shaping", () => {
+  test("allows one long attempt for full audits without retry multiplication", () => {
+    assert.deepEqual(getAzureRequestOptions("audit"), {
+      timeout: 150_000,
+      maxRetries: 0,
+    });
+  });
+
+  test("keeps shorter retryable requests for interactive tasks", () => {
+    assert.deepEqual(getAzureRequestOptions("chat"), {
+      timeout: 45_000,
+      maxRetries: 1,
+    });
+    assert.deepEqual(getAzureRequestOptions("tailor"), {
+      timeout: 45_000,
+      maxRetries: 1,
+    });
+  });
+
   test("allows enough output for a complete structured resume", () => {
     assert.ok(TASK_BUDGETS.parse.maxOutputTokens >= 5000);
-    assert.ok(TASK_BUDGETS.audit.maxOutputTokens >= 5000);
-    assert.equal(TASK_BUDGETS.audit.reasoningEffort, "low");
+    assert.ok(TASK_BUDGETS.audit.maxOutputTokens >= 16_000);
+    assert.equal(TASK_BUDGETS.audit.reasoningEffort, "medium");
   });
 
   test("keeps usable text from an incomplete response", () => {

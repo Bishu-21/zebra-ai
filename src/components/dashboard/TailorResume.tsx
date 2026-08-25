@@ -6,7 +6,6 @@ import {
     RiCloseCircleLine,
     RiCheckboxCircleLine,
     RiErrorWarningLine,
-    RiFlashlightLine,
     RiInformationLine,
     RiMagicLine,
     RiArrowDropDownLine,
@@ -57,6 +56,16 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
     const [isUploadingResume, setIsUploadingResume] = useState(false);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const router = useRouter();
+
+    React.useEffect(() => {
+        const open = () => {
+            setIsOpen(true);
+            sessionStorage.removeItem("zebu:pending-tool");
+        };
+        window.addEventListener("zebu:open-role_match", open);
+        if (sessionStorage.getItem("zebu:pending-tool") === "role_match") open();
+        return () => window.removeEventListener("zebu:open-role_match", open);
+    }, []);
 
     const isBusy = loading || isUploadingResume;
 
@@ -219,7 +228,7 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                 className="group/card relative overflow-hidden flex flex-col justify-between w-full h-full cursor-pointer transition-all p-7 bg-white border border-neutral-200/80 rounded-3xl hover:border-neutral-300 hover:shadow-xl active:scale-[0.99] group shadow-xs"
             >
                 <div className="flex items-start justify-between mb-8">
-                    <div className="w-11 h-11 bg-neutral-100 rounded-xl flex items-center justify-center text-neutral-600 group-hover/card:bg-[#0A0A0A] group-hover/card:text-white transition-colors duration-300">
+                    <div className="w-11 h-11 bg-neutral-100 rounded-full flex items-center justify-center text-neutral-600 group-hover/card:bg-[#0A0A0A] group-hover/card:text-white transition-colors duration-300">
                         <RiFocus3Line size={22} />
                     </div>
                     <div className="flex items-center gap-1 opacity-0 group-hover/card:opacity-100 transition-opacity">
@@ -229,7 +238,7 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                 </div>
 
                 <div>
-                    <h3 className="font-bold text-xl mb-1.5 text-[#0A0A0A] tracking-tight">How well does this fit the job?</h3>
+                    <h3 className="font-bold text-xl mb-1.5 text-[#0A0A0A] tracking-tight">How Well Does This Fit the Job?</h3>
                     <p className="text-xs text-neutral-500 font-normal leading-relaxed">
                         Match your experience against specific job descriptions.
                     </p>
@@ -258,11 +267,11 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                             {/* Header */}
                             <div className="px-6 py-5 border-b border-neutral-200/60 flex items-center justify-between bg-white sticky top-0 z-20">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-[#0A0A0A] text-white flex items-center justify-center shadow-2xs shrink-0">
-                                        <RiFlashlightLine size={20} />
+                                    <div className="w-11 h-11 rounded-full bg-[#0A0A0A] text-white flex items-center justify-center shadow-2xs shrink-0">
+                                        <RiFocus3Line size={22} />
                                     </div>
                                     <div>
-                                        <h2 className="text-lg font-bold tracking-tight text-[#0A0A0A]">Role Match Analysis</h2>
+                                        <h2 className="text-lg font-bold tracking-tight text-[#0A0A0A]">How Well Does This Fit the Job?</h2>
                                         <p className="text-xs font-normal text-neutral-500">Analyze profile &amp; job description alignment</p>
                                     </div>
                                 </div>

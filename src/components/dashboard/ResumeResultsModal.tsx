@@ -50,7 +50,7 @@ const CircularGauge = ({ value, label, icon: Icon }: { value: number; label: str
     const strokeDashoffset = circumference - (value / 100) * circumference;
 
     return (
-        <div className="bg-white border border-[#F5F5F5] p-5 rounded-[1.8rem] flex flex-col items-center text-center transition-all hover:border-primary/30 hover:shadow-[0_4px_20px_rgba(59,130,246,0.03)] group">
+        <div className="bg-white border border-border-subtle p-5 rounded-[var(--radius-lg)] flex flex-col items-center text-center transition-all hover:border-neutral-300 hover:shadow-[var(--shadow-sm)] group">
             <div className="relative w-14 h-14 mb-4">
                 <svg className="w-full h-full transform -rotate-90">
                     <circle cx="28" cy="28" r={radius} stroke="currentColor" className="text-border-subtle" strokeWidth="2.5" fill="transparent" />
@@ -116,8 +116,8 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
                     const message = item.checkpoint || item.message || "Undefined check";
                     if (item.status === "Pass") {
                         strengths.push(message);
-                    } else if (item.status === "Fail") {
-                        weaknesses.push(message);
+                    } else if (item.status === "Fail" || item.status === "Partial") {
+                        weaknesses.push(item.status === "Partial" ? `${message} — partially met` : message);
                         if (item.fix) actionItems.push(item.fix);
                     }
                 });
@@ -142,7 +142,7 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
                     className="relative bg-background w-full max-w-6xl max-h-[92vh] rounded-[var(--radius-xl)] shadow-[var(--shadow-2xl)] border border-border-subtle flex flex-col overflow-hidden"
                 >
                     {/* Header */}
-                    <div className="px-4 sm:px-10 py-4 sm:py-6 border-b border-[#F5F5F5] flex items-center justify-between bg-white/40 backdrop-blur-3xl sticky top-0 z-20">
+                    <div className="px-5 sm:px-8 py-4 sm:py-5 border-b border-border-subtle flex items-center justify-between bg-white/90 backdrop-blur-xl sticky top-0 z-20">
                         <div className="flex flex-col">
                             <div className="flex items-center gap-3">
                                 <div className="flex items-center gap-2 px-2.5 py-1 bg-primary/10 text-primary rounded-full">
@@ -159,21 +159,21 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
                         </button>
                     </div>
 
-                    <div className="flex-grow overflow-y-auto no-scrollbar p-4 sm:p-10 pt-6 sm:pt-8 space-y-6 sm:space-y-10 bg-muted/30">
+                    <div className="flex-grow overflow-y-auto no-scrollbar p-4 sm:p-8 pt-6 space-y-6 sm:space-y-8 bg-muted/30">
 
                         {/* Top: Score & Summary Column + Gauges */}
                         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8">
                             {/* Strategic Column (Left) */}
                             <div className="lg:col-span-5 flex flex-col gap-6">
-                                <div className="bg-white border border-[#F5F5F5] p-6 sm:p-8 rounded-[2.2rem] relative overflow-hidden group shadow-sm">
+                                <div className="bg-white border border-border-subtle p-6 rounded-[var(--radius-xl)] relative overflow-hidden group shadow-[var(--shadow-sm)]">
                                     <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                                     <div className="relative z-10 space-y-6">
                                         <div className="flex justify-between items-start">
                                             <div>
                                                 <p className="text-[0.55rem] font-bold uppercase tracking-[0.3em] text-[#A3A3A3] mb-3">Resume Score</p>
                                                 <div className="flex items-baseline gap-2">
-                                                    <h3 className="text-6xl font-black text-[#0A0A0A] tracking-tighter leading-none">{score}</h3>
-                                                    <span className="text-[#A3A3A3] text-xl font-bold">/100</span>
+                                                    <h3 className="text-5xl font-bold text-foreground tracking-tight leading-none">{score}</h3>
+                                                    <span className="text-muted-foreground text-lg font-semibold">/100</span>
                                                 </div>
                                             </div>
                                             <ShieldIcon className="text-primary opacity-20" />
@@ -264,7 +264,7 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
                                         const suggestion = isString ? item : (item.after ?? item.suggestion ?? "");
 
                                         return (
-                                            <div key={i} className="grid grid-cols-1 lg:grid-cols-12 gap-6 bg-white border border-[#F5F5F5] rounded-[2rem] overflow-hidden p-6 sm:p-8 hover:border-primary/20 transition-all shadow-sm">
+                                            <div key={i} className="grid grid-cols-1 lg:grid-cols-12 gap-6 bg-white border border-border-subtle rounded-[var(--radius-xl)] overflow-hidden p-6 hover:border-neutral-300 transition-all shadow-[var(--shadow-sm)]">
                                                 <div className="lg:col-span-4 space-y-4">
                                                     <span className="text-[0.5rem] font-bold uppercase tracking-[0.2em] text-[#A3A3A3] block">Improvement Logic</span>
                                                     <p className="text-[0.7rem] font-medium text-[#171717]/80 leading-relaxed border-l border-[#F5F5F5] pl-4">

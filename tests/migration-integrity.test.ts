@@ -4,6 +4,7 @@ import { describe, test } from "node:test";
 
 const migrationPath = new URL("../drizzle/0005_evidence_compiler_platform.sql", import.meta.url);
 const rateLimitMigrationPath = new URL("../drizzle/0006_distributed_rate_limits.sql", import.meta.url);
+const careerProfileMigrationPath = new URL("../drizzle/0007_career_profile.sql", import.meta.url);
 const journalPath = new URL("../drizzle/meta/_journal.json", import.meta.url);
 
 describe("Evidence compiler migration", () => {
@@ -34,7 +35,10 @@ describe("Evidence compiler migration", () => {
         };
         const last = journal.entries.at(-1);
 
-        assert.equal(last?.idx, 6);
-        assert.equal(last?.tag, "0006_distributed_rate_limits");
+        const careerSql = readFileSync(careerProfileMigrationPath, "utf8");
+        assert.match(careerSql, /"career_profile_status" text DEFAULT 'pending' NOT NULL/);
+        assert.match(careerSql, /"professional_experience_years" integer/);
+        assert.equal(last?.idx, 7);
+        assert.equal(last?.tag, "0007_career_profile");
     });
 });

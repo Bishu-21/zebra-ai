@@ -66,6 +66,29 @@ async function runHealthCheck() {
         if (missingTables.length > 0) {
             throw new Error(`Required database migrations are missing: ${missingTables.join(", ")}`);
         }
+        const requiredUserColumns = [
+            "career_stage",
+            "professional_experience_years",
+            "career_profile_status",
+            "career_profile_completed_at",
+        ];
+        const userColumnRows = await sql<{ column_name: string }[]>`
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_schema = 'public'
+              AND table_name = 'user'
+              AND column_name IN (
+                'career_stage',
+                'professional_experience_years',
+                'career_profile_status',
+                'career_profile_completed_at'
+              )
+        `;
+        const existingUserColumns = new Set(userColumnRows.map((row) => row.column_name));
+        const missingUserColumns = requiredUserColumns.filter((column) => !existingUserColumns.has(column));
+        if (missingUserColumns.length > 0) {
+            throw new Error(`Required user profile columns are missing: ${missingUserColumns.join(", ")}`);
+        }
         console.log("   ✅ Required schema is present");
 
         console.log("--------------------------------------");

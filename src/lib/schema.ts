@@ -11,6 +11,10 @@ export const user = pgTable("user", {
 	updatedAt: timestamp("updated_at").notNull(),
     credits: integer("credits").notNull().default(5),
     plan: text("plan").notNull().default("Free"),
+    careerStage: text("career_stage"),
+    professionalExperienceYears: integer("professional_experience_years"),
+    careerProfileStatus: text("career_profile_status").notNull().default("pending"),
+    careerProfileCompletedAt: timestamp("career_profile_completed_at"),
 });
 
 export const userRelations = relations(user, ({ many, one }) => ({

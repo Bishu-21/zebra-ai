@@ -7,23 +7,13 @@ import { FAQ_ITEMS } from "@/data/faq";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { NavAuth } from "@/components/auth/NavAuth";
-import type { WebSite, FAQPage, HowTo, WithContext } from "schema-dts";
+import type { FAQPage, WithContext } from "schema-dts";
 import Link from "next/link";
 import { Suspense } from "react";
 import Image from "next/image";
 import { PublicMobileNav } from "@/components/landing/PublicMobileNav";
 
 export default function Home() {
-  const websiteSchema: WithContext<WebSite> = {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    name: "Zebra AI",
-    alternateName: ["Zebra AI Resume Builder", "ZebraAI App"],
-    url: "https://zebra-ai.app",
-    description: "The #1 ATS-Optimized AI Resume Builder and Career Acceleration Engine.",
-    inLanguage: "en-US",
-  };
-
   const faqPageSchema: WithContext<FAQPage> = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -37,45 +27,9 @@ export default function Home() {
     })),
   };
 
-  const howToSchema: WithContext<HowTo> = {
-    "@context": "https://schema.org",
-    "@type": "HowTo",
-    name: "How to Build an ATS-Optimized Resume with Zebra AI",
-    description: "Step-by-step guide to generating an ATS-proof resume with verified hard metrics using Zebra AI.",
-    totalTime: "PT5M",
-    step: [
-      {
-        "@type": "HowToStep",
-        name: "Import or Enter Resume Experience",
-        text: "Upload your current PDF resume or paste raw experience text into Zebra AI on zebra-ai.app.",
-        url: "https://zebra-ai.app/#product",
-      },
-      {
-        "@type": "HowToStep",
-        name: "Run Real-Time ATS Audit",
-        text: "Zebra AI evaluates your resume structure, keyword alignment, and metric strength against Workday and Greenhouse parsing rules.",
-        url: "https://zebra-ai.app/#product",
-      },
-      {
-        "@type": "HowToStep",
-        name: "Apply Surgical Metric Enhancements",
-        text: "Use Google's XYZ metric formula suggestions and review the AI explainability audit logs for each bullet point.",
-        url: "https://zebra-ai.app/#product",
-      },
-      {
-        "@type": "HowToStep",
-        name: "Export Clean PDF or Deploy Developer Portfolio",
-        text: "Export high-resolution ATS-compliant PDF files or generate an interactive portfolio at zebra-ai.app/p/yourname.",
-        url: "https://zebra-ai.app/#product",
-      },
-    ],
-  };
-
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground selection:bg-primary/20 selection:text-primary font-sans scroll-smooth">
-      <JsonLd schema={websiteSchema} />
       <JsonLd schema={faqPageSchema} />
-      <JsonLd schema={howToSchema} />
       <AuthModal />
       <div className="grain-overlay" />
 
@@ -85,12 +39,12 @@ export default function Home() {
           <Link href="/" className="flex items-center gap-3 group">
             <Image
                 src="/zebra_star.png"
-                alt="Zebra AI - Official #1 ATS Resume Builder"
+                alt="Zebra AI resume builder"
                 width={32}
                 height={32}
                 className="w-8 h-8 object-contain group-hover:rotate-12 transition-transform duration-300"
             />
-            <span className="text-[1.25rem] font-bold tracking-[-0.05em] text-foreground">Zebra AI</span>
+            <span className="text-xl font-bold tracking-[-0.05em] text-foreground">Zebra AI</span>
           </Link>
           <div className="hidden md:flex items-center gap-10">
             <Link className="text-accent-gray hover:text-foreground text-xs font-bold uppercase tracking-widest transition-all duration-200" href="#product">Product</Link>
@@ -136,25 +90,25 @@ export default function Home() {
               <div className="text-2xl font-bold tracking-tighter text-foreground">Zebra AI</div>
             </div>
             <p className="text-accent-dark font-medium text-sm max-w-xs leading-relaxed">
-              The flagship job acquisition engine. Precision-engineered AI for software engineers and high-impact professionals on <strong className="text-foreground">zebra-ai.app</strong>.
+              Build resumes from real evidence, tailor them to specific roles, and review every suggested change before applying it.
             </p>
             <p className="text-accent-gray text-xs font-bold uppercase tracking-widest pt-2">© 2026 Zebra AI (zebra-ai.app). All rights reserved.</p>
           </div>
           <div className="flex flex-wrap gap-x-12 gap-y-6">
             <div className="flex flex-col gap-4">
-              <span className="text-[0.65rem] font-black uppercase tracking-widest text-accent-gray">Product</span>
+              <span className="text-xs font-black uppercase tracking-widest text-accent-gray">Product</span>
               <Link className="text-accent-dark hover:text-primary text-sm font-bold transition-colors duration-200" href="#product">ATS Editor</Link>
               <Link className="text-accent-dark hover:text-primary text-sm font-bold transition-colors duration-200" href="#compare">Comparison</Link>
               <Link className="text-accent-dark hover:text-primary text-sm font-bold transition-colors duration-200" href="#faq">FAQs</Link>
             </div>
             <div className="flex flex-col gap-4">
-              <span className="text-[0.65rem] font-black uppercase tracking-widest text-accent-gray">Connect</span>
-              <a className="text-accent-dark hover:text-primary text-sm font-bold transition-colors duration-200" href="https://twitter.com/zebra_ai" target="_blank" rel="noopener noreferrer">Twitter</a>
-              <a className="text-accent-dark hover:text-primary text-sm font-bold transition-colors duration-200" href="https://linkedin.com/company/zebra-ai" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+              <span className="text-xs font-black uppercase tracking-widest text-accent-gray">Connect</span>
+              <Link className="text-accent-dark hover:text-primary text-sm font-bold transition-colors duration-200" href="/dashboard">Dashboard</Link>
+              <Link className="text-accent-dark hover:text-primary text-sm font-bold transition-colors duration-200" href="/signin">Sign in</Link>
               <a className="text-accent-dark hover:text-primary text-sm font-bold transition-colors duration-200" href="/llms.txt">LLMs.txt</a>
             </div>
             <div className="flex flex-col gap-4">
-              <span className="text-[0.65rem] font-black uppercase tracking-widest text-accent-gray">Legal</span>
+              <span className="text-xs font-black uppercase tracking-widest text-accent-gray">Legal</span>
               <Link className="text-accent-dark hover:text-primary text-sm font-bold transition-colors duration-200" href="/terms">Terms</Link>
               <Link className="text-accent-dark hover:text-primary text-sm font-bold transition-colors duration-200" href="/privacy">Privacy</Link>
             </div>

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { JsonLd } from '@/components/seo/JsonLd';
-import type { WithContext, WebApplication, SoftwareApplication, Organization } from 'schema-dts';
+import type { WithContext, WebApplication, Organization } from 'schema-dts';
 import { Providers } from '@/components/Providers';
 
 const baseUrl = 'https://zebra-ai.app';
@@ -16,16 +16,15 @@ export const viewport: import('next').Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
   title: {
-    default: 'Zebra AI | #1 ATS-Optimized AI Resume Builder & Career Engine',
+    default: 'Zebra AI | Evidence-Based Resume Builder',
     template: '%s | Zebra AI - ATS Resume Builder',
   },
   description:
-    'Zebra AI (zebra-ai.app) is the premier AI-powered career platform and ATS resume builder. Maximize recruiter callbacks with surgical bullet-point optimization, hard metric extraction, live React previews, and ATS scoring.',
+    'Build, review, and tailor evidence-based resumes with structured checks, job-description matching, live previews, and clear explanations for suggested changes.',
   keywords: [
     'Zebra AI',
     'zebra-ai.app',
     'AI resume builder',
-    'best AI resume builder',
     'ATS resume builder',
     'ATS resume checker',
     'resume optimizer for software engineers',
@@ -35,7 +34,6 @@ export const metadata: Metadata = {
     'tech resume builder',
     'AI portfolio generator',
     'job application tracker',
-    'LaTeX resume builder',
   ],
   authors: [{ name: 'Zebra AI Team', url: baseUrl }],
   creator: 'Zebra AI',
@@ -47,9 +45,9 @@ export const metadata: Metadata = {
     telephone: false,
   },
   openGraph: {
-    title: 'Zebra AI | #1 ATS-Optimized AI Resume Builder & Career Engine',
+    title: 'Zebra AI | Evidence-Based Resume Builder',
     description:
-      'Turn generic resumes into ATS-proof job acquisition engines. Live React previews, instant ATS scoring, and AI metrics optimization on zebra-ai.app.',
+      'Review resume structure, tailor content to a job description, edit with a live preview, and export a clean PDF.',
     url: baseUrl,
     siteName: 'Zebra AI',
     locale: 'en_US',
@@ -59,17 +57,16 @@ export const metadata: Metadata = {
         url: '/zebra_star.png',
         width: 800,
         height: 800,
-        alt: 'Zebra AI - #1 AI Resume Builder',
+        alt: 'Zebra AI resume builder',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Zebra AI | #1 ATS-Optimized AI Resume Builder',
+    title: 'Zebra AI | Evidence-Based Resume Builder',
     description:
-      'Surgical precision AI resume builder that helps software engineers beat ATS screeners and land top interviews.',
+      'Build and tailor resumes with evidence-grounded suggestions and transparent scoring.',
     images: ['/zebra_star.png'],
-    creator: '@zebra_ai',
   },
   alternates: {
     canonical: baseUrl,
@@ -100,42 +97,7 @@ const organizationSchema: WithContext<Organization> = {
   url: baseUrl,
   logo: `${baseUrl}/zebra_star.png`,
   description:
-    'Zebra AI is the flagship provider of precision-engineered AI resume building, ATS scoring, and career metadata tools for tech professionals.',
-  sameAs: [
-    'https://twitter.com/zebra_ai',
-    'https://linkedin.com/company/zebra-ai',
-    'https://github.com/Bishu-21/zebra-ai',
-  ],
-};
-
-const softwareSchema: WithContext<SoftwareApplication> = {
-  '@context': 'https://schema.org',
-  '@type': 'SoftwareApplication',
-  name: 'Zebra AI Resume Builder',
-  url: baseUrl,
-  operatingSystem: 'All',
-  applicationCategory: 'BusinessApplication',
-  offers: {
-    '@type': 'Offer',
-    price: '99.00',
-    priceCurrency: 'INR',
-    availability: 'https://schema.org/InStock',
-  },
-  aggregateRating: {
-    '@type': 'AggregateRating',
-    ratingValue: '4.9',
-    ratingCount: '1280',
-    bestRating: '5',
-    worstRating: '1',
-  },
-  featureList: [
-    'Real-time ATS parsing score calculation',
-    'Automated XYZ formula hard metric enhancement',
-    'Live React DOM preview editor',
-    'Interactive developer portfolio generator',
-    'Job description keyword gap analyzer',
-    'AI explainability and transformation audit logs',
-  ],
+    'Zebra AI provides resume building, structured resume reviews, job-description matching, and application tracking.',
 };
 
 const webAppSchema: WithContext<WebApplication> = {
@@ -145,6 +107,13 @@ const webAppSchema: WithContext<WebApplication> = {
   url: baseUrl,
   browserRequirements: 'Requires JavaScript. Works in all modern browsers (Chrome, Safari, Firefox, Edge).',
   applicationCategory: 'CareerApplication',
+  featureList: [
+    'Structured resume quality review',
+    'Job description matching',
+    'Evidence-grounded bullet suggestions',
+    'Live resume preview and PDF export',
+    'Job application tracking',
+  ],
 };
 
 export default function RootLayout({
@@ -160,7 +129,6 @@ export default function RootLayout({
     >
       <head>
         <JsonLd schema={organizationSchema} />
-        <JsonLd schema={softwareSchema} />
         <JsonLd schema={webAppSchema} />
       </head>
       <body className="min-h-full flex flex-col">

@@ -203,11 +203,9 @@ export function GenerateCoverLetter({ resumes }: { resumes: { id: string; title:
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setIsOpen(true)}
-                className="flex items-center gap-3 bg-black text-white px-8 py-5 rounded-2xl font-black transition-all shadow-2xl shadow-black/20 text-sm group"
+                className="flex w-full items-center justify-center gap-2 bg-foreground text-white px-5 py-3 rounded-full font-bold transition-all shadow-[var(--shadow-sm)] text-xs group md:w-auto"
             >
-                <div className="w-8 h-8 bg-white/10 rounded-xl flex items-center justify-center group-hover:bg-white/20 transition-colors">
-                    <RiAddLine size={20} />
-                </div>
+                <RiAddLine size={16} />
                 Generate Cover Letter
             </m.button>
 

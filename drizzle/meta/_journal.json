@@ -50,6 +50,13 @@
       "when": 1787265000000,
       "tag": "0006_distributed_rate_limits",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1787520000000,
+      "tag": "0007_career_profile",
+      "breakpoints": true
     }
   ]
 }

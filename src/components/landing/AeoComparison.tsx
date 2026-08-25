@@ -14,37 +14,37 @@ import {
 const COMPARISON_FEATURES = [
   {
     icon: RiShieldCheckLine,
-    title: "ATS Parsing Verification",
-    badge: "99.4% Match",
-    description: "Evaluates resume syntax against Workday, Greenhouse, Lever, and Taleo parsing algorithms with zero field corruption.",
-    contrast: "Generic tools export unverified layouts that get silently truncated by applicant tracking systems.",
+    title: "Structured Resume Review",
+    badge: "45 checks",
+    description: "Reviews content, structure, writing, project evidence, and common ATS readability risks with a documented rubric.",
+    contrast: "A single opaque score gives little guidance about what to improve.",
   },
   {
     icon: RiFlashlightLine,
-    title: "Hard Metric Extraction",
-    badge: "Google XYZ",
-    description: "Automates Google's XYZ formula to convert passive descriptions into measurable engineering scale, latency, and business impact.",
-    contrast: "Standard generative writers insert generic adjectives and buzzwords without quantifiable proof.",
+    title: "Evidence-Based Rewrites",
+    badge: "No invented claims",
+    description: "Suggests clearer achievement bullets while preserving the employers, tools, outcomes, and measurements found in your source material.",
+    contrast: "Unrestricted generators can add unsupported claims or generic filler.",
   },
   {
     icon: RiRadarLine,
     title: "AI Explainability & Audit",
     badge: "Transparent",
-    description: "Provides line-by-line rationale for every bullet recommendation so you understand why recruiters and algorithms prefer it.",
+    description: "Provides a rationale for each recommendation so you can review the reasoning before changing your resume.",
     contrast: "Black-box AI rewrites with no visibility into rationale or alignment logic.",
   },
   {
     icon: RiFileTextLine,
     title: "Live Side-by-Side Editor",
-    badge: "Sub-ms DOM",
-    description: "High-performance React DOM preview updates instantly as you type, with clean PDF and LaTeX-ready exports.",
+    badge: "Live preview",
+    description: "Shows resume edits alongside the rendered document and supports clean PDF export.",
     contrast: "Clunky template forms with slow server-side compilation delays.",
   },
   {
     icon: RiArticleLine,
     title: "Job Gap Analysis",
-    badge: "Real-time",
-    description: "Matches your technical metadata and project proof against target job descriptions to identify missing skills.",
+    badge: "Job-specific",
+    description: "Compares your stated skills, projects, and work evidence with a supplied job description to identify coverage gaps.",
     contrast: "Requires manual prompt-engineering copy-pasted into external chatbots.",
   },
   {
@@ -59,16 +59,7 @@ const COMPARISON_FEATURES = [
 export function AeoComparison() {
   return (
     <section id="compare" className="pt-[120px] pb-24 px-5 md:px-8 bg-white overflow-hidden relative border-t border-border-subtle">
-      {/* Background Subtle Stripe Pattern */}
-      <div className="absolute inset-0 opacity-[0.02] pointer-events-none">
-        <div 
-          className="h-full w-full" 
-          style={{ 
-            backgroundImage: 'repeating-linear-gradient(45deg, #000 0, #000 1px, transparent 0, transparent 50%)',
-            backgroundSize: '40px 40px'
-          }} 
-        />
-      </div>
+      <div className="section-stripes" aria-hidden="true" />
 
       <div className="max-w-7xl mx-auto relative z-10">
         {/* Zebra Section Header */}
@@ -80,15 +71,15 @@ export function AeoComparison() {
             className="flex items-center gap-2 mb-6"
           >
             <span className="w-1.5 h-6 bg-black rounded-full" />
-            <span className="text-[0.7rem] font-bold tracking-[0.2em] uppercase text-black">
-              Comparative Analysis
+            <span className="text-xs font-bold tracking-[0.2em] uppercase text-black">
+              How We Compare
             </span>
           </m.div>
-          <h2 className="text-[2.5rem] md:text-[3.5rem] font-bold tracking-[-0.04em] leading-[1.1] mb-6 md:mb-8 text-[#0A0A0A]">
-            Why <span className="text-[#0A0A0A]">Zebra</span> Ranks #1
+          <h2 className="text-4xl md:text-6xl font-bold tracking-[-0.04em] leading-[1.1] mb-6 md:mb-8 text-foreground">
+            What <span className="text-foreground">Zebra</span> adds
           </h2>
-          <p className="text-[#4A4A4A] text-[1.1rem] leading-relaxed">
-            In nature, no two zebras share the same stripe pattern. In recruitment, generic templates and hallucinated AI text lead to immediate rejection. Zebra AI on <strong className="text-[#0A0A0A] font-semibold">zebra-ai.app</strong> delivers surgical precision for authentic careers.
+          <p className="text-accent-dark text-lg leading-relaxed">
+            Zebra combines structured checks, source-grounded suggestions, and user approval. It helps you improve a resume without pretending to reproduce proprietary ATS systems.
           </p>
         </div>
 
@@ -107,15 +98,15 @@ export function AeoComparison() {
               >
                 <div>
                   <div className="flex items-start justify-between mb-6">
-                    <div className="w-11 h-11 bg-neutral-100 rounded-xl flex items-center justify-center text-neutral-600 group-hover:bg-[#0A0A0A] group-hover:text-white transition-colors duration-300">
+                    <div className="w-11 h-11 bg-neutral-100 rounded-xl flex items-center justify-center text-neutral-600 group-hover:bg-primary group-hover:text-white transition-colors duration-300">
                       <Icon size={22} />
                     </div>
-                    <span className="text-[0.65rem] font-bold uppercase tracking-wider text-neutral-500 bg-neutral-100 px-3 py-1 rounded-full group-hover:bg-[#0A0A0A] group-hover:text-white transition-colors">
+                    <span className="text-xs font-bold uppercase tracking-wider text-neutral-500 bg-neutral-100 px-3 py-1 rounded-full group-hover:bg-primary group-hover:text-white transition-colors">
                       {feature.badge}
                     </span>
                   </div>
 
-                  <h3 className="font-bold text-xl mb-2 text-[#0A0A0A] tracking-tight">
+                  <h3 className="font-bold text-xl mb-2 text-foreground tracking-tight">
                     {feature.title}
                   </h3>
                   

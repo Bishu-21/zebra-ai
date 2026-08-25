@@ -172,7 +172,7 @@ export async function PATCH(req: NextRequest) {
         if (errorResponse) return errorResponse;
 
         const body = await req.json();
-        const { id, status, company, position, jobDescription, url, selectedResumeId, selectedWorkIds, selectedCertIds, resumeVersionId, notes, outcome } = body;
+        const { id, status, company, position, jobDescription, url, selectedResumeId, selectedWorkIds, selectedCertIds, resumeVersionId, deadline, notes, outcome } = body;
 
         if (!id) {
             return NextResponse.json({ error: "Application ID required" }, { status: 400 });
@@ -226,6 +226,7 @@ export async function PATCH(req: NextRequest) {
         if (selectedWorkIds !== undefined) updateData.selectedWorkIds = selectedWorkIds;
         if (selectedCertIds !== undefined) updateData.selectedCertIds = selectedCertIds;
         if (resumeVersionId !== undefined) updateData.resumeVersionId = resumeVersionId;
+        if (deadline !== undefined) updateData.deadline = deadline ? new Date(deadline) : null;
         if (outcome !== undefined) updateData.outcome = outcome;
 
         if (notes !== undefined) {

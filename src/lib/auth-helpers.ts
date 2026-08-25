@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { cache } from "react";
 import { sanitizeSecretText } from "@/lib/db";
 
-const SESSION_LOOKUP_TIMEOUT_MS = 8_000;
+const SESSION_LOOKUP_TIMEOUT_MS = 15_000;
 
 export class SessionUnavailableError extends Error {
     constructor() {
@@ -138,6 +138,14 @@ async function fetchSessionWithRetry() {
                 if (isAuthenticationFailure(err)) return null;
                 const msg = sanitizeSecretText(err instanceof Error ? err.message : String(err));
                 console.error(`[Auth Session Error] Session lookup failed: ${msg}`);
+                throw new SessionUnavailableError();
+            }
+
+            // Promise.race cannot cancel Better Auth's database query. Starting a
+            // second query after our own deadline would leave the first running
+            // and can congest the small Neon pool during a cold start.
+            if (collectErrorText(err).includes("session lookup timed out")) {
+                console.error("[Auth Session Error] Session lookup exceeded the 15-second deadline.");
                 throw new SessionUnavailableError();
             }
 

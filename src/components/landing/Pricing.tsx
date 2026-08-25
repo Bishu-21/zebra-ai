@@ -56,8 +56,8 @@ export function Pricing() {
       icon: <FlashIcon />,
       price: PLANS.starter.displayPrice,
       description: "Perfect for students & single applications.",
-      features: [`${PLANS.starter.credits} AI Scan Credits`, "ATS Score Optimization", "Resume Templates", "Community Support"],
-      cta: "Get Plains",
+      features: [`${PLANS.starter.credits} AI Credits`, "Resume Quality Reviews", "Job Description Matching", "PDF Resume Export"],
+      cta: `Buy ${PLANS.starter.credits} Credits`,
       featured: false
     },
     {
@@ -66,8 +66,8 @@ export function Pricing() {
       icon: <CrownIcon />,
       price: PLANS.pro.displayPrice,
       description: "Strategic edge for active job seekers.",
-      features: [`${PLANS.pro.credits} AI Credits`, "Deep AI Resume Audit", "Job Description Matching", "Priority Support"],
-      cta: "Go Mountain",
+      features: [`${PLANS.pro.credits} AI Credits`, "Resume Quality Reviews", "Job Description Matching", "Cover Letter Generation"],
+      cta: `Buy ${PLANS.pro.credits} Credits`,
       featured: true
     },
     {
@@ -76,8 +76,8 @@ export function Pricing() {
       icon: <EnterpriseIcon />,
       price: PLANS.enterprise.displayPrice,
       description: "Full suite for career excellence.",
-      features: [`${PLANS.enterprise.credits} Bulk Credits`, "All Mountain Features", "Universal Translate", "Dedicated Mentorship"],
-      cta: "Get Grevy's",
+      features: [`${PLANS.enterprise.credits} AI Credits`, "Resume Quality Reviews", "Job Description Matching", "Cover Letter Generation"],
+      cta: `Buy ${PLANS.enterprise.credits} Credits`,
       featured: false
     }
   ];
@@ -92,13 +92,13 @@ export function Pricing() {
             viewport={{ once: true }}
             className="flex items-center justify-center gap-2 mb-5"
           >
-            <span className="text-[0.7rem] font-bold tracking-[0.2em] uppercase text-primary">Student-First Model</span>
+            <span className="text-xs font-bold tracking-[0.2em] uppercase text-primary">One-time credit packs</span>
           </m.div>
-          <h2 className="text-[2.5rem] md:text-[3.5rem] font-bold tracking-[-0.04em] leading-[1.1] mb-5 md:mb-6 text-[#0A0A0A]">
+          <h2 className="text-4xl md:text-6xl font-bold tracking-[-0.04em] leading-[1.1] mb-5 md:mb-6 text-foreground">
             Premium Career Tools, <span className="text-primary">Localized</span>
           </h2>
-          <p className="text-[#4A4A4A] text-[1.1rem] leading-relaxed">
-            We believe career growth shouldn&apos;t break the bank. Our pricing is tailored for the <span className="font-bold text-[#0A0A0A]">Indian job market</span>, starting at just the price of a coffee.
+          <p className="text-accent-dark text-lg leading-relaxed">
+            Choose a one-time credit pack based on how many resume reviews, tailoring runs, or generated documents you expect to use.
           </p>
         </div>
 
@@ -110,14 +110,14 @@ export function Pricing() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
-              className={`p-10 pt-14 rounded-[28px] border-[1.5px] transition-all duration-300 relative ${
+              className={`p-10 pt-14 rounded-3xl border-[1.5px] transition-all duration-300 relative ${
                 plan.featured
                 ? "bg-white border-primary shadow-[0px_24px_60px_-15px_rgba(0,0,0,0.1)] scale-105 z-10"
                 : "bg-white/60 border-black/5 hover:border-black/30"
               }`}
             >
               {plan.featured && (
-                <div className="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-primary text-white text-[0.65rem] font-bold uppercase tracking-wider rounded-full shadow-lg shadow-black/10">
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-primary text-white text-xs font-bold uppercase tracking-wider rounded-full shadow-lg shadow-black/10">
                   Most Popular
                 </div>
               )}
@@ -129,9 +129,9 @@ export function Pricing() {
               <h3 className="text-2xl font-bold mb-2 tracking-tight">{plan.name}</h3>
               <div className="flex items-baseline gap-1 mb-4">
                 <span className="text-4xl font-extrabold tracking-tighter">{plan.price}</span>
-                <span className="text-[#737373] text-sm font-medium">/ pack</span>
+                <span className="text-muted-foreground text-sm font-medium">one-time</span>
               </div>
-              <p className="text-[#4A4A4A] text-sm mb-10">{plan.description}</p>
+              <p className="text-accent-dark text-sm mb-10">{plan.description}</p>
 
               <div className="space-y-4 mb-10">
                 {plan.features.map((feature) => (
@@ -139,7 +139,7 @@ export function Pricing() {
                     <div className="w-5 h-5 rounded-full bg-black/5 flex items-center justify-center">
                       <CheckIcon className="text-primary" />
                     </div>
-                    <span className="text-sm font-medium text-[#4A4A4A]">{feature}</span>
+                    <span className="text-sm font-medium text-accent-dark">{feature}</span>
                   </div>
                 ))}
               </div>
@@ -149,8 +149,8 @@ export function Pricing() {
                 disabled={loading !== null}
                 className={`w-full py-4 rounded-xl font-bold text-sm tracking-wide transition-all active:scale-[0.98] disabled:opacity-50 ${
                 plan.featured
-                ? "bg-[#0A0A0A] text-white hover:bg-[#262626] shadow-lg shadow-black/15"
-                : "bg-white text-[#0A0A0A] border-[1.5px] border-black/10 hover:border-black/30 hover:bg-neutral-50"
+                ? "bg-primary text-white hover:bg-primary-dark shadow-lg shadow-black/15"
+                : "bg-white text-foreground border-[1.5px] border-black/10 hover:border-black/30 hover:bg-neutral-50"
               }`}>
                 {loading === plan.id ? "Processing..." : plan.cta}
               </button>

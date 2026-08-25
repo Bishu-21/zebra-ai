@@ -101,8 +101,15 @@ export const auth = betterAuth({
 		},
 	},
 	session: {
-		expiresIn: 60 * 60 * 24 * 7, // 7 days
+	expiresIn: 60 * 60 * 24 * 7, // 7 days
 		updateAge: 60 * 60 * 24, // 1 day update age
+		// Avoid a Neon round trip on every dashboard render and Zebu tool call.
+		// A short cache keeps revocation latency bounded while absorbing cold starts.
+		cookieCache: {
+			enabled: true,
+			maxAge: 60,
+			strategy: "compact",
+		},
 	},
 	advanced: {
 		useSecureCookies: process.env.NODE_ENV === "production",
