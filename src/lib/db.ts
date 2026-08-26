@@ -6,6 +6,7 @@ import ws from "ws";
 // Configure WebSocket constructor for Neon serverless Node.js environment
 if (typeof window === "undefined") {
   neonConfig.webSocketConstructor = ws;
+  neonConfig.poolQueryViaFetch = true;
 }
 
 /** Sanitize sensitive credentials, connection URLs, and tokens from log messages. */
