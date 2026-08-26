@@ -66,16 +66,26 @@ function normalizeMeta(value: unknown): ResumeIngestionMeta | undefined {
     return {
         schemaVersion: RESUME_SCHEMA_VERSION,
         parserVersion: stringValue(meta.parserVersion) || RESUME_PARSER_VERSION,
-        parseStatus:
-            status === "verified" || status === "needs_review" || status === "legacy"
-                ? status
-                : "needs_review",
+        parseStatus: status === "reviewed" || status === "verified"
+            ? "reviewed"
+            : status === "needs_review" || status === "legacy" ? status : "needs_review",
         sourceText: meta.sourceText,
         parseWarnings: stringArray(meta.parseWarnings),
         parsedAt: stringValue(meta.parsedAt) || undefined,
         originalFileName: stringValue(meta.originalFileName) || undefined,
         mimeType: stringValue(meta.mimeType) || undefined,
         sourceTruncatedForAi: meta.sourceTruncatedForAi === true || undefined,
+        sourceSpans: Array.isArray(meta.sourceSpans)
+            ? meta.sourceSpans.flatMap((value) => {
+                const span = recordValue(value);
+                const text = stringValue(span.text);
+                const path = stringValue(span.path);
+                if (!text || !path) return [];
+                const start = typeof span.start === "number" && span.start >= 0 ? Math.trunc(span.start) : null;
+                const end = typeof span.end === "number" && span.end >= 0 ? Math.trunc(span.end) : null;
+                return [{ path, text, start, end, grounded: span.grounded === true && start !== null && end !== null }];
+            })
+            : undefined,
     };
 }
 
@@ -233,6 +243,27 @@ export function looksLikeFlattenedLegacyResume(content: ResumeContent): boolean 
 
 export function stringifyResumeContent(content: ResumeContent): string {
     return JSON.stringify(normalizeResumeContent(content));
+}
+
+/** Validates the JSON storage boundary and returns one canonical representation. */
+export function normalizeResumeContentForStorage(storedContent: string): string {
+    let parsed: unknown;
+    try {
+        parsed = JSON.parse(storedContent);
+    } catch {
+        throw new Error("Resume content must be valid JSON");
+    }
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        throw new Error("Resume content must be a structured object");
+    }
+    return stringifyResumeContent(normalizeResumeContent(parsed));
+}
+
+/** Returns normalized resume data safe for public sharing and export surfaces. */
+export function toPublicResumeContent(value: unknown): ResumeContent {
+    const content = normalizeResumeContent(value);
+    delete content._ingestionMeta;
+    return content;
 }
 
 export function getResumeSourceText(content: ResumeContent): string {

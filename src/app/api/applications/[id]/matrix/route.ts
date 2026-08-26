@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { withRequestPolicy } from "@/lib/request-policy";
-import { getUserOwnedApplication, getUserOwnedWorkItems } from "@/lib/auth-policy";
-import { getCandidateEvidenceGraph, syncWorkItemsToEvidenceGraph } from "@/lib/evidence-graph";
+import { getUserOwnedApplication } from "@/lib/auth-policy";
+import { getEvidenceForWorkItems } from "@/lib/evidence-graph";
 import { buildRequirementMatrix } from "@/lib/requirement-matrix";
 import { runPreflightValidation } from "@/lib/preflight-validator";
 import { compileAtsDocument } from "@/lib/ats-compiler";
@@ -26,26 +26,19 @@ export const GET = withRequestPolicy(
             return NextResponse.json({ error: "Application not found" }, { status: 404 });
         }
 
-        // Fetch candidate evidence graph
-        let evidenceGraph = await getCandidateEvidenceGraph(userId);
-
-        // If evidence graph is empty, attempt to seed from work items if available
-        if (evidenceGraph.length === 0) {
-            const selectedWorkIds = Array.isArray(application.selectedWorkIds)
-                ? application.selectedWorkIds.filter((id): id is string => typeof id === "string")
-                : [];
-            const workItemsList = await getUserOwnedWorkItems(userId, selectedWorkIds);
-            if (workItemsList.length > 0) {
-                evidenceGraph = await syncWorkItemsToEvidenceGraph(userId, workItemsList);
-            }
-        }
+        // GET is read-only and uses only evidence explicitly selected for this application.
+        const selectedWorkIds = Array.isArray(application.selectedWorkIds)
+            ? application.selectedWorkIds.filter((id): id is string => typeof id === "string")
+            : [];
+        const evidenceGraph = await getEvidenceForWorkItems(userId, selectedWorkIds);
 
         // Build Requirement-to-Evidence Matrix
         const matrixResult = await buildRequirementMatrix(
             userId,
             applicationId,
             application.jobDescription,
-            evidenceGraph
+            evidenceGraph,
+            { persist: false },
         );
 
         // Run Preflight Validation
@@ -54,7 +47,9 @@ export const GET = withRequestPolicy(
             applicationId,
             matrixResult,
             application.jobDescription,
-            application.selectedResume?.content
+            application.selectedResume?.content,
+            undefined,
+            { persist: false },
         );
 
         return NextResponse.json({
@@ -83,7 +78,10 @@ export const POST = withRequestPolicy(
             return NextResponse.json({ error: "Application not found" }, { status: 404 });
         }
 
-        const evidenceGraph = await getCandidateEvidenceGraph(userId);
+        const selectedWorkIds = Array.isArray(application.selectedWorkIds)
+            ? application.selectedWorkIds.filter((id): id is string => typeof id === "string")
+            : [];
+        const evidenceGraph = await getEvidenceForWorkItems(userId, selectedWorkIds);
         const matrixResult = await buildRequirementMatrix(
             userId,
             applicationId,

@@ -26,19 +26,20 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: `Title must be under ${MAX_TITLE_LENGTH} characters.` }, { status: 400 });
     }
 
+    const credit = await reserveUserCredits(authCtx.user.id, 1);
+    if (!credit.success) {
+        return NextResponse.json({ error: credit.error || "Insufficient credits." }, { status: 402 });
+    }
+
     let sourceText: string;
     try {
         sourceText = await extractResumeText(fileValue);
     } catch (error: unknown) {
+        await refundUserCredits(authCtx.user.id, 1);
         return NextResponse.json(
             { error: error instanceof Error ? error.message : "Could not read the uploaded document." },
             { status: 400 },
         );
-    }
-
-    const credit = await reserveUserCredits(authCtx.user.id, 1);
-    if (!credit.success) {
-        return NextResponse.json({ error: credit.error || "Insufficient credits." }, { status: 402 });
     }
 
     try {

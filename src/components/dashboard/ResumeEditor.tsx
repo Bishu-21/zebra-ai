@@ -30,7 +30,7 @@ import { SkillsEditor } from "./SkillsEditor";
 import type { ResumeData, ResumeContent, Experience, Project, Achievement, SectionId, TemplateType } from "@/components/compiler/types";
 
 interface ResumeEditorProps {
-    initialData?: { id: string; title: string; content: string; };
+    initialData?: { id: string; title: string; content: string; revision: number; };
     isStripeVersion?: boolean;
     versionTitle?: string | null;
 }
@@ -43,7 +43,7 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
         if (typeof window !== "undefined") {
             const saved = localStorage.getItem(`resume-template-${initialData?.id || "new"}`);
             if (saved === "modern" || saved === "professional" || saved === "minimal" || saved === "executive") {
-                setSelectedTemplate(saved as TemplateType);
+                queueMicrotask(() => setSelectedTemplate(saved as TemplateType));
             }
         }
     }, [initialData?.id]);
@@ -56,6 +56,7 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
     }, [initialData?.id, selectedTemplate]);
 
     const [isSaving, setIsSaving] = useState(false);
+    const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "unsaved" | "error">("saved");
     const [activeSection, setActiveSection] = useState<SectionId>("basics");
     const [viewMode, setViewMode] = useState<"sheet" | "source">(() => {
         const parsed = parseResumeData(initialData);
@@ -100,6 +101,8 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
     const { showToast } = useToast();
     const { settings } = useSettings();
     const lastSavedContentRef = React.useRef(JSON.stringify(resume.content));
+    const autosaveAbortRef = React.useRef<AbortController | null>(null);
+    const revisionRef = React.useRef(initialData?.revision ?? 0);
 
     useEffect(() => {
         lastSavedContentRef.current = JSON.stringify(resume.content);
@@ -255,7 +258,9 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
     }, [isResizing, resize, stopResizing]);
 
     const handleSave = async () => {
+        autosaveAbortRef.current?.abort();
         setIsSaving(true);
+        setSaveStatus("saving");
         try {
             const isNew = resume.id === "new";
             const res = await fetch("/api/resumes", {
@@ -264,7 +269,8 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                 body: JSON.stringify({
                     id: isNew ? null : resume.id,
                     title: resume.title,
-                    content: JSON.stringify(resume.content)
+                    content: JSON.stringify(resume.content),
+                    expectedRevision: isNew ? undefined : revisionRef.current,
                 })
             });
 
@@ -272,11 +278,16 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
             if (!res.ok || !contentType?.includes("application/json")) {
                 const text = await res.text();
                 console.error("Save failed response:", text);
-                throw new Error(res.status === 404 ? "API route not found" : "Server returned an invalid response");
+                const message = res.status === 409
+                    ? "A newer version exists. Refresh this page before saving."
+                    : res.status === 404 ? "API route not found" : "Server returned an invalid response";
+                throw new Error(message);
             }
 
             const data = await res.json();
             lastSavedContentRef.current = JSON.stringify(resume.content);
+            revisionRef.current = data.revision ?? revisionRef.current;
+            setSaveStatus("saved");
             if (isNew && data.id) {
                 router.replace(`/dashboard/resumes/${data.id}`);
                 setResume((p: ResumeData) => ({ ...p, id: data.id }));
@@ -285,6 +296,7 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                 showToast("Saved", "success");
             }
         } catch (error: unknown) {
+            setSaveStatus("error");
             showToast(error instanceof Error ? error.message : "Save failed", "error");
         } finally {
             setIsSaving(false);
@@ -300,29 +312,49 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
         if (!settings.autoSave) return;
         if (resume.id === "new") return;
 
-        const save = async (contentStr: string) => {
+        const save = async (contentStr: string, controller: AbortController) => {
             setIsSaving(true);
+            setSaveStatus("saving");
             try {
                 const res = await fetch(`/api/resumes/${resume.id}/update`, {
                     method: "PATCH",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ content: contentStr })
+                    body: JSON.stringify({ content: contentStr, expectedRevision: revisionRef.current }),
+                    signal: controller.signal,
                 });
-                if (res.ok) {
-                    lastSavedContentRef.current = contentStr;
-                }
+                const data = await res.json().catch(() => null);
+                if (!res.ok) throw new Error(res.status === 409 ? "A newer version exists. Refresh before saving." : "Autosave failed");
+                revisionRef.current = data?.data?.revision ?? revisionRef.current;
+                lastSavedContentRef.current = contentStr;
+                setSaveStatus("saved");
             } catch (err) {
+                if (controller.signal.aborted) return;
                 console.error("Autosave failed", err);
+                setSaveStatus("error");
             } finally {
-                setTimeout(() => setIsSaving(false), 800);
+                if (!controller.signal.aborted) setIsSaving(false);
             }
         };
 
         const debouncedStr = JSON.stringify(debouncedContent);
         if (debouncedStr !== lastSavedContentRef.current) {
-            save(debouncedStr);
+            setSaveStatus("unsaved");
+            autosaveAbortRef.current?.abort();
+            const controller = new AbortController();
+            autosaveAbortRef.current = controller;
+            void save(debouncedStr, controller);
         }
+        return () => autosaveAbortRef.current?.abort();
     }, [debouncedContent, resume.id, settings.autoSave]);
+
+    useEffect(() => {
+        const warnIfUnsaved = (event: BeforeUnloadEvent) => {
+            if (JSON.stringify(resume.content) === lastSavedContentRef.current) return;
+            event.preventDefault();
+        };
+        window.addEventListener("beforeunload", warnIfUnsaved);
+        return () => window.removeEventListener("beforeunload", warnIfUnsaved);
+    }, [resume.content]);
 
     const handleDuplicate = async () => {
         setIsSaving(true);
@@ -425,6 +457,21 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
         resume.content.projects.length === 0;
 
     const needsReview = resume.content._ingestionMeta?.parseStatus === "needs_review";
+    const ungroundedImportFields = resume.content._ingestionMeta?.sourceSpans?.filter((span) => !span.grounded).length ?? 0;
+
+    const markImportReviewed = () => {
+        setResume((previous) => ({
+            ...previous,
+            content: {
+                ...previous.content,
+                _ingestionMeta: previous.content._ingestionMeta
+                    ? { ...previous.content._ingestionMeta, parseStatus: "reviewed" }
+                    : undefined,
+            },
+        }));
+        setSaveStatus("unsaved");
+        showToast("Review marked complete. Save the resume to confirm.", "success");
+    };
 
     const handleDelete = async () => {
         if (!window.confirm("Are you sure you want to delete this resume?")) return;
@@ -637,7 +684,7 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                         {settings.autoSave && (
                             <div className={`hidden sm:flex items-center gap-1.5 transition-all duration-500 ${isSaving ? 'opacity-100' : 'opacity-40'}`}>
                                 <div className={`w-1.5 h-1.5 rounded-full ${isSaving ? 'bg-primary' : 'bg-muted-foreground/30'}`} />
-                                <span className="text-[0.65rem] font-bold text-muted-foreground/60 uppercase tracking-widest">{isSaving ? 'Saving' : 'Synced'}</span>
+                                <span className="text-[0.65rem] font-bold text-muted-foreground/60 uppercase tracking-widest">{saveStatus === "saving" ? "Saving" : saveStatus === "error" ? "Save failed" : saveStatus === "unsaved" ? "Unsaved" : "Saved"}</span>
                             </div>
                         )}
                         <button onClick={handleSave} disabled={isSaving} className="h-7 px-2 sm:px-4 bg-primary hover:bg-primary-dark rounded-[var(--radius-md)] text-[10px] font-bold tracking-wide text-white transition-all flex items-center gap-1.5 disabled:opacity-40 active:scale-95">
@@ -682,10 +729,21 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                         className="bg-amber-50 border-b border-amber-200 px-4 sm:px-6 py-2.5 flex items-center gap-3"
                     >
                         <RiCheckboxCircleFill className="text-amber-700 shrink-0" size={17} />
-                        <div>
+                        <div className="min-w-0 flex-1">
                             <p className="text-xs font-black text-amber-950">AI structure ready for review</p>
-                            <p className="text-[10px] font-semibold text-amber-800">Compare every section with the preserved source. Zebra AI will not apply role-match suggestions automatically.</p>
+                            <p className="text-[10px] font-semibold text-amber-800">
+                                Compare every section with the preserved source. {ungroundedImportFields > 0
+                                    ? `${ungroundedImportFields} extracted ${ungroundedImportFields === 1 ? "field has" : "fields have"} no exact source match.`
+                                    : "All extracted fields have an exact source match."}
+                            </p>
                         </div>
+                        <button
+                            type="button"
+                            onClick={markImportReviewed}
+                            className="ml-auto shrink-0 rounded-lg bg-amber-900 px-3 py-1.5 text-[10px] font-bold text-white hover:bg-amber-950"
+                        >
+                            Mark review complete
+                        </button>
                     </m.div>
                 )}
 
@@ -1078,7 +1136,7 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                 <footer className={`h-6 bg-primary flex items-center justify-between px-3 shrink-0 select-none transition-[padding] duration-300 ${showAiPanel ? "lg:pr-[432px]" : ""}`}>
                     <div className="flex items-center gap-3">
                         <div className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-white/70" /><span className="text-[9px] font-semibold text-white/80">Ready</span></div>
-                        <span className="text-[9px] font-semibold text-white/50">{isSaving ? "Saving..." : "Synced"}</span>
+                        <span className="text-[9px] font-semibold text-white/50">{saveStatus === "saving" ? "Saving..." : saveStatus === "error" ? "Save failed" : saveStatus === "unsaved" ? "Unsaved" : "Saved"}</span>
                     </div>
                     <div className="flex items-center gap-3">
                         <span className="text-[9px] font-semibold text-white/50">A4</span>

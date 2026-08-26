@@ -46,6 +46,13 @@ export function isValidApplicationStatus(status: string): status is ApplicationS
     return (APPLICATION_STATUSES as readonly string[]).includes(status);
 }
 
+/** Maps historical labels to the canonical lifecycle without rewriting stored history. */
+export function normalizeApplicationStatus(status: string): ApplicationStatus {
+    if (status === "Tailoring") return "Preparing";
+    if (status === "Offers") return "Offer";
+    return isValidApplicationStatus(status) ? status : "Draft";
+}
+
 /**
  * Validate status transition and minimum rule requirements for an application.
  */

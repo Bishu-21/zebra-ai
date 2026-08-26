@@ -6,6 +6,8 @@ import crypto from "crypto";
 import { handleApiError } from "@/lib/api-error";
 import { shareSchema } from "@/lib/validation";
 import { requireAuth, getUserOwnedResume, notFoundResponse } from "@/lib/auth-policy";
+import { getAuthBaseURL } from "@/lib/auth";
+import { parseStoredResumeContent } from "@/lib/resume-content";
 
 /**
  * POST /api/resumes/[id]/share — Generate a share token for public viewing
@@ -32,6 +34,13 @@ export async function POST(req: NextRequest, { params: paramsPromise }: { params
         // Verify ownership
         const resume = await getUserOwnedResume(authCtx.user.id, params.id);
         if (!resume) return notFoundResponse("Resume");
+        const parseStatus = parseStoredResumeContent(resume.content)._ingestionMeta?.parseStatus;
+        if (isPublic && (parseStatus === "needs_review" || parseStatus === "legacy")) {
+            return NextResponse.json(
+                { error: "Review this imported resume against its source before sharing it publicly." },
+                { status: 409 },
+            );
+        }
 
         // Generate token if it doesn't exist
         let shareToken = resume.shareToken;
@@ -47,7 +56,7 @@ export async function POST(req: NextRequest, { params: paramsPromise }: { params
             })
             .where(and(eq(resumes.id, params.id), eq(resumes.userId, authCtx.user.id)));
 
-        const shareUrl = `${getBaseUrl(req)}/share/${shareToken}`;
+        const shareUrl = `${getAuthBaseURL()}/share/${shareToken}`;
         return NextResponse.json({ shareToken, shareUrl, isPublic: isPublic ?? resume.isPublic });
     } catch (error: unknown) {
         return handleApiError(error, "Resume Share POST");
@@ -75,7 +84,7 @@ export async function DELETE(req: NextRequest, { params: paramsPromise }: { para
     }
 }
 
-export async function GET(req: NextRequest, { params: paramsPromise }: { params: Promise<{ id: string }> }) {
+export async function GET(_req: NextRequest, { params: paramsPromise }: { params: Promise<{ id: string }> }) {
     const params = await paramsPromise;
     try {
         const { auth: authCtx, errorResponse } = await requireAuth();
@@ -85,7 +94,7 @@ export async function GET(req: NextRequest, { params: paramsPromise }: { params:
         if (!resume) return notFoundResponse("Resume");
 
         if (resume.shareToken) {
-            const shareUrl = `${getBaseUrl(req)}/share/${resume.shareToken}`;
+            const shareUrl = `${getAuthBaseURL()}/share/${resume.shareToken}`;
             return NextResponse.json({ 
                 shared: true, 
                 shareToken: resume.shareToken, 
@@ -97,13 +106,4 @@ export async function GET(req: NextRequest, { params: paramsPromise }: { params:
     } catch (error: unknown) {
         return handleApiError(error, "Resume Share GET");
     }
-}
-
-function getBaseUrl(req: NextRequest): string {
-    const host = req.headers.get("host");
-    const proto = req.headers.get("x-forwarded-proto") || "https";
-    
-    if (host) return `${proto}://${host}`;
-    
-    return process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 }

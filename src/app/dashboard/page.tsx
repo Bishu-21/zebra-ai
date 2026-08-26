@@ -104,11 +104,18 @@ async function renderDashboardContent(session: NonNullable<Awaited<ReturnType<ty
               actionLabel: "Continue",
               actionHref: `/dashboard/applications/${latestApp.id}?step=resume`
           };
-      } else if (latestApp.status === "Tailoring" || latestApp.status === "Draft" || latestApp.status === "Preparing") {
+      } else if (!latestApp.resumeVersionId) {
           nextAction = {
               title: `Continue application: ${latestApp.position} @ ${latestApp.company}`,
-              description: "Your tailored profile is ready. Check final document and export.",
-              actionLabel: "Export resume",
+              description: "Generate and review role-specific suggestions before exporting.",
+              actionLabel: "Prepare application",
+              actionHref: `/dashboard/applications/${latestApp.id}?step=suggestions`
+          };
+      } else if (latestApp.status === "Draft" || latestApp.status === "Preparing" || latestApp.status === "Ready") {
+          nextAction = {
+              title: `Continue application: ${latestApp.position} @ ${latestApp.company}`,
+              description: "A tailored version exists. Review the document before export and submission.",
+              actionLabel: "Review and export",
               actionHref: `/dashboard/applications/${latestApp.id}?step=export`
           };
       } else {
@@ -123,32 +130,61 @@ async function renderDashboardContent(session: NonNullable<Awaited<ReturnType<ty
 
 
 
-  // Fetch project analyses for feed
-  const projectResults = await db.query.projectAnalyses.findMany({
+  const [
+    projectResults,
+    userResumes,
+    atsResults,
+    [resumeCount],
+    [analysisCount],
+    [optimisationCount],
+    currentUser,
+  ] = await Promise.all([
+    db.query.projectAnalyses.findMany({
       where: eq(projectAnalysesTable.userId, session.user.id),
       orderBy: [desc(projectAnalysesTable.createdAt)],
       limit: 10,
-  });
-
-  // Fetch real resumes
-  const userResumes = await db.query.resumes.findMany({
-    where: eq(resumesTable.userId, session.user.id),
-    orderBy: [desc(resumesTable.updatedAt)],
-    with: {
-        analyses: {
-            orderBy: [desc(analysisTable.createdAt)],
-            limit: 1,
-        },
+    }),
+    db.query.resumes.findMany({
+      where: eq(resumesTable.userId, session.user.id),
+      orderBy: [desc(resumesTable.updatedAt)],
+      limit: 25,
+      columns: {
+        id: true,
+        title: true,
+        updatedAt: true,
+        parentResumeId: true,
+        targetRole: true,
+        targetCompany: true,
+      },
+      with: {
         versions: {
-            orderBy: [desc(resumeVersionsTable.createdAt)],
-        }
-    }
-  });
+          orderBy: [desc(resumeVersionsTable.createdAt)],
+          limit: 10,
+        },
+      },
+    }),
+    db.query.atsOptimisations.findMany({
+      where: eq(atsOptimisationsTable.userId, session.user.id),
+      orderBy: [desc(atsOptimisationsTable.createdAt)],
+      limit: 10,
+      with: { resume: { columns: { id: true, title: true } } },
+    }),
+    db.select({ value: count() }).from(resumesTable).where(eq(resumesTable.userId, session.user.id)),
+    db.select({ value: count() })
+      .from(analysisTable)
+      .innerJoin(resumesTable, eq(analysisTable.resumeId, resumesTable.id))
+      .where(eq(resumesTable.userId, session.user.id)),
+    db.select({ value: count() }).from(atsOptimisationsTable).where(eq(atsOptimisationsTable.userId, session.user.id)),
+    db.query.user.findFirst({
+      where: eq(userTable.id, session.user.id),
+      columns: { credits: true },
+    }),
+  ]);
 
   // Fetch all analyses for the user's resumes to retrieve the latest score & feedback in memory
   const userResumeIds = userResumes.map(r => r.id);
-  const resumeAnalyses = userResumeIds.length > 0 
-    ? await db.select({
+  const [resumeAnalyses, allAnalyses] = await Promise.all([
+    userResumeIds.length > 0 ? db.selectDistinctOn([analysisTable.resumeId], {
         id: analysisTable.id,
         resumeId: analysisTable.resumeId,
         score: analysisTable.score,
@@ -157,8 +193,17 @@ async function renderDashboardContent(session: NonNullable<Awaited<ReturnType<ty
       })
       .from(analysisTable)
       .where(inArray(analysisTable.resumeId, userResumeIds))
-      .orderBy(desc(analysisTable.createdAt))
-    : [];
+      .orderBy(analysisTable.resumeId, desc(analysisTable.createdAt)) : Promise.resolve([]),
+    db.query.analysis.findMany({
+      where: (analysis, { inArray: inArrayFn }) =>
+        userResumes.length > 0
+          ? inArrayFn(analysis.resumeId, userResumes.map(r => r.id))
+          : eq(analysis.id, "none"),
+      orderBy: [desc(analysisTable.createdAt)],
+      limit: 10,
+      with: { resume: { columns: { id: true, title: true } } },
+    }),
+  ]);
   
   const latestAnalysisMap: Record<string, { id: string; score: number; feedback: unknown }> = {};
   for (const a of resumeAnalyses) {
@@ -176,41 +221,6 @@ async function renderDashboardContent(session: NonNullable<Awaited<ReturnType<ty
       analyses: latestAnalysisMap[r.id] ? [true] : []
   }));
 
-  // Fetch all analyses for feed
-  const allAnalyses = await db.query.analysis.findMany({
-      where: (analysis, { inArray: inArrayFn }) => 
-        userResumes.length > 0 
-          ? inArrayFn(analysis.resumeId, userResumes.map(r => r.id))
-          : eq(analysis.id, "none"),
-      orderBy: [desc(analysisTable.createdAt)],
-      limit: 10,
-      with: {
-          resume: true
-      }
-  });
-
-  // Fetch ATS optimizations for feed
-  const atsResults = await db.query.atsOptimisations.findMany({
-      where: eq(atsOptimisationsTable.userId, session.user.id),
-      orderBy: [desc(atsOptimisationsTable.createdAt)],
-      limit: 10,
-      with: {
-          resume: true
-      }
-  });
-
-  // Fetch counts for Quick Stats
-  const [resumeCount] = await db.select({ value: count() }).from(resumesTable).where(eq(resumesTable.userId, session.user.id));
-  const [analysisCount] = await db.select({ value: count() })
-    .from(analysisTable)
-    .innerJoin(resumesTable, eq(analysisTable.resumeId, resumesTable.id))
-    .where(eq(resumesTable.userId, session.user.id));
-  const [optimisationCount] = await db.select({ value: count() }).from(atsOptimisationsTable).where(eq(atsOptimisationsTable.userId, session.user.id));
-
-  // Get credits from user table directly to ensure freshness
-  const currentUser = await db.query.user.findFirst({
-      where: eq(userTable.id, session.user.id)
-  });
   const credits = currentUser?.credits ?? 5;
 
   type StatItem = {

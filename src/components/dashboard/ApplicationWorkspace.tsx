@@ -21,7 +21,7 @@ export interface ApplicationData {
     position: string;
     jobDescription: string | null;
     url: string | null;
-    status: string; // "Draft" | "Preparing" | "Tailoring" | "Applied" | "Interviewing" | "Offer" | "Rejected" | "Withdrawn"
+    status: string; // canonical application lifecycle status
     selectedResumeId: string | null;
     selectedWorkIds: string[] | null;
     selectedCertIds: string[] | null;
@@ -65,7 +65,7 @@ interface ApplicationWorkspaceProps {
 const STATUS_OPTIONS = [
     { value: "Draft", label: "Draft" },
     { value: "Preparing", label: "Preparing" },
-    { value: "Tailoring", label: "Tailoring" },
+    { value: "Ready", label: "Ready" },
     { value: "Applied", label: "Applied" },
     { value: "Interviewing", label: "Interviewing" },
     { value: "Offer", label: "Offer" },
@@ -99,6 +99,8 @@ export function ApplicationWorkspace({ initialApplication, resumes, workItems, c
     const [selectedCertIds, setSelectedCertIds] = useState<string[]>(app.selectedCertIds || []);
     const [certificationsList, setCertificationsList] = useState<UserCertification[]>(initialCertifications || []);
     const [isLoadingCerts, setIsLoadingCerts] = useState(false);
+    const [isLoadingMoreCerts, setIsLoadingMoreCerts] = useState(false);
+    const [certNextCursor, setCertNextCursor] = useState<string | null>(null);
     const [certsError, setCertsError] = useState<string | null>(null);
     const [notes, setNotes] = useState(app.notes || "");
     const [outcome, setOutcome] = useState(app.outcome || "");
@@ -107,14 +109,18 @@ export function ApplicationWorkspace({ initialApplication, resumes, workItems, c
     const [isTailoring, setIsTailoring] = useState(false);
     const [showSuggestionsModal, setShowSuggestionsModal] = useState(false);
 
-    const fetchCertifications = async () => {
-        setIsLoadingCerts(true);
+    const fetchCertifications = async (cursor?: string) => {
+        if (cursor) setIsLoadingMoreCerts(true);
+        else setIsLoadingCerts(true);
         setCertsError(null);
         try {
-            const res = await fetch("/api/certifications");
+            const query = new URLSearchParams({ limit: "25" });
+            if (cursor) query.set("cursor", cursor);
+            const res = await fetch(`/api/certifications?${query.toString()}`);
             const data = await res.json();
             if (res.ok && data.certifications) {
-                setCertificationsList(data.certifications);
+                setCertificationsList(previous => cursor ? [...previous, ...data.certifications] : data.certifications);
+                setCertNextCursor(data.page?.nextCursor ?? null);
             } else {
                 setCertsError(data.error || "Failed to load certifications");
             }
@@ -123,6 +129,7 @@ export function ApplicationWorkspace({ initialApplication, resumes, workItems, c
             setCertsError("Failed to fetch certifications.");
         } finally {
             setIsLoadingCerts(false);
+            setIsLoadingMoreCerts(false);
         }
     };
 
@@ -198,7 +205,7 @@ export function ApplicationWorkspace({ initialApplication, resumes, workItems, c
             setIsTailoring(true);
             const res = await fetch("/api/ai/tailor", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: { "Content-Type": "application/json", "Idempotency-Key": crypto.randomUUID() },
                 body: JSON.stringify({
                     resumeId: selectedResumeId,
                     jobDescription: jobDescription,
@@ -622,7 +629,7 @@ export function ApplicationWorkspace({ initialApplication, resumes, workItems, c
                                     <RiCheckLine className="w-4 h-4 text-emerald-600" /> Attached Certifications & Credentials
                                 </h3>
                                 <p className="text-xs text-neutral-500 mt-0.5">
-                                    Select verified certifications from your library to attach to this application.
+                                    Select relevant certifications from your library to attach to this application.
                                 </p>
                             </div>
                             <span className="px-2.5 py-1 text-xs font-bold bg-neutral-100 text-neutral-700 rounded-full">
@@ -637,13 +644,13 @@ export function ApplicationWorkspace({ initialApplication, resumes, workItems, c
                         ) : certsError ? (
                             <div className="p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-2xl text-xs flex items-center justify-between">
                                 <span>{certsError}</span>
-                                <button onClick={fetchCertifications} className="font-bold underline ml-2">Retry</button>
+                                <button onClick={() => void fetchCertifications()} className="font-bold underline ml-2">Retry</button>
                             </div>
                         ) : certificationsList.length === 0 ? (
                             <div className="p-4 border border-dashed border-neutral-200 rounded-2xl text-center text-xs text-neutral-500 font-semibold space-y-2">
                                 <p>No certifications found in your library yet.</p>
                                 <button
-                                    onClick={fetchCertifications}
+                                    onClick={() => void fetchCertifications()}
                                     className="px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-bold rounded-xl transition-colors text-xs"
                                 >
                                     Refresh Certifications
@@ -689,6 +696,16 @@ export function ApplicationWorkspace({ initialApplication, resumes, workItems, c
                                         </div>
                                     );
                                 })}
+                                {certNextCursor && (
+                                    <button
+                                        type="button"
+                                        disabled={isLoadingMoreCerts}
+                                        onClick={() => void fetchCertifications(certNextCursor)}
+                                        className="w-full rounded-xl border border-neutral-200 px-3 py-2 text-xs font-bold text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
+                                    >
+                                        {isLoadingMoreCerts ? "Loading…" : "Load more certifications"}
+                                    </button>
+                                )}
                             </div>
                         )}
                     </div>
@@ -898,7 +915,7 @@ export function ApplicationWorkspace({ initialApplication, resumes, workItems, c
                             </p>
                             {app.resumeVersionId ? (
                                 <Link
-                                    href={`/dashboard/resumes/${app.resumeVersionId}`}
+                                    href={`/dashboard/resumes/${selectedResumeId}?version=${app.resumeVersionId}`}
                                     className="w-full py-2.5 bg-[#0A0A0A] text-white text-xs font-bold rounded-xl hover:bg-neutral-800 transition-colors inline-flex items-center justify-center gap-2"
                                 >
                                     <RiDownloadLine className="w-4 h-4" /> Export Tailored Resume PDF

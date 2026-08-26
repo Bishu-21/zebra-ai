@@ -2,7 +2,7 @@ import React from "react";
 import { getSafeSession } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { resumes as resumesTable, resumeVersions as resumeVersionsTable } from "@/lib/schema";
-import { eq, desc } from "drizzle-orm";
+import { and, eq, desc, lt, or } from "drizzle-orm";
 import Link from "next/link";
 import {
     RiFileTextLine,
@@ -15,6 +15,7 @@ import {
 } from "react-icons/ri";
 import { ImportResume } from "@/components/dashboard/ImportResume";
 import { TailorResume } from "@/components/dashboard/TailorResume";
+import { decodeCursor, paginateRows } from "@/lib/pagination";
 
 function formatTimeAgo(date: Date) {
     const now = new Date();
@@ -25,25 +26,50 @@ function formatTimeAgo(date: Date) {
     return `${Math.floor(diffInSeconds / 86400)}d ago`;
 }
 
-export default async function ResumesPage() {
+export default async function ResumesPage({ searchParams }: { searchParams: Promise<{ masterCursor?: string; versionCursor?: string }> }) {
     const session = await getSafeSession();
     if (!session) return null;
+    const params = await searchParams;
+    const masterCursor = decodeCursor(params.masterCursor);
+    const versionCursor = decodeCursor(params.versionCursor);
+    const pageLimit = 24;
 
-    const masterResumes = await db.query.resumes.findMany({
-        where: eq(resumesTable.userId, session.user.id),
-        orderBy: [desc(resumesTable.updatedAt)],
-    });
+    const masterRows = await db.select({
+        id: resumesTable.id,
+        title: resumesTable.title,
+        updatedAt: resumesTable.updatedAt,
+    }).from(resumesTable).where(and(
+        eq(resumesTable.userId, session.user.id),
+        masterCursor ? or(
+            lt(resumesTable.updatedAt, masterCursor.timestamp),
+            and(eq(resumesTable.updatedAt, masterCursor.timestamp), lt(resumesTable.id, masterCursor.id)),
+        ) : undefined,
+    )).orderBy(desc(resumesTable.updatedAt), desc(resumesTable.id)).limit(pageLimit + 1);
+    const masterPage = paginateRows(masterRows, pageLimit, resume => ({ id: resume.id, timestamp: resume.updatedAt }));
+    const masterResumes = masterPage.items;
 
-    const tailoredVersions = await db.query.resumeVersions.findMany({
-        where: eq(resumeVersionsTable.userId, session.user.id),
-        orderBy: [desc(resumeVersionsTable.createdAt)],
-    });
+    const versionRows = await db.select({
+        id: resumeVersionsTable.id,
+        resumeId: resumeVersionsTable.resumeId,
+        title: resumeVersionsTable.title,
+        company: resumeVersionsTable.company,
+        targetRole: resumeVersionsTable.targetRole,
+        matchScore: resumeVersionsTable.matchScore,
+        createdAt: resumeVersionsTable.createdAt,
+    }).from(resumeVersionsTable).where(and(
+        eq(resumeVersionsTable.userId, session.user.id),
+        versionCursor ? or(
+            lt(resumeVersionsTable.createdAt, versionCursor.timestamp),
+            and(eq(resumeVersionsTable.createdAt, versionCursor.timestamp), lt(resumeVersionsTable.id, versionCursor.id)),
+        ) : undefined,
+    )).orderBy(desc(resumeVersionsTable.createdAt), desc(resumeVersionsTable.id)).limit(pageLimit + 1);
+    const versionPage = paginateRows(versionRows, pageLimit, version => ({ id: version.id, timestamp: version.createdAt }));
+    const tailoredVersions = versionPage.items;
 
     const formattedResumes = masterResumes.map(r => ({
         id: r.id,
         title: r.title,
         updatedAt: r.updatedAt.toISOString(),
-        content: r.content,
     }));
 
     return (
@@ -78,7 +104,7 @@ export default async function ResumesPage() {
             <div className="space-y-4">
                 <div className="flex items-center justify-between border-b border-neutral-200/70 pb-3">
                     <h2 className="text-sm font-bold text-[#0A0A0A] flex items-center gap-2">
-                        <RiShieldCheckLine className="w-4 h-4 text-emerald-600" /> Master Base Resumes ({masterResumes.length})
+                        <RiShieldCheckLine className="w-4 h-4 text-emerald-600" /> Master Base Resumes
                     </h2>
                 </div>
 
@@ -112,7 +138,7 @@ export default async function ResumesPage() {
                                         {resume.title}
                                     </h3>
                                     <p className="text-xs text-neutral-500 line-clamp-3 leading-relaxed">
-                                        {resume.content?.slice(0, 150) || "No resume content preview."}
+                                        Open this resume to review or edit its structured content.
                                     </p>
                                 </div>
 
@@ -136,6 +162,11 @@ export default async function ResumesPage() {
                         ))}
                     </div>
                 )}
+                {masterPage.page.nextCursor && (
+                    <Link href={`/dashboard/resumes?masterCursor=${encodeURIComponent(masterPage.page.nextCursor)}${params.versionCursor ? `&versionCursor=${encodeURIComponent(params.versionCursor)}` : ""}`} className="inline-flex rounded-xl border border-neutral-200 bg-white px-4 py-2 text-xs font-bold text-neutral-700 hover:bg-neutral-50">
+                        View older resumes
+                    </Link>
+                )}
             </div>
 
             {/* Section 2: Compiled Tailored Versions */}
@@ -143,7 +174,7 @@ export default async function ResumesPage() {
                 <div className="space-y-6 pt-6">
                     <div className="flex items-center justify-between border-b border-neutral-200 pb-4">
                         <h2 className="text-lg font-extrabold text-[#0A0A0A] flex items-center gap-2">
-                            <RiMagicLine className="w-5 h-5 text-indigo-600" /> Tailored Versions ({tailoredVersions.length})
+                            <RiMagicLine className="w-5 h-5 text-indigo-600" /> Tailored Versions
                         </h2>
                     </div>
 
@@ -174,7 +205,7 @@ export default async function ResumesPage() {
 
                                 <div className="flex items-center justify-between pt-4 border-t border-neutral-100">
                                     <Link
-                                        href={`/dashboard/resumes/${ver.id}`}
+                                        href={`/dashboard/resumes/${ver.resumeId}?version=${ver.id}`}
                                         className="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1"
                                     >
                                         View Tailored Version <RiArrowRightLine size={14} />
@@ -183,6 +214,11 @@ export default async function ResumesPage() {
                             </div>
                         ))}
                     </div>
+                    {versionPage.page.nextCursor && (
+                        <Link href={`/dashboard/resumes?versionCursor=${encodeURIComponent(versionPage.page.nextCursor)}${params.masterCursor ? `&masterCursor=${encodeURIComponent(params.masterCursor)}` : ""}`} className="inline-flex rounded-xl border border-neutral-200 bg-white px-4 py-2 text-xs font-bold text-neutral-700 hover:bg-neutral-50">
+                            View older tailored versions
+                        </Link>
+                    )}
                 </div>
             )}
         </div>

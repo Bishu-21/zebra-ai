@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { workItems as workItemsTable } from "@/lib/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, lt, or } from "drizzle-orm";
 import { handleApiError } from "@/lib/api-error";
 import { z } from "zod";
 import { requireAuth, notFoundResponse } from "@/lib/auth-policy";
+import { paginateRows, parsePagination } from "@/lib/pagination";
 
 const createWorkItemSchema = z.object({
     title: z.string().min(1, "Title is required"),
@@ -16,17 +17,23 @@ const createWorkItemSchema = z.object({
     isPublic: z.boolean().default(false),
 });
 
-export async function GET() {
+export async function GET(req: NextRequest) {
     try {
         const { auth: authCtx, errorResponse } = await requireAuth();
         if (errorResponse) return errorResponse;
 
-        const items = await db.query.workItems.findMany({
-            where: eq(workItemsTable.userId, authCtx.user.id),
-            orderBy: [desc(workItemsTable.createdAt)],
-        });
+        const { limit, cursor } = parsePagination(req);
+        const cursorCondition = cursor ? or(
+            lt(workItemsTable.createdAt, cursor.timestamp),
+            and(eq(workItemsTable.createdAt, cursor.timestamp), lt(workItemsTable.id, cursor.id)),
+        ) : undefined;
+        const rows = await db.select().from(workItemsTable)
+            .where(and(eq(workItemsTable.userId, authCtx.user.id), cursorCondition))
+            .orderBy(desc(workItemsTable.createdAt), desc(workItemsTable.id))
+            .limit(limit + 1);
+        const page = paginateRows(rows, limit, item => ({ id: item.id, timestamp: item.createdAt }));
 
-        return NextResponse.json({ items });
+        return NextResponse.json({ items: page.items, page: page.page });
     } catch (error: unknown) {
         return handleApiError(error, "GET /api/work");
     }

@@ -61,6 +61,7 @@ Return ONLY the JSON array.`;
 
         const text = (await generateAiResponse({
             task: "copilot",
+            telemetry: { userId: authCtx.user.id },
             prompt,
             systemPrompt,
         })).trim();

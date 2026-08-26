@@ -72,6 +72,7 @@ Job: ${jobDescription}`;
     try {
       stream = await generateAiStream({
         task: "audit",
+        telemetry: { userId: authCtx.user.id, creditsCost: 1 },
         prompt,
         systemPrompt,
         onStreamFailure: refundCredit,

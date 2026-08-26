@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { 
     RiAddLine, 
     RiCloseCircleLine, 
@@ -16,12 +16,16 @@ import {
 import { useRouter } from "next/navigation";
 import { m, AnimatePresence } from "framer-motion";
 import { sanitizeHtml } from "@/lib/utils";
+import { useHydrated } from "@/hooks/useHydrated";
 
 export function GenerateCoverLetter({ resumes }: { resumes: { id: string; title: string }[] }) {
     const [isOpen, setIsOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [resumeOptions, setResumeOptions] = useState(resumes);
+    const [resumeCursor, setResumeCursor] = useState<string | null>(null);
+    const [loadingResumes, setLoadingResumes] = useState(false);
     const [formData, setFormData] = useState({
         resumeId: resumes[0]?.id || "",
         jobDescription: "",
@@ -32,7 +36,7 @@ export function GenerateCoverLetter({ resumes }: { resumes: { id: string; title:
     const [isExporting, setIsExporting] = useState(false);
     const [scraping, setScraping] = useState(false);
     const [scrapeUrl, setScrapeUrl] = useState("");
-    const [isMounted, setIsMounted] = useState(false);
+    const isMounted = useHydrated();
     const [intelligence, setIntelligence] = useState<{
         skills: string[];
         companySignals: string[];
@@ -41,9 +45,29 @@ export function GenerateCoverLetter({ resumes }: { resumes: { id: string; title:
     const [enriching, setEnriching] = useState(false);
     const router = useRouter();
 
-    React.useEffect(() => {
-        setIsMounted(true);
+    const loadResumes = useCallback(async (cursor?: string) => {
+        setLoadingResumes(true);
+        try {
+            const query = new URLSearchParams({ limit: "50" });
+            if (cursor) query.set("cursor", cursor);
+            const response = await fetch(`/api/resumes?${query.toString()}`);
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Could not load resumes");
+            setResumeOptions((current) => cursor ? [...current, ...(data.resumes || [])] : (data.resumes || []));
+            setResumeCursor(data.page?.nextCursor ?? null);
+        } catch (cause) {
+            setError(cause instanceof Error ? cause.message : "Could not load resumes");
+        } finally {
+            setLoadingResumes(false);
+        }
     }, []);
+
+    useEffect(() => {
+        if (!isOpen) return;
+        let cancelled = false;
+        queueMicrotask(() => { if (!cancelled) void loadResumes(); });
+        return () => { cancelled = true; };
+    }, [isOpen, loadResumes]);
 
     const handleScrape = async () => {
         if (!scrapeUrl.trim()) return;
@@ -264,13 +288,18 @@ export function GenerateCoverLetter({ resumes }: { resumes: { id: string; title:
                                                         value={formData.resumeId}
                                                         onChange={(e) => setFormData({...formData, resumeId: e.target.value})}
                                                     >
-                                                        {resumes.map(r => <option key={r.id} value={r.id}>{r.title}</option>)}
-                                                        {resumes.length === 0 && <option value="">No Resumes Found (Template mode)</option>}
+                                                        {resumeOptions.map(r => <option key={r.id} value={r.id}>{r.title}</option>)}
+                                                        {resumeOptions.length === 0 && <option value="">No Resumes Found (Template mode)</option>}
                                                     </select>
                                                     <div className="absolute right-8 top-1/2 -translate-y-1/2 pointer-events-none text-black/30">
                                                         <RiArrowDropDownLine size={28} />
                                                     </div>
                                                 </div>
+                                                {resumeCursor && (
+                                                    <button type="button" disabled={loadingResumes} onClick={() => void loadResumes(resumeCursor)} className="text-xs font-bold text-black/50 underline disabled:opacity-50">
+                                                        {loadingResumes ? "Loading resumes…" : "Load more resumes"}
+                                                    </button>
+                                                )}
                                             </div>
                                             <div className="group space-y-4">
                                                 <label className="text-[0.7rem] font-black uppercase tracking-[0.2em] text-black/30 group-hover:text-black transition-colors">Internal Reference Title</label>

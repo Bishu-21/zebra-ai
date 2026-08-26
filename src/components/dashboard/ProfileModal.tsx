@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { m, AnimatePresence } from "framer-motion";
-import Image from "next/image";
 import {
     RiCloseLine,
     RiLogoutBoxRLine,
@@ -12,7 +11,6 @@ import {
     RiArrowLeftLine,
     RiCheckLine,
     RiLoader4Line,
-    RiDeleteBinLine,
     RiMoneyDollarCircleLine,
     RiMailLine
 } from "react-icons/ri";
@@ -20,6 +18,7 @@ import { signOut, authClient, useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/Toast";
 import { useDialogFocus } from "@/hooks/useDialogFocus";
+import { UserAvatar } from "@/components/dashboard/UserAvatar";
 
 interface ProfileModalProps {
     isOpen: boolean;
@@ -39,7 +38,6 @@ export function ProfileModal({ isOpen, onCloseAction, userName, userImage }: Pro
     const [view, setView] = useState<ViewState>("menu");
     const [newName, setNewName] = useState(userName);
     const [isSaving, setIsSaving] = useState(false);
-    const [isDeleting, setIsDeleting] = useState(false);
 
     React.useEffect(() => {
         if (!isOpen) return;
@@ -90,23 +88,6 @@ export function ProfileModal({ isOpen, onCloseAction, userName, userImage }: Pro
             showToast(err instanceof Error ? err.message : "Update failed", "error");
         } finally {
             setIsSaving(false);
-        }
-    };
-
-    const handleDeleteAccount = async () => {
-        if (!window.confirm("This will permanently delete your account. This action cannot be undone. Proceed?")) return;
-
-        setIsDeleting(true);
-        try {
-            const { error } = await authClient.deleteUser();
-            if (error) throw new Error(error.message);
-
-            showToast("Account deleted", "success");
-            router.push("/");
-        } catch {
-            showToast("Deletion failed", "error");
-        } finally {
-            setIsDeleting(false);
         }
     };
 
@@ -198,18 +179,7 @@ export function ProfileModal({ isOpen, onCloseAction, userName, userImage }: Pro
                                         {/* Profile Card */}
                                         <div className="p-6 flex flex-col items-center border-b border-neutral-200/60 bg-[#FAF9F6]">
                                             <div className="w-20 h-20 rounded-2xl bg-[#0A0A0A] text-white flex items-center justify-center overflow-hidden shadow-2xs border border-neutral-200/80 mb-3">
-                                                {userImage ? (
-                                                    <Image
-                                                        src={userImage}
-                                                        alt={userName}
-                                                        width={80}
-                                                        height={80}
-                                                        className="w-full h-full object-cover"
-                                                        unoptimized
-                                                    />
-                                                ) : (
-                                                    <span className="text-2xl font-bold">{userName.charAt(0).toUpperCase()}</span>
-                                                )}
+                                                <UserAvatar name={userName} src={userImage} size={80} fallbackClassName="text-2xl" />
                                             </div>
                                             <h4 className="text-base font-bold text-[#0A0A0A] tracking-tight">{userName}</h4>
                                             <p className="text-xs font-normal text-neutral-500 mt-0.5">{session?.user?.email}</p>
@@ -282,15 +252,8 @@ export function ProfileModal({ isOpen, onCloseAction, userName, userImage }: Pro
                                             </button>
 
                                             <div className="pt-4 border-t border-neutral-200/60">
-                                                <h5 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Danger Zone</h5>
-                                                <button
-                                                    onClick={handleDeleteAccount}
-                                                    disabled={isDeleting}
-                                                    className="w-full py-3 bg-red-50 text-red-700 border border-red-200/80 hover:bg-red-100 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-40"
-                                                >
-                                                    {isDeleting ? <RiLoader4Line className="animate-spin" size={16} /> : <RiDeleteBinLine size={16} />}
-                                                    Delete Account
-                                                </button>
+                                                <h5 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Account requests</h5>
+                                                <p className="text-xs text-neutral-500 leading-relaxed">Contact support to request account deletion while the complete retention and cascade workflow is being finalized.</p>
                                             </div>
                                         </div>
                                     </m.div>

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { RiExternalLinkLine, RiArrowDownSLine, RiFontSize } from "react-icons/ri";
+import { RiArrowDownSLine, RiFontSize } from "react-icons/ri";
 import { useSettings } from "@/context/SettingsContext";
 import type { ResumeContent } from "./types";
 
@@ -393,4 +393,3 @@ function ResumeSection({ title, children, template }: { title: string; children:
         </section>
     );
 }
-

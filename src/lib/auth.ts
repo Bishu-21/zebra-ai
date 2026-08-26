@@ -22,6 +22,9 @@ export function getAuthBaseURL(): string {
 		const vercelHost = process.env.VERCEL_URL.replace(/^https?:\/\//, "").replace(/\/$/, "");
 		return `https://${vercelHost}`;
 	}
+	if (process.env.NODE_ENV === "production") {
+		throw new Error("BETTER_AUTH_URL or NEXT_PUBLIC_APP_URL must be configured in production.");
+	}
 	return "http://localhost:3000";
 }
 
@@ -82,9 +85,11 @@ export const auth = betterAuth({
 		additionalFields: {
 			plan: {
 				type: "string",
+				input: false,
 			},
 			credits: {
 				type: "number",
+				input: false,
 			},
 		},
 	},

@@ -62,7 +62,8 @@ export async function runPreflightValidation(
     matrixResult: RequirementMatrixResult,
     jobDescription?: string | null,
     resumeContent?: string | null,
-    basics?: { name?: string; email?: string; phone?: string; location?: string } | null
+    basics?: { name?: string; email?: string; phone?: string; location?: string } | null,
+    options: { persist?: boolean } = {},
 ): Promise<PreflightReport> {
     const parsingRiskFlags: string[] = [];
     const hardEligibilityFlags: string[] = [];
@@ -72,7 +73,7 @@ export async function runPreflightValidation(
     const parsingHazards: string[] = [];
     if (resumeContent) {
         if (/<table|<\/table>/i.test(resumeContent)) {
-            const msg = "Table element detected (Greenhouse parsers fail on tables)";
+            const msg = "Table element detected; some resume parsers may not preserve table reading order";
             parsingRiskFlags.push(msg);
             parsingHazards.push(msg);
         }
@@ -270,9 +271,9 @@ export async function runPreflightValidation(
         updatedAt: now,
     };
 
-    if (isTestStoreActive()) {
+    if (options.persist !== false && isTestStoreActive()) {
         testStore.preflightChecks.set(id, report);
-    } else {
+    } else if (options.persist !== false) {
         await db.insert(preflightChecks)
             .values({
                 id,

@@ -142,7 +142,7 @@ export default async function PortfolioDashboardPage() {
                             >
                                 <div className="space-y-1">
                                     <div className="flex items-center gap-1.5 text-emerald-600 text-xs font-semibold">
-                                        <RiCheckLine size={14} /> Verified Credential
+                                        <RiCheckLine size={14} /> Credential details
                                     </div>
                                     <h3 className="font-bold text-sm text-[#0A0A0A]">{cert.title}</h3>
                                     <p className="text-xs text-neutral-500">Issuer: {cert.issuer}</p>

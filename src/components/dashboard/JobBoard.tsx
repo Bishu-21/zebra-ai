@@ -14,7 +14,7 @@ import { formatRelativeTime } from "@/lib/utils";
 import type { ApplicationStatus } from "@/lib/application-state-machine";
 
 export const BOARD_STATUSES = [
-  "Draft", "Preparing", "Tailoring", "Applied", "Interviewing", "Offer", "Rejected", "Withdrawn",
+  "Draft", "Preparing", "Ready", "Applied", "Interviewing", "Offer", "Rejected", "Withdrawn",
 ] as const;
 
 export type BoardStatus = (typeof BOARD_STATUSES)[number];
@@ -39,7 +39,7 @@ const FILTERS: Filter[] = ["All", "Active", "Applied", "Interviewing", "Closed"]
 
 function matchesFilter(status: string, filter: Filter) {
   if (filter === "All") return true;
-  if (filter === "Active") return ["Draft", "Preparing", "Tailoring"].includes(status);
+  if (filter === "Active") return ["Draft", "Preparing", "Ready"].includes(status);
   if (filter === "Closed") return ["Offer", "Offers", "Rejected", "Withdrawn"].includes(status);
   return status === filter;
 }

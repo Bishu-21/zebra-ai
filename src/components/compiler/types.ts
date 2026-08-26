@@ -41,7 +41,15 @@ export interface Education {
     highlights: string[];
 }
 
-export type ResumeParseStatus = "legacy" | "needs_review" | "verified";
+export type ResumeParseStatus = "legacy" | "needs_review" | "reviewed";
+
+export interface ResumeSourceSpan {
+    path: string;
+    text: string;
+    start: number | null;
+    end: number | null;
+    grounded: boolean;
+}
 
 export interface ResumeIngestionMeta {
     schemaVersion: 2;
@@ -53,6 +61,8 @@ export interface ResumeIngestionMeta {
     originalFileName?: string;
     mimeType?: string;
     sourceTruncatedForAi?: boolean;
+    /** Private per-field provenance used by the import review workflow. */
+    sourceSpans?: ResumeSourceSpan[];
 }
 
 export interface ResumeContent {

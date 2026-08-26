@@ -37,6 +37,7 @@ export async function POST(req: NextRequest) {
 
         const response = await generateAiResponse({
             task: "chat",
+            telemetry: { userId: auth!.user.id },
             prompt: parsed.data.message,
             systemPrompt: `You are Zebra AI's evidence-grounded career assistant.
 Use only facts supplied by the user or present in candidate context.

@@ -85,7 +85,7 @@ export function ImportResume() {
             });
 
             const data = await res.json();
-            if (!res.ok) throw new Error(data.error || "Neural extraction failed");
+            if (!res.ok) throw new Error(data.error || "Resume extraction failed");
 
             setUploadStep("Structured draft ready for review.");
             showToast("Resume imported. Review the mapped sections before using suggestions.", "success");

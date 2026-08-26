@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateResumeHtml } from "@/lib/resume-renderer";
 import { handleApiError } from "@/lib/api-error";
 import { requireAuth } from "@/lib/auth-policy";
+import { db } from "@/lib/db";
+import { user as userTable } from "@/lib/schema";
+import { eq } from "drizzle-orm";
+import { normalizeResumeContent } from "@/lib/resume-content";
 
 /**
  * HARDENED EXPORT API — Server-Side PDF Generation Gate
@@ -27,16 +31,26 @@ export async function POST(req: NextRequest) {
         const { auth: authCtx, errorResponse } = await requireAuth();
         if (errorResponse) return errorResponse;
 
-        const { resumeData, template = "modern" } = await req.json();
-        const user = authCtx.user as unknown as { plan?: string };
-        const userPlan = user.plan || "Free";
+        const payload: unknown = await req.json();
+        if (!payload || typeof payload !== "object") {
+            return NextResponse.json({ error: "Invalid export payload" }, { status: 400 });
+        }
+        const body = payload as Record<string, unknown>;
+        const resumeData = normalizeResumeContent(body.resumeData);
+        const template = typeof body.template === "string" ? body.template : "modern";
+        const account = await db.query.user.findFirst({
+            columns: { plan: true },
+            where: eq(userTable.id, authCtx.user.id),
+        });
+        if (!account) return NextResponse.json({ error: "Account not found" }, { status: 404 });
+        const userPlan = account.plan;
 
         // PAYWALL GATE: Premium templates require paid plan
         if (PREMIUM_TEMPLATES.includes(template)) {
             if (userPlan === "Free") {
                 return NextResponse.json({
                     error: "PREMIUM_REQUIRED",
-                    message: "Executive templates require a Pro subscription.",
+                    message: "Executive templates require an eligible paid credit pack.",
                     upgradeUrl: "/dashboard/settings?tab=billing"
                 }, { status: 403 });
             }

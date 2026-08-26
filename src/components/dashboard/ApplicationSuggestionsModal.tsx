@@ -69,9 +69,11 @@ export function ApplicationSuggestionsModal({
     }, [applicationId, showToast]);
 
     useEffect(() => {
+        let cancelled = false;
         if (isOpen && applicationId) {
-            fetchChanges();
+            queueMicrotask(() => { if (!cancelled) void fetchChanges(); });
         }
+        return () => { cancelled = true; };
     }, [isOpen, applicationId, fetchChanges]);
 
     useEffect(() => {

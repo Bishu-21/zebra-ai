@@ -409,10 +409,6 @@ html {
 .zebu-launcher { position: fixed; right: 1.5rem; bottom: 1.5rem; z-index: 100; display: flex; align-items: center; gap: .45rem; }
 .zebu-fab { display: flex; height: 3.15rem; align-items: center; gap: .5rem; border-radius: 999px; background: #0a0a0a; padding: 0 1.1rem; color: #fff; font-size: .72rem; font-weight: 700; box-shadow: 0 14px 36px rgba(0, 0, 0, .2); transition: transform 160ms ease, box-shadow 160ms ease; }
 .zebu-fab:hover { transform: translateY(-2px); box-shadow: 0 18px 42px rgba(0, 0, 0, .24); }
-.zebu-wake-toggle { display: flex; height: 2.55rem; align-items: center; gap: .42rem; border: 1px solid rgba(10, 10, 10, .12); border-radius: 999px; background: #faf9f6; padding: 0 .75rem; color: #737373; font-size: .64rem; font-weight: 650; box-shadow: var(--shadow-md); }
-.zebu-wake-toggle__dot { width: .4rem; height: .4rem; border-radius: 999px; background: #a3a3a3; }
-.zebu-wake-toggle--on { border-color: rgba(10, 10, 10, .28); color: #0a0a0a; }
-.zebu-wake-toggle--on .zebu-wake-toggle__dot { background: #0a0a0a; animation: zebu-pulse 1.1s ease-in-out infinite alternate; }
 
 .zebu-orb { --zebu-volume: .08; position: relative; display: grid; width: 4.4rem; height: 4.4rem; flex: 0 0 auto; place-items: center; }
 .zebu-orb__core { position: relative; z-index: 2; display: flex; width: 3rem; height: 3rem; align-items: center; justify-content: center; gap: 2px; border-radius: .9rem; background: #0a0a0a; box-shadow: var(--shadow-lg); transform: scale(calc(.96 + var(--zebu-volume) * .28)); transition: transform 70ms linear; }
@@ -456,8 +452,6 @@ html {
   .zebu-icon-button { width: 2.5rem; height: 2.5rem; }
   .zebu-composer { padding-bottom: max(.8rem, env(safe-area-inset-bottom)); }
   .zebu-launcher { right: .75rem; bottom: .75rem; }
-  .zebu-wake-toggle { width: 2.55rem; justify-content: center; padding: 0; }
-  .zebu-wake-toggle span:last-child { display: none; }
   .zebu-action-heading span:last-child { display: none; }
   .zebu-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .zebu-actions .zebu-suggestion:nth-child(3):last-child { grid-column: 1 / -1; }
@@ -466,9 +460,40 @@ html {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .zebu-panel, .zebu-orb__bar, .zebu-orb__ring, .zebu-card, .zebu-mic--live, .zebu-wake-toggle__dot, .zebu-working span,
+  .zebu-panel, .zebu-orb__bar, .zebu-orb__ring, .zebu-card, .zebu-mic--live, .zebu-working span,
   .zebra-loader__mark, .zebra-loader__contact, .zebra-loader__ground span { animation: none !important; }
   .zebra-loader--page { animation-duration: 1ms; }
+}
+
+/* Keep the compiler inside Zebra's standard light workspace language. */
+.compiler-workspace [class~="bg-slate-900"],
+.compiler-workspace [class~="bg-slate-950"],
+.compiler-workspace [class~="bg-slate-950/80"] {
+  background-color: #ffffff !important;
+}
+
+.compiler-workspace [class~="border-slate-800"],
+.compiler-workspace [class~="border-slate-700"] {
+  border-color: #e5e5e5 !important;
+}
+
+.compiler-workspace [class~="text-white"]:not([class*="bg-"]),
+.compiler-workspace [class~="text-slate-200"],
+.compiler-workspace [class~="text-slate-300"] {
+  color: #262626 !important;
+}
+
+.compiler-workspace [class~="text-slate-400"],
+.compiler-workspace [class~="text-slate-500"] {
+  color: #737373 !important;
+}
+
+.compiler-workspace [class~="shadow-lg"] {
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.08) !important;
+}
+
+.compiler-workspace tr[class*="hover:bg-slate"]:hover {
+  background-color: #fafafa !important;
 }
 
 @media print {

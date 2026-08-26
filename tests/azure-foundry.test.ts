@@ -218,9 +218,9 @@ describe("Azure Foundry fallback policy", () => {
     assert.equal(shouldFallbackToGemini({ status: 408 }), true);
     assert.equal(shouldFallbackToGemini({ status: 429 }), true);
     assert.equal(shouldFallbackToGemini({ status: 503 }), true);
-    assert.equal(shouldFallbackToGemini({ status: 400 }), true);
-    assert.equal(shouldFallbackToGemini({ status: 401 }), true);
-    assert.equal(shouldFallbackToGemini({ status: 403 }), true);
+    assert.equal(shouldFallbackToGemini({ status: 400 }), false);
+    assert.equal(shouldFallbackToGemini({ status: 401 }), false);
+    assert.equal(shouldFallbackToGemini({ status: 403 }), false);
   });
 
   test("falls back for connection and timeout errors", () => {
@@ -228,11 +228,8 @@ describe("Azure Foundry fallback policy", () => {
     connectionError.name = "APIConnectionError";
     const timeoutError = new Error("timed out");
     timeoutError.name = "APIConnectionTimeoutError";
-    const emptyResponseError = new Error("empty response");
-    emptyResponseError.name = "AiProviderResponseError";
 
     assert.equal(shouldFallbackToGemini(connectionError), true);
     assert.equal(shouldFallbackToGemini(timeoutError), true);
-    assert.equal(shouldFallbackToGemini(emptyResponseError), true);
   });
 });

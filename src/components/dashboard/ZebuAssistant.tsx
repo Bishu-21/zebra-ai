@@ -36,7 +36,7 @@ export function ZebuAssistant() {
   const zebu = useZebu();
   const endRef = useRef<HTMLDivElement | null>(null);
   const committedResponseTurn = useRef(0);
-  const committedResponseText = useRef("");
+  const [committedResponseText, setCommittedResponseText] = useState("");
   const transcriptCommittedForResponse = useRef(false);
   const skipTranscriptText = useRef<string | null>(null);
   const submissionRef = useRef<string | null>(null);
@@ -86,8 +86,10 @@ export function ZebuAssistant() {
   useEffect(() => {
     if (!pendingNavigation) return;
     if (pendingNavigation.route === zebu.pathname) {
-      setActionReceipt({ status: "completed", label: `${pendingNavigation.label} opened` });
-      setPendingNavigation(null);
+      queueMicrotask(() => {
+        setActionReceipt({ status: "completed", label: `${pendingNavigation.label} opened` });
+        setPendingNavigation(null);
+      });
       return;
     }
     const timeout = window.setTimeout(() => {
@@ -121,7 +123,7 @@ export function ZebuAssistant() {
   }, [selectedContext, syncLivePage, zebu.pathname]);
   useEffect(() => {
     if (!live.responseText.trim()) {
-      committedResponseText.current = "";
+      queueMicrotask(() => setCommittedResponseText(""));
       transcriptCommittedForResponse.current = false;
     }
   }, [live.responseText]);
@@ -140,7 +142,7 @@ export function ZebuAssistant() {
     const text = live.responseText.trim();
     if (text && live.turnCount > committedResponseTurn.current) {
       committedResponseTurn.current = live.turnCount;
-      committedResponseText.current = text;
+      setCommittedResponseText(text);
       setMessages((items) => [...items, { role: "assistant", content: text }]);
     }
   }, [live.responseText, live.turnCount]);
@@ -247,7 +249,7 @@ export function ZebuAssistant() {
   const latestActions: ZebuSuggestion[] = conversationalFollowUps?.map((prompt) => ({ label: prompt, prompt })) ?? zebu.suggestions;
   const pageLabel = getZebuPageLabel(zebu.pathname);
   const visibleContext = zebu.entityContext?.title || pageLabel;
-  const streamingResponse = live.responseText.trim() !== committedResponseText.current ? live.responseText : "";
+  const streamingResponse = live.responseText.trim() !== committedResponseText ? live.responseText : "";
   const compactText = pendingNavigation
     ? `Loading ${pendingNavigation.label}. Zebu will keep this conversation ready.`
     : live.responseText.trim() || live.transcript.trim() || messages.at(-1)?.content || welcome.content;
@@ -357,10 +359,6 @@ export function ZebuAssistant() {
     ) : (
       <div className="zebu-launcher">
         <button type="button" onClick={() => zebu.open(true)} className="zebu-fab" aria-label="Open Zebu and start listening"><RiVolumeUpLine size={17} /><span>Talk to Zebu</span></button>
-        <button type="button" onClick={toggleWake} className={`zebu-wake-toggle ${wake.enabled ? "zebu-wake-toggle--on" : ""}`} aria-label={wakeLabel} title={wake.error ?? `${wakeLabel}. Works while this tab is open.`}>
-          <span className="zebu-wake-toggle__dot" />
-          <span>{wake.enabled ? "Hey Zebu on" : "Hey Zebu"}</span>
-        </button>
       </div>
     )}
   </>;

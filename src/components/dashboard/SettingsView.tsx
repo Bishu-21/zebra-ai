@@ -49,7 +49,7 @@ export function SettingsView() {
     useEffect(() => {
         const tab = searchParams.get("tab") as TabType;
         if (tab && TABS.some(t => t.id === tab) && tab !== activeTab) {
-            setActiveTab(tab);
+            queueMicrotask(() => setActiveTab(tab));
         }
     }, [searchParams, activeTab]);
 

@@ -13,6 +13,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { m, AnimatePresence } from "framer-motion";
 
 import { PLANS, PlanId } from "@/lib/constants/plans";
+import { useHydrated } from "@/hooks/useHydrated";
 
 interface RazorpayResponse {
     razorpay_order_id: string;
@@ -51,19 +52,18 @@ export function CreditTopUp() {
     const [isOpen, setIsOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
-    const [mounted, setMounted] = useState(false);
+    const mounted = useHydrated();
     const [scriptLoaded, setScriptLoaded] = useState(false);
     const router = useRouter();
     const searchParams = useSearchParams();
 
     React.useEffect(() => {
-        setMounted(true);
         const handleOpenCredits = () => setIsOpen(true);
         window.addEventListener("open-credits", handleOpenCredits);
 
         const existingScript = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
         if (existingScript) {
-            setScriptLoaded(true);
+            queueMicrotask(() => setScriptLoaded(true));
             return () => window.removeEventListener("open-credits", handleOpenCredits);
         }
 
@@ -88,12 +88,14 @@ export function CreditTopUp() {
         const showPricing = searchParams.get("showPricing") === "true";
         const planId = searchParams.get("plan");
         if (showPricing && planId && PLANS[planId as PlanId]) {
-            setIsOpen(true);
-            if (scriptLoaded) {
-                const newUrl = window.location.pathname;
-                window.history.replaceState({}, "", newUrl);
-                handlePurchase(planId);
-            }
+            queueMicrotask(() => {
+                setIsOpen(true);
+                if (scriptLoaded) {
+                    const newUrl = window.location.pathname;
+                    window.history.replaceState({}, "", newUrl);
+                    void handlePurchase(planId);
+                }
+            });
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [mounted, scriptLoaded, searchParams]);
@@ -112,7 +114,7 @@ export function CreditTopUp() {
         { ...PLANS.enterprise, icon: <RiShieldCheckLine size={24} className="text-neutral-900" />, popular: false },
     ];
 
-    const handlePurchase = async (planId: string) => {
+    async function handlePurchase(planId: string) {
         if (loading) return;
         setLoading(true);
 
@@ -187,7 +189,7 @@ export function CreditTopUp() {
         } finally {
             setLoading(false);
         }
-    };
+    }
 
     return (
         <>

@@ -11,9 +11,13 @@ describe("Resume validation", () => {
     });
 
     test("accepts content-only autosave patches", () => {
-        const result = resumeUpdateSchema.safeParse({ content: "{}" });
+        const result = resumeUpdateSchema.safeParse({ content: "{}", expectedRevision: 0 });
 
         assert.equal(result.success, true);
+    });
+
+    test("requires a revision for autosave patches", () => {
+        assert.equal(resumeUpdateSchema.safeParse({ content: "{}" }).success, false);
     });
 
     test("rejects empty autosave patches", () => {

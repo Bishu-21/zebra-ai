@@ -1,5 +1,11 @@
 import fs from "fs";
 import chromium from "@sparticuz/chromium-min";
+import puppeteer, { type Browser } from "puppeteer-core";
+
+const MAX_CONCURRENT_PDF_RENDERS = 2;
+const MAX_PDF_HTML_BYTES = 1024 * 1024;
+let activePdfRenders = 0;
+let browserPromise: Promise<Browser> | null = null;
 
 export interface BrowserLaunchConfig {
   executablePath: string;
@@ -111,5 +117,57 @@ export async function getPdfBrowserConfig(): Promise<BrowserLaunchConfig> {
       `Please install Chrome or Edge locally, or set CHROME_EXECUTABLE_PATH or CHROMIUM_PACK_URL in your environment. ` +
       `[Details: ${detail}]`
     );
+  }
+}
+
+async function getSharedBrowser(): Promise<Browser> {
+  if (!browserPromise) {
+    browserPromise = getPdfBrowserConfig().then((launchConfig) => puppeteer.launch({
+      args: launchConfig.args,
+      defaultViewport: launchConfig.defaultViewport,
+      executablePath: launchConfig.executablePath,
+      headless: launchConfig.headless,
+    })).catch((error) => {
+      browserPromise = null;
+      throw error;
+    });
+  }
+  const browser = await browserPromise;
+  if (!browser.connected) {
+    browserPromise = null;
+    return getSharedBrowser();
+  }
+  return browser;
+}
+
+/** Render trusted generated HTML through the shared, network-isolated browser pool. */
+export async function renderPdfBuffer(html: string): Promise<Uint8Array> {
+  if (Buffer.byteLength(html, "utf8") > MAX_PDF_HTML_BYTES) {
+    throw new Error("Generated PDF document is too large.");
+  }
+  if (activePdfRenders >= MAX_CONCURRENT_PDF_RENDERS) {
+    throw new Error("PDF renderer is busy. Please retry shortly.");
+  }
+
+  activePdfRenders += 1;
+  let page: Awaited<ReturnType<Browser["newPage"]>> | null = null;
+  try {
+    page = await (await getSharedBrowser()).newPage();
+    await page.setRequestInterception(true);
+    page.on("request", (request) => request.abort());
+    page.on("error", (error: unknown) => console.error("PDF page error:", error));
+    page.on("pageerror", (error: unknown) => console.error("PDF page crash:", error));
+    await page.setContent(html, { waitUntil: "domcontentloaded" });
+    await page.evaluate(() => document.fonts.ready);
+    return await page.pdf({
+      format: "A4",
+      printBackground: true,
+      margin: { top: "0", right: "0", bottom: "0", left: "0" },
+      scale: 1,
+      preferCSSPageSize: true,
+    });
+  } finally {
+    activePdfRenders -= 1;
+    if (page) await page.close().catch(() => undefined);
   }
 }

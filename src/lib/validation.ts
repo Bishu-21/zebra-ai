@@ -31,6 +31,7 @@ export const applicationStatusSchema = z.enum(APPLICATION_STATUSES);
 export const resumeSchema = z.object({
     // Treat an explicit null as "create" for older clients; new clients omit the id.
     id: idSchema.nullish(),
+    expectedRevision: z.number().int().nonnegative().optional(),
     title: z.string().min(1, "Title is required").max(MAX_TITLE_LENGTH).trim(),
     content: z.string().max(MAX_STORED_RESUME_LENGTH).optional(),
     status: z.enum(["Draft", "Completed", "Archived"]).optional(),
@@ -39,10 +40,14 @@ export const resumeSchema = z.object({
 });
 
 export const resumeUpdateSchema = resumeSchema
-    .pick({ title: true, content: true, status: true })
+    .pick({ title: true, content: true, status: true, expectedRevision: true })
     .partial()
-    .refine((data) => Object.keys(data).length > 0, {
+    .refine((data) => data.title !== undefined || data.content !== undefined || data.status !== undefined, {
         message: "At least one resume field is required",
+    })
+    .refine((data) => data.expectedRevision !== undefined, {
+        message: "Expected revision is required",
+        path: ["expectedRevision"],
     });
 
 // Duplication schema

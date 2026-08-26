@@ -49,7 +49,9 @@ export function RequirementEvidenceMatrixView({ applicationId, onCompileSuccess 
     }, [applicationId]);
 
     useEffect(() => {
-        void fetchMatrixData();
+        let cancelled = false;
+        queueMicrotask(() => { if (!cancelled) void fetchMatrixData(); });
+        return () => { cancelled = true; };
     }, [fetchMatrixData]);
 
     const handleAddEvidence = async () => {
@@ -110,7 +112,7 @@ export function RequirementEvidenceMatrixView({ applicationId, onCompileSuccess 
         }
     };
 
-    const handleDownloadDocx = () => {
+    const handleDownloadText = () => {
         if (!compiledDoc) return;
         const blob = new Blob([compiledDoc.markdownContent || compiledDoc.textContent], { type: "text/plain;charset=utf-8" });
         const url = URL.createObjectURL(blob);
@@ -154,7 +156,7 @@ export function RequirementEvidenceMatrixView({ applicationId, onCompileSuccess 
     }
 
     return (
-        <div className="space-y-6">
+        <div className="compiler-workspace space-y-6">
             {error && (
                 <div role="alert" className="rounded-xl border border-rose-800 bg-rose-950/40 p-3 text-sm text-rose-200">
                     {error}
@@ -316,7 +318,7 @@ export function RequirementEvidenceMatrixView({ applicationId, onCompileSuccess 
                                 <ul className="text-[11px] text-rose-300 space-y-1 max-h-24 overflow-y-auto">
                                     {preflight.detailedAudit.missingMustHaves.map((m: string, i: number) => <li key={i}>• {m}</li>)}
                                 </ul>
-                            ) : <span className="text-emerald-400 text-[11px]">✓ 100% must-haves supported</span>}
+                            ) : <span className="text-emerald-400 text-[11px]">✓ All assessed must-haves supported</span>}
                         </div>
 
                         {/* 4. Eligibility Confirmations */}
@@ -389,11 +391,11 @@ export function RequirementEvidenceMatrixView({ applicationId, onCompileSuccess 
                         <RiFileCodeLine className="text-emerald-400 text-lg" />
                         <span>ATS Document Compiler & Template Selection</span>
                     </h3>
-                    <span className="text-xs text-slate-400">PDF & DOCX Output • Single-Column Flowable Text</span>
+                    <span className="text-xs text-slate-400">HTML & plain-text artifacts • Single-column flowable text</span>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Template Card 1: ATS Portal Optimized */}
+                    {/* Template Card 1: simple single-column */}
                     <div
                         onClick={() => {
                             setSelectedTemplateMode("ats_portal_optimized");
@@ -406,7 +408,7 @@ export function RequirementEvidenceMatrixView({ applicationId, onCompileSuccess 
                         }`}
                     >
                         <div className="flex items-center justify-between mb-2">
-                            <span className="font-bold text-sm text-white">ATS Portal Optimized</span>
+                            <span className="font-bold text-sm text-white">Simple Single-Column</span>
                             <span className="bg-emerald-600 text-white text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full">
                                 RECOMMENDED FOR PORTALS
                             </span>
@@ -415,7 +417,7 @@ export function RequirementEvidenceMatrixView({ applicationId, onCompileSuccess 
                             Strict single-column layout, standard section headings (SUMMARY, SKILLS, EXPERIENCE), no tables/text boxes, contact details in document body.
                         </p>
                         <span className="text-[11px] text-emerald-400 font-semibold flex items-center gap-1">
-                            <RiShieldCheckLine /> 100% Greenhouse, Workday & Lever Compliant
+                            <RiShieldCheckLine /> Layout checks completed; portal compatibility not independently assessed
                         </span>
                     </div>
 
@@ -441,7 +443,7 @@ export function RequirementEvidenceMatrixView({ applicationId, onCompileSuccess 
                             Stylized layout with subtle accent bars for direct recruiter email, portfolio links, or networking.
                         </p>
                         <span className="text-[11px] text-amber-400 font-semibold flex items-center gap-1">
-                            ⚠️ Use ATS Portal Optimized when submitting to online job application portals.
+                            Choose the simple single-column layout when a plain document is preferred.
                         </span>
                     </div>
                 </div>
@@ -453,17 +455,17 @@ export function RequirementEvidenceMatrixView({ applicationId, onCompileSuccess 
                         className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-5 py-2.5 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50"
                     >
                         <RiFileCodeLine className="text-base" />
-                        <span>{compiling ? "Compiling Document..." : `Compile Document (${selectedTemplateMode === "ats_portal_optimized" ? "ATS Safe" : "Visually Rich"})`}</span>
+                        <span>{compiling ? "Compiling Document..." : `Compile Document (${selectedTemplateMode === "ats_portal_optimized" ? "Single-Column" : "Visually Rich"})`}</span>
                     </button>
 
                     {compiledDoc && (
                         <div className="flex items-center gap-2">
                             <button
-                                onClick={handleDownloadDocx}
+                                onClick={handleDownloadText}
                                 className="bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs px-3.5 py-2 rounded-lg flex items-center gap-1.5 transition-colors border border-slate-700"
                             >
                                 <RiDownloadLine />
-                                <span>Export Text / DOCX</span>
+                                <span>Export Text</span>
                             </button>
                             <button
                                 onClick={handleCopyText}

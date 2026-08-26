@@ -49,6 +49,15 @@ describe("Better Auth Environment & Origin Configuration [Unit Test]", () => {
             const url = getAuthBaseURL();
             assert.strictEqual(url, "http://localhost:3000");
         });
+
+        test("1.5 refuses a localhost fallback in production", () => {
+            delete process.env.BETTER_AUTH_URL;
+            delete process.env.NEXT_PUBLIC_APP_URL;
+            delete process.env.VERCEL_URL;
+            (process.env as Record<string, string | undefined>).NODE_ENV = "production";
+
+            assert.throws(() => getAuthBaseURL(), /must be configured in production/);
+        });
     });
 
     describe("2. Trusted Origins Resolution (getTrustedOrigins)", () => {

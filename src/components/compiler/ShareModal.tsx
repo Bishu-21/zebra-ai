@@ -24,6 +24,18 @@ export function ShareModal({ isOpen, onCloseAction, resumeId, resumeTitle }: Sha
     const [revoking, setRevoking] = useState(false);
     const [toggling, setToggling] = useState(false);
 
+    const generateQR = useCallback(async (url: string) => {
+        try {
+            const dataUrl = await QRCode.toDataURL(url, {
+                width: 200,
+                margin: 2,
+                color: { dark: "#0A0A0A", light: "#FFFFFF" },
+                errorCorrectionLevel: "M",
+            });
+            setQrDataUrl(dataUrl);
+        } catch { }
+    }, []);
+
     const fetchShareStatus = useCallback(async () => {
         try {
             const res = await fetch(`/api/resumes/${resumeId}/share`);
@@ -34,12 +46,14 @@ export function ShareModal({ isOpen, onCloseAction, resumeId, resumeTitle }: Sha
                 if (data.isPublic) generateQR(data.shareUrl);
             }
         } catch {}
-    }, [resumeId]);
+    }, [generateQR, resumeId]);
 
     // Fetch existing share status on open
     useEffect(() => {
         if (!isOpen || resumeId === "new") return;
-        fetchShareStatus();
+        let cancelled = false;
+        queueMicrotask(() => { if (!cancelled) void fetchShareStatus(); });
+        return () => { cancelled = true; };
     }, [isOpen, resumeId, fetchShareStatus]);
 
     // Handle Escape key and body scroll lock
@@ -115,18 +129,6 @@ export function ShareModal({ isOpen, onCloseAction, resumeId, resumeTitle }: Sha
         } finally {
             setRevoking(false);
         }
-    };
-
-    const generateQR = async (url: string) => {
-        try {
-            const dataUrl = await QRCode.toDataURL(url, {
-                width: 200,
-                margin: 2,
-                color: { dark: "#0A0A0A", light: "#FFFFFF" },
-                errorCorrectionLevel: "M",
-            });
-            setQrDataUrl(dataUrl);
-        } catch { }
     };
 
     const copyLink = async () => {

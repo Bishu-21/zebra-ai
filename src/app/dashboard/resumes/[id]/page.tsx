@@ -65,7 +65,8 @@ export default async function ResumeEditorPage(props: {
                 initialData={resume ? {
                     id: resume.id,
                     title: versionTitle || resume.title,
-                    content: resume.content || ""
+                    content: resume.content || "",
+                    revision: resume.revision,
                 } : undefined}
                 isStripeVersion={isStripeVersion}
                 versionTitle={versionTitle}

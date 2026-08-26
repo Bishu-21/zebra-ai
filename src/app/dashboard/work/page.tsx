@@ -35,6 +35,8 @@ interface WorkItem {
 export default function MyWorkPage() {
     const [items, setItems] = useState<WorkItem[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [nextCursor, setNextCursor] = useState<string | null>(null);
     const [filter, setFilter] = useState<string>("All");
     const [searchQuery, setSearchQuery] = useState("");
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -50,13 +52,17 @@ export default function MyWorkPage() {
     const [proofUrl, setProofUrl] = useState("");
     const [isPublic, setIsPublic] = useState(false);
 
-    const fetchItems = React.useCallback(async () => {
+    const fetchItems = React.useCallback(async (cursor?: string) => {
         try {
-            setLoading(true);
-            const res = await fetch("/api/work");
+            if (cursor) setLoadingMore(true);
+            else setLoading(true);
+            const query = new URLSearchParams({ limit: "25" });
+            if (cursor) query.set("cursor", cursor);
+            const res = await fetch(`/api/work?${query.toString()}`);
             const data = await res.json();
             if (res.ok) {
-                setItems(data.items || []);
+                setItems(previous => cursor ? [...previous, ...(data.items || [])] : (data.items || []));
+                setNextCursor(data.page?.nextCursor ?? null);
             } else {
                 showToast(data.error || "Error loading work items", "error");
             }
@@ -64,11 +70,14 @@ export default function MyWorkPage() {
             console.error("Failed to load work items", err);
         } finally {
             setLoading(false);
+            setLoadingMore(false);
         }
     }, [showToast]);
 
     useEffect(() => {
-        fetchItems();
+        let cancelled = false;
+        queueMicrotask(() => { if (!cancelled) void fetchItems(); });
+        return () => { cancelled = true; };
     }, [fetchItems]);
 
 
@@ -231,8 +240,9 @@ export default function MyWorkPage() {
                     </button>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                    {filteredItems.map((item) => (
+                <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                        {filteredItems.map((item) => (
                         <m.div
                             key={item.id}
                             initial={{ opacity: 0, y: 10 }}
@@ -308,7 +318,20 @@ export default function MyWorkPage() {
                                 </div>
                             )}
                         </m.div>
-                    ))}
+                        ))}
+                    </div>
+                    {nextCursor && (
+                        <div className="flex justify-center">
+                            <button
+                                type="button"
+                                disabled={loadingMore}
+                                onClick={() => void fetchItems(nextCursor)}
+                                className="rounded-xl border border-neutral-200 bg-white px-5 py-2.5 text-xs font-bold text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
+                            >
+                                {loadingMore ? "Loading…" : "Load more work"}
+                            </button>
+                        </div>
+                    )}
                 </div>
             )}
 

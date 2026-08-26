@@ -7,7 +7,7 @@ import {
     user as userTable,
     certifications as certificationsTable
 } from "@/lib/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import { 
     RiFolder2Line, 
     RiExternalLinkLine, 
@@ -34,68 +34,40 @@ export default async function PublicPortfolioPage({ params }: PortfolioPageProps
     const { slug: rawSlug } = await params;
     const cleanedSlug = cleanSlugInput(rawSlug);
 
-    // 1. Strict Unique Lookup: Query portfolios table by slug
-    let portfolio = await db.query.portfolios.findFirst({
-        where: eq(portfoliosTable.slug, cleanedSlug),
+    // Public pages only resolve an explicitly published portfolio by its exact slug.
+    const portfolio = await db.query.portfolios.findFirst({
+        where: and(
+            eq(portfoliosTable.slug, cleanedSlug),
+            eq(portfoliosTable.isPublished, true),
+        ),
     });
-
-    // 2. Fallback Unique Lookup: Query portfolios table by userId
     if (!portfolio) {
-        portfolio = await db.query.portfolios.findFirst({
-            where: eq(portfoliosTable.userId, rawSlug),
-        });
-    }
-
-    // 3. Fallback Unique Lookup: Direct user ID match
-    let targetUser = null;
-    if (portfolio) {
-        targetUser = await db.query.user.findFirst({
-            where: eq(userTable.id, portfolio.userId),
-        });
-    } else {
-        // Match user explicitly by user ID
-        targetUser = await db.query.user.findFirst({
-            where: eq(userTable.id, rawSlug),
-        });
-
-        if (targetUser) {
-            portfolio = {
-                id: `auto-${targetUser.id}`,
-                userId: targetUser.id,
-                slug: cleanedSlug,
-                title: targetUser.name || "Professional Portfolio",
-                bio: "Software Engineer & Builder showcase.",
-                selectedWorkIds: null,
-                isPublished: true,
-                theme: "default",
-                createdAt: new Date().toISOString() as unknown as Date,
-                updatedAt: new Date().toISOString() as unknown as Date
-            };
-        }
-    }
-
-    if (!portfolio || !targetUser) {
         notFound();
     }
 
+    const targetUser = await db.query.user.findFirst({
+        where: eq(userTable.id, portfolio.userId),
+    });
+    if (!targetUser) notFound();
+
     // 4. Fetch Work Items strictly for this specific user
-    let userWorkItems = await db.query.workItems.findMany({
+    const selectedWorkIds = Array.isArray(portfolio.selectedWorkIds)
+        ? portfolio.selectedWorkIds.filter((id): id is string => typeof id === "string")
+        : [];
+    const userWorkItems = selectedWorkIds.length === 0 ? [] : await db.query.workItems.findMany({
         where: and(
             eq(workItemsTable.userId, targetUser.id),
-            eq(workItemsTable.isPublic, true)
+            eq(workItemsTable.isPublic, true),
+            inArray(workItemsTable.id, selectedWorkIds),
         ),
     });
 
-    // Fallback if no items explicitly marked isPublic
-    if (userWorkItems.length === 0) {
-        userWorkItems = await db.query.workItems.findMany({
-            where: eq(workItemsTable.userId, targetUser.id),
-        });
-    }
-
     // 5. Fetch Certifications strictly for this specific user
     const userCertifications = await db.query.certifications.findMany({
-        where: eq(certificationsTable.userId, targetUser.id),
+        where: and(
+            eq(certificationsTable.userId, targetUser.id),
+            eq(certificationsTable.isPublic, true),
+        ),
     });
 
     const getCategoryIcon = (cat: string) => {
@@ -237,7 +209,7 @@ export default async function PublicPortfolioPage({ params }: PortfolioPageProps
                                 >
                                     <div className="space-y-2">
                                         <div className="flex items-center gap-1.5 text-emerald-600 text-xs font-bold">
-                                            <RiCheckLine size={16} /> Verified Credential
+                                            <RiCheckLine size={16} /> Credential supplied by owner
                                         </div>
                                         <h3 className="text-sm font-bold text-[#0A0A0A]">{cert.title}</h3>
                                         <p className="text-xs text-neutral-500 font-medium">Issuer: {cert.issuer}</p>

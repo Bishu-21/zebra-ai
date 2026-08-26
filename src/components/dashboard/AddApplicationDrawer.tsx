@@ -14,10 +14,37 @@ export function AddApplicationDrawer({ resumes }: { resumes: ResumeOption[] }) {
   const [saving, setSaving] = useState(false);
   const [extracting, setExtracting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resumeOptions, setResumeOptions] = useState<ResumeOption[]>(resumes);
+  const [resumeCursor, setResumeCursor] = useState<string | null>(null);
+  const [loadingResumes, setLoadingResumes] = useState(false);
   const [jobUrl, setJobUrl] = useState("");
   const [form, setForm] = useState({ company: "", position: "", deadline: "", jobDescription: "", selectedResumeId: "" });
   const closeDrawer = useCallback(() => { if (!saving) setOpen(false); }, [saving]);
   const dialogRef = useDialogFocus(open, closeDrawer);
+
+  const loadResumes = useCallback(async (cursor?: string) => {
+    setLoadingResumes(true);
+    try {
+      const query = new URLSearchParams({ limit: "50" });
+      if (cursor) query.set("cursor", cursor);
+      const response = await fetch(`/api/resumes?${query.toString()}`);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Could not load resumes");
+      setResumeOptions(current => cursor ? [...current, ...(data.resumes || [])] : (data.resumes || []));
+      setResumeCursor(data.page?.nextCursor ?? null);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not load resumes");
+    } finally {
+      setLoadingResumes(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    queueMicrotask(() => { if (!cancelled) void loadResumes(); });
+    return () => { cancelled = true; };
+  }, [loadResumes, open]);
 
   useEffect(() => {
     const openFromZebu = () => {
@@ -80,7 +107,8 @@ export function AddApplicationDrawer({ resumes }: { resumes: ResumeOption[] }) {
                 </div>
                 <Field label="Deadline (optional)" value={form.deadline} onChange={(value) => update("deadline", value)} type="date" />
                 <label className="block"><span className="text-xs font-bold">Job description (optional)</span><textarea rows={8} value={form.jobDescription} onChange={(event) => update("jobDescription", event.target.value)} placeholder="Paste the job description" className="mt-2 w-full resize-y rounded-[var(--radius-md)] border border-border-subtle bg-white px-3.5 py-3 text-xs leading-5 outline-none focus:border-neutral-300" /></label>
-                <label className="block"><span className="text-xs font-bold">Attach resume</span><select value={form.selectedResumeId} onChange={(event) => update("selectedResumeId", event.target.value)} className="mt-2 w-full rounded-[var(--radius-md)] border border-border-subtle bg-white px-3.5 py-3 text-xs font-medium outline-none"><option value="">Select later</option>{resumes.map((resume) => <option key={resume.id} value={resume.id}>{resume.title}</option>)}</select></label>
+                <label className="block"><span className="text-xs font-bold">Attach resume</span><select value={form.selectedResumeId} onChange={(event) => update("selectedResumeId", event.target.value)} className="mt-2 w-full rounded-[var(--radius-md)] border border-border-subtle bg-white px-3.5 py-3 text-xs font-medium outline-none"><option value="">Select later</option>{resumeOptions.map((resume) => <option key={resume.id} value={resume.id}>{resume.title}</option>)}</select></label>
+                {resumeCursor ? <button type="button" disabled={loadingResumes} onClick={() => void loadResumes(resumeCursor)} className="text-xs font-bold text-muted-foreground underline disabled:opacity-50">{loadingResumes ? "Loading resumes…" : "Load more resumes"}</button> : null}
                 {error ? <p role="alert" className="rounded-[var(--radius-md)] border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-medium text-rose-700">{error}</p> : null}
               </div>
               <footer className="grid grid-cols-2 gap-3 border-t border-border-subtle bg-white p-6"><button onClick={() => setOpen(false)} disabled={saving} className="rounded-full border border-border-subtle px-5 py-3 text-xs font-bold text-muted-foreground hover:bg-muted">Cancel</button><button onClick={submit} disabled={saving} className="flex items-center justify-center gap-2 rounded-full bg-foreground px-5 py-3 text-xs font-bold text-white disabled:opacity-50">{saving ? <RiLoader4Line className="animate-spin" /> : <RiAddLine />} Add application</button></footer>

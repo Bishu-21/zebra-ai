@@ -84,7 +84,8 @@ export async function buildRequirementMatrix(
     userId: string,
     applicationId: string,
     jobDescription: string | null | undefined,
-    evidenceGraph: CandidateEvidenceNode[]
+    evidenceGraph: CandidateEvidenceNode[],
+    options: { persist?: boolean } = {},
 ): Promise<RequirementMatrixResult> {
     const rawRequirements = extractJobRequirements(jobDescription);
     const now = new Date();
@@ -188,9 +189,9 @@ export async function buildRequirementMatrix(
 
         items.push(item);
 
-        if (isTestStoreActive()) {
+        if (options.persist !== false && isTestStoreActive()) {
             testStore.jobRequirementMatrices.set(item.id, item);
-        } else {
+        } else if (options.persist !== false) {
             await db.insert(jobRequirementMatrices)
                 .values({
                     ...item,

@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -12,6 +11,7 @@ import {
 } from "react-icons/ri";
 import { getBreadcrumbForPath } from "@/lib/constants/navigation";
 import { useZebu } from "@/context/ZebuContext";
+import { UserAvatar } from "@/components/dashboard/UserAvatar";
 
 interface HeaderProps {
     credits: number;
@@ -107,18 +107,7 @@ export function Header({ credits, userName, userImage, isNavOpen = false, onOpen
                         {userName}
                     </span>
                     <div className="w-9 h-9 rounded-xl bg-[#0A0A0A] border border-neutral-200 flex items-center justify-center text-white overflow-hidden shadow-xs group-hover:scale-105 active:scale-95 transition-all shrink-0">
-                        {userImage ? (
-                            <Image
-                                src={userImage}
-                                alt={userName}
-                                width={36}
-                                height={36}
-                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                                unoptimized
-                            />
-                        ) : (
-                            <span className="text-xs font-bold">{userName?.charAt(0)?.toUpperCase() || "U"}</span>
-                        )}
+                        <UserAvatar name={userName} src={userImage} size={36} className="group-hover:scale-110 transition-transform duration-300" fallbackClassName="text-xs" />
                     </div>
                 </button>
             </div>

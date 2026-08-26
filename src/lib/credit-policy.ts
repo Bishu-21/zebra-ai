@@ -20,7 +20,7 @@ export async function reserveUserCredits(
         return { success: false, error: "Invalid credit reservation parameters." };
     }
 
-    if (process.env.TEST_AUTH_USER_ID) {
+    if (process.env.NODE_ENV === "test" && process.env.TEST_AUTH_USER_ID) {
         return { success: true, remainingCredits: 99 };
     }
 
@@ -63,7 +63,7 @@ export async function refundUserCredits(
     cost: number = 1
 ): Promise<boolean> {
     if (!userId || cost <= 0) return false;
-    if (process.env.TEST_AUTH_USER_ID) return true;
+    if (process.env.NODE_ENV === "test" && process.env.TEST_AUTH_USER_ID) return true;
 
     try {
         await executeWithDbRetry(async () => {

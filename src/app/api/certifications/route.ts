@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { certifications as certificationsTable } from "@/lib/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, lt, or } from "drizzle-orm";
 import { handleApiError } from "@/lib/api-error";
 import { z } from "zod";
 import { requireAuth, isTestStoreActive, notFoundResponse } from "@/lib/auth-policy";
 import { testStore } from "@/lib/test-store";
+import { paginateRows, parsePagination } from "@/lib/pagination";
 
 const createCertSchema = z.object({
     title: z.string().min(1, "Title is required"),
@@ -13,9 +14,10 @@ const createCertSchema = z.object({
     issueDate: z.string().optional(),
     credentialUrl: z.url().or(z.literal("")).optional(),
     skills: z.array(z.string()).optional(),
+    isPublic: z.boolean().optional(),
 });
 
-export async function GET() {
+export async function GET(req: NextRequest) {
     try {
         const { auth: authCtx, errorResponse } = await requireAuth();
         if (errorResponse) return errorResponse;
@@ -31,16 +33,25 @@ export async function GET() {
                     issueDate: new Date().toISOString(),
                     credentialUrl: null,
                     skills: [],
+                    isPublic: c.isPublic ?? false,
                 }));
-            return NextResponse.json({ certifications: items });
+            const { limit } = parsePagination(req);
+            const page = paginateRows(items.slice(0, limit + 1), limit, item => ({ id: item.id, timestamp: new Date(item.issueDate) }));
+            return NextResponse.json({ certifications: page.items, page: page.page });
         }
 
-        const items = await db.query.certifications.findMany({
-            where: eq(certificationsTable.userId, authCtx.user.id),
-            orderBy: [desc(certificationsTable.createdAt)],
-        });
+        const { limit, cursor } = parsePagination(req);
+        const cursorCondition = cursor ? or(
+            lt(certificationsTable.createdAt, cursor.timestamp),
+            and(eq(certificationsTable.createdAt, cursor.timestamp), lt(certificationsTable.id, cursor.id)),
+        ) : undefined;
+        const rows = await db.select().from(certificationsTable)
+            .where(and(eq(certificationsTable.userId, authCtx.user.id), cursorCondition))
+            .orderBy(desc(certificationsTable.createdAt), desc(certificationsTable.id))
+            .limit(limit + 1);
+        const page = paginateRows(rows, limit, item => ({ id: item.id, timestamp: item.createdAt }));
 
-        return NextResponse.json({ certifications: items });
+        return NextResponse.json({ certifications: page.items, page: page.page });
     } catch (error: unknown) {
         return handleApiError(error, "GET /api/certifications");
     }
@@ -65,6 +76,7 @@ export async function POST(req: NextRequest) {
             issueDate: parsed.issueDate ? new Date(parsed.issueDate) : null,
             credentialUrl: parsed.credentialUrl || null,
             skills: parsed.skills || [],
+            isPublic: parsed.isPublic ?? false,
             createdAt: now,
             updatedAt: now,
         };
@@ -74,6 +86,7 @@ export async function POST(req: NextRequest) {
                 id,
                 userId: authCtx.user.id,
                 name: parsed.title,
+                isPublic: parsed.isPublic ?? false,
             });
             return NextResponse.json({ certification: certPayload });
         }

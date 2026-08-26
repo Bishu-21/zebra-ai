@@ -16,6 +16,7 @@ import Link from "next/link";
 import { m, AnimatePresence } from "framer-motion";
 import { ResumeResultsModal } from "./ResumeResultsModal";
 import type { ResumeAnalysisData } from "@/components/compiler/types";
+import { useHydrated } from "@/hooks/useHydrated";
 
 interface ResumeVersion {
     id: string;
@@ -48,13 +49,9 @@ interface ResumeVaultProps {
 export function ResumeVault({ items }: ResumeVaultProps) {
     const [search, setSearch] = useState("");
     const [isExpanded, setIsExpanded] = useState(false);
-    const [isMounted, setIsMounted] = useState(false);
+    const isMounted = useHydrated();
     const [selectedResumeId, setSelectedResumeId] = useState<string | null>(null);
     const [selectedAnalysisData, setSelectedAnalysisData] = useState<ResumeAnalysisData | null>(null);
-
-    React.useEffect(() => {
-        setIsMounted(true);
-    }, []);
 
     const rootResumes = items.filter(r => !r.parentResumeId);
     const versions = items.filter(r => !!r.parentResumeId);

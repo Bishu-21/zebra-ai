@@ -35,15 +35,15 @@ test("Zebu recognizes the wake phrase without triggering on ordinary brand menti
   assert.equal(containsZebuWakeWord("Hey Zebra, open my resume"), false);
 });
 
-test("Zebu accepts bounded real-work actions", () => {
+test("Zebu rejects model-proposed writes until deterministic confirmation exists", () => {
   assert.equal(zebuPlanSchema.safeParse({
     spokenResponse: "I’ll add that draft.",
     action: { type: "create_application", company: "Acme", position: "Product Intern" },
-  }).success, true);
+  }).success, false);
   assert.equal(zebuPlanSchema.safeParse({
     spokenResponse: "I’ll mark it applied.",
     action: { type: "update_application_status", applicationId: "app_123", status: "Applied" },
-  }).success, true);
+  }).success, false);
   assert.equal(zebuPlanSchema.safeParse({
     spokenResponse: "I’ll update it.",
     action: { type: "update_application_status", applicationId: "app_123", status: "Deleted" },

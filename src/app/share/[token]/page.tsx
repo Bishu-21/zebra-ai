@@ -1,17 +1,18 @@
 import React from "react";
 import { db } from "@/lib/db";
 import { resumes } from "@/lib/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { SharePageActions } from "@/components/compiler/SharePageActions";
 import Link from "next/link";
 import type { ResumeContent, Experience, Education, SkillCategory, Project, Achievement } from "@/components/compiler/types";
+import { toPublicResumeContent } from "@/lib/resume-content";
 
 export async function generateMetadata({ params: paramsPromise }: { params: Promise<{ token: string }> }): Promise<Metadata> {
     const params = await paramsPromise;
     const resume = await db.query.resumes.findFirst({
-        where: eq(resumes.shareToken, params.token),
+        where: and(eq(resumes.shareToken, params.token), eq(resumes.isPublic, true)),
         columns: { title: true, content: true },
     });
     if (!resume) return { title: "Resume Not Found | Zebra AI" };
@@ -37,8 +38,9 @@ export default async function SharedResumePage({ params: paramsPromise }: { para
 
     if (!resume || !resume.shareToken || !resume.isPublic) notFound();
 
-    let content: ResumeContent = {} as ResumeContent;
-    try { content = JSON.parse(resume.content || "{}"); } catch { content = {} as ResumeContent; }
+    let content: ResumeContent;
+    try { content = toPublicResumeContent(JSON.parse(resume.content || "{}")); }
+    catch { content = toPublicResumeContent({}); }
 
     const basics = content.basics || {};
     const education = (content.education || []) as Education[];
@@ -54,7 +56,7 @@ export default async function SharedResumePage({ params: paramsPromise }: { para
                 <div className="flex items-center gap-2">
                     <Link href="/" className="text-sm font-bold tracking-[-0.04em] text-[#0A0A0A]">Zebra AI</Link>
                     <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 uppercase tracking-wider">
-                        Verified Resume
+                        Shared Resume
                     </span>
                 </div>
                 <SharePageActions
@@ -185,13 +187,13 @@ export default async function SharedResumePage({ params: paramsPromise }: { para
                         <div className="sticky top-16 bg-white border border-neutral-200/90 rounded-2xl p-6 shadow-sm space-y-5">
                             <div className="space-y-2">
                                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold uppercase tracking-wider">
-                                    Verified Resume Engine
+                                    Resume Review Workspace
                                 </span>
                                 <h3 className="text-base font-black text-[#0A0A0A] tracking-tight">
                                     Build your ATS-optimized resume
                                 </h3>
                                 <p className="text-xs text-neutral-500 leading-relaxed font-medium">
-                                    Create a high-impact, ATS-pass resume with quantitative metrics and live project proof.
+                                    Review, tailor, and export a structured resume using your supplied experience.
                                 </p>
                             </div>
 
@@ -206,7 +208,7 @@ export default async function SharedResumePage({ params: paramsPromise }: { para
                                 </div>
                                 <div className="flex items-center gap-2 text-neutral-700 font-medium">
                                     <span className="text-emerald-600 font-bold">✓</span>
-                                    <span>Shareable verified portfolio link</span>
+                                    <span>Shareable portfolio and resume links</span>
                                 </div>
                             </div>
 

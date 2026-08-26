@@ -1,6 +1,6 @@
 import mammoth from "mammoth";
 import { extractText, getDocumentProxy } from "unpdf";
-import type { ResumeContent } from "@/components/compiler/types";
+import type { ResumeContent, ResumeSourceSpan } from "@/components/compiler/types";
 import { generateAiResponse } from "@/lib/azure-foundry";
 import {
     MAX_AI_RESUME_TEXT_LENGTH,
@@ -24,6 +24,63 @@ export interface ResumeIngestionOptions {
 export interface ResumeIngestionResult {
     content: ResumeContent;
     warnings: string[];
+}
+
+function collectGroundingClaims(content: ResumeContent): Array<{ path: string; text: string }> {
+    const claims: Array<{ path: string; text: string }> = [];
+    const add = (path: string, value: string | undefined) => {
+        const text = value?.trim();
+        if (text) claims.push({ path, text });
+    };
+
+    Object.entries(content.basics).forEach(([field, value]) => add(`basics.${field}`, value));
+    content.experience.forEach((entry, index) => {
+        add(`experience.${index}.company`, entry.company);
+        add(`experience.${index}.location`, entry.location);
+        add(`experience.${index}.role`, entry.role);
+        add(`experience.${index}.period`, entry.period);
+        add(`experience.${index}.techStack`, entry.techStack);
+        add(`experience.${index}.link`, entry.link);
+        entry.highlights.forEach((value, bullet) => add(`experience.${index}.highlights.${bullet}`, value));
+    });
+    content.education.forEach((entry, index) => {
+        add(`education.${index}.school`, entry.school);
+        add(`education.${index}.location`, entry.location);
+        add(`education.${index}.degree`, entry.degree);
+        add(`education.${index}.gpa`, entry.gpa);
+        add(`education.${index}.period`, entry.period);
+        entry.highlights.forEach((value, bullet) => add(`education.${index}.highlights.${bullet}`, value));
+    });
+    content.projects.forEach((entry, index) => {
+        add(`projects.${index}.title`, entry.title);
+        add(`projects.${index}.techStack`, entry.techStack);
+        add(`projects.${index}.link`, entry.link);
+        entry.highlights.forEach((value, bullet) => add(`projects.${index}.highlights.${bullet}`, value));
+    });
+    content.skills.forEach((entry, index) => {
+        add(`skills.${index}.category`, entry.category);
+        entry.items.split(/[,;|]/).forEach((value, item) => add(`skills.${index}.items.${item}`, value));
+    });
+    content.certifications.forEach((entry, index) => {
+        add(`certifications.${index}.category`, entry.category);
+        entry.items.split(/[;|]/).forEach((value, item) => add(`certifications.${index}.items.${item}`, value));
+    });
+    return claims;
+}
+
+/** Locate every extracted claim in the preserved normalized source. */
+export function groundResumeContent(content: ResumeContent, sourceText: string): ResumeSourceSpan[] {
+    const searchable = sourceText.toLocaleLowerCase();
+    return collectGroundingClaims(content).map(({ path, text }) => {
+        const start = searchable.indexOf(text.toLocaleLowerCase());
+        return {
+            path,
+            text,
+            start: start >= 0 ? start : null,
+            end: start >= 0 ? start + text.length : null,
+            grounded: start >= 0,
+        };
+    });
 }
 
 function cleanFileName(value: string): string {
@@ -82,6 +139,39 @@ function normalizeExtractedText(value: string): string {
         .trim();
 }
 
+const MAX_PDF_PAGES = 50;
+const MAX_DOCX_ENTRIES = 2_000;
+const MAX_DOCX_EXPANDED_BYTES = 20 * 1024 * 1024;
+const MAX_DOCX_COMPRESSION_RATIO = 100;
+
+function validateDocxExpansion(buffer: Buffer): void {
+    let offset = 0;
+    let entries = 0;
+    let compressedTotal = 0;
+    let expandedTotal = 0;
+    while (offset + 46 <= buffer.length) {
+        const signature = buffer.readUInt32LE(offset);
+        if (signature !== 0x02014b50) {
+            offset += 1;
+            continue;
+        }
+        entries += 1;
+        compressedTotal += buffer.readUInt32LE(offset + 20);
+        expandedTotal += buffer.readUInt32LE(offset + 24);
+        const nameLength = buffer.readUInt16LE(offset + 28);
+        const extraLength = buffer.readUInt16LE(offset + 30);
+        const commentLength = buffer.readUInt16LE(offset + 32);
+        offset += 46 + nameLength + extraLength + commentLength;
+        if (entries > MAX_DOCX_ENTRIES || expandedTotal > MAX_DOCX_EXPANDED_BYTES) {
+            throw new Error("DOCX expands beyond the permitted document limits.");
+        }
+    }
+    if (entries === 0) throw new Error("DOCX archive directory is missing or invalid.");
+    if (compressedTotal > 0 && expandedTotal / compressedTotal > MAX_DOCX_COMPRESSION_RATIO) {
+        throw new Error("DOCX compression ratio exceeds the permitted safety limit.");
+    }
+}
+
 export async function extractResumeText(file: File): Promise<string> {
     if (file.size <= 0) throw new Error("The uploaded file is empty.");
     if (file.size > MAX_FILE_SIZE) {
@@ -95,9 +185,13 @@ export async function extractResumeText(file: File): Promise<string> {
 
     if (kind === "pdf") {
         const pdf = await getDocumentProxy(bytes);
+        if (pdf.numPages > MAX_PDF_PAGES) {
+            throw new Error(`PDF exceeds the ${MAX_PDF_PAGES}-page processing limit.`);
+        }
         const result = await extractText(pdf, { mergePages: true });
         text = result.text;
     } else if (kind === "docx") {
+        validateDocxExpansion(buffer);
         const result = await mammoth.extractRawText({ buffer });
         text = result.value;
     } else {
@@ -171,6 +265,13 @@ RESUME SOURCE END`;
     }
 
     const content = normalizeResumeContent(validated.data);
+    const sourceSpans = groundResumeContent(content, normalizedSource);
+    const ungroundedCount = sourceSpans.filter((span) => !span.grounded).length;
+    if (ungroundedCount > 0) {
+        warnings.push(
+            `${ungroundedCount} extracted ${ungroundedCount === 1 ? "field does" : "fields do"} not exactly match the preserved source. Review the highlighted import before using it.`,
+        );
+    }
     content._ingestionMeta = {
         schemaVersion: RESUME_SCHEMA_VERSION,
         parserVersion: RESUME_PARSER_VERSION,
@@ -181,6 +282,7 @@ RESUME SOURCE END`;
         originalFileName: options.originalFileName ? cleanFileName(options.originalFileName) : undefined,
         mimeType: options.mimeType?.slice(0, 100) || undefined,
         sourceTruncatedForAi: sourceTruncatedForAi || undefined,
+        sourceSpans,
     };
 
     return { content, warnings };

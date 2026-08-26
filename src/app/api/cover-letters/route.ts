@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, lt, or } from "drizzle-orm";
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { handleApiError } from "@/lib/api-error";
@@ -14,20 +14,27 @@ import {
     resumes as resumesTable,
 } from "@/lib/schema";
 import { generateCoverLetterSchema } from "@/lib/validation";
+import { paginateRows, parsePagination } from "@/lib/pagination";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
     try {
         const session = await auth.api.getSession({ headers: await headers() });
         if (!session) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const letters = await db.query.coverLetters.findMany({
-            where: eq(coverLettersTable.userId, session.user.id),
-            orderBy: [desc(coverLettersTable.createdAt)],
-        });
+        const { limit, cursor } = parsePagination(req);
+        const cursorCondition = cursor ? or(
+            lt(coverLettersTable.createdAt, cursor.timestamp),
+            and(eq(coverLettersTable.createdAt, cursor.timestamp), lt(coverLettersTable.id, cursor.id)),
+        ) : undefined;
+        const rows = await db.select().from(coverLettersTable)
+            .where(and(eq(coverLettersTable.userId, session.user.id), cursorCondition))
+            .orderBy(desc(coverLettersTable.createdAt), desc(coverLettersTable.id))
+            .limit(limit + 1);
+        const page = paginateRows(rows, limit, item => ({ id: item.id, timestamp: item.createdAt }));
 
-        return NextResponse.json({ success: true, data: letters });
+        return NextResponse.json({ success: true, data: page.items, page: page.page });
     } catch (error: unknown) {
         return handleApiError(error, "GET /api/cover-letters");
     }
@@ -117,6 +124,7 @@ Requirements:
 
             const response = await generateAiResponse({
                 task: "cover-letter",
+                telemetry: { userId: session.user.id, creditsCost: 1 },
                 prompt,
                 systemPrompt,
             });

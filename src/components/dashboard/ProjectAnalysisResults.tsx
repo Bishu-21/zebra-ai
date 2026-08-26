@@ -25,7 +25,7 @@ export interface ProjectAnalysisData {
         improvements: string[];
     };
     suggestedResumeBullet: string;
-    verificationStatus: 'verified' | 'unverified' | 'partial';
+    verificationStatus: 'supported' | 'partial' | 'not_assessed' | 'verified' | 'unverified';
     url?: string;
 }
 
@@ -76,7 +76,9 @@ export function ProjectAnalysisResults({ result }: Props) {
                     <h4 className="text-[10px] font-black text-foreground uppercase tracking-[0.2em] mb-1">Proof Score</h4>
                     <div className="flex items-center gap-1.5 px-2 py-1 bg-success/10 text-success rounded-full">
                         <RiShieldCheckLine size={10} />
-                        <span className="text-[8px] font-black uppercase tracking-widest">{result.verificationStatus}</span>
+                        <span className="text-[8px] font-black uppercase tracking-widest">
+                            {(result.verificationStatus === "verified" ? "supported" : result.verificationStatus === "unverified" ? "not assessed" : result.verificationStatus).replaceAll("_", " ")}
+                        </span>
                     </div>
                 </div>
 

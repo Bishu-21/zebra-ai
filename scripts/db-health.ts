@@ -51,15 +51,36 @@ async function runHealthCheck() {
         const requiredTables = [
             "user",
             "session",
+            "account",
+            "verification",
             "resumes",
             "analysis",
+            "jobs",
+            "cover_letters",
+            "ats_optimisations",
+            "transactions",
             "rate_limit_buckets",
+            "project_analyses",
+            "resume_versions",
+            "work_items",
+            "certifications",
+            "applications",
+            "application_changes",
+            "tailoring_runs",
+            "portfolios",
+            "interview_notes",
+            "ai_usage",
+            "evidence_nodes",
+            "job_requirement_matrices",
+            "preflight_checks",
+            "background_jobs",
+            "document_artifacts",
         ];
         const tableRows = await sql<{ table_name: string }[]>`
             SELECT table_name
             FROM information_schema.tables
             WHERE table_schema = 'public'
-              AND table_name IN ('user', 'session', 'resumes', 'analysis', 'rate_limit_buckets')
+              AND table_name = ANY(${requiredTables})
         `;
         const existingTables = new Set(tableRows.map((row) => row.table_name));
         const missingTables = requiredTables.filter((table) => !existingTables.has(table));
@@ -88,6 +109,32 @@ async function runHealthCheck() {
         const missingUserColumns = requiredUserColumns.filter((column) => !existingUserColumns.has(column));
         if (missingUserColumns.length > 0) {
             throw new Error(`Required user profile columns are missing: ${missingUserColumns.join(", ")}`);
+        }
+
+        const requiredColumns: Record<string, string[]> = {
+            resumes: ["revision", "is_public", "share_token"],
+            certifications: ["is_public"],
+            applications: ["selected_resume_id", "resume_version_id", "selected_work_ids", "selected_cert_ids"],
+            evidence_nodes: ["confidence", "source", "updated_at"],
+            ai_usage: ["provider", "request_id", "latency_ms", "error_code"],
+        };
+        const columnRows = await sql<{ table_name: string; column_name: string }[]>`
+            SELECT table_name, column_name
+            FROM information_schema.columns
+            WHERE table_schema = 'public'
+              AND table_name = ANY(${Object.keys(requiredColumns)})
+        `;
+        const columnsByTable = new Map<string, Set<string>>();
+        for (const row of columnRows) {
+            const columns = columnsByTable.get(row.table_name) ?? new Set<string>();
+            columns.add(row.column_name);
+            columnsByTable.set(row.table_name, columns);
+        }
+        const missingColumns = Object.entries(requiredColumns).flatMap(([table, columns]) =>
+            columns.filter(column => !columnsByTable.get(table)?.has(column)).map(column => `${table}.${column}`),
+        );
+        if (missingColumns.length > 0) {
+            throw new Error(`Required schema columns are missing: ${missingColumns.join(", ")}`);
         }
         console.log("   ✅ Required schema is present");
 

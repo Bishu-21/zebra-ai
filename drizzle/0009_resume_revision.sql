@@ -1,0 +1,1 @@
+ALTER TABLE "resumes" ADD COLUMN IF NOT EXISTS "revision" integer DEFAULT 0 NOT NULL;

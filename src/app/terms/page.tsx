@@ -42,13 +42,13 @@ export default function TermsOfServicePage() {
                         </ul>
                     </Section>
 
-                    <Section title="4. Subscription & Payments">
+                    <Section title="4. Credits & Payments">
                         <ul>
-                            <li><strong>Free Tier:</strong> Access to basic templates, limited AI credits, and standard export.</li>
-                            <li><strong>Pro Tier:</strong> Access to premium (Executive) templates, unlimited AI credits, and priority features.</li>
+                            <li><strong>Included Credits:</strong> New accounts may receive a limited promotional credit balance.</li>
+                            <li><strong>Credit Packs:</strong> Paid packs provide the number of credits displayed at checkout. Credits are not an unlimited subscription.</li>
                             <li>Payments are processed securely via Razorpay.</li>
-                            <li>Subscriptions auto-renew unless cancelled before the billing date.</li>
-                            <li>Refunds are available within 7 days of purchase if no premium features were used.</li>
+                            <li>Purchases are one-time charges and do not auto-renew.</li>
+                            <li>Any refund eligibility and process will be shown at purchase or provided by support in accordance with applicable law.</li>
                         </ul>
                     </Section>
 
@@ -91,7 +91,7 @@ export default function TermsOfServicePage() {
                     </Section>
 
                     <Section title="9. Termination">
-                        <p>We may suspend or terminate your account if you violate these Terms. You may delete your account at any time from Settings. Upon termination, your data will be permanently deleted within 30 days.</p>
+                        <p>We may suspend or terminate your account if you violate these Terms. Account-deletion requests can be submitted to support; the applicable retention and deletion process will be communicated with the request.</p>
                     </Section>
 
                     <Section title="10. Changes to Terms">

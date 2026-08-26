@@ -9,7 +9,7 @@ Recruitment has shifted from human-led scanning to **Hyper-Automated ATS Filters
 
 ### The Struggle
 - **Overleaf Users**: Struggle with technical complexity only to produce "static" documents that don't talk back to recruiters.
-- **Prism Users**: Fear the "Quiet Funeral" of integrity—AI that writes *for* them but loses the human metadata that proves skill.
+- **Candidate concern**: AI-written material can lose the source context that supports a candidate's experience.
 - **Zebra Target**: The engineer who needs to prove their "unique stripe pattern" (uniqueness) in a sea of AI-generated generic horses.
 
 ---
@@ -25,7 +25,7 @@ To compete with titans like OpenAI, Zebra must operate as **XaaS (Everything-as-
 | **Zebra Example** | "A resume builder with AI" | "Job Acquisition Engine & Metadata Audit" |
 
 > [!IMPORTANT]
-> **XaaS Principle for Zebra**: You aren't selling a "resume editor." You are selling **"ATS Integrity as a Service."** Users shouldn't care about the editor logic; they care about the **Audit Score** and the **Protocol Secure** result.
+> **Product principle**: Zebra helps candidates organize source evidence, review proposed edits, and produce clear application documents. Scores are guidance, not vendor certification or outcome guarantees.
 
 ---
 
@@ -37,7 +37,7 @@ To compete with titans like OpenAI, Zebra must operate as **XaaS (Everything-as-
 
 ### OpenAI Prism (The AI-Native Giant)
 - **Strengths**: GPT-5.2 core, extreme speed (Turbopack), deep contextual awareness of the whole document.
-- **Zebra’s Edge**: Prism is an *authoring* platform. Zebra is a **Security & Strategy Protocol**. By focusing on "Integrity" and "Transparency Logs," Zebra offers a "Surgical Precision" that generalized AI like GPT-5.2 lacks for specific ATS bypass strategies.
+- **Zebra’s focus**: preserve source evidence and show users exactly which proposed edits they approve. Zebra does not provide ATS bypasses or vendor-certified compatibility.
 
 ---
 
@@ -45,12 +45,12 @@ To compete with titans like OpenAI, Zebra must operate as **XaaS (Everything-as-
 
 ### Phase 1: Empathy Mapping
 - **What do users feel?** Imposter syndrome when AI writes their resume.
-- **What is the goal?** A "Protocol Secure" feeling after clicking Match.
+- **What is the goal?** A clear, reviewable explanation of what is supported, partial, missing, or not assessed.
 - **Action**: Increase the "Tactile" feedback of the `ScratchCard` and `Strategic Match` animations to build trust in the "Surgical" nature of the AI.
 
 ### Phase 2: Ideation (Differentiating via XaaS)
 - **Feature Layer**: Real-time PDF previews (Prism does this).
-- **Service Layer (XaaS)**: Automatic "Alpha Recommendations" that update based on live market trends (Zebra's unique edge).
+- **Service layer**: evidence-grounded recommendations based on the supplied resume, work, and job description.
 - **Action**: Implement "Metadata Fingerprinting" to certify that the resume isn't just AI-fluff, but audited technical truth.
 
 ### Phase 3: Prototyping (The UI/UX Moat)
@@ -63,8 +63,8 @@ To compete with titans like OpenAI, Zebra must operate as **XaaS (Everything-as-
 
 1. **[ ] Step 1: The Integrity Protocol**: Formalize the "Audit" logic as a standalone backend service. Ensure it doesn't just "rewrite" text but "verifies" it against Job Description JSON data.
 2. **[ ] Step 2: XaaS Credit Economy**: Refine the Razorpay integration to sync with "Value Units." One credit = one "Alpha Match" result, reinforcing the XaaS value proposition.
-3. **[ ] Step 3: Semantic Moat**: Build a deeper library of "Alpha Recommendations" that Prism’s general model cannot replicate without heavy prompt engineering.
-4. **[ ] Step 4: The "Stripe" Certification**: Create a shareable link (`/share/[token]`) that acts as a "Zebra Verified" badge for recruiters, solving the "Quiet Funeral" problem.
+3. **[ ] Step 3: Recommendation quality**: Build a deeper, tested library of evidence-grounded recommendations.
+4. **[ ] Step 4: Reviewed sharing**: Allow candidates to share only resumes they have reviewed, without presenting the link as third-party verification.
 
 ---
 

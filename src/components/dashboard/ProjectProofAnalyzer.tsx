@@ -24,7 +24,7 @@ interface ProjectAnalysis {
         improvements: string[];
     };
     suggestedResumeBullet: string;
-    verificationStatus: 'verified' | 'unverified' | 'partial';
+    verificationStatus: 'supported' | 'partial' | 'not_assessed' | 'verified' | 'unverified';
 }
 
 export function ProjectProofAnalyzer() {

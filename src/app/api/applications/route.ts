@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import {
     applications as applicationsTable
 } from "@/lib/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, lt, or } from "drizzle-orm";
 import { handleApiError } from "@/lib/api-error";
 import { z } from "zod";
 import {
@@ -15,8 +15,9 @@ import {
     validateSelectedCertIds,
     notFoundResponse
 } from "@/lib/auth-policy";
-import { validateStatusTransition, ApplicationStatus } from "@/lib/application-state-machine";
+import { validateStatusTransition, normalizeApplicationStatus, ApplicationStatus } from "@/lib/application-state-machine";
 import { testStore, type TestApplication } from "@/lib/test-store";
+import { paginateRows, parsePagination } from "@/lib/pagination";
 
 const createApplicationSchema = z.object({
     company: z.string().min(1, "Company is required"),
@@ -25,8 +26,8 @@ const createApplicationSchema = z.object({
     jobDescription: z.string().optional(),
     url: z.url().or(z.literal("")).optional(),
     selectedResumeId: z.string().optional(),
-    selectedWorkIds: z.array(z.string()).optional(),
-    selectedCertIds: z.array(z.string()).optional(),
+    selectedWorkIds: z.array(z.string()).max(50).optional(),
+    selectedCertIds: z.array(z.string()).max(50).optional(),
     deadline: z.string().optional(),
     notes: z.string().optional(),
 });
@@ -44,6 +45,9 @@ async function validateLinkedResourcesOwnership({
     selectedWorkIds?: string[] | null;
     selectedCertIds?: string[] | null;
 }) {
+    if ((selectedWorkIds?.length ?? 0) > 50 || (selectedCertIds?.length ?? 0) > 50) {
+        return "Select no more than 50 work items or certifications";
+    }
     if (selectedResumeId) {
         const res = await getUserOwnedResume(userId, selectedResumeId);
         if (!res) return "Selected resume not found";
@@ -82,21 +86,41 @@ export async function GET(req: NextRequest) {
         }
 
         if (process.env.NODE_ENV !== "production" && process.env.TEST_AUTH_USER_ID) {
-            const userApps = Array.from(testStore.applications.values()).filter(a => a.userId === authCtx.user.id);
-            return NextResponse.json({ applications: userApps });
+            const { limit } = parsePagination(req);
+            const userApps = Array.from(testStore.applications.values())
+                .filter(a => a.userId === authCtx.user.id)
+                .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime() || b.id.localeCompare(a.id));
+            const page = paginateRows(userApps.slice(0, limit + 1), limit, app => ({ id: app.id, timestamp: app.createdAt }));
+            return NextResponse.json({ applications: page.items, page: page.page });
         }
 
-        const apps = await db.query.applications.findMany({
-            where: eq(applicationsTable.userId, authCtx.user.id),
-            orderBy: [desc(applicationsTable.createdAt)],
-            with: {
-                selectedResume: true,
-                resumeVersion: true,
-                changes: true,
-            }
-        });
+        const { limit, cursor } = parsePagination(req);
+        const cursorCondition = cursor ? or(
+            lt(applicationsTable.createdAt, cursor.timestamp),
+            and(eq(applicationsTable.createdAt, cursor.timestamp), lt(applicationsTable.id, cursor.id)),
+        ) : undefined;
+        const rows = await db.select({
+            id: applicationsTable.id,
+            company: applicationsTable.company,
+            position: applicationsTable.position,
+            status: applicationsTable.status,
+            url: applicationsTable.url,
+            selectedResumeId: applicationsTable.selectedResumeId,
+            resumeVersionId: applicationsTable.resumeVersionId,
+            selectedWorkIds: applicationsTable.selectedWorkIds,
+            selectedCertIds: applicationsTable.selectedCertIds,
+            deadline: applicationsTable.deadline,
+            notes: applicationsTable.notes,
+            outcome: applicationsTable.outcome,
+            createdAt: applicationsTable.createdAt,
+            updatedAt: applicationsTable.updatedAt,
+        }).from(applicationsTable)
+            .where(and(eq(applicationsTable.userId, authCtx.user.id), cursorCondition))
+            .orderBy(desc(applicationsTable.createdAt), desc(applicationsTable.id))
+            .limit(limit + 1);
+        const page = paginateRows(rows, limit, app => ({ id: app.id, timestamp: app.createdAt }));
 
-        return NextResponse.json({ applications: apps });
+        return NextResponse.json({ applications: page.items, page: page.page });
     } catch (error: unknown) {
         return handleApiError(error, "GET /api/applications");
     }
@@ -204,7 +228,7 @@ export async function PATCH(req: NextRequest) {
             };
 
             const transitionCheck = validateStatusTransition(
-                existingApp.status as ApplicationStatus,
+                normalizeApplicationStatus(existingApp.status),
                 status,
                 combinedData
             );

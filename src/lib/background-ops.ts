@@ -58,7 +58,7 @@ export async function dispatchBackgroundJob(
             operationType,
             status: "pending",
             progressPercent: 0,
-            payload: JSON.stringify(payload),
+            payload,
             createdAt: now,
             updatedAt: now,
         });
@@ -71,6 +71,7 @@ export async function dispatchBackgroundJob(
  * Update background operation progress or completion.
  */
 export async function updateBackgroundJobStatus(
+    userId: string,
     jobId: string,
     status: "pending" | "processing" | "completed" | "failed",
     progressPercent: number,
@@ -95,7 +96,7 @@ export async function updateBackgroundJobStatus(
 
     if (isTestStoreActive()) {
         const existing = testStore.backgroundJobs.get(jobId);
-        if (existing) {
+        if (existing?.userId === userId) {
             testStore.backgroundJobs.set(jobId, { ...existing, ...updates });
         }
     } else {
@@ -103,12 +104,13 @@ export async function updateBackgroundJobStatus(
             .set({
                 status,
                 progressPercent,
-                result: result ? JSON.stringify(result) : undefined,
+                result: result ?? undefined,
                 errorMessage: errorMessage || null,
                 updatedAt: now,
+                startedAt: status === "processing" ? now : undefined,
                 completedAt: (status === "completed" || status === "failed") ? now : undefined,
             })
-            .where(eq(backgroundJobs.id, jobId));
+            .where(and(eq(backgroundJobs.id, jobId), eq(backgroundJobs.userId, userId)));
     }
 }
 

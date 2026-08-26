@@ -21,7 +21,7 @@ export function generateCoverLetterHtml(content: string, title: string): string 
         }
 
         // Handle markdown bold/italic
-        const formatted = trimmed
+        const formatted = escapeHtml(trimmed)
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
             .replace(/\*(.*?)\*/g, '<strong>$1</strong>');
 
@@ -54,12 +54,11 @@ export function generateCoverLetterHtml(content: string, title: string): string 
 <head>
     <meta charset="UTF-8">
     <title>${escapeHtml(title)}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;600;800&family=EB+Garamond:ital,wght@0,400..800;1,400..800&display=swap" rel="stylesheet">
     <style>
         @page { size: A4; margin: 0; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: Arial, Helvetica, sans-serif;
             font-size: 11pt;
             line-height: 1.6;
             color: #1a1a1a;
@@ -78,7 +77,7 @@ export function generateCoverLetterHtml(content: string, title: string): string 
         }
 
         .user-info h1 {
-            font-family: 'Outfit', sans-serif;
+            font-family: Arial, Helvetica, sans-serif;
             font-size: 28pt;
             font-weight: 800;
             color: #000;
@@ -104,7 +103,7 @@ export function generateCoverLetterHtml(content: string, title: string): string 
         }
 
         .cl-content {
-            font-family: 'EB Garamond', serif;
+            font-family: Georgia, 'Times New Roman', serif;
             font-size: 13pt;
             color: #111827;
             line-height: 1.5;
@@ -129,13 +128,13 @@ export function generateCoverLetterHtml(content: string, title: string): string 
 
         .signature {
             margin-top: 15mm;
-            font-family: 'EB Garamond', serif;
+            font-family: Georgia, 'Times New Roman', serif;
             font-size: 13pt;
         }
 
         .signature-name {
             margin-top: 8mm;
-            font-family: 'Inter', sans-serif;
+            font-family: Arial, Helvetica, sans-serif;
             font-weight: 700;
             font-size: 12pt;
             color: #000;
@@ -163,7 +162,7 @@ export function generateCoverLetterHtml(content: string, title: string): string 
         </div>
         <div style="text-align: right; font-size: 8pt; color: #6b7280; font-weight: 500;">
             Generated via Zebra AI Suite<br>
-            Verification ID: CL-${Math.random().toString(36).slice(2, 11).toUpperCase()}
+            Document ID: CL-${Math.random().toString(36).slice(2, 11).toUpperCase()}
         </div>
     </div>
 

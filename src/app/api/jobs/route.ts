@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { jobs as jobsTable } from "@/lib/schema";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, lt, or } from "drizzle-orm";
 import { handleApiError } from "@/lib/api-error";
 import { idSchema, jobSchema } from "@/lib/validation";
 import crypto from "crypto";
@@ -11,6 +11,7 @@ import {
     getUserOwnedResumeVersion, 
     notFoundResponse 
 } from "@/lib/auth-policy";
+import { paginateRows, parsePagination } from "@/lib/pagination";
 
 const jobPatchSchema = jobSchema.partial().extend({ id: idSchema });
 
@@ -44,17 +45,23 @@ async function validateLinkedAsset({
     return null;
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const { auth: authCtx, errorResponse } = await requireAuth();
     if (errorResponse) return errorResponse;
 
-    const userJobs = await db.query.jobs.findMany({
-        where: eq(jobsTable.userId, authCtx.user.id),
-        orderBy: [desc(jobsTable.updatedAt)],
-    });
+    const { limit, cursor } = parsePagination(req);
+    const cursorCondition = cursor ? or(
+        lt(jobsTable.updatedAt, cursor.timestamp),
+        and(eq(jobsTable.updatedAt, cursor.timestamp), lt(jobsTable.id, cursor.id)),
+    ) : undefined;
+    const rows = await db.select().from(jobsTable)
+        .where(and(eq(jobsTable.userId, authCtx.user.id), cursorCondition))
+        .orderBy(desc(jobsTable.updatedAt), desc(jobsTable.id))
+        .limit(limit + 1);
+    const page = paginateRows(rows, limit, item => ({ id: item.id, timestamp: item.updatedAt }));
 
-    return NextResponse.json({ success: true, jobs: userJobs });
+    return NextResponse.json({ success: true, jobs: page.items, page: page.page });
 
   } catch (error: unknown) {
     return handleApiError(error, "GET /api/jobs");

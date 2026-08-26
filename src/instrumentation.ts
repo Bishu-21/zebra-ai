@@ -1,8 +1,10 @@
 import { type Instrumentation } from 'next'
 import { isExpectedRequestAbort } from '@/lib/error-classification'
+import { validateServerEnvironment } from '@/lib/env'
 
 export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
+    validateServerEnvironment();
     const connectionString = process.env.APPLICATIONINSIGHTS_CONNECTION_STRING;
     if (connectionString) {
       try {

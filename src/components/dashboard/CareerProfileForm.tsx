@@ -24,8 +24,10 @@ export function CareerProfileForm({ initialStage, initialYears, onSaved, compact
     const [message, setMessage] = useState<string | null>(null);
 
     useEffect(() => {
-        if (CAREER_STAGES.includes(initialStage as CareerStage)) setCareerStage(initialStage as CareerStage);
-        setYears(initialYears?.toString() ?? "");
+        queueMicrotask(() => {
+            if (CAREER_STAGES.includes(initialStage as CareerStage)) setCareerStage(initialStage as CareerStage);
+            setYears(initialYears?.toString() ?? "");
+        });
     }, [initialStage, initialYears]);
 
     async function save() {

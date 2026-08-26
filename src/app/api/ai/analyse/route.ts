@@ -126,6 +126,7 @@ RESUME EVIDENCE END`;
 
         const rawResponse = await generateAiResponse({
             task: "audit",
+            telemetry: { userId: authCtx.user.id, creditsCost: 1 },
             systemPrompt: "You are Zebra AI's evidence-grounded executive resume coach and senior talent-acquisition reviewer. Produce the established actionable audit while applying the supplied fixed rubric consistently. Unsupported claims are prohibited.",
             prompt,
             responseFormat: RESUME_AUDIT_RESPONSE_FORMAT,

@@ -15,6 +15,7 @@ import { ProjectResultsModal } from "./ProjectResultsModal";
 import { ProjectAnalysisData } from "./ProjectAnalysisResults";
 import { m } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { useHydrated } from "@/hooks/useHydrated";
 
 export interface TailoringData {
     matchScore: number;
@@ -46,11 +47,7 @@ export function InsightsFeed({ data }: InsightsFeedProps) {
     const [selectedProject, setSelectedProject] = useState<ProjectAnalysisData | null>(null);
     const [isResumeModalOpen, setIsResumeModalOpen] = useState(false);
     const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
-    const [isMounted, setIsMounted] = useState(false);
-
-    React.useEffect(() => {
-        setIsMounted(true);
-    }, []);
+    const isMounted = useHydrated();
 
     const openResume = (resumeId: string) => {
         try {

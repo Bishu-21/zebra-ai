@@ -42,6 +42,7 @@ export function useZebuWakeWord(options: { paused: boolean; onWake: () => void }
   const retryRef = useRef<number | null>(null);
   const retryCountRef = useRef(0);
   const enabledRef = useRef(false);
+  const startRecognitionRef = useRef<() => void>(() => undefined);
   const pausedRef = useRef(options.paused);
   const wakeHandlerRef = useRef(options.onWake);
   const [enabled, setEnabled] = useState(false);
@@ -50,8 +51,10 @@ export function useZebuWakeWord(options: { paused: boolean; onWake: () => void }
   const [lastHeard, setLastHeard] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  pausedRef.current = options.paused;
-  wakeHandlerRef.current = options.onWake;
+  useEffect(() => {
+    pausedRef.current = options.paused;
+    wakeHandlerRef.current = options.onWake;
+  }, [options.onWake, options.paused]);
 
   const clearRetry = useCallback(() => {
     if (retryRef.current !== null) window.clearTimeout(retryRef.current);
@@ -142,7 +145,7 @@ export function useZebuWakeWord(options: { paused: boolean; onWake: () => void }
         return;
       }
       const delay = Math.min(10_000, 500 * 2 ** Math.min(retryCountRef.current, 4));
-      retryRef.current = window.setTimeout(startRecognition, delay);
+      retryRef.current = window.setTimeout(() => startRecognitionRef.current(), delay);
     };
     recognitionRef.current = instance;
     try {
@@ -150,9 +153,11 @@ export function useZebuWakeWord(options: { paused: boolean; onWake: () => void }
     } catch {
       recognitionRef.current = null;
       retryCountRef.current += 1;
-      retryRef.current = window.setTimeout(startRecognition, 700);
+      retryRef.current = window.setTimeout(() => startRecognitionRef.current(), 700);
     }
   }, [clearRetry, stopRecognition]);
+
+  useEffect(() => { startRecognitionRef.current = startRecognition; }, [startRecognition]);
 
   const disable = useCallback(() => {
     enabledRef.current = false;
@@ -202,25 +207,27 @@ export function useZebuWakeWord(options: { paused: boolean; onWake: () => void }
   }, [disable, enable]);
 
   useEffect(() => {
-    const hasSupport = Boolean(getRecognitionConstructor());
-    setSupported(hasSupport);
-    if (!hasSupport) {
-      setState("unsupported");
-      return;
-    }
-    if (localStorage.getItem(STORAGE_KEY) === "true") {
-      enabledRef.current = true;
-      setEnabled(true);
-      startRecognition();
-    }
+    queueMicrotask(() => {
+      const hasSupport = Boolean(getRecognitionConstructor());
+      setSupported(hasSupport);
+      if (!hasSupport) {
+        setState("unsupported");
+        return;
+      }
+      if (localStorage.getItem(STORAGE_KEY) === "true") {
+        enabledRef.current = true;
+        setEnabled(true);
+        startRecognition();
+      }
+    });
   }, [startRecognition]);
 
   useEffect(() => {
     if (!enabledRef.current) return;
     if (options.paused) {
-      pause();
+      queueMicrotask(pause);
     } else {
-      startRecognition();
+      queueMicrotask(startRecognition);
     }
   }, [options.paused, pause, startRecognition]);
 

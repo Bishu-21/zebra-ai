@@ -6,7 +6,7 @@ import { requireAuth } from "@/lib/auth-policy";
 import { checkDistributedRateLimit } from "@/lib/rate-limit";
 import { generateAiResponse } from "@/lib/azure-foundry";
 import { isAllowedZebuRoute, zebuPlanSchema, zebuTurnSchema, type ZebuPlan } from "@/lib/zebu-contract";
-import { executeCreateApplicationDraft, executeCreateWorkItem, executeDeadlineCheck, executeQuickStats, executeSearch, executeSuggestNext, executeSummary, executeUpdateApplication } from "@/lib/zebu-actions";
+import { executeDeadlineCheck, executeQuickStats, executeSearch, executeSuggestNext, executeSummary } from "@/lib/zebu-actions";
 
 const actionVariants = [
   { type: "object", additionalProperties: false, required: ["type"], properties: { type: { const: "none" } } },
@@ -20,9 +20,6 @@ const actionVariants = [
   { type: "object", additionalProperties: false, required: ["type", "query"], properties: { type: { const: "open_application" }, query: { type: "string" } } },
   { type: "object", additionalProperties: false, required: ["type"], properties: { type: { const: "deadline_check" } } },
   { type: "object", additionalProperties: false, required: ["type"], properties: { type: { const: "suggest_next" } } },
-  { type: "object", additionalProperties: false, required: ["type", "company", "position"], properties: { type: { const: "create_application" }, company: { type: "string" }, position: { type: "string" } } },
-  { type: "object", additionalProperties: false, required: ["type", "title", "category", "description"], properties: { type: { const: "create_work" }, title: { type: "string" }, category: { enum: ["Project", "Internship", "Hackathon", "Course", "Award", "Other"] }, description: { type: "string" } } },
-  { type: "object", additionalProperties: false, required: ["type", "applicationId", "status"], properties: { type: { const: "update_application_status" }, applicationId: { type: "string" }, status: { enum: ["Draft", "Preparing", "Ready", "Applied", "Interviewing", "Offer", "Rejected", "Withdrawn"] } } },
 ];
 
 const responseFormat = { type: "json_schema" as const, name: "zebu_turn", strict: true, schema: {
@@ -37,9 +34,6 @@ async function enrichPlan(userId: string, plan: ZebuPlan): Promise<ZebuPlan> {
   if (action.type === "quick_stats") return { ...plan, ...(await executeQuickStats(userId)) };
   if (action.type === "deadline_check") return { ...plan, ...(await executeDeadlineCheck(userId)) };
   if (action.type === "suggest_next") return { ...plan, ...(await executeSuggestNext(userId)) };
-  if (action.type === "create_application") return { ...plan, ...(await executeCreateApplicationDraft(userId, action)), action: { type: "none" } };
-  if (action.type === "create_work") return { ...plan, ...(await executeCreateWorkItem(userId, action)), action: { type: "none" } };
-  if (action.type === "update_application_status") return { ...plan, ...(await executeUpdateApplication(userId, action)), action: { type: "none" } };
   if (action.type === "start_flow") {
     const routes = { resume: "/dashboard/resumes", application: "/dashboard/job-tracker", cover_letter: "/dashboard/cover-letters" } as const;
     return { ...plan, action: { type: "navigate", route: routes[action.flow] } };
@@ -70,11 +64,11 @@ export async function POST(request: NextRequest) {
     ]);
     const context = JSON.stringify({ user: { name: auth.user.name }, currentPage: parsed.data.currentPage, selectedEntity: parsed.data.currentContext, resumes: userResumes, applications: userApplications, legacyJobs, work: userWork });
     const systemPrompt = `You are Zebu, Zebra AI's concise, warm voice workspace agent. Choose at most one action.
-Use search for broad finding; open_resume/open_application when the user clearly asks to open one; summarize for a saved entity summary; quick_stats for counts; deadline_check for deadlines; suggest_next for recommendations; start_flow only to navigate to a creation screen. Use open_tool for resume analysis or role matching. Use create_application or create_work only after a clear command to add/create/save/track a record and all required fields are present. Use update_application_status only after a clear request and only with an exact ID from WORKSPACE_CONTEXT. If a write request is ambiguous, ask one short follow-up and choose none.
+Use search for broad finding; open_resume/open_application when the user clearly asks to open one; summarize for a saved entity summary; quick_stats for counts; deadline_check for deadlines; suggest_next for recommendations; start_flow only to navigate to a creation screen. Use open_tool for resume analysis or role matching. Do not mutate workspace records; navigate the user to the relevant deterministic form for creation or updates.
 Page mapping: home=/dashboard, applications=/dashboard/job-tracker, resumes=/dashboard/resumes, work=/dashboard/work, cover letters=/dashboard/cover-letters, portfolio=/dashboard/portfolio, analytics=/dashboard/analytics, settings=/dashboard/settings.
-Use only facts in WORKSPACE_CONTEXT and tool results. You may create private draft applications and work items or update application status through the allowed actions. Never delete, externally submit, email, publish, spend credits, browse the public web, or navigate externally. Do not claim a mutation succeeded before its action executes. Keep the response voice-friendly and under 120 words.
+Use only facts in WORKSPACE_CONTEXT and tool results. Never create, update, delete, externally submit, email, publish, spend credits, browse the public web, or navigate externally. Keep the response voice-friendly and under 120 words.
 WORKSPACE_CONTEXT=${context}`;
-    const raw = await generateAiResponse({ task: "zebu", prompt: parsed.data.message, history: parsed.data.history, systemPrompt, responseFormat, preferGemini: true });
+    const raw = await generateAiResponse({ task: "zebu", prompt: parsed.data.message, history: parsed.data.history, systemPrompt, responseFormat, preferGemini: true, telemetry: { userId: auth.user.id } });
     let plan = zebuPlanSchema.parse(JSON.parse(raw));
     plan = await enrichPlan(auth.user.id, plan);
     if (plan.action.type === "navigate" && !isAllowedZebuRoute(plan.action.route)) plan = { spokenResponse: "That destination is not enabled for Zebu yet.", action: { type: "none" } };

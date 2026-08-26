@@ -29,6 +29,12 @@ describe("Evidence-to-Job Compiler Pipeline", () => {
         assert.strictEqual(node1.confidence, "asserted");
 
         // Sync work items
+        testStore.workItems.set("work_1", {
+            id: "work_1",
+            userId,
+            title: "Cloud Microservices Engine",
+            category: "Project",
+        });
         await syncWorkItemsToEvidenceGraph(userId, [
             {
                 id: "work_1",
@@ -108,7 +114,7 @@ describe("Evidence-to-Job Compiler Pipeline", () => {
         assert.ok(tableReport.detailedAudit.eligibilityConfirmations.length > 0, "Should contain eligibility confirmations entry");
     });
 
-    it("should compile single-column ATS document guaranteed by evidence lineage", async () => {
+    it("should compile a single-column document from evidence lineage", async () => {
         const userId = "usr_test_123";
         const graph: CandidateEvidenceNode[] = [
             {
@@ -119,7 +125,7 @@ describe("Evidence-to-Job Compiler Pipeline", () => {
                 skill: "TypeScript",
                 action: "Built real-time transaction monitor using TypeScript and WebSockets",
                 measurableOutcome: "Reduced latency to under 50ms",
-                confidence: "verified",
+                confidence: "asserted",
                 source: "manual",
                 createdAt: new Date(),
                 updatedAt: new Date(),
@@ -184,6 +190,6 @@ describe("Evidence-to-Job Compiler Pipeline", () => {
         );
 
         assert.strictEqual(visualRich.templateMode, "visual_rich_sharing");
-        assert.ok(visualRich.htmlContent.includes("Visually Rich Template"));
+        assert.ok(visualRich.htmlContent.includes("Visually rich layout"));
     });
 });

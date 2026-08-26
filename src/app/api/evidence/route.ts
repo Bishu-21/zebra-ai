@@ -1,19 +1,21 @@
 import { NextResponse } from "next/server";
 import { withRequestPolicy } from "@/lib/request-policy";
-import { getCandidateEvidenceGraph, upsertEvidenceNode } from "@/lib/evidence-graph";
+import { getCandidateEvidencePage, upsertEvidenceNode } from "@/lib/evidence-graph";
 import { z } from "zod";
+import { paginateRows, parsePagination } from "@/lib/pagination";
 
 export const GET = withRequestPolicy(
     { requireAuth: true },
     async (req, ctx) => {
         const userId = ctx.auth!.user.id;
-        const evidenceGraph = await getCandidateEvidenceGraph(userId);
-        return NextResponse.json({ evidence: evidenceGraph });
+        const { limit, cursor } = parsePagination(req);
+        const evidenceGraph = await getCandidateEvidencePage(userId, limit, cursor);
+        const page = paginateRows(evidenceGraph, limit, node => ({ id: node.id, timestamp: node.updatedAt }));
+        return NextResponse.json({ evidence: page.items, page: page.page });
     }
 );
 
 const upsertSchema = z.object({
-    id: z.string().optional(),
     workItemId: z.string().nullable().optional(),
     companyOrProject: z.string().min(1, "Company or Project name is required"),
     roleOrContext: z.string().nullable().optional(),

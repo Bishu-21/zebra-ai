@@ -2,15 +2,11 @@
 
 import { useSession } from "@/lib/auth-client";
 import { AuthTrigger } from "./AuthTrigger";
-import { useState, useEffect } from "react";
+import { useHydrated } from "@/hooks/useHydrated";
 
 export function NavAuth() {
   const { data: session, isPending } = useSession();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useHydrated();
 
   // Use skeleton during hydration or while session is pending
   if (!mounted || isPending) {

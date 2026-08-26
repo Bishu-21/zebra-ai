@@ -31,6 +31,7 @@ export const userRelations = relations(user, ({ many, one }) => ({
     certifications: many(certifications),
     applications: many(applications),
     applicationChanges: many(applicationChanges),
+    tailoringRuns: many(tailoringRuns),
     portfolios: one(portfolios),
     interviewNotes: many(interviewNotes),
     aiUsage: many(aiUsage),
@@ -97,6 +98,7 @@ export const resumes = pgTable("resumes", {
     targetCompany: text("target_company"),
     title: text("title").notNull(),
     content: text("content"), // Can store raw text or serialized JSON
+    revision: integer("revision").notNull().default(0),
     status: text("status").notNull().default("Draft"),
     isPublic: boolean("is_public").notNull().default(false),
     shareToken: text("share_token"), // Unique token for public sharing
@@ -312,6 +314,7 @@ export const certifications = pgTable("certifications", {
     issueDate: timestamp("issue_date"),
     credentialUrl: text("credential_url"),
     skills: jsonb("skills"), // string[]
+    isPublic: boolean("is_public").notNull().default(false),
     createdAt: timestamp("created_at").notNull(),
     updatedAt: timestamp("updated_at").notNull(),
 });
@@ -329,7 +332,7 @@ export const applications = pgTable("applications", {
     position: text("position").notNull(),
     jobDescription: text("job_description"),
     url: text("url"),
-    status: text("status").notNull().default("Draft"), // Draft, Tailoring, Applied, Interviewing, Offer, Rejected
+    status: text("status").notNull().default("Draft"), // Draft, Preparing, Ready, Applied, Interviewing, Offer, Rejected, Withdrawn
     selectedResumeId: text("selected_resume_id").references(() => resumes.id),
     resumeVersionId: text("resume_version_id").references(() => resumeVersions.id),
     selectedWorkIds: jsonb("selected_work_ids"), // string[]
@@ -374,6 +377,27 @@ export const applicationChanges = pgTable("application_changes", {
 export const applicationChangesRelations = relations(applicationChanges, ({ one }) => ({
     application: one(applications, { fields: [applicationChanges.applicationId], references: [applications.id] }),
     user: one(user, { fields: [applicationChanges.userId], references: [user.id] }),
+}));
+
+export const tailoringRuns = pgTable("tailoring_runs", {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull().references(() => user.id),
+    applicationId: text("application_id").references(() => applications.id),
+    resumeId: text("resume_id").notNull().references(() => resumes.id),
+    idempotencyKey: text("idempotency_key").notNull().unique(),
+    status: text("status").notNull().default("pending"),
+    result: jsonb("result"),
+    errorMessage: text("error_message"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => [
+    index("tailoring_runs_user_id_idx").on(table.userId),
+]);
+
+export const tailoringRunsRelations = relations(tailoringRuns, ({ one }) => ({
+    user: one(user, { fields: [tailoringRuns.userId], references: [user.id] }),
+    application: one(applications, { fields: [tailoringRuns.applicationId], references: [applications.id] }),
+    resume: one(resumes, { fields: [tailoringRuns.resumeId], references: [resumes.id] }),
 }));
 
 export const portfolios = pgTable("portfolios", {
@@ -430,6 +454,10 @@ export const aiUsage = pgTable("ai_usage", {
     creditsCost: integer("credits_cost").notNull().default(1),
     idempotencyKey: text("idempotency_key").unique(),
     status: text("status").notNull().default("success"),
+    provider: text("provider"),
+    requestId: text("request_id"),
+    latencyMs: integer("latency_ms"),
+    errorCode: text("error_code"),
     createdAt: timestamp("created_at").notNull(),
 });
 
@@ -454,7 +482,7 @@ export const evidenceNodes = pgTable("evidence_nodes", {
     endDate: timestamp("end_date"),
     durationMonths: integer("duration_months"),
     proofUrl: text("proof_url"),
-    confidence: text("confidence").notNull().default("asserted"), // verified, asserted, imported
+    confidence: text("confidence").notNull().default("asserted"), // asserted, imported, externally_checked
     source: text("source").notNull().default("manual"), // work_item, manual, git, resume
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),

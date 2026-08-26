@@ -83,7 +83,7 @@ describe("Navigation & Plans Configuration Test Suite [Unit Test]", () => {
         const expected = [
             "Draft",
             "Preparing",
-            "Tailoring",
+            "Ready",
             "Applied",
             "Interviewing",
             "Offer",

@@ -13,12 +13,22 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "lh3.googleusercontent.com",
+        hostname: "**.googleusercontent.com",
       },
     ],
   },
   experimental: {
     optimizePackageImports: ["framer-motion", "react-icons/ri"],
+  },
+  webpack(config) {
+    config.ignoreWarnings = [
+      ...(config.ignoreWarnings || []),
+      {
+        module: /node_modules[\\/]unpdf[\\/]dist[\\/]index\.mjs/,
+        message: /Accessing import\.meta directly is unsupported/,
+      },
+    ];
+    return config;
   },
   async headers() {
     return [

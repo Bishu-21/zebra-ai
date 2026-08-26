@@ -20,6 +20,7 @@ import {
     RiLineChartLine
 } from "react-icons/ri";
 import { DASHBOARD_NAV_ITEMS } from "@/lib/constants/navigation";
+import { UserAvatar } from "@/components/dashboard/UserAvatar";
 
 interface SidebarProps {
     plan: string;
@@ -74,7 +75,7 @@ export function Sidebar({
 
     // Close mobile drawer whenever pathname changes
     useEffect(() => {
-        closeDrawer();
+        queueMicrotask(closeDrawer);
     }, [pathname, closeDrawer]);
 
     const handleSignOut = async (e: React.MouseEvent) => {
@@ -180,18 +181,7 @@ export function Sidebar({
                             className="group flex items-center gap-3 p-2 rounded-xl bg-white border border-neutral-200/80 hover:border-neutral-300 hover:shadow-xs transition-all cursor-pointer"
                         >
                             <div className="w-8 h-8 rounded-lg bg-[#0A0A0A] text-white flex items-center justify-center overflow-hidden shadow-xs shrink-0">
-                                {userImage ? (
-                                    <Image
-                                        src={userImage}
-                                        alt={userName}
-                                        width={32}
-                                        height={32}
-                                        className="w-full h-full object-cover"
-                                        unoptimized
-                                    />
-                                ) : (
-                                    <span className="text-xs font-bold">{userName.charAt(0).toUpperCase()}</span>
-                                )}
+                                <UserAvatar name={userName} src={userImage} size={32} fallbackClassName="text-xs" />
                             </div>
 
                             <div className="flex-grow min-w-0">

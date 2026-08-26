@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import {
     createLegacyResumeContent,
     normalizeResumeContent,
+    normalizeResumeContentForStorage,
     parseStoredResumeContent,
     resumeContentToPrompt,
     stringifyResumeContent,
@@ -79,5 +80,30 @@ describe("Lossless resume content handling", () => {
         assert.equal(parsed._ingestionMeta?.parseStatus, "legacy");
         assert.equal(parsed._ingestionMeta?.sourceText, flattened);
         assert.match(parsed._ingestionMeta?.parseWarnings[0] || "", /Auto-Structure/);
+    });
+
+    it("normalizes every structured save through one canonical storage boundary", () => {
+        const stored = normalizeResumeContentForStorage(JSON.stringify({
+            basics: { name: "Bishal Sarkar" },
+            experience: [],
+            skills: ["TypeScript"],
+        }));
+        const parsed = JSON.parse(stored);
+
+        assert.equal(parsed.basics.name, "Bishal Sarkar");
+        assert.equal(parsed.skills[0].category, "Technical Skills");
+        assert.throws(() => normalizeResumeContentForStorage("not-json"), /valid JSON/);
+    });
+
+    it("migrates the legacy verified parse label to reviewed", () => {
+        const normalized = normalizeResumeContent({
+            _ingestionMeta: {
+                parseStatus: "verified",
+                sourceText: "source",
+                parserVersion: "legacy",
+                parseWarnings: [],
+            },
+        });
+        assert.equal(normalized._ingestionMeta?.parseStatus, "reviewed");
     });
 });

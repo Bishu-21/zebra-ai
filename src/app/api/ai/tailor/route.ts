@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { db, sanitizeSecretText } from "@/lib/db";
 import {
     applicationChanges as applicationChangesTable,
     applications as applicationsTable,
     atsOptimisations as atsTable,
     resumeVersions as resumeVersionsTable,
+    tailoringRuns as tailoringRunsTable,
     workItems as workItemsTable,
 } from "@/lib/schema";
 import { aiRoleMatchSchema, tailorSchema } from "@/lib/validation";
@@ -35,9 +36,44 @@ export async function POST(req: NextRequest) {
     const resume = await getUserOwnedResume(authCtx.user.id, resumeId);
     if (!resume) return notFoundResponse("Resume");
 
+    let scopedWorkIds: string[] | null = null;
     if (applicationId) {
         const application = await getUserOwnedApplication(authCtx.user.id, applicationId);
         if (!application) return notFoundResponse("Application");
+        scopedWorkIds = Array.isArray(application.selectedWorkIds)
+            ? application.selectedWorkIds.filter((id): id is string => typeof id === "string")
+            : [];
+    }
+
+    const requestedKey = req.headers.get("idempotency-key")?.trim();
+    if (requestedKey && !/^[A-Za-z0-9_-]{16,128}$/.test(requestedKey)) {
+        return NextResponse.json({ error: "Invalid idempotency key" }, { status: 400 });
+    }
+    const idempotencyKey = requestedKey || crypto.randomUUID();
+    const now = new Date();
+    const [createdRun] = await db.insert(tailoringRunsTable).values({
+        id: crypto.randomUUID(),
+        userId: authCtx.user.id,
+        applicationId: applicationId || null,
+        resumeId,
+        idempotencyKey,
+        status: "pending",
+        createdAt: now,
+        updatedAt: now,
+    }).onConflictDoNothing({ target: tailoringRunsTable.idempotencyKey }).returning({ id: tailoringRunsTable.id });
+
+    if (!createdRun) {
+        const existingRun = await db.query.tailoringRuns.findFirst({
+            where: and(
+                eq(tailoringRunsTable.idempotencyKey, idempotencyKey),
+                eq(tailoringRunsTable.userId, authCtx.user.id),
+            ),
+        });
+        if (!existingRun) return NextResponse.json({ error: "Idempotency key is already in use" }, { status: 409 });
+        if (existingRun.status === "completed" && existingRun.result) {
+            return NextResponse.json({ success: true, analysis: existingRun.result, operationId: existingRun.id, replayed: true });
+        }
+        return NextResponse.json({ error: existingRun.status === "pending" ? "This role match is already running" : "This role match previously failed; start a new attempt", operationId: existingRun.id }, { status: 409 });
     }
 
     const resumeEvidence = resumeContentToPrompt(resume.content);
@@ -47,12 +83,26 @@ export async function POST(req: NextRequest) {
 
     const credit = await reserveUserCredits(authCtx.user.id, 1);
     if (!credit.success) {
+        await db.delete(tailoringRunsTable).where(eq(tailoringRunsTable.id, createdRun.id));
         return NextResponse.json({ error: credit.error || "Insufficient credits." }, { status: 402 });
     }
 
     try {
-        const userWork = await db.query.workItems.findMany({
-            where: eq(workItemsTable.userId, authCtx.user.id),
+        const userWork = scopedWorkIds?.length === 0 ? [] : await db.query.workItems.findMany({
+            columns: {
+                category: true,
+                title: true,
+                description: true,
+                tools: true,
+                result: true,
+                proofUrl: true,
+            },
+            where: and(
+                eq(workItemsTable.userId, authCtx.user.id),
+                scopedWorkIds ? inArray(workItemsTable.id, scopedWorkIds) : undefined,
+            ),
+            orderBy: [desc(workItemsTable.updatedAt)],
+            limit: 50,
         });
         const workEvidence = userWork.map((item) => ({
             category: item.category,
@@ -104,6 +154,7 @@ TARGET JOB DESCRIPTION END`;
 
         const rawResponse = await generateAiResponse({
             task: "tailor",
+            telemetry: { userId: authCtx.user.id, operationId: idempotencyKey, creditsCost: 1 },
             systemPrompt: "You are Zebra AI's evidence-grounded role match analyst. Output strict JSON only and keep every proposed edit pending human approval.",
             prompt,
         });
@@ -128,7 +179,7 @@ TARGET JOB DESCRIPTION END`;
                 await tx.update(applicationsTable)
                     .set({
                         selectedResumeId: resumeId,
-                        status: "Tailoring",
+                        status: "Preparing",
                         jobDescription,
                         updatedAt: new Date(),
                     })
@@ -170,11 +221,22 @@ TARGET JOB DESCRIPTION END`;
                     updatedAt: new Date(),
                 });
             }
+
+            await tx.update(tailoringRunsTable)
+                .set({ status: "completed", result: analysis, updatedAt: new Date() })
+                .where(and(
+                    eq(tailoringRunsTable.id, createdRun.id),
+                    eq(tailoringRunsTable.userId, authCtx.user.id),
+                ));
         });
 
-        return NextResponse.json({ success: true, analysis });
+        return NextResponse.json({ success: true, analysis, operationId: createdRun.id });
     } catch (error: unknown) {
         await refundUserCredits(authCtx.user.id, 1);
+        await db.update(tailoringRunsTable)
+            .set({ status: "failed", errorMessage: "Role match generation failed", updatedAt: new Date() })
+            .where(and(eq(tailoringRunsTable.id, createdRun.id), eq(tailoringRunsTable.userId, authCtx.user.id)))
+            .catch(() => undefined);
         console.error("Role match analysis failed:", sanitizeSecretText(error instanceof Error ? error.message : String(error)));
         return NextResponse.json(
             { error: "The role match could not be validated. No suggestions were applied and your credit was refunded." },

@@ -214,9 +214,6 @@ export const zebuLiveToolDeclarations: FunctionDeclaration[] = [
   { name: "open_application", description: "Open an application by its exact ID from a prior search result.", parameters: { type: Type.OBJECT, properties: { applicationId: { type: Type.STRING } }, required: ["applicationId"] } },
   { name: "start_resume_check", description: "Open the existing resume analysis tool without running or spending credits.", parameters: { type: Type.OBJECT, properties: {} } },
   { name: "start_role_match", description: "Open the existing role-match tool without running or spending credits.", parameters: { type: Type.OBJECT, properties: {} } },
-  { name: "create_application_draft", description: "Create a real draft application record. Call only when the user clearly asks to add, create, save, or track it and gives both company and position.", parameters: { type: Type.OBJECT, properties: { company: { type: Type.STRING }, position: { type: Type.STRING }, deadline: { type: Type.STRING, description: "Optional ISO 8601 date or datetime explicitly supplied by the user." }, notes: { type: Type.STRING } }, required: ["company", "position"] } },
-  { name: "create_work_item", description: "Create a real private work-evidence item. Call only after an explicit request to add or save it.", parameters: { type: Type.OBJECT, properties: { title: { type: Type.STRING }, category: { type: Type.STRING, enum: ["Project", "Internship", "Hackathon", "Course", "Award", "Other"] }, description: { type: Type.STRING } }, required: ["title", "category"] } },
-  { name: "update_application", description: "Update a real application status, deadline, or notes. Use an exact applicationId from workspace data and call only after an explicit user instruction. Never infer a status change.", parameters: { type: Type.OBJECT, properties: { applicationId: { type: Type.STRING }, status: { type: Type.STRING, enum: ["Draft", "Preparing", "Ready", "Applied", "Interviewing", "Offer", "Rejected", "Withdrawn"] }, deadline: { type: Type.STRING, description: "ISO 8601 date/datetime, or an empty string to clear it." }, notes: { type: Type.STRING } }, required: ["applicationId"] } },
 ];
 
 export type ZebuLiveUiAction = { type: "navigate"; route: string } | { type: "open_tool"; tool: "resume_analysis" | "role_match" };
@@ -257,17 +254,5 @@ export async function executeZebuLiveTool(name: string, args: Record<string, unk
   }
   if (name === "start_resume_check") return { result: { success: true, note: "Tool opened; analysis has not started." }, uiAction: { type: "open_tool", tool: "resume_analysis" } };
   if (name === "start_role_match") return { result: { success: true, note: "Tool opened; role matching has not started." }, uiAction: { type: "open_tool", tool: "role_match" } };
-  if (name === "create_application_draft") {
-    const data = await executeCreateApplicationDraft(userId, args);
-    return { result: { success: true, summary: data.spokenResponse, application: data.displayCards?.[0] ?? null }, cards: data.displayCards };
-  }
-  if (name === "create_work_item") {
-    const data = await executeCreateWorkItem(userId, args);
-    return { result: { success: true, summary: data.spokenResponse, workItem: data.displayCards?.[0] ?? null }, cards: data.displayCards };
-  }
-  if (name === "update_application") {
-    const data = await executeUpdateApplication(userId, args);
-    return { result: { success: true, summary: data.spokenResponse, application: data.displayCards?.[0] ?? null }, cards: data.displayCards };
-  }
   throw new Error("Unsupported Zebu tool");
 }

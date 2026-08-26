@@ -11,7 +11,6 @@ export interface Settings {
     resumeFont: string;
     previewScale: number | "auto";
     aiTone: "professional" | "bold" | "technical" | "executive";
-    theme: "system" | "light" | "dark";
     autoFormatOnPaste: boolean;
 }
 
@@ -30,7 +29,6 @@ const defaultSettings: Settings = {
     resumeFont: "Latin Modern Roman",
     previewScale: "auto",
     aiTone: "professional",
-    theme: "light",
     autoFormatOnPaste: true,
 };
 
@@ -55,10 +53,9 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
                     resumeFont: parsed.resumeFont || defaultSettings.resumeFont,
                     previewScale: parsed.previewScale || defaultSettings.previewScale,
                     aiTone: parsed.aiTone || defaultSettings.aiTone,
-                    theme: parsed.theme || defaultSettings.theme,
                     autoFormatOnPaste: parsed.autoFormatOnPaste !== undefined ? parsed.autoFormatOnPaste : defaultSettings.autoFormatOnPaste,
                 };
-                setSettings(migrated);
+                queueMicrotask(() => setSettings(migrated));
             } catch (e) {
                 console.error("Failed to parse settings", e);
             }

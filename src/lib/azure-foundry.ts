@@ -1,5 +1,8 @@
 import OpenAI from "openai";
 import { GoogleGenAI } from "@google/genai";
+import { randomUUID } from "node:crypto";
+import { db } from "@/lib/db";
+import { aiUsage } from "@/lib/schema";
 
 export type TaskType =
   | "chat"
@@ -70,6 +73,11 @@ export interface GenerationOptions {
   onStreamFailure?: (error: unknown) => Promise<void> | void;
   allowGeminiFallback?: boolean;
   preferGemini?: boolean;
+  telemetry?: {
+    userId: string;
+    operationId?: string;
+    creditsCost?: number;
+  };
 }
 
 export class AiProviderConfigurationError extends Error {
@@ -303,36 +311,54 @@ function getErrorStatus(error: unknown): number | undefined {
 export function shouldFallbackToGemini(error: unknown): boolean {
   const status = getErrorStatus(error);
   if (status !== undefined) {
-    return status >= 400;
+    return status === 408 || status === 429 || [500, 502, 503, 504].includes(status);
   }
 
   const name = error instanceof Error ? error.name : "";
   return [
     "APIConnectionError",
     "APIConnectionTimeoutError",
-    "AiProviderResponseError",
     "TimeoutError",
   ].includes(name);
 }
 
-function getConfiguredAzureOrFallback(
-  gemini: GoogleGenAI | null,
-): AzureFoundryConfig | null {
-  try {
-    return getAzureFoundryConfig();
-  } catch (error) {
-    if (!gemini || !(error instanceof AiProviderConfigurationError)) throw error;
-    console.warn(
-      `[AI] ${error.message} Using the configured Gemini fallback.`,
-    );
-    return null;
-  }
+function getConfiguredAzureOrFallback(): AzureFoundryConfig | null {
+  return getAzureFoundryConfig();
 }
 
 function logAzureFallback(task: TaskType, error: unknown): void {
   const status = getErrorStatus(error);
   const reason = status ? `HTTP ${status}` : error instanceof Error ? error.name : "unknown error";
   console.warn(`[AI] Azure Foundry ${task} request failed (${reason}); using Gemini fallback.`);
+}
+
+async function recordAiOperation(
+  options: GenerationOptions,
+  details: { provider?: string; requestId?: string; status: "success" | "failed"; latencyMs: number; output?: string; outputChars?: number; error?: unknown },
+): Promise<void> {
+  if (!options.telemetry) return;
+  const status = getErrorStatus(details.error);
+  const errorCode = status ? `HTTP_${status}` : details.error instanceof Error ? details.error.name : null;
+  try {
+    await db.insert(aiUsage).values({
+      id: randomUUID(),
+      userId: options.telemetry.userId,
+      operationName: options.task,
+      promptVersion: "v1",
+      inputTokens: Math.ceil((options.prompt.length + (options.systemPrompt?.length ?? 0)) / 4),
+      outputTokens: Math.ceil((details.outputChars ?? details.output?.length ?? 0) / 4),
+      creditsCost: options.telemetry.creditsCost ?? 0,
+      idempotencyKey: options.telemetry.operationId ?? null,
+      status: details.status,
+      provider: details.provider ?? null,
+      requestId: details.requestId ?? null,
+      latencyMs: details.latencyMs,
+      errorCode,
+      createdAt: new Date(),
+    });
+  } catch (error) {
+    console.error(`[AI] Could not record ${options.task} usage (${error instanceof Error ? error.name : "unknown"}).`);
+  }
 }
 
 function getGeminiModel(task: TaskType): string {
@@ -381,35 +407,57 @@ async function generateGeminiResponse(
 export async function generateAiResponse(
   options: GenerationOptions,
 ): Promise<string> {
-  const gemini = options.allowGeminiFallback === false ? null : getGeminiClient();
-  if (options.preferGemini && gemini) return generateGeminiResponse(options, gemini);
-  const azureConfig = getConfiguredAzureOrFallback(gemini);
-
-  if (azureConfig) {
-    try {
-      const client = getAzureFoundryClient(azureConfig);
-      const response = await client.responses.create(
-        buildAzureRequest(options, azureConfig),
-        getAzureRequestOptions(options.task),
-      );
-
-      const responseText = getUsableAzureResponseText(response);
-      if (responseText) return responseText;
-
-      throw new AiProviderResponseError(
-        `Azure Foundry returned no text; response ended ${describeAzureResponseEnd(response)}.`,
-      );
-    } catch (error) {
-      if (!gemini || !shouldFallbackToGemini(error)) throw error;
-      logAzureFallback(options.task, error);
+  const startedAt = Date.now();
+  let provider: "azure" | "gemini" | undefined;
+  try {
+    const gemini = options.allowGeminiFallback === false ? null : getGeminiClient();
+    if (options.preferGemini && gemini) {
+      provider = "gemini";
+      const text = await generateGeminiResponse(options, gemini);
+      await recordAiOperation(options, { provider, status: "success", latencyMs: Date.now() - startedAt, output: text });
+      return text;
     }
+    const azureConfig = getConfiguredAzureOrFallback();
+
+    if (azureConfig) {
+      try {
+        provider = "azure";
+        const client = getAzureFoundryClient(azureConfig);
+        const response = await client.responses.create(
+          buildAzureRequest(options, azureConfig),
+          getAzureRequestOptions(options.task),
+        );
+
+        const responseText = getUsableAzureResponseText(response);
+        if (responseText) {
+          const requestId = (response as unknown as { _request_id?: string })._request_id;
+          await recordAiOperation(options, { provider, requestId, status: "success", latencyMs: Date.now() - startedAt, output: responseText });
+          return responseText;
+        }
+
+        throw new AiProviderResponseError(
+          `Azure Foundry returned no text; response ended ${describeAzureResponseEnd(response)}.`,
+        );
+      } catch (error) {
+        if (!gemini || !shouldFallbackToGemini(error)) throw error;
+        logAzureFallback(options.task, error);
+      }
+    }
+
+    if (gemini) {
+      provider = "gemini";
+      const text = await generateGeminiResponse(options, gemini);
+      await recordAiOperation(options, { provider, status: "success", latencyMs: Date.now() - startedAt, output: text });
+      return text;
+    }
+
+    throw new AiProviderConfigurationError(
+      "No AI provider is configured. Add the Azure Foundry API key or a Gemini API key.",
+    );
+  } catch (error) {
+    await recordAiOperation(options, { provider, status: "failed", latencyMs: Date.now() - startedAt, error });
+    throw error;
   }
-
-  if (gemini) return generateGeminiResponse(options, gemini);
-
-  throw new AiProviderConfigurationError(
-    "No AI provider is configured. Add the Azure Foundry API key or a Gemini API key.",
-  );
 }
 
 async function notifyStreamFailure(
@@ -432,8 +480,9 @@ async function notifyStreamFailure(
 export async function generateAiStream(
   options: GenerationOptions,
 ): Promise<ReadableStream<Uint8Array>> {
+  const startedAt = Date.now();
   const gemini = getGeminiClient();
-  const azureConfig = getConfiguredAzureOrFallback(gemini);
+  const azureConfig = getConfiguredAzureOrFallback();
 
   if (!azureConfig && !gemini) {
     throw new AiProviderConfigurationError(
@@ -445,6 +494,9 @@ export async function generateAiStream(
   let cancelled = false;
   let activeAzureStream: { abort: () => void } | null = null;
   const geminiAbortController = new AbortController();
+  let provider: "azure" | "gemini" | undefined;
+  let outputChars = 0;
+  let settled = false;
 
   return new ReadableStream<Uint8Array>({
     async start(controller) {
@@ -453,6 +505,7 @@ export async function generateAiStream(
 
         if (azureConfig) {
           try {
+            provider = "azure";
             const client = getAzureFoundryClient(azureConfig);
             const azureStream = client.responses.stream(
               buildAzureRequest(options, azureConfig),
@@ -464,6 +517,7 @@ export async function generateAiStream(
               if (cancelled) return;
               if (event.type === "response.output_text.delta" && event.delta) {
                 azureTextEmitted = true;
+                outputChars += event.delta.length;
                 controller.enqueue(encoder.encode(event.delta));
               }
             }
@@ -472,6 +526,7 @@ export async function generateAiStream(
             const finalText = getUsableAzureResponseText(finalResponse);
             if (!azureTextEmitted && finalText) {
               azureTextEmitted = true;
+              outputChars += finalText.length;
               controller.enqueue(encoder.encode(finalText));
             }
             if (!azureTextEmitted) {
@@ -488,6 +543,14 @@ export async function generateAiStream(
               );
             }
 
+            settled = true;
+            await recordAiOperation(options, {
+              provider,
+              requestId: (finalResponse as unknown as { _request_id?: string })._request_id,
+              status: "success",
+              latencyMs: Date.now() - startedAt,
+              outputChars,
+            });
             controller.close();
             return;
           } catch (error) {
@@ -504,6 +567,7 @@ export async function generateAiStream(
         }
 
         const budget = TASK_BUDGETS[options.task];
+        provider = "gemini";
         const geminiStream = await gemini.models.generateContentStream({
           model: getGeminiModel(options.task),
           contents: buildGeminiContents(options),
@@ -520,6 +584,7 @@ export async function generateAiStream(
           const text = chunk.text || "";
           if (text) {
             geminiTextEmitted = true;
+            outputChars += text.length;
             controller.enqueue(encoder.encode(text));
           }
         }
@@ -527,9 +592,13 @@ export async function generateAiStream(
         if (!geminiTextEmitted) {
           throw new AiProviderResponseError("Gemini returned an empty stream.");
         }
+        settled = true;
+        await recordAiOperation(options, { provider, status: "success", latencyMs: Date.now() - startedAt, outputChars });
         controller.close();
       } catch (error) {
         if (cancelled) return;
+        settled = true;
+        await recordAiOperation(options, { provider, status: "failed", latencyMs: Date.now() - startedAt, outputChars, error });
         await notifyStreamFailure(options.onStreamFailure, error);
         controller.error(new Error("AI response stream failed."));
       }
@@ -538,6 +607,16 @@ export async function generateAiStream(
       cancelled = true;
       activeAzureStream?.abort();
       geminiAbortController.abort();
+      if (!settled) {
+        settled = true;
+        void recordAiOperation(options, {
+          provider,
+          status: "failed",
+          latencyMs: Date.now() - startedAt,
+          outputChars,
+          error: new DOMException("The client cancelled the AI stream.", "AbortError"),
+        });
+      }
     },
   });
 }

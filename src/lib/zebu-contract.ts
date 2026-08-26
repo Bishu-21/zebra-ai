@@ -7,8 +7,6 @@ export const ZEBU_ROUTES = [
 
 export const zebuToolSchema = z.enum(["resume_analysis", "role_match"]);
 export const zebuEntitySchema = z.enum(["resume", "application", "work"]);
-export const zebuWorkCategorySchema = z.enum(["Project", "Internship", "Hackathon", "Course", "Award", "Other"]);
-export const zebuApplicationStatusSchema = z.enum(["Draft", "Preparing", "Ready", "Applied", "Interviewing", "Offer", "Rejected", "Withdrawn"]);
 
 export const zebuActionSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("none") }),
@@ -22,9 +20,6 @@ export const zebuActionSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("open_application"), query: z.string().trim().min(1).max(200) }),
   z.object({ type: z.literal("deadline_check") }),
   z.object({ type: z.literal("suggest_next") }),
-  z.object({ type: z.literal("create_application"), company: z.string().trim().min(1).max(160), position: z.string().trim().min(1).max(160) }),
-  z.object({ type: z.literal("create_work"), title: z.string().trim().min(1).max(200), category: zebuWorkCategorySchema, description: z.string().trim().max(2_000) }),
-  z.object({ type: z.literal("update_application_status"), applicationId: z.string().trim().min(1).max(160), status: zebuApplicationStatusSchema }),
 ]);
 
 export const zebuDisplayCardSchema = z.object({

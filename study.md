@@ -36,7 +36,7 @@ Research indicates a massive gap between academic output and industry readiness 
 To bridge the Tier-3 gap, a tool must move from **Document Generation** to **Metadata Strategic Auditing**.
 
 ### Strategic Principles
-1. **Surgical Precision**: Focus on technical metadata that proves work (GitHub, specific projects) rather than generic adjectives.
+1. **Source precision**: Focus on concrete project details and candidate-provided links rather than generic adjectives.
 2. **Integrity-First AI**: Use "Transparency Logs" (Zebra's unique feature) to ensure information is reflected, not replaced.
 3. **The XaaS Outcome**: The goal is not a "pretty file," but an **ATS-Optimized Match Protocol** that secures the interview.
 

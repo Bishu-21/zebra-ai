@@ -129,7 +129,8 @@ export async function PATCH(req: NextRequest) {
         if (userEdits !== undefined) updateData.userEdits = userEdits;
 
         let updated: TestApplicationChange;
-        if (process.env.NODE_ENV !== "production" && process.env.TEST_AUTH_USER_ID) {
+        const useTestStore = process.env.NODE_ENV !== "production" && Boolean(process.env.TEST_AUTH_USER_ID);
+        if (useTestStore) {
             const existingChange = testStore.applicationChanges.get(id);
             if (!existingChange || existingChange.userId !== authCtx.user.id) {
                 return notFoundResponse("Change suggestion");
@@ -137,19 +138,109 @@ export async function PATCH(req: NextRequest) {
             updated = { ...existingChange, ...updateData };
             testStore.applicationChanges.set(id, updated);
         } else {
-            const [dbUpdated] = await db.update(applicationChangesTable)
-                .set(updateData)
-                .where(and(eq(applicationChangesTable.id, id), eq(applicationChangesTable.userId, authCtx.user.id)))
-                .returning();
+            const transactionResult = await db.transaction(async (tx) => {
+                const [existingChange] = await tx.select()
+                    .from(applicationChangesTable)
+                    .where(and(
+                        eq(applicationChangesTable.id, id),
+                        eq(applicationChangesTable.userId, authCtx.user.id),
+                    ))
+                    .limit(1);
+                if (!existingChange) return null;
 
-            if (!dbUpdated) {
-                return notFoundResponse("Change suggestion");
-            }
-            updated = dbUpdated as TestApplicationChange;
+                const [app] = await tx.select()
+                    .from(applicationsTable)
+                    .where(and(
+                        eq(applicationsTable.id, existingChange.applicationId),
+                        eq(applicationsTable.userId, authCtx.user.id),
+                    ))
+                    .for("update")
+                    .limit(1);
+                if (!app) return null;
+
+                const [dbUpdated] = await tx.update(applicationChangesTable)
+                    .set(updateData)
+                    .where(and(
+                        eq(applicationChangesTable.id, id),
+                        eq(applicationChangesTable.userId, authCtx.user.id),
+                    ))
+                    .returning();
+                if (!dbUpdated) return null;
+
+                const shouldCompile = status === "approved" || status === "pending" || status === "rejected" || userEdits !== undefined;
+                if (shouldCompile && app.selectedResumeId) {
+                    const approvedChanges = await tx.select()
+                        .from(applicationChangesTable)
+                        .where(and(
+                            eq(applicationChangesTable.applicationId, app.id),
+                            eq(applicationChangesTable.userId, authCtx.user.id),
+                            eq(applicationChangesTable.status, "approved"),
+                        ));
+                    const [baseResume] = await tx.select({ content: resumesTable.content })
+                        .from(resumesTable)
+                        .where(and(
+                            eq(resumesTable.id, app.selectedResumeId),
+                            eq(resumesTable.userId, authCtx.user.id),
+                        ))
+                        .limit(1);
+                    if (!baseResume) throw new Error("Selected resume no longer exists");
+
+                    const compiledContent = compileTailoredResumeContent(baseResume.content || "", approvedChanges);
+                    const now = new Date();
+                    const versionTitle = `${app.company} Tailored Version (${now.toLocaleDateString()})`;
+                    const changeNotes = approvedChanges
+                        .map(change => `${change.section}: ${change.userEdits || change.suggestedText}`)
+                        .join("\n");
+
+                    if (app.resumeVersionId) {
+                        const [version] = await tx.update(resumeVersionsTable)
+                            .set({
+                                title: versionTitle,
+                                company: app.company,
+                                targetRole: app.position,
+                                content: compiledContent,
+                                feedback: { approvedChanges: approvedChanges.length, notes: changeNotes },
+                                updatedAt: now,
+                            })
+                            .where(and(
+                                eq(resumeVersionsTable.id, app.resumeVersionId),
+                                eq(resumeVersionsTable.userId, authCtx.user.id),
+                            ))
+                            .returning({ id: resumeVersionsTable.id });
+                        if (!version) throw new Error("Linked resume version no longer exists");
+                    } else if (approvedChanges.length > 0) {
+                        const versionId = crypto.randomUUID();
+                        await tx.insert(resumeVersionsTable).values({
+                            id: versionId,
+                            userId: authCtx.user.id,
+                            resumeId: app.selectedResumeId,
+                            title: versionTitle,
+                            company: app.company,
+                            targetRole: app.position,
+                            jobDescription: app.jobDescription || undefined,
+                            content: compiledContent,
+                            feedback: { approvedChanges: approvedChanges.length, notes: changeNotes },
+                            createdAt: now,
+                            updatedAt: now,
+                        });
+                        await tx.update(applicationsTable)
+                            .set({ resumeVersionId: versionId, status: "Preparing", updatedAt: now })
+                            .where(and(
+                                eq(applicationsTable.id, app.id),
+                                eq(applicationsTable.userId, authCtx.user.id),
+                            ));
+                    }
+                }
+
+                return dbUpdated;
+            });
+
+            if (!transactionResult) return notFoundResponse("Change suggestion");
+            updated = transactionResult as TestApplicationChange;
         }
 
         // AUTO-COMPILE TAILORED RESUME VERSION UPON APPROVAL OR UNDO
-        if (status === "approved" || status === "pending" || userEdits !== undefined) {
+        if (useTestStore && (status === "approved" || status === "pending" || status === "rejected" || userEdits !== undefined)) {
             let app: TestApplication | undefined;
             if (process.env.NODE_ENV !== "production" && process.env.TEST_AUTH_USER_ID) {
                 app = testStore.applications.get(updated.applicationId);

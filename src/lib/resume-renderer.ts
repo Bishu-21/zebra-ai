@@ -28,7 +28,7 @@ interface Skill {
     items?: string;
 }
 
-interface ResumeData {
+export interface ResumeRenderData {
     basics?: {
         name?: string;
         phone?: string;
@@ -54,12 +54,19 @@ function escapeHtml(str: string): string {
         .replace(/'/g, "&#039;");
 }
 
-function ensureAbsoluteUrl(url: string): string {
-    if (!url) return "";
-    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('mailto:')) {
-        return url;
+function safeExternalUrl(rawUrl: string, allowMailto = false): string {
+    const value = rawUrl.trim();
+    if (!value) return "";
+    const candidate = /^[a-z][a-z\d+.-]*:/i.test(value) ? value : `https://${value}`;
+    try {
+        const parsed = new URL(candidate);
+        if (parsed.protocol === "https:" || parsed.protocol === "http:" || (allowMailto && parsed.protocol === "mailto:")) {
+            return escapeHtml(parsed.href);
+        }
+    } catch {
+        // Invalid links are rendered as text, never as navigable attributes.
     }
-    return `https://${url}`;
+    return "";
 }
 
 function cleanDisplayUrl(url: string): string {
@@ -77,7 +84,7 @@ function formatMarkdown(text: string): string {
 }
 
 export function generateResumeHtml(
-    data: ResumeData, 
+    data: ResumeRenderData,
     template: string = "modern", 
     fontFamily?: string,
     documentTitle?: string
@@ -94,25 +101,27 @@ export function generateResumeHtml(
     const name = basics?.name?.trim() || "Resume";
     const title = documentTitle || `${name} - Resume`;
 
-    const fontConfig = {
-        name: fontFamily || (template === "minimal" ? "Inter" : "Latin Modern Roman"),
-        url: (fontFamily === "Latin Modern Roman" || (!fontFamily && template !== "minimal")) 
-            ? "https://cdn.jsdelivr.net/npm/@fontsource/latin-modern-roman@5.0.11/index.css"
-            : `https://fonts.googleapis.com/css2?family=${(fontFamily || (template === "minimal" ? "Inter" : "STIX+Two+Text")).replace(/\s+/g, '+')}:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap`
-    };
+    const allowedFonts = new Set(["Inter", "Latin Modern Roman", "STIX Two Text", "Times New Roman", "Georgia"]);
+    const requestedFont = fontFamily || (template === "minimal" ? "Inter" : "Latin Modern Roman");
+    const fontName = allowedFonts.has(requestedFont) ? requestedFont : "Georgia";
 
     // Header Meta Rows (clean LaTeX format with dot separators)
     const contactRow1 = [];
     if (basics?.location) contactRow1.push(`<span>${escapeHtml(basics.location)}</span>`);
     if (basics?.phone) contactRow1.push(`<span>${escapeHtml(basics.phone)}</span>`);
-    if (basics?.email) contactRow1.push(`<a href="mailto:${escapeHtml(basics.email)}">${escapeHtml(basics.email)}</a>`);
+    if (basics?.email) {
+        const emailHref = safeExternalUrl(`mailto:${basics.email}`, true);
+        contactRow1.push(emailHref ? `<a href="${emailHref}">${escapeHtml(basics.email)}</a>` : `<span>${escapeHtml(basics.email)}</span>`);
+    }
 
     const contactRow2 = [];
     if (basics?.linkedin) {
-        contactRow2.push(`<a href="${ensureAbsoluteUrl(basics.linkedin)}" target="_blank" rel="noopener noreferrer">${escapeHtml(cleanDisplayUrl(basics.linkedin))}</a>`);
+        const href = safeExternalUrl(basics.linkedin);
+        contactRow2.push(href ? `<a href="${href}" target="_blank" rel="noopener noreferrer">${escapeHtml(cleanDisplayUrl(basics.linkedin))}</a>` : `<span>${escapeHtml(cleanDisplayUrl(basics.linkedin))}</span>`);
     }
     if (basics?.portfolio) {
-        contactRow2.push(`<a href="${ensureAbsoluteUrl(basics.portfolio)}" target="_blank" rel="noopener noreferrer">${escapeHtml(cleanDisplayUrl(basics.portfolio))}</a>`);
+        const href = safeExternalUrl(basics.portfolio);
+        contactRow2.push(href ? `<a href="${href}" target="_blank" rel="noopener noreferrer">${escapeHtml(cleanDisplayUrl(basics.portfolio))}</a>` : `<span>${escapeHtml(cleanDisplayUrl(basics.portfolio))}</span>`);
     }
 
     // 1. Education HTML
@@ -153,7 +162,8 @@ export function generateResumeHtml(
 
     // 3. Projects HTML
     const projectsHtml = projects.map((proj: Project) => {
-        const hasLinks = !!proj.link;
+        const projectHref = safeExternalUrl(proj.link || "");
+        const hasLinks = Boolean(projectHref);
         return `
         <div class="entry">
             <div class="entry-row">
@@ -163,7 +173,7 @@ export function generateResumeHtml(
                 </div>
                 ${hasLinks ? `
                     <div class="right">
-                        <a href="${ensureAbsoluteUrl(proj.link!)}" target="_blank" rel="noopener noreferrer" class="italic-link">GitHub — Live Demo</a>
+                        <a href="${projectHref}" target="_blank" rel="noopener noreferrer" class="italic-link">Project link</a>
                     </div>
                 ` : ""}
             </div>
@@ -214,7 +224,6 @@ export function generateResumeHtml(
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${escapeHtml(title)}</title>
-    <link rel="stylesheet" href="${fontConfig.url}">
     <style>
         @page { 
             size: A4; 
@@ -226,7 +235,7 @@ export function generateResumeHtml(
             box-sizing: border-box; 
         }
         body {
-            font-family: '${fontConfig.name}', 'Latin Modern Roman', 'STIX Two Text', 'Times New Roman', Georgia, serif;
+            font-family: '${fontName}', 'Times New Roman', Georgia, serif;
             font-size: 10pt;
             line-height: 1.35;
             color: #111111;

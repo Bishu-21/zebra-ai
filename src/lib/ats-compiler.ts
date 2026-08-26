@@ -58,7 +58,7 @@ export function compileAtsDocument(
 
     if (!isAtsOptimized) {
         html += `  <div style="background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; padding: 8px 12px; border-radius: 6px; font-size: 11px; font-weight: bold; margin-bottom: 20px; text-align: center;">\n`;
-        html += `    ✨ Visually Rich Template — Best for direct email sharing & recruiter networking. For application portals (Greenhouse/Workday), use ATS Portal Optimized mode.\n`;
+        html += `    Visually rich layout — intended for direct sharing. Use the simpler single-column layout when a plain document is preferred.\n`;
         html += `  </div>\n`;
     }
 
@@ -89,7 +89,8 @@ export function compileAtsDocument(
         const summaryHeading = "SUMMARY";
         html += `  <div style="margin-bottom: 24px;">\n`;
         html += `    <h2 style="font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; margin-bottom: 8px; color: ${isAtsOptimized ? "#111827" : "#047857"};">${summaryHeading}</h2>\n`;
-        const summaryText = `Targeted ${targetRole} with verified evidence across ${matchedSkills.slice(0, 5).join(", ")}. Proven track record delivering measurable results in real projects.`;
+        const listedSkills = matchedSkills.slice(0, 5).join(", ");
+        const summaryText = `Candidate profile for ${targetRole}${listedSkills ? ` highlighting listed experience with ${listedSkills}` : " based on the experience and projects below"}.`;
         html += `    <p style="font-size: 13px; margin: 0; color: #374151;">${escapeHtml(summaryText)}</p>\n`;
         html += `  </div>\n`;
 
@@ -175,7 +176,7 @@ export function compileAtsDocument(
         evidenceLineage: lineage,
         atsSafetyScore: isAtsOptimized ? 100 : 75,
         parseSafetyStatus: isAtsOptimized ? "PASS" : "PASS",
-        badgeText: isAtsOptimized ? "ATS Portal Optimized (Greenhouse/Workday)" : "Visually Rich (Direct Recruiter Sharing)",
+        badgeText: isAtsOptimized ? "Simple single-column layout" : "Visually rich direct-sharing layout",
     };
 }
 

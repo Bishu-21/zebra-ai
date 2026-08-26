@@ -2,7 +2,8 @@ import React, { Suspense } from "react";
 import { getSafeSession } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { resumes as resumesTable, coverLetters as coverLettersTable } from "@/lib/schema";
-import { eq, desc } from "drizzle-orm";
+import { and, eq, desc, lt, or } from "drizzle-orm";
+import Link from "next/link";
 import { GenerateCoverLetter } from "@/components/dashboard/GenerateCoverLetter";
 import {
     RiMagicLine,
@@ -11,6 +12,7 @@ import {
 } from "react-icons/ri";
 import { CoverLetterActions } from "@/components/dashboard/CoverLetterActions";
 import { DashboardPage, DashboardPageHeader } from "@/components/dashboard/DashboardPage";
+import { decodeCursor, paginateRows } from "@/lib/pagination";
 
 function formatTimeAgo(date: Date) {
   const now = new Date();
@@ -40,31 +42,42 @@ function CoverLettersLoadingState() {
   );
 }
 
-export default async function CoverLettersPage() {
+export default async function CoverLettersPage({ searchParams }: { searchParams: Promise<{ cursor?: string }> }) {
   const session = await getSafeSession();
 
   if (!session) return null;
 
   return (
     <Suspense fallback={<CoverLettersLoadingState />}>
-      <CoverLettersContent userId={session.user.id} />
+      <CoverLettersContent userId={session.user.id} cursor={(await searchParams).cursor} />
     </Suspense>
   );
 }
 
-async function CoverLettersContent({ userId }: { userId: string }) {
-  const [userResumes, letters] = await Promise.all([
+async function CoverLettersContent({ userId, cursor: rawCursor }: { userId: string; cursor?: string }) {
+  const cursor = decodeCursor(rawCursor);
+  const [userResumes, letterRows] = await Promise.all([
     db.query.resumes.findMany({
       columns: { id: true, title: true },
       where: eq(resumesTable.userId, userId),
       orderBy: [desc(resumesTable.updatedAt)],
+      limit: 50,
     }),
     db.query.coverLetters.findMany({
       columns: { id: true, title: true, content: true, createdAt: true },
-      where: eq(coverLettersTable.userId, userId),
-      orderBy: [desc(coverLettersTable.createdAt)],
+      where: and(
+        eq(coverLettersTable.userId, userId),
+        cursor ? or(
+          lt(coverLettersTable.createdAt, cursor.timestamp),
+          and(eq(coverLettersTable.createdAt, cursor.timestamp), lt(coverLettersTable.id, cursor.id)),
+        ) : undefined,
+      ),
+      orderBy: [desc(coverLettersTable.createdAt), desc(coverLettersTable.id)],
+      limit: 25,
     }),
   ]);
+  const letterPage = paginateRows(letterRows, 24, letter => ({ id: letter.id, timestamp: letter.createdAt }));
+  const letters = letterPage.items;
 
   return (
     <DashboardPage>
@@ -86,7 +99,8 @@ async function CoverLettersContent({ userId }: { userId: string }) {
           <GenerateCoverLetter resumes={userResumes} />
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
           {letters.map((letter) => (
             <div
                 key={letter.id}
@@ -120,6 +134,12 @@ async function CoverLettersContent({ userId }: { userId: string }) {
                 }} />
             </div>
           ))}
+          </div>
+          {letterPage.page.nextCursor && (
+            <Link href={`/dashboard/cover-letters?cursor=${encodeURIComponent(letterPage.page.nextCursor)}`} className="inline-flex rounded-xl border border-neutral-200 bg-white px-4 py-2 text-xs font-bold text-neutral-700 hover:bg-neutral-50">
+              View older cover letters
+            </Link>
+          )}
         </div>
       )}
     </DashboardPage>

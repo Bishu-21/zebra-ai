@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateResumeHtml } from "@/lib/resume-renderer";
 import { handleApiError } from "@/lib/api-error";
-import puppeteer, { type Browser } from "puppeteer-core";
 import { requireAuth } from "@/lib/auth-policy";
-import { getPdfBrowserConfig } from "@/lib/pdf-browser";
+import { renderPdfBuffer } from "@/lib/pdf-browser";
 import { db } from "@/lib/db";
 import { resumes as resumesTable, resumeVersions as resumeVersionsTable } from "@/lib/schema";
 import { eq, and } from "drizzle-orm";
+import { normalizeResumeContent } from "@/lib/resume-content";
+import type { ResumeRenderData } from "@/lib/resume-renderer";
+
+const MAX_PDF_PAYLOAD_BYTES = 256 * 1024;
 
 /**
  * PREMIUM PDF EXPORT API
@@ -15,53 +18,24 @@ import { eq, and } from "drizzle-orm";
  * Supports both POST (direct data from editor) and GET (download by ID from vault).
  */
 
-async function renderPdfBuffer(html: string): Promise<Uint8Array> {
-    let browser: Browser | null = null;
-    try {
-        const launchConfig = await getPdfBrowserConfig();
-
-        browser = await puppeteer.launch({
-            args: launchConfig.args,
-            defaultViewport: launchConfig.defaultViewport,
-            executablePath: launchConfig.executablePath,
-            headless: launchConfig.headless,
-        });
-
-        const page = await browser.newPage();
-
-        page.on('error', (err: unknown) => console.error('PDF page error:', err));
-        page.on('pageerror', (err: unknown) => console.error('PDF page crash:', err));
-
-        await page.setContent(html, { waitUntil: "domcontentloaded" });
-        await page.waitForNetworkIdle({ idleTime: 500, timeout: 10_000 });
-        await page.evaluate(() => document.fonts.ready);
-
-        const pdfBuffer = await page.pdf({
-            format: 'A4',
-            printBackground: true,
-            margin: { top: '0', right: '0', bottom: '0', left: '0' },
-            scale: 1,
-            preferCSSPageSize: true
-        });
-
-        return pdfBuffer;
-    } finally {
-        if (browser) {
-            try {
-                await browser.close();
-            } catch (e) {
-                console.error("Error closing browser in PDF export:", e);
-            }
-        }
-    }
-}
-
 export async function POST(req: NextRequest) {
     try {
         const { errorResponse } = await requireAuth();
         if (errorResponse) return errorResponse;
 
-        const { resumeData, template = "modern", title, fontFamily } = await req.json();
+        const contentLength = Number(req.headers.get("content-length") || 0);
+        if (contentLength > MAX_PDF_PAYLOAD_BYTES) {
+            return NextResponse.json({ error: "PDF payload is too large" }, { status: 413 });
+        }
+        const payload: unknown = await req.json();
+        if (!payload || typeof payload !== "object" || JSON.stringify(payload).length > MAX_PDF_PAYLOAD_BYTES) {
+            return NextResponse.json({ error: "Invalid or oversized PDF payload" }, { status: 400 });
+        }
+        const body = payload as Record<string, unknown>;
+        const resumeData = normalizeResumeContent(body.resumeData);
+        const template = ["modern", "professional", "minimal", "executive"].includes(String(body.template)) ? String(body.template) : "modern";
+        const title = typeof body.title === "string" ? body.title.slice(0, 200) : undefined;
+        const fontFamily = typeof body.fontFamily === "string" ? body.fontFamily : undefined;
         
         const candidateName = resumeData?.basics?.name || "";
         const docTitle = title || (candidateName ? `${candidateName} - Resume` : "Resume");
@@ -99,7 +73,7 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: "Missing resume id" }, { status: 400 });
         }
 
-        let resumeContent: any = null;
+        let resumeContent: ResumeRenderData;
         let resumeTitle = "Resume";
 
         if (isVersion) {
@@ -107,14 +81,14 @@ export async function GET(req: NextRequest) {
                 where: and(eq(resumeVersionsTable.id, resumeId), eq(resumeVersionsTable.userId, authCtx.user.id))
             });
             if (!version) return NextResponse.json({ error: "Version not found" }, { status: 404 });
-            resumeContent = typeof version.content === "string" ? JSON.parse(version.content) : version.content;
+            resumeContent = normalizeResumeContent(typeof version.content === "string" ? JSON.parse(version.content) : version.content);
             resumeTitle = version.title;
         } else {
             const resume = await db.query.resumes.findFirst({
                 where: and(eq(resumesTable.id, resumeId), eq(resumesTable.userId, authCtx.user.id))
             });
             if (!resume) return NextResponse.json({ error: "Resume not found" }, { status: 404 });
-            resumeContent = typeof resume.content === "string" ? JSON.parse(resume.content) : resume.content;
+            resumeContent = normalizeResumeContent(typeof resume.content === "string" ? JSON.parse(resume.content) : resume.content);
             resumeTitle = resume.title;
         }
 

@@ -51,6 +51,7 @@ CURRENT RESUME CONTEXT: ${serializedContext}
 
         const response = await generateAiResponse({
             task: "chat",
+            telemetry: { userId: authCtx.user.id },
             prompt: message.trim(),
             systemPrompt,
             history,

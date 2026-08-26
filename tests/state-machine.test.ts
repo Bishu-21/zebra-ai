@@ -150,7 +150,7 @@ describe("Application State Machine Test Suite [Unit Test]", () => {
 
     test("9. JobBoard BOARD_STATUSES includes all required canonical statuses without collapsing", () => {
         const requiredStatuses = [
-            "Draft", "Preparing", "Tailoring", "Applied",
+            "Draft", "Preparing", "Ready", "Applied",
             "Interviewing", "Offer", "Rejected", "Withdrawn"
         ];
 

@@ -20,11 +20,9 @@ export const GET = async (req: Request) => {
 
 export const POST = async (req: Request) => {
     try {
-        return await executeWithDbRetry(
-            () => handler.POST(req),
-            3,
-            200
-        );
+        // Auth POSTs are non-idempotent and request bodies are single-use. Retrying the
+        // entire handler can duplicate side effects or replay a consumed stream.
+        return await handler.POST(req);
     } catch (error) {
         const sanitizedMsg = sanitizeSecretText(error instanceof Error ? error.message : String(error));
         console.error("Auth POST Error:", sanitizedMsg);

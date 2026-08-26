@@ -12,6 +12,7 @@ import {
     RiFileTextLine
 } from "react-icons/ri";
 import Link from "next/link";
+import { useHydrated } from "@/hooks/useHydrated";
 
 interface Version {
     id: string;
@@ -29,11 +30,7 @@ interface ResumeVersionsModalProps {
 }
 
 export function ResumeVersionsModal({ isOpen, onCloseAction, parentTitle, versions }: ResumeVersionsModalProps) {
-    const [isMounted, setIsMounted] = React.useState(false);
-
-    React.useEffect(() => {
-        setIsMounted(true);
-    }, []);
+    const isMounted = useHydrated();
 
     function formatTimeAgo(date: Date) {
         if (!isMounted) return "---";

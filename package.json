@@ -5,14 +5,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "azure:smoke": "tsx scripts/test-azure-foundry.ts",
     "azure:audit-smoke": "tsx scripts/test-azure-audit.ts",
     "resumes:legacy-audit": "tsx scripts/audit-legacy-resumes.ts",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test tests/**/*.test.ts",
+    "test": "NODE_ENV=test tsx --test tests/**/*.test.ts",
     "db:migrate": "drizzle-kit migrate",
     "db:health": "tsx scripts/db-health.ts",
     "db:prepare": "npm run db:migrate && npm run db:health",
@@ -71,11 +71,6 @@
     "protobufjs": "^8.0.2",
     "sharp": "0.35.3"
   },
-  "browserslist": [
-    "last 2 versions",
-    "not dead",
-    "not ie 11"
-  ],
   "allowScripts": {
     "esbuild@0.28.1": true,
     "fsevents@2.3.3": true,

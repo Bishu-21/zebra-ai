@@ -96,7 +96,7 @@ export function useZebuLive(options: { currentPage: string; currentContext?: str
   const timeoutRef = useRef<number | null>(null);
   const turnTimeoutRef = useRef<number | null>(null);
   const optionsRef = useRef(options);
-  optionsRef.current = options;
+  useEffect(() => { optionsRef.current = options; }, [options]);
 
   const [state, setState] = useState<ZebuLiveState>("idle");
   const [audioLevel, setAudioLevel] = useState(0);

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { resumes } from "@/lib/schema";
 import { eq, and } from "drizzle-orm";
+import { toPublicResumeContent } from "@/lib/resume-content";
 
 /**
  * PUBLIC SHARE DATA API
@@ -34,7 +35,12 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: "Resume not found or private" }, { status: 404 });
         }
 
-        return NextResponse.json(data);
+        let storedContent: unknown = {};
+        try { storedContent = JSON.parse(data.content || "{}"); } catch { storedContent = {}; }
+        return NextResponse.json({
+            title: data.title,
+            content: JSON.stringify(toPublicResumeContent(storedContent)),
+        });
 
     } catch (error: unknown) {
         return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 500 });
