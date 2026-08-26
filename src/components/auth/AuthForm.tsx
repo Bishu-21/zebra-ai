@@ -87,13 +87,15 @@ export function AuthForm({
     setIsLoading(true);
     setError(null);
     try {
-      await signIn.social({
+      const { error } = await signIn.social({
         provider,
         callbackURL: resolvedCallbackURL,
       });
+      if (error) throw new Error(error.message || "Social sign-in failed");
     } catch (err) {
       const authErr = err as Error;
       setError(authErr.message || "Social sign-in failed");
+    } finally {
       setIsLoading(false);
     }
   };

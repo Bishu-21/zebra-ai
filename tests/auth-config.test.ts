@@ -93,6 +93,10 @@ describe("Better Auth Environment & Origin Configuration [Unit Test]", () => {
             assert.strictEqual(auth.options.session?.expiresIn, 60 * 60 * 24 * 7);
             assert.strictEqual(auth.options.session?.updateAge, 60 * 60 * 24);
         });
+
+        test("3.3 OAuth state does not require a database write before redirect", () => {
+            assert.strictEqual(auth.options.account?.storeStateStrategy, "cookie");
+        });
     });
 
 });
