@@ -91,13 +91,11 @@ export const RESUME_AUDIT_RUBRIC: readonly ResumeAuditCriterion[] = [
 
 export const RESUME_AUDIT_TOTAL_WEIGHT = RESUME_AUDIT_RUBRIC.reduce((total, criterion) => total + criterion.weight, 0);
 
-const auditItemJsonSchema = {
+const auditEvaluationJsonSchema = {
     type: "object",
     additionalProperties: false,
-    required: ["id", "checkpoint", "status", "fix", "evidence"],
+    required: ["status", "fix", "evidence"],
     properties: {
-        id: { type: "string" },
-        checkpoint: { type: "string" },
         status: { type: "string", enum: [...RESUME_AUDIT_STATUSES] },
         fix: { type: "string" },
         evidence: { type: "string" },
@@ -116,7 +114,11 @@ const rewriteJsonSchema = {
     },
 } as const;
 
-/** Strict Responses API format that preserves the historical Zebra result contract. */
+/**
+ * Provider-facing schema. Criteria are object keys so structured output cannot
+ * duplicate an ID, omit one while preserving an array length, or put it in the
+ * wrong category. The route converts this back to the UI's historical arrays.
+ */
 export const RESUME_AUDIT_RESPONSE_FORMAT = {
     type: "json_schema" as const,
     name: "zebra_resume_audit",
@@ -145,12 +147,12 @@ export const RESUME_AUDIT_RESPONSE_FORMAT = {
                 additionalProperties: false,
                 required: [...RESUME_AUDIT_CATEGORIES],
                 properties: Object.fromEntries(RESUME_AUDIT_CATEGORIES.map((category) => {
-                    const count = RESUME_AUDIT_RUBRIC.filter((item) => item.category === category).length;
+                    const criteria = RESUME_AUDIT_RUBRIC.filter((item) => item.category === category);
                     return [category, {
-                        type: "array",
-                        minItems: count,
-                        maxItems: count,
-                        items: auditItemJsonSchema,
+                        type: "object",
+                        additionalProperties: false,
+                        required: criteria.map((item) => item.id),
+                        properties: Object.fromEntries(criteria.map((item) => [item.id, auditEvaluationJsonSchema])),
                     }];
                 })),
             },
@@ -172,6 +174,38 @@ export const RESUME_AUDIT_RESPONSE_FORMAT = {
         },
     },
 };
+
+/** Convert the provider's ID-keyed audit into the canonical UI/storage shape. */
+export function canonicalizeResumeAuditProviderResponse(value: unknown): unknown {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return value;
+
+    const response = value as Record<string, unknown>;
+    if (!response.audit || typeof response.audit !== "object" || Array.isArray(response.audit)) return value;
+
+    const providerAudit = response.audit as Record<string, unknown>;
+    const audit = Object.fromEntries(RESUME_AUDIT_CATEGORIES.map((category) => {
+        const categoryValue = providerAudit[category];
+        // Accept the former array contract during rolling deployments and in
+        // persisted fixtures; only new provider responses use keyed objects.
+        if (Array.isArray(categoryValue)) return [category, categoryValue];
+
+        const evaluations = categoryValue && typeof categoryValue === "object"
+            ? categoryValue as Record<string, unknown>
+            : {};
+        const items = RESUME_AUDIT_RUBRIC
+            .filter((criterion) => criterion.category === category)
+            .map((criterion) => {
+                const rawEvaluation = evaluations[criterion.id];
+                const evaluation = rawEvaluation && typeof rawEvaluation === "object" && !Array.isArray(rawEvaluation)
+                    ? rawEvaluation as Record<string, unknown>
+                    : {};
+                return { ...evaluation, id: criterion.id, checkpoint: criterion.checkpoint };
+            });
+        return [category, items];
+    }));
+
+    return { ...response, audit };
+}
 
 export function formatResumeAuditRubricForPrompt(): string {
     return RESUME_AUDIT_RUBRIC.map((criterion) =>

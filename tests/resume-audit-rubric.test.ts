@@ -2,6 +2,7 @@ import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 import {
     calculateResumeAuditScores,
+    canonicalizeResumeAuditProviderResponse,
     inferResumeAuditContext,
     normalizeResumeQualityAuditItems,
     RESUME_AUDIT_CATEGORIES,
@@ -55,6 +56,29 @@ describe("45-check resume audit rubric", () => {
             ["score", "summary", "metrics", "audit", "recruiterInsights", "suggestedBulletPoints"],
         );
         assert.equal(RESUME_AUDIT_RESPONSE_FORMAT.schema.properties.suggestedBulletPoints.maxItems, 6);
+        const documentSchema = RESUME_AUDIT_RESPONSE_FORMAT.schema.properties.audit.properties.document;
+        assert.equal(documentSchema.type, "object");
+        assert.deepEqual(documentSchema.required, RESUME_AUDIT_RUBRIC
+            .filter((item) => item.category === "document")
+            .map((item) => item.id));
+    });
+
+    test("canonicalizes provider evaluations without trusting repeated IDs or checkpoint text", () => {
+        const keyedAudit = Object.fromEntries(RESUME_AUDIT_CATEGORIES.map((category) => [
+            category,
+            Object.fromEntries(RESUME_AUDIT_RUBRIC
+                .filter((criterion) => criterion.category === category)
+                .map((criterion) => [criterion.id, { status: "Pass", fix: "", evidence: "source" }])),
+        ]));
+        const canonical = canonicalizeResumeAuditProviderResponse({ audit: keyedAudit }) as {
+            audit: Record<string, Array<{ id: string; checkpoint: string; status: string }>>;
+        };
+        const items = Object.values(canonical.audit).flat();
+
+        assert.equal(items.length, 45);
+        assert.deepEqual(items.map((item) => item.id), RESUME_AUDIT_RUBRIC.map((item) => item.id));
+        assert.deepEqual(items.map((item) => item.checkpoint), RESUME_AUDIT_RUBRIC.map((item) => item.checkpoint));
+        assert.ok(items.every((item) => item.status === "Pass"));
     });
 
     test("normalizes unavailable JD, rendering, and external evidence before scoring", () => {

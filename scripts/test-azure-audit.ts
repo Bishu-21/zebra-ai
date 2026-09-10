@@ -4,6 +4,7 @@ import { extractJsonObject } from "../src/lib/resume-ingestion";
 import { aiResumeAnalysisSchema } from "../src/lib/validation";
 import {
     calculateResumeAuditScores,
+    canonicalizeResumeAuditProviderResponse,
     formatResumeAuditRubricForPrompt,
     normalizeResumeQualityAuditItems,
     RESUME_AUDIT_RESPONSE_FORMAT,
@@ -27,7 +28,7 @@ Skills: TypeScript, Next.js, PostgreSQL, Azure AI Foundry
 
 const prompt = `Audit the resume evidence below against all 45 rubric checks and return one JSON object.
 
-Return each ID exactly once in its declared category. Applicable text checks may be Pass, Partial, or Fail. Target-dependent checks are Not Applicable because no target was supplied. Rendered and external checks are Not Assessed. Never invent evidence.
+Return each ID exactly once as an object key in its declared category. Each value contains status, fix, and evidence. Applicable text checks may be Pass, Partial, or Fail. Target-dependent checks are Not Applicable because no target was supplied. Rendered and external checks are Not Assessed. Never invent evidence.
 
 RUBRIC:
 ${formatResumeAuditRubricForPrompt()}
@@ -37,7 +38,7 @@ Return exactly this shape:
   "score": 0,
   "summary": "evidence-based overview",
   "metrics": { "impact": 0, "formatting": 0, "ats": 0, "branding": 0 },
-  "audit": { "document": [{ "id": "DOC-01", "checkpoint": "exact rubric text", "status": "Pass|Partial|Fail|Not Applicable|Not Assessed", "fix": "...", "evidence": "..." }], "contact": [], "targeting": [], "experience": [], "projects": [], "skillsEducation": [], "writing": [] },
+  "audit": { "document": { "DOC-01": { "status": "Pass|Partial|Fail|Not Applicable|Not Assessed", "fix": "...", "evidence": "..." } }, "contact": {}, "targeting": {}, "experience": {}, "projects": {}, "skillsEducation": {}, "writing": {} },
   "recruiterInsights": { "sevenSecondScan": "...", "soWhatTest": "...", "readability": "..." },
   "suggestedBulletPoints": [{ "original": "exact source text", "problem": "...", "after": "evidence-safe rewrite", "rationale": "..." }]
 }
@@ -53,7 +54,9 @@ async function main() {
         prompt,
         responseFormat: RESUME_AUDIT_RESPONSE_FORMAT,
     });
-    const analysis = aiResumeAnalysisSchema.parse(extractJsonObject(response));
+    const analysis = aiResumeAnalysisSchema.parse(
+        canonicalizeResumeAuditProviderResponse(extractJsonObject(response)),
+    );
     const items = Object.values(analysis.audit).flat();
     const ids = new Set(items.map((item) => item.id));
     if (items.length !== RESUME_AUDIT_RUBRIC.length || ids.size !== RESUME_AUDIT_RUBRIC.length) {

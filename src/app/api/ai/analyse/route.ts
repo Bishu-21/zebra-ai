@@ -17,6 +17,7 @@ import {
 } from "@/lib/resume-content";
 import {
     calculateResumeAuditScores,
+    canonicalizeResumeAuditProviderResponse,
     formatResumeAuditRubricForPrompt,
     inferResumeAuditContext,
     normalizeResumeQualityAuditItems,
@@ -100,7 +101,7 @@ Evidence rules:
 - Explain failures with evidence-specific fixes. Do not use generic filler.
 - Apply the product policy in the rubric: prefer a one-page, minimal resume; omit a professional summary unless it adds essential senior-level or career-transition evidence; prioritize detailed projects, adjacent tech stacks, and live links.
 - Project and experience content must use direct bullets, not "Topic: explanation" prose.
-- Return each rubric ID exactly once, in its declared category. Copy the checkpoint text exactly.
+- Return every rubric ID exactly once as an object key in its declared category. Each keyed value contains only status, fix, and evidence; Zebra supplies the canonical ID and checkpoint text.
 - Preserve Zebra's established report: a 2-3 sentence summary, four metric fields, recruiter seven-second scan, "So what?" test, readability feedback, and evidence-safe bullet rewrites.
 - Return up to six useful bullet rewrites, prioritizing the highest-impact weak bullets. Rewrite every eligible weak bullet when fewer than six exist. Never add a made-up number; use a visible [add verified metric] placeholder only when the missing measurement is the point of the recommendation.
 
@@ -113,8 +114,8 @@ Return exactly this shape:
   "summary": "evidence-based overview",
   "metrics": { "impact": 0, "formatting": 0, "ats": 0, "branding": 0 },
   "audit": {
-    "document": [{ "id": "DOC-01", "checkpoint": "exact rubric text", "status": "Pass|Partial|Fail|Not Applicable|Not Assessed", "fix": "specific fix or empty string", "evidence": "brief source evidence or reason not applicable/assessed" }],
-    "contact": [], "targeting": [], "experience": [], "projects": [], "skillsEducation": [], "writing": []
+    "document": { "DOC-01": { "status": "Pass|Partial|Fail|Not Applicable|Not Assessed", "fix": "specific fix or empty string", "evidence": "brief source evidence or reason not applicable/assessed" } },
+    "contact": {}, "targeting": {}, "experience": {}, "projects": {}, "skillsEducation": {}, "writing": {}
   },
   "recruiterInsights": { "sevenSecondScan": "...", "soWhatTest": "...", "readability": "..." },
   "suggestedBulletPoints": [{ "original": "exact source text", "problem": "...", "after": "evidence-safe rewrite", "rationale": "..." }]
@@ -131,7 +132,9 @@ RESUME EVIDENCE END`;
             prompt,
             responseFormat: RESUME_AUDIT_RESPONSE_FORMAT,
         });
-        const parsed = aiResumeAnalysisSchema.safeParse(extractJsonObject(rawResponse));
+        const parsed = aiResumeAnalysisSchema.safeParse(
+            canonicalizeResumeAuditProviderResponse(extractJsonObject(rawResponse)),
+        );
         if (!parsed.success) {
             const issue = parsed.error.issues[0];
             const field = issue?.path.length ? issue.path.join(".") : "analysis";
