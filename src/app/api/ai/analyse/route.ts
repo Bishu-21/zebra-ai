@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
-import { db, sanitizeSecretText } from "@/lib/db";
+import { db, executeWithDbRetry, sanitizeSecretText } from "@/lib/db";
 import { analysis as analysisTable, resumes as resumesTable, user as userTable } from "@/lib/schema";
 import { analyseSchema, aiResumeAnalysisSchema } from "@/lib/validation";
 import { requireAuth, getUserOwnedResume, notFoundResponse } from "@/lib/auth-policy";
@@ -60,6 +60,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: credit.error || "Insufficient credits." }, { status: 402 });
     }
 
+    let failureStage: "generation" | "validation" | "persistence" = "generation";
     try {
         const evidenceContext = inferResumeAuditContext(sourceForAnalysis);
         const savedProfile = await db.query.user.findFirst({
@@ -132,6 +133,7 @@ RESUME EVIDENCE END`;
             prompt,
             responseFormat: RESUME_AUDIT_RESPONSE_FORMAT,
         });
+        failureStage = "validation";
         const parsed = aiResumeAnalysisSchema.safeParse(
             canonicalizeResumeAuditProviderResponse(extractJsonObject(rawResponse)),
         );
@@ -186,8 +188,22 @@ RESUME EVIDENCE END`;
             audit,
         };
 
-        await db.transaction(async (tx) => {
-            if (!resumeId) {
+        failureStage = "persistence";
+        const analysisRecord = {
+            id: crypto.randomUUID(),
+            resumeId: activeResumeId,
+            score: feedback.score,
+            feedback,
+            createdAt: new Date(),
+        };
+
+        if (resumeId) {
+            // Uploaded/saved resumes already exist. A direct query stays on
+            // Neon's retryable HTTP path and avoids opening a WebSocket
+            // transaction after a long-running provider request.
+            await executeWithDbRetry(() => db.insert(analysisTable).values(analysisRecord));
+        } else {
+            await db.transaction(async (tx) => {
                 await tx.insert(resumesTable).values({
                     id: activeResumeId,
                     userId: authCtx.user.id,
@@ -197,23 +213,21 @@ RESUME EVIDENCE END`;
                     createdAt: new Date(),
                     updatedAt: new Date(),
                 });
-            }
-
-            await tx.insert(analysisTable).values({
-                id: crypto.randomUUID(),
-                resumeId: activeResumeId,
-                score: feedback.score,
-                feedback,
-                createdAt: new Date(),
+                await tx.insert(analysisTable).values(analysisRecord);
             });
-        });
+        }
 
         return NextResponse.json({ success: true, analysis: feedback, resumeId: activeResumeId });
     } catch (error: unknown) {
         await refundUserCredits(authCtx.user.id, 1);
-        console.error("Resume analysis failed:", sanitizeSecretText(error instanceof Error ? error.message : String(error)));
+        console.error(`Resume analysis failed during ${failureStage}:`, sanitizeSecretText(error instanceof Error ? error.message : String(error)));
+        const message = failureStage === "persistence"
+            ? "The analysis was completed but could not be saved. No changes were applied and your credit was refunded."
+            : failureStage === "validation"
+                ? "The analysis response was incomplete. No changes were applied and your credit was refunded."
+                : "The analysis service could not complete the request. No changes were applied and your credit was refunded.";
         return NextResponse.json(
-            { error: "The analysis could not be validated. No changes were applied and your credit was refunded." },
+            { error: message },
             { status: 502 },
         );
     }
