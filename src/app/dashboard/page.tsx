@@ -10,7 +10,7 @@ import {
 } from "react-icons/ri";
 import Link from "next/link";
 import { AnalyzeResume } from "@/components/dashboard/AnalyzeResume";
-import { TailorResume, type Resume } from "@/components/dashboard/TailorResume";
+import { TailorResume } from "@/components/dashboard/TailorResume";
 import { ImportResume } from "@/components/dashboard/ImportResume";
 import { InsightsFeed, type TailoringData } from "@/components/dashboard/InsightsFeed";
 import { ResumeVault } from "@/components/dashboard/ResumeVault";
@@ -186,11 +186,9 @@ async function renderDashboardContent(session: NonNullable<Awaited<ReturnType<ty
   const userResumeIds = userResumes.map(r => r.id);
   const [resumeAnalyses, allAnalyses] = await Promise.all([
     userResumeIds.length > 0 ? db.selectDistinctOn([analysisTable.resumeId], {
-        id: analysisTable.id,
         resumeId: analysisTable.resumeId,
         score: analysisTable.score,
         feedback: analysisTable.feedback,
-        createdAt: analysisTable.createdAt
       })
       .from(analysisTable)
       .where(inArray(analysisTable.resumeId, userResumeIds))
@@ -206,21 +204,10 @@ async function renderDashboardContent(session: NonNullable<Awaited<ReturnType<ty
     }),
   ]);
   
-  const latestAnalysisMap: Record<string, { id: string; score: number; feedback: unknown }> = {};
+  const latestAnalysisMap: Record<string, { score: number; feedback: unknown }> = {};
   for (const a of resumeAnalyses) {
-      if (!latestAnalysisMap[a.resumeId]) {
-          latestAnalysisMap[a.resumeId] = {
-              id: a.id,
-              score: a.score,
-              feedback: a.feedback
-          };
-      }
+      latestAnalysisMap[a.resumeId] = { score: a.score, feedback: a.feedback };
   }
-
-  const resumesWithStatus = userResumes.map(r => ({
-      ...r,
-      analyses: latestAnalysisMap[r.id] ? [true] : []
-  }));
 
   const credits = currentUser?.credits ?? 5;
 
@@ -239,11 +226,11 @@ async function renderDashboardContent(session: NonNullable<Awaited<ReturnType<ty
   ];
 
 
-  const vaultItems = resumesWithStatus.map(r => ({
+  const vaultItems = userResumes.map(r => ({
       id: r.id,
       title: r.title || "Untitled Resume",
       date: r.updatedAt,
-      hasAnalysis: r.analyses.length > 0,
+      hasAnalysis: Boolean(latestAnalysisMap[r.id]),
       parentResumeId: r.parentResumeId,
       targetRole: r.targetRole,
       targetCompany: r.targetCompany,
@@ -376,7 +363,9 @@ async function renderDashboardContent(session: NonNullable<Awaited<ReturnType<ty
         </Link>
       </div>
 
-      <section aria-labelledby="workspace-actions-title" className="mb-12">
+      <details className="rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-xs">
+        <summary className="cursor-pointer text-sm font-bold text-[#0A0A0A] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0A0A0A]">More tools</summary>
+      <section aria-labelledby="workspace-actions-title" className="mb-12 mt-8">
         <div className="mb-5">
           <h2 id="workspace-actions-title" className="text-xl font-bold tracking-tight text-[#0A0A0A] md:text-2xl">Create and improve</h2>
           <p className="mt-1 text-sm text-neutral-600">Review or import a resume, match it to a role, build a new one, or add project evidence.</p>
@@ -386,7 +375,7 @@ async function renderDashboardContent(session: NonNullable<Awaited<ReturnType<ty
           <AnalyzeResume />
         </div>
         <div className="lg:col-span-2 h-full">
-          <TailorResume resumes={resumesWithStatus as Resume[]} />
+          <TailorResume resumes={userResumes.map(({ id, title }) => ({ id, title }))} />
         </div>
         <div className="lg:col-span-2 h-full">
           <Link 
@@ -445,6 +434,7 @@ async function renderDashboardContent(session: NonNullable<Awaited<ReturnType<ty
             <InsightsFeed data={intelligenceReports} />
         )}
       </div>
+      </details>
     </div>
   );
 }
