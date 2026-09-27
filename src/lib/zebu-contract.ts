@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const ZEBU_ROUTES = [
-  "/dashboard", "/dashboard/job-tracker", "/dashboard/resumes", "/dashboard/work",
+  "/dashboard", "/dashboard/job-tracker", "/dashboard/linkedin", "/dashboard/resumes", "/dashboard/work",
   "/dashboard/cover-letters", "/dashboard/portfolio", "/dashboard/analytics", "/dashboard/settings",
 ] as const;
 
@@ -11,11 +11,15 @@ export const zebuEntitySchema = z.enum(["resume", "application", "work"]);
 export const zebuActionSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("none") }),
   z.object({ type: z.literal("navigate"), route: z.string().min(1).max(300) }),
-  z.object({ type: z.literal("open_tool"), tool: zebuToolSchema }),
+  z.object({ type: z.literal("open_tool"), tool: zebuToolSchema, jobUrl: z.url().max(2_048).refine(value => {
+    const url = new URL(value);
+    return url.protocol === "https:" && !url.username && !url.password;
+  }).optional() }),
   z.object({ type: z.literal("search"), query: z.string().trim().min(1).max(200) }),
   z.object({ type: z.literal("summarize"), entityType: zebuEntitySchema, query: z.string().trim().max(200) }),
   z.object({ type: z.literal("quick_stats") }),
   z.object({ type: z.literal("start_flow"), flow: z.enum(["resume", "application", "cover_letter"]) }),
+  z.object({ type: z.literal("open_proof_flow") }),
   z.object({ type: z.literal("open_resume"), query: z.string().trim().min(1).max(200) }),
   z.object({ type: z.literal("open_application"), query: z.string().trim().min(1).max(200) }),
   z.object({ type: z.literal("deadline_check") }),

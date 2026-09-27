@@ -1,5 +1,30 @@
 # Zebra AI deployment procedure
 
+## Automated release path
+
+The repository now defines three workflows:
+
+- `CI`: every pull request, pushes to `main` and `staging`, and release runs. Installs the lockfile, audits runtime dependencies, lints, typechecks, tests, and builds without production secrets.
+- `Release`: manually run from `main` in Actions. It checks the selected commit, deploys that same commit to staging, then requests production environment approval. Releases are serialized and never cancelled mid-migration.
+- `Deploy environment`: reusable deployment job; pulls the selected Vercel project's configuration, validates it, builds, applies forward migrations, verifies the schema, deploys, and probes `/` and `/api/auth/ok` for HTTP 200.
+
+**Activation is required:** workflow files alone do not create hosting resources, secrets, or branch protections. Do not call this pipeline live until a staging release has completed successfully. `vercel.json` disables Vercel's automatic Git deployments so pushes cannot bypass CI; configure the release workflow before merging this file. Manual Vercel deployments and deploy hooks must also be restricted operationally.
+
+### One-time environment setup
+
+1. Keep the existing production Vercel project. Create a second Vercel project for staging with a stable staging domain. Both projects use their own **Production** target; the second project's name and credentials are what isolate staging. Set Node.js 22.x in both projects.
+2. Create a separate Neon staging database with synthetic data. Do not clone production customer data. Apply the committed migrations to initialize it. The existing `ep-empty-bird-amupvzd6-pooler` endpoint belongs to production and must not be used for staging.
+3. Set variables from `.env.example` separately in each Vercel project. Staging needs its own auth secret, matching staging app/auth origins, test-mode Razorpay keys and webhook secret, and separate OAuth callback registration. Register its test webhook at `https://STAGING_HOST/api/payments/webhook`. Keep any AI test usage budgeted.
+4. Create GitHub environments `staging` and `production` (GitHub environment names are case insensitive; the existing `Production` environment may be reused). Restrict both to `main`. Require an owner approval for production; allow self-review for a single-maintainer repository. Review staging before approving. Disable administrator bypass where the account supports it.
+5. In **each GitHub environment**, set secrets `VERCEL_TOKEN`, `VERCEL_ORG_ID`, and `VERCEL_PROJECT_ID` for its own Vercel project. Do not put production credentials in repository-wide secrets. If deployment protection is enabled, also set the project's `VERCEL_AUTOMATION_BYPASS_SECRET`.
+6. In each GitHub environment, set variables `APP_URL` (the stable HTTPS origin), `EXPECTED_DATABASE_HOST` (the exact corresponding Neon hostname, with no credentials), and `VERCEL_CLI_VERSION` (an explicitly tested numeric version such as the output of your installed `vercel --version`; do not use `latest`). The validator rejects mismatched URLs, database hosts and live Razorpay keys in staging. Confirm the two environments have different project IDs and database hosts.
+7. Protect `main`: require a pull request, require the `Quality checks` status after its first run, require the branch to be up to date, disallow force pushes and deletions, and apply protections to administrators. A solo-maintainer repository need not require another PR reviewer; production still has its explicit environment approval.
+8. Run `Release` from `main`. After staging succeeds, perform the manual smoke tests below on the exact release, then approve production. Keep the previous production deployment available for rollback. Confirm that a deliberately failing PR cannot merge and cannot deploy.
+
+Public HTTP probes prove reachability, not complete payment/AI correctness. The existing integration suite uses a test store; the staging payment, OAuth, PDF and database journeys below remain required acceptance checks. Schema health is checked against the target database before deployment. A post-deploy probe failure marks the release failed but does not automatically roll back code or schema.
+
+Workflow behavior follows the [Vercel GitHub Actions guide](https://vercel.com/kb/guide/how-can-i-use-github-actions-with-vercel), [Git deployment controls](https://vercel.com/docs/project-configuration/git-configuration), and [GitHub deployment environments](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments).
+
 Use this checklist for staging first, then repeat it for production. Never use
 `drizzle-kit push --force` against either environment.
 
@@ -43,6 +68,11 @@ https://YOUR_APP_HOST/api/payments/webhook
 Subscribe to `payment.captured` and `order.paid`. The endpoint validates the
 raw-body signature and credits each order idempotently; do not reuse the API key
 secret as the webhook secret.
+Enable automatic capture in Razorpay before selling credit packs. Checkout
+verification grants credits only after Razorpay reports a captured payment.
+Use test-mode API keys and a separate test webhook secret in staging; replace
+both with live credentials for production. Keep all secrets in deployment
+environment variables, not in the repository.
 
 ## 3. Back up and migrate
 

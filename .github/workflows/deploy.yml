@@ -1,0 +1,80 @@
+name: Deploy environment
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: ${{ inputs.environment }}
+      url: ${{ vars.APP_URL }}
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      APP_URL: ${{ vars.APP_URL }}
+      EXPECTED_DATABASE_HOST: ${{ vars.EXPECTED_DATABASE_HOST }}
+      DEPLOY_ENVIRONMENT: ${{ inputs.environment }}
+      VERCEL_CLI_VERSION: ${{ vars.VERCEL_CLI_VERSION }}
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Require explicit deployment configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in VERCEL_TOKEN VERCEL_ORG_ID VERCEL_PROJECT_ID APP_URL EXPECTED_DATABASE_HOST VERCEL_CLI_VERSION; do
+            test -n "${!name}" || { echo "Missing deployment setting: $name"; exit 1; }
+          done
+          [[ "$VERCEL_CLI_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo 'Pin an exact Vercel CLI version'; exit 1; }
+      - run: npm ci
+      - name: Install pinned deployment CLI
+        run: npm install --global "vercel@$VERCEL_CLI_VERSION"
+      # Both projects use their production target, giving staging a stable URL.
+      - name: Pull isolated project settings
+        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+      - name: Validate target environment
+        run: node --env-file=.vercel/.env.production.local scripts/validate-deployment.mjs
+      - name: Build before changing database
+        run: vercel build --prod --token="$VERCEL_TOKEN"
+      - name: Apply forward migrations and verify schema
+        run: node --env-file=.vercel/.env.production.local --run db:prepare
+      - name: Deploy checked revision
+        id: deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          deployment_url=$(vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN")
+          [[ "$deployment_url" =~ ^https://[a-zA-Z0-9.-]+\.vercel\.app$ ]] || { echo 'Unexpected deployment URL'; exit 1; }
+          echo "url=$deployment_url" >> "$GITHUB_OUTPUT"
+      - name: Probe deployed application
+        env:
+          BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+          DEPLOYMENT_URL: ${{ steps.deployment.outputs.url }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for origin in "$DEPLOYMENT_URL" "$APP_URL"; do
+            for path in / /api/auth/ok; do
+              status=$(curl --fail --silent --show-error --retry 5 --retry-all-errors --retry-delay 5 --max-time 30 \
+                --output /dev/null --write-out '%{http_code}' \
+                -H "x-vercel-protection-bypass: $BYPASS_SECRET" "${origin%/}$path")
+              test "$status" = 200 || { echo "Probe failed: $path returned $status"; exit 1; }
+            done
+          done

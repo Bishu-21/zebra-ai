@@ -15,6 +15,8 @@ import {
 import { useRouter } from "next/navigation";
 import { ResumeResultsModal } from "./ResumeResultsModal";
 import { ResumeAnalysisData } from "@/components/compiler/types";
+import { readApiResponse } from "@/lib/api-response";
+import { ResumeProcessingStatus } from "./ResumeProcessingStatus";
 
 export function AnalyzeResume() {
   const [isOpen, setIsOpen] = useState(false);
@@ -68,8 +70,7 @@ export function AnalyzeResume() {
         body: formData,
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Upload failed");
+      const data = await readApiResponse<{ id: string; title?: string }>(res, "Upload failed");
 
       setContent("");
       setActiveResumeId(data.id);
@@ -88,21 +89,7 @@ export function AnalyzeResume() {
 
   const triggerAnalysis = async (textToAnalyze?: string, resumeId?: string) => {
     setIsAnalyzing(true);
-    const steps = [
-      "Initializing Analysis...",
-      "Evaluating ATS benchmarks...",
-      "Analyzing content impact...",
-      "Performing readability check...",
-      "Generating improvement suggestions...",
-      "Finalizing Report..."
-    ];
-    let stepIdx = 0;
-
-    setScanStep(steps[0]);
-    const stepInterval = setInterval(() => {
-      stepIdx++;
-      if (stepIdx < steps.length) setScanStep(steps[stepIdx]);
-    }, 1200);
+    setScanStep("Reviewing your resume against 45 evidence checks...");
 
     setError(null);
 
@@ -113,10 +100,8 @@ export function AnalyzeResume() {
         body: JSON.stringify(resumeId ? { resumeId } : { content: textToAnalyze }),
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Analysis failed");
+      const data = await readApiResponse<{ analysis: ResumeAnalysisData; resumeId: string }>(res, "Analysis failed");
 
-      clearInterval(stepInterval);
       setScanStep("Analysis Complete.");
 
       setAnalysisResult(data.analysis);
@@ -131,7 +116,6 @@ export function AnalyzeResume() {
       setError(err instanceof Error ? err.message : "Analysis failed");
       setIsAnalyzing(false);
       setIsUploading(false);
-      clearInterval(stepInterval);
     }
   };
 
@@ -259,18 +243,7 @@ export function AnalyzeResume() {
                                       exit={{ opacity: 0 }}
                                       className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-white/80 backdrop-blur-xs gap-4 p-6"
                                   >
-                                      <RiLoader4Line className="animate-spin text-[#0A0A0A]" size={32} />
-                                      <div className="flex flex-col items-center gap-2 text-center">
-                                          <span className="text-xs font-bold text-[#0A0A0A]">{scanStep}</span>
-                                          <div className="w-40 h-1.5 bg-neutral-200 rounded-full overflow-hidden">
-                                              <m.div
-                                                  className="h-full bg-[#0A0A0A]"
-                                                  initial={{ width: "0%" }}
-                                                  animate={{ width: "100%" }}
-                                                  transition={{ duration: 6, ease: "linear" }}
-                                              />
-                                          </div>
-                                      </div>
+                                      <ResumeProcessingStatus key={isAnalyzing ? "analysis" : "upload"} stage={scanStep} />
                                   </m.div>
                               )}
                           </AnimatePresence>

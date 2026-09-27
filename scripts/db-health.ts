@@ -75,6 +75,7 @@ async function runHealthCheck() {
             "preflight_checks",
             "background_jobs",
             "document_artifacts",
+            "linkedin_audits",
         ];
         const tableRows = await sql<{ table_name: string }[]>`
             SELECT table_name
@@ -117,6 +118,7 @@ async function runHealthCheck() {
             applications: ["selected_resume_id", "resume_version_id", "selected_work_ids", "selected_cert_ids"],
             evidence_nodes: ["confidence", "source", "updated_at"],
             ai_usage: ["provider", "request_id", "latency_ms", "error_code"],
+            linkedin_audits: ["user_id", "feedback", "drafts", "linkedin_url", "target_role", "source_text", "created_at", "updated_at"],
         };
         const columnRows = await sql<{ table_name: string; column_name: string }[]>`
             SELECT table_name, column_name

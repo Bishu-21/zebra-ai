@@ -1,0 +1,32 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { validateDeployment } from '../scripts/validate-deployment.mjs';
+
+const staging = {
+    DEPLOY_ENVIRONMENT: 'staging',
+    DATABASE_URL: 'postgresql://test:test@localhost/staging',
+    BETTER_AUTH_SECRET: 'a'.repeat(32),
+    APP_URL: 'https://staging.example.com',
+    BETTER_AUTH_URL: 'https://staging.example.com',
+    NEXT_PUBLIC_APP_URL: 'https://staging.example.com',
+    NEXT_PUBLIC_RAZORPAY_KEY_ID: 'rzp_test_example',
+    RAZORPAY_KEY_SECRET: 'test-only',
+    RAZORPAY_WEBHOOK_SECRET: 'test-only-webhook',
+    EXPECTED_DATABASE_HOST: 'localhost',
+};
+
+test('staging accepts aligned origins and test payments', () => {
+    assert.doesNotThrow(() => validateDeployment(staging));
+});
+test('staging refuses live payments', () => {
+    assert.throws(() => validateDeployment({ ...staging, NEXT_PUBLIC_RAZORPAY_KEY_ID: 'rzp_live_example' }), /test credentials/);
+});
+test('deployment refuses wrong origin, missing database and weak auth', () => {
+    assert.throws(() => validateDeployment({ ...staging, BETTER_AUTH_URL: 'https://production.example.com' }), /match APP_URL/);
+    assert.throws(() => validateDeployment({ ...staging, DATABASE_URL: '' }), /DATABASE_URL/);
+    assert.throws(() => validateDeployment({ ...staging, BETTER_AUTH_SECRET: 'short' }), /32 characters/);
+});
+test('deployment refuses a database outside the configured environment', () => {
+    assert.throws(() => validateDeployment({ ...staging, DATABASE_URL: 'postgresql://test:test@production.example.com/app' }), /database host/);
+    assert.throws(() => validateDeployment({ ...staging, EXPECTED_DATABASE_HOST: '' }), /EXPECTED_DATABASE_HOST/);
+});
