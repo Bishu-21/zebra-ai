@@ -3,7 +3,7 @@ import { sanitizeSecretText } from "@/lib/db";
 import { db } from "@/lib/db";
 import { transactions as transactionsTable } from "@/lib/schema";
 import { and, eq } from "drizzle-orm";
-import { razorpay } from "@/lib/razorpay";
+import { getRazorpay } from "@/lib/razorpay";
 import { requireAuth, notFoundResponse } from "@/lib/auth-policy";
 import { checkDistributedRateLimit } from "@/lib/rate-limit";
 import {
@@ -43,6 +43,10 @@ export async function POST(req: NextRequest) {
         if (!secret) {
             console.error("Critical: RAZORPAY_KEY_SECRET is not configured.");
             return NextResponse.json({ error: "Payment verification system unavailable" }, { status: 500 });
+        }
+        const razorpay = getRazorpay();
+        if (!razorpay) {
+            return NextResponse.json({ error: "Payment verification system unavailable" }, { status: 503 });
         }
 
         const payloadStr = `${storedOrder.orderId}|${razorpay_payment_id}`;
