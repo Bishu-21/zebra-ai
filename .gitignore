@@ -34,6 +34,14 @@ yarn-error.log*
 .env*
 !.env.example
 
+# Local planning and agent notes
+/.agents/skills/vercel-connect/
+/docs/resume-analysis-diagnostics-*.md
+/docs/superpowers/plans/
+/docs/zebra-trusted-workspace-blueprint-*.md
+/docs/zebu-action-harness-plan-*.md
+/docs/zebu-gemini-live-harness-design-*.md
+
 # vercel
 .vercel
 
