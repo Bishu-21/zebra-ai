@@ -1,0 +1,26 @@
+name: Validate staging
+
+on:
+  push:
+    branches:
+      - codex/release-candidate
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: zebra-staging
+  cancel-in-progress: false
+
+jobs:
+  checks:
+    if: startsWith(github.ref, 'refs/heads/codex/')
+    uses: ./.github/workflows/ci.yml
+  staging:
+    needs: checks
+    if: vars.STAGING_READY == 'true'
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: staging
+    secrets: inherit

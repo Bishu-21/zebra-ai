@@ -20,6 +20,18 @@ export function validateDeployment(env) {
   }
   if (env.BETTER_AUTH_SECRET.length < 32) throw new Error('Auth secret must contain at least 32 characters');
   if (env.DEPLOY_ENVIRONMENT === 'staging') {
+    for (const name of ['PRODUCTION_DATABASE_HOST', 'PRODUCTION_APP_URL']) {
+      if (!env[name]) throw new Error(`Missing ${name}`);
+    }
+    if (database.hostname === env.PRODUCTION_DATABASE_HOST) {
+      throw new Error('Staging must not use the production database host');
+    }
+    if (origin.origin === new URL(env.PRODUCTION_APP_URL).origin) {
+      throw new Error('Staging must not use the production application origin');
+    }
+    if (!origin.hostname.startsWith('staging.')) {
+      throw new Error('Staging APP_URL must use a staging. hostname');
+    }
     if (!env.NEXT_PUBLIC_RAZORPAY_KEY_ID?.startsWith('rzp_test_')) {
       throw new Error('Staging requires Razorpay test credentials');
     }

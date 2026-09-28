@@ -13,6 +13,8 @@ const staging = {
     RAZORPAY_KEY_SECRET: 'test-only',
     RAZORPAY_WEBHOOK_SECRET: 'test-only-webhook',
     EXPECTED_DATABASE_HOST: 'localhost',
+    PRODUCTION_DATABASE_HOST: 'production.example.com',
+    PRODUCTION_APP_URL: 'https://example.com',
 };
 
 test('staging accepts aligned origins and test payments', () => {
@@ -29,4 +31,12 @@ test('deployment refuses wrong origin, missing database and weak auth', () => {
 test('deployment refuses a database outside the configured environment', () => {
     assert.throws(() => validateDeployment({ ...staging, DATABASE_URL: 'postgresql://test:test@production.example.com/app' }), /database host/);
     assert.throws(() => validateDeployment({ ...staging, EXPECTED_DATABASE_HOST: '' }), /EXPECTED_DATABASE_HOST/);
+});
+
+test('staging refuses the production database host or application origin', () => {
+    assert.throws(() => validateDeployment({ ...staging, PRODUCTION_DATABASE_HOST: 'localhost' }), /production database host/);
+    assert.throws(() => validateDeployment({ ...staging, PRODUCTION_APP_URL: staging.APP_URL }), /production application origin/);
+    assert.throws(() => validateDeployment({ ...staging, PRODUCTION_DATABASE_HOST: '' }), /PRODUCTION_DATABASE_HOST/);
+    assert.throws(() => validateDeployment({ ...staging, PRODUCTION_APP_URL: '' }), /PRODUCTION_APP_URL/);
+    assert.throws(() => validateDeployment({ ...staging, APP_URL: 'https://app.example.com', BETTER_AUTH_URL: 'https://app.example.com', NEXT_PUBLIC_APP_URL: 'https://app.example.com' }), /staging\. hostname/);
 });
