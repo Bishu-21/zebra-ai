@@ -19,6 +19,12 @@ export function validateDeployment(env) {
     if (env[name].replace(/\/$/, '') !== origin.origin) throw new Error(`${name} must match APP_URL`);
   }
   if (env.BETTER_AUTH_SECRET.length < 32) throw new Error('Auth secret must contain at least 32 characters');
+  if (!env.RAZORPAY_KEY_SECRET?.trim() || !env.RAZORPAY_WEBHOOK_SECRET?.trim()) {
+    throw new Error('Deployment requires payment and webhook secrets');
+  }
+  if (env.DEPLOY_ENVIRONMENT === 'production' && !env.NEXT_PUBLIC_RAZORPAY_KEY_ID?.startsWith('rzp_live_')) {
+    throw new Error('Production requires Razorpay live credentials');
+  }
   if (env.DEPLOY_ENVIRONMENT === 'staging') {
     for (const name of ['PRODUCTION_DATABASE_HOST', 'PRODUCTION_APP_URL']) {
       if (!env[name]) throw new Error(`Missing ${name}`);
@@ -34,9 +40,6 @@ export function validateDeployment(env) {
     }
     if (!env.NEXT_PUBLIC_RAZORPAY_KEY_ID?.startsWith('rzp_test_')) {
       throw new Error('Staging requires Razorpay test credentials');
-    }
-    if (!env.RAZORPAY_KEY_SECRET || !env.RAZORPAY_WEBHOOK_SECRET) {
-      throw new Error('Staging requires payment and webhook secrets');
     }
   }
 }

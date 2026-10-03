@@ -76,6 +76,9 @@ async function runHealthCheck() {
             "background_jobs",
             "document_artifacts",
             "linkedin_audits",
+            "github_installations",
+            "github_installation_repositories",
+            "github_sync_runs",
         ];
         const tableRows = await sql<{ table_name: string }[]>`
             SELECT table_name
@@ -119,6 +122,9 @@ async function runHealthCheck() {
             evidence_nodes: ["confidence", "source", "updated_at"],
             ai_usage: ["provider", "request_id", "latency_ms", "error_code"],
             linkedin_audits: ["user_id", "feedback", "drafts", "linkedin_url", "target_role", "source_text", "created_at", "updated_at"],
+            github_installations: ["user_id", "installation_id", "permissions", "suspended_at", "created_at", "updated_at"],
+            github_installation_repositories: ["github_installation_id", "user_id", "repo_id", "authorship", "removed_at"],
+            github_sync_runs: ["user_id", "github_installation_id", "status", "started_at", "finished_at"],
         };
         const columnRows = await sql<{ table_name: string; column_name: string }[]>`
             SELECT table_name, column_name

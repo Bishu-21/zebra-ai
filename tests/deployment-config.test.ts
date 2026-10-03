@@ -2,6 +2,26 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { validateDeployment } from '../scripts/validate-deployment.mjs';
 
+const production = {
+    DEPLOY_ENVIRONMENT: 'production',
+    DATABASE_URL: 'postgresql://test:test@production.example.com/app',
+    EXPECTED_DATABASE_HOST: 'production.example.com',
+    BETTER_AUTH_SECRET: 'x'.repeat(32),
+    BETTER_AUTH_URL: 'https://production.example.com',
+    NEXT_PUBLIC_APP_URL: 'https://production.example.com',
+    APP_URL: 'https://production.example.com',
+    NEXT_PUBLIC_RAZORPAY_KEY_ID: 'rzp_live_example',
+    RAZORPAY_KEY_SECRET: 'test-fixture-secret',
+    RAZORPAY_WEBHOOK_SECRET: 'test-fixture-webhook',
+};
+
+test('production requires live payment keys and webhook configuration', () => {
+    assert.doesNotThrow(() => validateDeployment(production));
+    assert.throws(() => validateDeployment({ ...production, NEXT_PUBLIC_RAZORPAY_KEY_ID: 'rzp_test_example' }), /live credentials/);
+    assert.throws(() => validateDeployment({ ...production, RAZORPAY_WEBHOOK_SECRET: '' }), /webhook secrets/);
+    assert.throws(() => validateDeployment({ ...production, RAZORPAY_KEY_SECRET: '' }), /webhook secrets/);
+});
+
 const staging = {
     DEPLOY_ENVIRONMENT: 'staging',
     DATABASE_URL: 'postgresql://test:test@localhost/staging',

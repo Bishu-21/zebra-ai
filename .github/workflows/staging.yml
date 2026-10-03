@@ -10,7 +10,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: zebra-staging
+  # Keep staging on the reviewed revision while a release awaits approval.
+  group: zebra-release
   cancel-in-progress: false
 
 jobs:
