@@ -1,5 +1,31 @@
 # Zebra AI deployment procedure
 
+## Automated release path
+
+The repository now defines four workflows:
+
+- `CI`: every pull request, pushes to `main` and `staging`, and release runs. Installs the lockfile, audits runtime dependencies, lints, typechecks, tests, and builds without production secrets.
+- `Release`: manually run from `main` in Actions. It checks the selected commit, deploys that same commit to staging, then requests production environment approval. Releases are serialized and never cancelled mid-migration.
+- `Validate staging`: runs on pushes to `codex/release-candidate` before merging. It runs CI, then deploys that exact commit to the staging Preview target when the repository variable `STAGING_READY` is `true`. The staging GitHub environment must permit that branch. Manual runs become available after the workflow reaches the default branch.
+- `Deploy environment`: reusable deployment job; verifies the existing `zebra-ai` Vercel project, then starts a Vercel-hosted Preview or Production build. The build validates the target, compiles the app, applies forward migrations, and verifies the schema before Vercel publishes it. The job then probes `/` and `/api/auth/ok` for HTTP 200.
+
+**Activation is required:** workflow files alone do not create hosting resources, secrets, or branch protections. Keep `STAGING_READY` unset until the separate staging database, Preview variables, hostname, and GitHub secrets are configured. Then set it to `true` and push the release branch to run `Validate staging`; complete the manual smoke tests before merging to `main`. `vercel.json` disables Vercel's automatic Git deployments so pushes cannot bypass CI; configure the release workflow before merging this file. Manual Vercel deployments and deploy hooks must also be restricted operationally. Sensitive Vercel variables cannot be pulled into GitHub Actions; the Vercel-hosted build uses them directly. Do not use `vercel build --prebuilt` with `[SENSITIVE]` placeholders.
+
+### One-time environment setup
+
+1. Keep the existing `zebra-ai` Vercel project. Use its **Preview** target for staging and **Production** target for the live app. Add a stable staging hostname beginning with `staging.` to this project, such as `staging.zebra-ai.app`. The release workflow aliases each verified Preview deployment to that hostname. The project's Node.js version is 24.x; CI uses Node.js 24 too.
+2. Create a separate Neon staging database with synthetic data. Do not clone production customer data or use either existing Neon branch that contains real resumes. Apply the committed migrations to initialize staging. The existing `ep-empty-bird-amupvzd6-pooler` endpoint belongs to production and must not be used for staging.
+3. Set variables from `.env.example` separately in the existing project's Preview and Production targets. Preview needs its own `DATABASE_URL`, `BETTER_AUTH_SECRET`, matching `BETTER_AUTH_URL` and `NEXT_PUBLIC_APP_URL`, test-mode Razorpay keys and webhook secret, and separate OAuth callback registration. Register its test webhook at `https://STAGING_HOST/api/payments/webhook`. Keep any AI test usage budgeted. Move shared production credentials to Production scope only after Preview alternatives are ready; never replace a Production value while configuring Preview.
+4. Create GitHub environments `staging` and `production` (GitHub environment names are case insensitive; the existing `Production` environment may be reused). Permit `main` and the reviewed `codex/*` release branch in staging; restrict production to `main`. Require an owner approval for production; allow self-review for a single-maintainer repository. Review staging before approving. Disable administrator bypass where the account supports it.
+5. In **each GitHub environment**, set secrets `VERCEL_TOKEN`, `VERCEL_ORG_ID`, and `VERCEL_PROJECT_ID` for the same existing `zebra-ai` Vercel project. Keep them environment-scoped rather than repository-wide. If deployment protection is enabled, also set `VERCEL_AUTOMATION_BYPASS_SECRET`.
+6. In each GitHub environment, set variables `APP_URL` (the stable HTTPS origin), `EXPECTED_DATABASE_HOST` (the exact corresponding Neon hostname, with no credentials), and `VERCEL_CLI_VERSION` (an explicitly tested numeric version; do not use `latest`). In staging, also set `PRODUCTION_APP_URL` and `PRODUCTION_DATABASE_HOST` to the corresponding production origin and Neon hostname. The workflow refuses to deploy to a project other than `zebra-ai`; the validator rejects mismatched URLs, shared database hosts, production origins, and live Razorpay keys in staging. Confirm both environments have the same Vercel project ID but different database hosts and app URLs.
+7. Protect `main`: require a pull request, require the `Quality checks` status after its first run, require the branch to be up to date, disallow force pushes and deletions, and apply protections to administrators. A solo-maintainer repository need not require another PR reviewer; production still has its explicit environment approval.
+8. Set repository variable `STAGING_READY=true` only after the staging resources and secrets are ready, then push the release branch to run `Validate staging`. Complete the manual smoke tests below and merge only after its checks succeed. Then run `Release` from `main`. Review the repeated staging result before approving production. Keep the previous production deployment available for rollback. Confirm that a deliberately failing PR cannot merge and cannot deploy.
+
+Public HTTP probes prove reachability, not complete payment/AI correctness. The existing integration suite uses a test store; the staging payment, OAuth, PDF and database journeys below remain required acceptance checks. Schema health is checked against the target database before deployment. A post-deploy probe failure marks the release failed but does not automatically roll back code or schema.
+
+Workflow behavior follows the [Vercel GitHub Actions guide](https://vercel.com/kb/guide/how-can-i-use-github-actions-with-vercel), [Git deployment controls](https://vercel.com/docs/project-configuration/git-configuration), and [GitHub deployment environments](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments).
+
 Use this checklist for staging first, then repeat it for production. Never use
 `drizzle-kit push --force` against either environment.
 
@@ -43,6 +69,11 @@ https://YOUR_APP_HOST/api/payments/webhook
 Subscribe to `payment.captured` and `order.paid`. The endpoint validates the
 raw-body signature and credits each order idempotently; do not reuse the API key
 secret as the webhook secret.
+Enable automatic capture in Razorpay before selling credit packs. Checkout
+verification grants credits only after Razorpay reports a captured payment.
+Use test-mode API keys and a separate test webhook secret in staging; replace
+both with live credentials for production. Keep all secrets in deployment
+environment variables, not in the repository.
 
 ## 3. Back up and migrate
 

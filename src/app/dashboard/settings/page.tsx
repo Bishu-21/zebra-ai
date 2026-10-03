@@ -1,5 +1,6 @@
 import React, { Suspense } from "react";
 import { SettingsView } from "@/components/dashboard/SettingsView";
+import { isGitHubAppConfigured } from "@/lib/env";
 import { Metadata } from "next";
 import { ZebraLoader } from "@/components/ui/ZebraLoader";
 
@@ -19,7 +20,7 @@ export default function SettingsPage() {
         />
       )}
     >
-      <SettingsView />
+      <SettingsView connectionProviders={{ linkedin: Boolean(process.env.LINKEDIN_CLIENT_ID && process.env.LINKEDIN_CLIENT_SECRET), github: Boolean(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) }} githubAppConfigured={isGitHubAppConfigured()} />
     </Suspense>
   );
 }

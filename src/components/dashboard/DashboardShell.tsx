@@ -1,14 +1,16 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
-import { ProfileModal } from "./ProfileModal";
 import { ToastProvider } from "../ui/Toast";
 import { SettingsProvider } from "@/context/SettingsContext";
 import { CareerProfilePrompt } from "./CareerProfilePrompt";
-import { ZebuAssistant } from "./ZebuAssistant";
 import { ZebuProvider } from "@/context/ZebuContext";
+
+const ProfileModal = dynamic(() => import("./ProfileModal").then((module) => module.ProfileModal));
+const ZebuAssistant = dynamic(() => import("./ZebuAssistant").then((module) => module.ZebuAssistant));
 
 interface DashboardShellProps {
     plan: string;
@@ -75,12 +77,14 @@ export function DashboardShell({ plan, credits, userName, userImage, shouldPromp
                         </main>
                     </div>
 
-                    <ProfileModal
-                        isOpen={isProfileOpen}
-                        onCloseAction={closeProfile}
-                        userName={userName}
-                        userImage={userImage}
-                    />
+                    {isProfileOpen && (
+                        <ProfileModal
+                            isOpen={isProfileOpen}
+                            onCloseAction={closeProfile}
+                            userName={userName}
+                            userImage={userImage}
+                        />
+                    )}
                     <CareerProfilePrompt shouldPrompt={shouldPromptCareerProfile} />
                     <ZebuAssistant />
                 </div>

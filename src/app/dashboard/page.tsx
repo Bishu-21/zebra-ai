@@ -10,11 +10,12 @@ import {
 } from "react-icons/ri";
 import Link from "next/link";
 import { AnalyzeResume } from "@/components/dashboard/AnalyzeResume";
-import { TailorResume, type Resume } from "@/components/dashboard/TailorResume";
+import { TailorResume } from "@/components/dashboard/TailorResume";
 import { ImportResume } from "@/components/dashboard/ImportResume";
 import { InsightsFeed, type TailoringData } from "@/components/dashboard/InsightsFeed";
 import { ResumeVault } from "@/components/dashboard/ResumeVault";
 import { ProjectAnalyzerCard } from "@/components/dashboard/ProjectAnalyzerCard";
+import { AddApplicationDrawer } from "@/components/dashboard/AddApplicationDrawer";
 import { getSafeSession } from "@/lib/auth-helpers";
 import { db, sanitizeSecretText } from "@/lib/db";
 import { 
@@ -83,9 +84,9 @@ async function renderDashboardContent(session: NonNullable<Awaited<ReturnType<ty
   const pendingChangesCount = latestApp?.changes?.filter(c => c.status === "pending").length || 0;
 
   let nextAction = {
-      title: "Add application",
-      description: "Track a role you are applying for.",
-      actionLabel: "Add application",
+      title: "Start with the job you want",
+      description: "1. Paste a job link or enter the role. 2. Attach or import your resume. 3. Review suggestions in your application workspace.",
+      actionLabel: "Start an application",
       actionHref: "/dashboard/job-tracker"
   };
 
@@ -185,11 +186,9 @@ async function renderDashboardContent(session: NonNullable<Awaited<ReturnType<ty
   const userResumeIds = userResumes.map(r => r.id);
   const [resumeAnalyses, allAnalyses] = await Promise.all([
     userResumeIds.length > 0 ? db.selectDistinctOn([analysisTable.resumeId], {
-        id: analysisTable.id,
         resumeId: analysisTable.resumeId,
         score: analysisTable.score,
         feedback: analysisTable.feedback,
-        createdAt: analysisTable.createdAt
       })
       .from(analysisTable)
       .where(inArray(analysisTable.resumeId, userResumeIds))
@@ -205,21 +204,10 @@ async function renderDashboardContent(session: NonNullable<Awaited<ReturnType<ty
     }),
   ]);
   
-  const latestAnalysisMap: Record<string, { id: string; score: number; feedback: unknown }> = {};
+  const latestAnalysisMap: Record<string, { score: number; feedback: unknown }> = {};
   for (const a of resumeAnalyses) {
-      if (!latestAnalysisMap[a.resumeId]) {
-          latestAnalysisMap[a.resumeId] = {
-              id: a.id,
-              score: a.score,
-              feedback: a.feedback
-          };
-      }
+      latestAnalysisMap[a.resumeId] = { score: a.score, feedback: a.feedback };
   }
-
-  const resumesWithStatus = userResumes.map(r => ({
-      ...r,
-      analyses: latestAnalysisMap[r.id] ? [true] : []
-  }));
 
   const credits = currentUser?.credits ?? 5;
 
@@ -238,11 +226,11 @@ async function renderDashboardContent(session: NonNullable<Awaited<ReturnType<ty
   ];
 
 
-  const vaultItems = resumesWithStatus.map(r => ({
+  const vaultItems = userResumes.map(r => ({
       id: r.id,
       title: r.title || "Untitled Resume",
       date: r.updatedAt,
-      hasAnalysis: r.analyses.length > 0,
+      hasAnalysis: Boolean(latestAnalysisMap[r.id]),
       parentResumeId: r.parentResumeId,
       targetRole: r.targetRole,
       targetCompany: r.targetCompany,
@@ -348,13 +336,13 @@ async function renderDashboardContent(session: NonNullable<Awaited<ReturnType<ty
           </p>
         </div>
 
-        <Link
+        {latestApp ? <Link
           href={nextAction.actionHref}
           className="inline-flex items-center gap-2 bg-white text-[#0A0A0A] px-6 py-3 rounded-xl font-bold text-xs hover:bg-neutral-100 transition-all shadow-md active:scale-95 shrink-0"
         >
           <span>{nextAction.actionLabel}</span>
           <RiArrowRightSLine size={16} />
-        </Link>
+        </Link> : <div className="rounded-full bg-white p-1 text-[#0A0A0A]"><AddApplicationDrawer onboarding resumes={userResumes.map(({ id, title }) => ({ id, title }))} /></div>}
       </div>
 
       {/* Two secondary destinations keep the home page focused. */}
@@ -375,19 +363,19 @@ async function renderDashboardContent(session: NonNullable<Awaited<ReturnType<ty
         </Link>
       </div>
 
-      <details className="group rounded-3xl border border-neutral-200/70 bg-[#FAF9F6] shadow-xs [&>summary::-webkit-details-marker]:hidden">
-        <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between rounded-3xl px-5 py-4 transition hover:bg-white md:px-6">
-          <div><h2 className="text-sm font-bold">More tools</h2><p className="mt-1 text-xs text-neutral-500">Analysis, role matching, imports, projects, and recent work.</p></div>
-          <RiArrowRightSLine className="text-neutral-500 transition-transform group-open:rotate-90" size={18} />
-        </summary>
-        <div className="border-t border-neutral-200/70 px-4 pb-8 pt-6 md:px-6">
-      {/* Supporting tools stay available without competing with the primary task. */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-5 mb-12">
+      <details className="rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-xs">
+        <summary className="cursor-pointer text-sm font-bold text-[#0A0A0A] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0A0A0A]">More tools</summary>
+      <section aria-labelledby="workspace-actions-title" className="mb-12 mt-8">
+        <div className="mb-5">
+          <h2 id="workspace-actions-title" className="text-xl font-bold tracking-tight text-[#0A0A0A] md:text-2xl">Create and improve</h2>
+          <p className="mt-1 text-sm text-neutral-600">Review or import a resume, match it to a role, build a new one, or add project evidence.</p>
+        </div>
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-6">
         <div className="lg:col-span-2 h-full">
           <AnalyzeResume />
         </div>
         <div className="lg:col-span-2 h-full">
-          <TailorResume resumes={resumesWithStatus as Resume[]} />
+          <TailorResume resumes={userResumes.map(({ id, title }) => ({ id, title }))} />
         </div>
         <div className="lg:col-span-2 h-full">
           <Link 
@@ -417,15 +405,16 @@ async function renderDashboardContent(session: NonNullable<Awaited<ReturnType<ty
         <div className="lg:col-span-3 h-full">
           <ProjectAnalyzerCard />
         </div>
-      </div>
+        </div>
+      </section>
 
       {/* Resume Vault Section */}
-      <div className="mt-16">
+      <div className="mt-12">
         <ResumeVault items={vaultItems} />
       </div>
 
       {/* Recent Activity Section */}
-      <div className="mt-16">
+      <div className="mt-12">
         <div className="flex items-center gap-2 mb-6 pb-4 border-b border-neutral-200/70">
             <h2 className="text-xl md:text-2xl font-bold text-[#0A0A0A] tracking-tight">Recent Activity</h2>
         </div>
@@ -445,7 +434,6 @@ async function renderDashboardContent(session: NonNullable<Awaited<ReturnType<ty
             <InsightsFeed data={intelligenceReports} />
         )}
       </div>
-        </div>
       </details>
     </div>
   );

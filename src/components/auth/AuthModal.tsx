@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useEffect, useState, Suspense } from "react";
+import React, { useEffect, useState, Suspense, useCallback } from "react";
 import { m, AnimatePresence } from "framer-motion";
 import { AuthForm } from "./AuthForm";
+import { useDialogFocus } from "@/hooks/useDialogFocus";
 
 export function AuthModal() {
   const [isOpen, setIsOpen] = useState(false);
@@ -13,21 +14,17 @@ export function AuthModal() {
     return () => window.removeEventListener("open-auth", handleOpen);
   }, []);
 
-  const onClose = () => {
+  const onClose = useCallback(() => {
     setIsOpen(false);
-  };
+  }, []);
+  const dialogRef = useDialogFocus(isOpen, onClose);
 
-  // Prevent scrolling when modal is open and handle Escape key
+  // Prevent background scrolling while the dialog is open.
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
-      const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === "Escape") onClose();
-      };
-      window.addEventListener("keydown", handleKeyDown);
       return () => {
         document.body.style.overflow = "unset";
-        window.removeEventListener("keydown", handleKeyDown);
       };
     } else {
       document.body.style.overflow = "unset";
@@ -40,6 +37,10 @@ export function AuthModal() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 font-sans">
           {/* Backdrop */}
           <m.div
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Zebra AI account access"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

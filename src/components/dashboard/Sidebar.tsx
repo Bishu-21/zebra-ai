@@ -39,6 +39,7 @@ const NAV_ICONS: Record<string, React.ReactNode> = {
     "/dashboard/work": <RiFileTextLine size={18} />,
     "/dashboard/cover-letters": <RiArticleLine size={18} />,
     "/dashboard/portfolio": <RiBarChartGroupedLine size={18} />,
+    "/dashboard/linkedin": <RiLineChartLine size={18} />,
     "/dashboard/analytics": <RiLineChartLine size={18} />,
     "/dashboard/settings": <RiSettings4Line size={18} />,
 };

@@ -1,14 +1,9 @@
 import Razorpay from "razorpay";
 
-if (!process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID) {
-    throw new Error("NEXT_PUBLIC_RAZORPAY_KEY_ID is not defined");
-}
+export function getRazorpay(): Razorpay | null {
+    const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID?.trim();
+    const keySecret = process.env.RAZORPAY_KEY_SECRET?.trim();
+    if (!keyId || !keySecret) return null;
 
-if (!process.env.RAZORPAY_KEY_SECRET) {
-    throw new Error("RAZORPAY_KEY_SECRET is not defined");
+    return new Razorpay({ key_id: keyId, key_secret: keySecret });
 }
-
-export const razorpay = new Razorpay({
-    key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-    key_secret: process.env.RAZORPAY_KEY_SECRET,
-});

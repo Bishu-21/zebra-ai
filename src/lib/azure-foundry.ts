@@ -25,7 +25,7 @@ export const TASK_BUDGETS: Record<TaskType, TaskBudget> = {
   copilot: { maxOutputTokens: 500, reasoningEffort: "low" },
   zebu: { maxOutputTokens: 500, reasoningEffort: "low" },
   audit: { maxOutputTokens: 16_000, reasoningEffort: "medium" },
-  tailor: { maxOutputTokens: 3000, reasoningEffort: "medium" },
+  tailor: { maxOutputTokens: 6000, reasoningEffort: "low" },
   parse: { maxOutputTokens: 5000, reasoningEffort: "low" },
   "cover-letter": { maxOutputTokens: 2200, reasoningEffort: "medium" },
   "job-extraction": { maxOutputTokens: 900, reasoningEffort: "low" },

@@ -99,7 +99,7 @@ export function ProfileModal({ isOpen, onCloseAction, userName, userImage }: Pro
         try {
             const { error } = await authClient.requestPasswordReset({
                 email: session.user.email,
-                redirectTo: `${typeof window !== "undefined" ? window.location.origin : ""}/signin`,
+                redirectTo: `${window.location.origin}/reset-password`,
             });
             if (error) throw new Error(error.message);
             showToast("Password reset link sent to your email", "success");
@@ -253,7 +253,7 @@ export function ProfileModal({ isOpen, onCloseAction, userName, userImage }: Pro
 
                                             <div className="pt-4 border-t border-neutral-200/60">
                                                 <h5 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Account requests</h5>
-                                                <p className="text-xs text-neutral-500 leading-relaxed">Contact support to request account deletion while the complete retention and cascade workflow is being finalized.</p>
+                                                <p className="text-xs text-neutral-600 leading-relaxed">To request access, correction, or account deletion, {process.env.NEXT_PUBLIC_SUPPORT_EMAIL ? <>email <a className="underline" href={`mailto:${process.env.NEXT_PUBLIC_SUPPORT_EMAIL}?subject=Zebra%20AI%20privacy%20request`}>{process.env.NEXT_PUBLIC_SUPPORT_EMAIL}</a></> : "a working contact address will be published before paid launch"}. We will review any payment records that must be retained.</p>
                                             </div>
                                         </div>
                                     </m.div>

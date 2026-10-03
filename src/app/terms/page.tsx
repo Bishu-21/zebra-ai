@@ -7,6 +7,7 @@ export const metadata = {
 };
 
 export default function TermsOfServicePage() {
+    const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim();
     return (
         <div className="min-h-screen bg-[#FAFAFA]">
             <nav className="h-16 border-b border-black/5 bg-white/80 backdrop-blur-md sticky top-0 z-50 flex items-center px-8">
@@ -48,7 +49,7 @@ export default function TermsOfServicePage() {
                             <li><strong>Credit Packs:</strong> Paid packs provide the number of credits displayed at checkout. Credits are not an unlimited subscription.</li>
                             <li>Payments are processed securely via Razorpay.</li>
                             <li>Purchases are one-time charges and do not auto-renew.</li>
-                            <li>Any refund eligibility and process will be shown at purchase or provided by support in accordance with applicable law.</li>
+                            <li>See our <Link href="/refunds" className="underline">Refund Policy</Link> for how to request a review of a purchase.</li>
                         </ul>
                     </Section>
 
@@ -103,7 +104,7 @@ export default function TermsOfServicePage() {
                     </Section>
 
                     <Section title="12. Contact">
-                        <p>For questions about these Terms, contact us at: <strong>legal@zebra-ai.app</strong></p>
+                        <p>For questions about these Terms: {supportEmail ? <a href={`mailto:${supportEmail}`} className="underline">{supportEmail}</a> : "A contact address will be published before paid launch."}</p>
                     </Section>
                 </div>
 
