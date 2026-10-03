@@ -60,37 +60,24 @@ jobs:
             -H "Authorization: Bearer $VERCEL_TOKEN" \
             "https://api.vercel.com/v9/projects/zebra-ai?teamId=$VERCEL_ORG_ID" | jq -r '.id')
           test "$project_id" = "$VERCEL_PROJECT_ID" || { echo 'Vercel project must be zebra-ai'; exit 1; }
-      - name: Select Vercel target
-        shell: bash
-        run: |
-          if [[ "$DEPLOY_ENVIRONMENT" = staging ]]; then
-            echo 'VERCEL_TARGET=preview' >> "$GITHUB_ENV"
-          else
-            echo 'VERCEL_TARGET=production' >> "$GITHUB_ENV"
-          fi
-      - name: Pull target settings
-        run: vercel pull --yes --environment="$VERCEL_TARGET" --token="$VERCEL_TOKEN"
-      - name: Validate target environment
-        run: node --env-file=".vercel/.env.$VERCEL_TARGET.local" scripts/validate-deployment.mjs
-      - name: Build before changing database
-        shell: bash
-        run: |
-          if [[ "$VERCEL_TARGET" = production ]]; then
-            vercel build --prod --token="$VERCEL_TOKEN"
-          else
-            vercel build --token="$VERCEL_TOKEN"
-          fi
-      - name: Apply forward migrations and verify schema
-        run: node --env-file=".vercel/.env.$VERCEL_TARGET.local" --run db:prepare
       - name: Deploy checked revision
         id: deployment
         shell: bash
         run: |
           set -euo pipefail
-          if [[ "$VERCEL_TARGET" = production ]]; then
-            deployment_url=$(vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN")
+          build_env=(
+            --build-env "DEPLOY_ENVIRONMENT=$DEPLOY_ENVIRONMENT"
+            --build-env "APP_URL=$APP_URL"
+            --build-env "EXPECTED_DATABASE_HOST=$EXPECTED_DATABASE_HOST"
+          )
+          if [[ "$DEPLOY_ENVIRONMENT" = staging ]]; then
+            build_env+=(
+              --build-env "PRODUCTION_DATABASE_HOST=$PRODUCTION_DATABASE_HOST"
+              --build-env "PRODUCTION_APP_URL=$PRODUCTION_APP_URL"
+            )
+            deployment_url=$(vercel deploy --yes "${build_env[@]}" --token="$VERCEL_TOKEN")
           else
-            deployment_url=$(vercel deploy --prebuilt --token="$VERCEL_TOKEN")
+            deployment_url=$(vercel deploy --yes --prod "${build_env[@]}" --token="$VERCEL_TOKEN")
           fi
           [[ "$deployment_url" =~ ^https://[a-zA-Z0-9.-]+\.vercel\.app$ ]] || { echo 'Unexpected deployment URL'; exit 1; }
           echo "url=$deployment_url" >> "$GITHUB_OUTPUT"
