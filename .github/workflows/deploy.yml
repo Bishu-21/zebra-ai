@@ -102,7 +102,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          vercel alias set "$DEPLOYMENT_URL" "${APP_URL#https://}" --scope="$VERCEL_ORG_ID" --token="$VERCEL_TOKEN"
+          hostname="${APP_URL#https://}"
+          deployment_host="${DEPLOYMENT_URL#https://}"
+          payload=$(jq -n --arg alias "$hostname" '{alias: $alias}')
+          assigned_alias=$(curl --fail --silent --show-error \
+            -X POST -H "Authorization: Bearer $VERCEL_TOKEN" \
+            -H 'Content-Type: application/json' --data "$payload" \
+            "https://api.vercel.com/v2/deployments/$deployment_host/aliases?teamId=$VERCEL_ORG_ID" | jq -r '.alias')
+          test "$assigned_alias" = "$hostname" || { echo 'Unexpected staging alias response'; exit 1; }
       - name: Probe stable application origin
         env:
           BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
