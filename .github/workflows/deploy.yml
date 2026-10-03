@@ -48,6 +48,7 @@ jobs:
           if [[ "$DEPLOY_ENVIRONMENT" = staging ]]; then
             for name in PRODUCTION_DATABASE_HOST PRODUCTION_APP_URL; do
               test -n "${!name}" || { echo "Missing deployment setting: $name"; exit 1; }
+            done
           fi
       - run: npm ci
       - name: Install pinned deployment CLI
