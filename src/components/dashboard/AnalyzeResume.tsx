@@ -17,6 +17,7 @@ import { ResumeResultsModal } from "./ResumeResultsModal";
 import { ResumeAnalysisData } from "@/components/compiler/types";
 import { readApiResponse } from "@/lib/api-response";
 import { ResumeProcessingStatus } from "./ResumeProcessingStatus";
+import { loadResumeReviewOptions, type ResumeReviewOption } from "@/lib/resume-review-options";
 
 export function AnalyzeResume() {
   const [isOpen, setIsOpen] = useState(false);
@@ -29,19 +30,42 @@ export function AnalyzeResume() {
   const [activeResumeId, setActiveResumeId] = useState<string | null>(null);
   const [uploadedTitle, setUploadedTitle] = useState<string | null>(null);
   const [isResultsModalOpen, setIsResultsModalOpen] = useState(false);
+  const [savedResumes, setSavedResumes] = useState<ResumeReviewOption[]>([]);
+  const [isLoadingResumes, setIsLoadingResumes] = useState(false);
+  const [resumeListError, setResumeListError] = useState<string | null>(null);
+  const [resumeListAttempt, setResumeListAttempt] = useState(0);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
+  const openReview = React.useCallback(() => {
+    setIsLoadingResumes(true);
+    setResumeListError(null);
+    setResumeListAttempt(attempt => attempt + 1);
+    setIsOpen(true);
+  }, []);
+
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const controller = new AbortController();
+    void loadResumeReviewOptions(fetch, controller.signal)
+      .then(options => { if (!controller.signal.aborted) setSavedResumes(options); })
+      .catch(err => {
+        if (!controller.signal.aborted) setResumeListError(err instanceof Error ? err.message : "Could not load your saved resumes");
+      })
+      .finally(() => { if (!controller.signal.aborted) setIsLoadingResumes(false); });
+    return () => controller.abort();
+  }, [isOpen, resumeListAttempt]);
+
   React.useEffect(() => {
     const open = () => {
-      setIsOpen(true);
+      openReview();
       sessionStorage.removeItem("zebu:pending-tool");
     };
     window.addEventListener("zebu:open-resume_analysis", open);
     if (sessionStorage.getItem("zebu:pending-tool") === "resume_analysis") open();
     return () => window.removeEventListener("zebu:open-resume_analysis", open);
-  }, []);
+  }, [openReview]);
 
   const handleAnalysisFailure = (err: unknown) => {
     setError(err instanceof Error ? err.message : "Analysis failed");
@@ -137,7 +161,7 @@ export function AnalyzeResume() {
     <>
       {/* Launcher Card */}
       <div
-        onClick={() => setIsOpen(true)}
+        onClick={openReview}
         className="group/card relative overflow-hidden flex flex-col justify-between w-full h-full cursor-pointer transition-all p-7 bg-white border border-neutral-200/80 rounded-3xl hover:border-neutral-300 hover:shadow-xl active:scale-[0.99] group shadow-xs"
       >
         <div className="flex items-start justify-between mb-8">
@@ -198,10 +222,41 @@ export function AnalyzeResume() {
 
                   {/* Body Content */}
                   <div className="flex-grow overflow-y-auto p-6 sm:p-8 space-y-6">
+                      <div className="space-y-2">
+                          <label htmlFor="review-saved-resume" className="text-xs font-semibold text-neutral-600">Existing resume</label>
+                          <select
+                              id="review-saved-resume"
+                              value={savedResumes.some(resume => resume.id === activeResumeId) ? activeResumeId ?? "" : ""}
+                              disabled={isProcessing || isLoadingResumes || !!resumeListError}
+                              onChange={event => {
+                                  setActiveResumeId(event.target.value || null);
+                                  setUploadedTitle(null);
+                                  setContent("");
+                                  setError(null);
+                              }}
+                              className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-3 text-sm text-neutral-900 disabled:opacity-50"
+                          >
+                              <option value="">{isLoadingResumes ? "Loading your resumes..." : "Choose a saved resume"}</option>
+                              {savedResumes.map(resume => <option key={resume.id} value={resume.id}>{resume.title || "Untitled resume"}</option>)}
+                          </select>
+                          {resumeListError ? (
+                              <p role="alert" className="text-xs text-red-700">
+                                  {resumeListError} <button type="button" onClick={() => {
+                                      setIsLoadingResumes(true);
+                                      setResumeListError(null);
+                                      setResumeListAttempt(attempt => attempt + 1);
+                                  }} className="underline">Retry</button>
+                              </p>
+                          ) : !isLoadingResumes && savedResumes.length === 0 ? (
+                              <p className="text-xs text-neutral-500">No saved resumes yet. Paste or upload one below.</p>
+                          ) : (
+                              <p className="text-xs text-neutral-500">Review the saved version without uploading it again. Analysis uses one credit.</p>
+                          )}
+                      </div>
                       <div className="flex items-center justify-between">
                           <div>
                               <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Resume Content</h4>
-                              <p className="text-xs text-neutral-500 mt-0.5">Paste plain text or import a document below</p>
+                              <p className="text-xs text-neutral-500 mt-0.5">Or paste plain text or import a new document below</p>
                           </div>
                           <div>
                               <input
