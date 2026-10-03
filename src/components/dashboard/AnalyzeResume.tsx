@@ -41,6 +41,7 @@ export function AnalyzeResume() {
   const openReview = React.useCallback(() => {
     setIsLoadingResumes(true);
     setResumeListError(null);
+    setResumeListAttempt(attempt => attempt + 1);
     setIsOpen(true);
   }, []);
 
