@@ -221,9 +221,9 @@ export function EditorToolbar({
                                 <span className="text-[0.65rem] font-bold text-muted-foreground/60 uppercase tracking-widest">{saveStatus === "saving" ? "Saving" : saveStatus === "error" ? "Save failed" : saveStatus === "unsaved" ? "Unsaved" : "Saved"}</span>
                             </div>
                         )}
-                        <button onClick={handleSave} disabled={isSaving} className="h-7 px-2 sm:px-4 bg-primary hover:bg-primary-dark rounded-[var(--radius-md)] text-[10px] font-bold tracking-wide text-white transition-all flex items-center gap-1.5 disabled:opacity-40 active:scale-95">
+                        <button onClick={handleSave} disabled={isSaving} aria-label="Save resume" title="Save resume" className="h-7 shrink-0 px-2 sm:px-4 bg-primary hover:bg-primary-dark rounded-[var(--radius-md)] text-[10px] font-bold tracking-wide text-white transition-all flex items-center gap-1.5 disabled:opacity-40 active:scale-95">
                             {isSaving && !settings.autoSave ? <RiLoader4Line size={12} className="animate-spin" /> : <RiSave3Line size={12} />}
-                            <span className="hidden sm:block">{isSaving && !settings.autoSave ? "Saving..." : "Save"}</span>
+                            <span>{isSaving && !settings.autoSave ? "Saving..." : "Save"}</span>
                         </button>
                     </div>
                 </div>

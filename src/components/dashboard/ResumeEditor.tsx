@@ -405,6 +405,10 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                 ...prev,
                 content: normalizeResumeContent(response),
             }));
+            setViewMode("sheet");
+            setEditorTab("editor");
+            setActiveSection("basics");
+            setSaveStatus("unsaved");
             showToast("Sections mapped. Review them against the preserved source, then save.", "success");
         } catch (error: unknown) {
             showToast(error instanceof Error ? error.message : "AI Reconstruction failed", "error");
@@ -570,7 +574,7 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        className="bg-amber-50 border-b border-amber-200 px-4 sm:px-6 py-2.5 flex items-center gap-3"
+                        className="bg-amber-50 border-b border-amber-200 px-4 sm:px-6 py-2.5 flex flex-wrap items-center gap-3"
                     >
                         <RiCheckboxCircleFill className="text-amber-700 shrink-0" size={17} />
                         <div className="min-w-0 flex-1">
@@ -602,6 +606,13 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                     </m.div>
                 )}
             </AnimatePresence>
+
+            {!isFlatImport && getResumeSourceText(resume.content) && (
+                <details className="shrink-0 border-b border-border-subtle bg-background px-4 py-2 sm:px-6">
+                    <summary className="cursor-pointer text-xs font-semibold text-secondary">Compare with original text</summary>
+                    <pre className="mt-2 max-h-[28vh] overflow-auto whitespace-pre-wrap break-words rounded-lg bg-muted p-3 text-xs text-secondary">{getResumeSourceText(resume.content)}</pre>
+                </details>
+            )}
 
             {/* ── MAIN 3-COLUMN LAYOUT ── */}
             <EditorCanvas
