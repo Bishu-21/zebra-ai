@@ -12,6 +12,7 @@ import { useToast } from "@/components/ui/Toast";
 import { useSettings } from "@/context/SettingsContext";
 import { useDebounce } from "@/hooks/useDebounce";
 import { getResumeSourceText,normalizeResumeContent } from "@/lib/resume-content";
+import { groundResumeContent, getClaimSourceContext } from "@/lib/resume-grounding";
 import { AnimatePresence,m } from "framer-motion";
 import { useRouter,useSearchParams } from "next/navigation";
 import React,{ useCallback,useEffect,useState } from "react";
@@ -425,7 +426,29 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
         resume.content.projects.length === 0;
 
     const needsReview = resume.content._ingestionMeta?.parseStatus === "needs_review";
-    const ungroundedImportFields = resume.content._ingestionMeta?.sourceSpans?.filter((span) => !span.grounded).length ?? 0;
+    const preservedSource = getResumeSourceText(resume.content);
+    const reviewSpans = React.useMemo(() => preservedSource
+        ? groundResumeContent(resume.content, preservedSource) : [], [resume.content, preservedSource]);
+    const unsupportedFields = reviewSpans.filter(span => !span.grounded);
+    const ungroundedImportFields = new Set(unsupportedFields.map(span => span.path.replace(/\.techStack\.\d+$/, ".techStack"))).size;
+
+    const editImportField = (path: string) => {
+        const section = path.split(".")[0] as SectionId;
+        setViewMode("sheet");
+        setEditorTab("editor");
+        setActiveSection(section);
+    };
+
+    const describeImportField = (path: string) => {
+        const [section, item, field] = path.split(".");
+        const labels: Record<string, string> = { basics: "Contact and summary", experience: "Experience", education: "Education", projects: "Projects", skills: "Skills", certifications: "Certifications", name: "Full name", email: "Email", phone: "Phone", summary: "Summary", location: "Location", linkedin: "LinkedIn", portfolio: "Portfolio", company: "Company", role: "Role", period: "Dates", techStack: "Tech stack", link: "Link", highlights: "Highlights", school: "School", degree: "Degree", gpa: "Grade", category: "Category", items: "Items", title: "Title" };
+        const index = Number(item);
+        const entryName = section === "experience" ? resume.content.experience[index]?.company
+            : section === "projects" ? resume.content.projects[index]?.title
+            : section === "education" ? resume.content.education[index]?.school : "";
+        return section === "basics" ? `${labels.basics} — ${labels[item] || item}`
+            : `${labels[section] || section} ${entryName || index + 1} — ${labels[field] || field}`;
+    };
 
     const markImportReviewed = () => {
         setResume((previous) => ({
@@ -433,7 +456,7 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
             content: {
                 ...previous.content,
                 _ingestionMeta: previous.content._ingestionMeta
-                    ? { ...previous.content._ingestionMeta, parseStatus: "reviewed" }
+                    ? { ...previous.content._ingestionMeta, sourceSpans: reviewSpans, parseStatus: "reviewed" }
                     : undefined,
             },
         }));
@@ -606,6 +629,23 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                     </m.div>
                 )}
             </AnimatePresence>
+
+            {needsReview && unsupportedFields.length > 0 && (
+                <details className="shrink-0 border-b border-amber-200 bg-amber-50 px-4 py-2 sm:px-6">
+                    <summary className="cursor-pointer text-xs font-semibold text-amber-950">Review flagged fields ({ungroundedImportFields})</summary>
+                    <ul className="mt-2 max-h-[28vh] space-y-3 overflow-auto text-xs text-amber-950">
+                        {unsupportedFields.map(span => {
+                            const context = getClaimSourceContext(resume.content, span.path, preservedSource);
+                            return <li key={span.path} className="rounded-lg border border-amber-200 p-3">
+                                <p className="font-semibold">{describeImportField(span.path)}: {span.text}</p>
+                                <p className="my-1">No matching evidence found in {span.path.startsWith("experience.") || span.path.startsWith("projects.") ? "this entry" : "the source"}. Correct or remove unsupported text before approving review.</p>
+                                <details><summary className="cursor-pointer">Relevant original text</summary><pre className="mt-1 whitespace-pre-wrap break-words">{context?.text || "This entry could not be identified reliably. Compare with the complete original text below."}</pre></details>
+                                <button type="button" onClick={() => editImportField(span.path)} className="mt-2 rounded bg-amber-900 px-3 py-1 text-white">Edit {span.path.split(".")[0]}</button>
+                            </li>;
+                        })}
+                    </ul>
+                </details>
+            )}
 
             {!isFlatImport && getResumeSourceText(resume.content) && (
                 <details className="shrink-0 border-b border-border-subtle bg-background px-4 py-2 sm:px-6">
