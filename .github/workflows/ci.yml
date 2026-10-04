@@ -21,6 +21,10 @@ jobs:
       BETTER_AUTH_SECRET: ci-only-placeholder-secret-at-least-32-characters
       BETTER_AUTH_URL: http://localhost:3000
       NEXT_PUBLIC_APP_URL: http://localhost:3000
+      # Legacy payment modules require configuration during build-time imports.
+      # These are inert CI placeholders, never deployment credentials.
+      NEXT_PUBLIC_RAZORPAY_KEY_ID: rzp_test_ci_placeholder
+      RAZORPAY_KEY_SECRET: ci-only-placeholder-not-a-payment-key
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
