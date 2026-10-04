@@ -64,7 +64,12 @@ Set every required variable from `.env.example` in the hosting platform. At a
 minimum, configure the database, Better Auth URL/secret/origins, application
 URL, and all three `AZURE_FOUNDRY_*` values. Keep API keys server-only. Set
 `GEMINI_API_KEY` in production when provider failover is required. Configure
-`CHROMIUM_PACK_URL` or `CHROME_EXECUTABLE_PATH` when the host has no browser.
+`CHROMIUM_PACK_URL` for serverless deployments, using the version-matched
+official binary pack in `.env.example`. `chromium-min` does not include a browser
+binary. Local development can instead use `CHROME_EXECUTABLE_PATH`. The release
+validator requires an HTTPS pack URL without embedded credentials; verify PDF
+export after deployment, since the validator cannot prove remote download or
+browser launch succeeds. Keep the pack version aligned when updating Chromium.
 `DATABASE_POOL_MAX` defaults to 5 and is clamped to 1–10; start at 5 for a
 serverless deployment and lower it if Neon reports connection saturation.
 
