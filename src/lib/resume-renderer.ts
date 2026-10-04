@@ -1,3 +1,5 @@
+import { hasStructuredResumeData, normalizeResumeContent } from "./resume-content";
+
 interface WorkExperience {
     company?: string;
     role?: string;
@@ -29,6 +31,7 @@ interface Skill {
 }
 
 export interface ResumeRenderData {
+    _ingestionMeta?: { sourceText?: string };
     basics?: {
         name?: string;
         phone?: string;
@@ -104,6 +107,11 @@ export function generateResumeHtml(
     const allowedFonts = new Set(["Inter", "Latin Modern Roman", "STIX Two Text", "Times New Roman", "Georgia"]);
     const requestedFont = fontFamily || (template === "minimal" ? "Inter" : "Latin Modern Roman");
     const fontName = allowedFonts.has(requestedFont) ? requestedFont : "Georgia";
+    // Unmapped imports contain their document only in ingestion metadata.
+    // Prefer edited fields whenever present; never append stale source to them.
+    const sourceText = !hasStructuredResumeData(normalizeResumeContent(data))
+        ? data._ingestionMeta?.sourceText?.trim() || ""
+        : "";
 
     // Header Meta Rows (clean LaTeX format with dot separators)
     const contactRow1 = [];
@@ -366,9 +374,15 @@ export function generateResumeHtml(
             .header-meta { justify-content: flex-start; }
             .section-title { border-bottom: 1.5px solid #000; }
         ` : ''}
+        ${sourceText ? `
+            @page { margin: 14mm 18mm; }
+            body { padding: 0; }
+            .source-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+        ` : ''}
     </style>
 </head>
 <body>
+    ${sourceText ? `<div class="source-text">${escapeHtml(sourceText)}</div>` : `
     <!-- ── HEADER ── -->
     <div class="header">
         <h1>${escapeHtml(name)}</h1>
@@ -434,6 +448,7 @@ export function generateResumeHtml(
 
     <!-- Page Number -->
     <div class="page-footer">1</div>
+    `}
 </body>
 </html>`;
 }
