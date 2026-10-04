@@ -13,6 +13,7 @@ const production = {
     NEXT_PUBLIC_RAZORPAY_KEY_ID: 'rzp_live_example',
     RAZORPAY_KEY_SECRET: 'test-fixture-secret',
     RAZORPAY_WEBHOOK_SECRET: 'test-fixture-webhook',
+    CHROMIUM_PACK_URL: 'https://example.com/chromium-pack.tar',
 };
 
 test('production requires live payment keys and webhook configuration', () => {
@@ -35,7 +36,16 @@ const staging = {
     EXPECTED_DATABASE_HOST: 'localhost',
     PRODUCTION_DATABASE_HOST: 'production.example.com',
     PRODUCTION_APP_URL: 'https://example.com',
+    CHROMIUM_PACK_URL: 'https://example.com/chromium-pack.tar',
 };
+
+test('deployment requires a secure browser pack for serverless PDF export', () => {
+    for (const environment of [staging, production]) {
+        assert.throws(() => validateDeployment({ ...environment, CHROMIUM_PACK_URL: '' }), /CHROMIUM_PACK_URL/);
+        assert.throws(() => validateDeployment({ ...environment, CHROMIUM_PACK_URL: 'http://example.com/pack.tar' }), /HTTPS/);
+        assert.throws(() => validateDeployment({ ...environment, CHROMIUM_PACK_URL: 'https://user:secret@example.com/pack.tar' }), /credentials/);
+    }
+});
 
 test('staging accepts aligned origins and test payments', () => {
     assert.doesNotThrow(() => validateDeployment(staging));

@@ -19,6 +19,10 @@ export function validateDeployment(env) {
     if (env[name].replace(/\/$/, '') !== origin.origin) throw new Error(`${name} must match APP_URL`);
   }
   if (env.BETTER_AUTH_SECRET.length < 32) throw new Error('Auth secret must contain at least 32 characters');
+  if (!env.CHROMIUM_PACK_URL?.trim()) throw new Error('Deployment requires CHROMIUM_PACK_URL for PDF export');
+  const browserPack = new URL(env.CHROMIUM_PACK_URL);
+  if (browserPack.protocol !== 'https:') throw new Error('CHROMIUM_PACK_URL must use HTTPS');
+  if (browserPack.username || browserPack.password) throw new Error('CHROMIUM_PACK_URL must not contain credentials');
   if (!env.RAZORPAY_KEY_SECRET?.trim() || !env.RAZORPAY_WEBHOOK_SECRET?.trim()) {
     throw new Error('Deployment requires payment and webhook secrets');
   }
