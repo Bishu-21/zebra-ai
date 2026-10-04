@@ -31,6 +31,20 @@ Use this checklist for staging first, then repeat it for production. Never use
 
 ## 1. Verify the release
 
+### Dependency maintenance
+
+CI and deployment actions are pinned to reviewed commit SHAs for checkout
+v7.0.1 and setup-node v7.0.0, which use the supported Node.js runtime. Review
+release notes and run staging again when updating these pins.
+
+The lockfile currently retains upstream deprecations: Drizzle Kit 0.31.11
+depends on the retired `@esbuild-kit` loader, and Google's authentication
+dependency chain includes `node-domexception`. ESLint 9 is also out of support,
+but the React plugin used by the current Next.js configuration does not declare
+ESLint 10 compatibility. Keep these as unresolved maintenance items; do not
+force incompatible overrides or remove lint rules just to suppress warnings.
+Recheck upstream compatibility before upgrading, then run the full checks.
+
 ```bash
 npm ci
 npm audit --omit=dev --audit-level=high
