@@ -20,6 +20,7 @@ export function ExperienceEditor({ content, updateExperience, addExperience, rem
                         <FieldInput label="Role" value={exp.role} onChange={(v) => updateExperience(exp.id, "role", v)} placeholder="Campus Partner" />
                         <FieldInput label="Period" value={exp.period} onChange={(v) => updateExperience(exp.id, "period", v)} placeholder="Sep 2025 - Nov 2025" />
                     </div>
+                    <FieldInput label="Tech Stack" value={exp.techStack || ""} onChange={(v) => updateExperience(exp.id, "techStack", v)} placeholder="Technologies explicitly used in this role" />
                     <BulletEditor
                         highlights={exp.highlights}
                         onUpdate={(nh) => updateExperience(exp.id, "highlights", nh)}
