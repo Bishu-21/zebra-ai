@@ -135,3 +135,28 @@ Roll back application code to the previous release if runtime checks fail. The
 new database objects are additive, so leave them in place during an application
 rollback. Restore a database backup only for confirmed data corruption; do not
 attempt a destructive schema rollback during an incident.
+
+## Dependency maintenance
+
+Keep Node 24 in CI and Vercel. After changing the lockfile, use `npm ci`,
+`npm audit --omit=dev --audit-level=high`, and `npm run check`; validate the
+staging deployment before promoting feature changes.
+
+As checked on 2026-10-07, the latest stable Drizzle Kit still depends on the
+deprecated `@esbuild-kit/esm-loader` and `@esbuild-kit/core-utils` packages.
+Google's authentication dependency also reaches deprecated `node-domexception`
+through `gaxios`, `node-fetch`, and `fetch-blob`. These are upstream dependencies,
+not direct application imports. Do not alias them to `tsx` or hide npm warnings:
+their APIs differ. Recheck the parent packages when adopting supported releases.
+
+ESLint 9 is also deprecated, but the current stable React and JSX accessibility
+lint plugins do not declare ESLint 10 support. Keep the existing checks until
+their supported peer ranges allow the upgrade; do not force peer dependencies
+or remove React/accessibility rules to obtain a warning-free install.
+
+The runtime audit retains a moderate `sprintf-js` advisory through Mammoth's
+`argparse` dependency (GHSA-hp3w-g68c-fv3c). The development lint dependency chain
+retains an unpatched high `braces` advisory (GHSA-vfj7-8cjw-p6xm). The suggested
+forced fixes downgrade Mammoth or Next's ESLint configuration incompatibly.
+Record these findings separately from successful high-severity runtime gates;
+passing that gate does not mean the complete dependency tree is vulnerability-free.
