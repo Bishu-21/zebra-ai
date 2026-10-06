@@ -12,7 +12,7 @@
     "resumes:legacy-audit": "tsx scripts/audit-legacy-resumes.ts",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "NODE_ENV=test tsx --test tests/**/*.test.ts",
+    "test": "node --import tsx scripts/run-tests.mjs",
     "db:migrate": "drizzle-kit migrate",
     "db:health": "tsx scripts/db-health.ts",
     "db:prepare": "npm run db:migrate && npm run db:health",
@@ -69,7 +69,7 @@
     "dompurify": "3.4.16",
     "nanoid": "3.3.18",
     "protobufjs": "^8.0.2",
-    "sharp": "0.35.4"
+    "sharp": "0.35.5"
   },
   "allowScripts": {
     "esbuild@0.28.1": true,
