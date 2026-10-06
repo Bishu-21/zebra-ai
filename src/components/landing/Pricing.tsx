@@ -118,7 +118,7 @@ export function Pricing() {
             >
               {plan.featured && (
                 <div className="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-primary text-white text-xs font-bold uppercase tracking-wider rounded-full shadow-lg shadow-black/10">
-                  Most Popular
+                  Featured pack
                 </div>
               )}
               <div className="flex items-center justify-between mb-8 mt-2">

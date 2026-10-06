@@ -1,4 +1,35 @@
 import { z } from "zod";
+import { LINKEDIN_AUDIT_CATEGORIES, LINKEDIN_AUDIT_STATUSES, LINKEDIN_AUDIT_RUBRIC } from "@/lib/linkedin-audit-rubric";
+import { validateLinkedInProfileUrl } from "@/lib/linkedin-workflow";
+
+export const linkedinAuditSchema = z.object({
+    profileText: z.string().trim().min(100, "Paste at least 100 characters of profile text.").max(30000),
+    linkedinUrl: z.string().trim().max(250).refine(value => validateLinkedInProfileUrl(value) !== null, "Enter a LinkedIn profile URL."),
+    targetRole: z.string().trim().min(3, "Enter a target role or service.").max(120)
+        .regex(/^[\p{L}\p{N} .,&/()+\-#]+$/u, "Use a short role or service name on one line."),
+}).strict();
+
+const linkedinEvaluationSchema = z.object({
+    status: z.enum(LINKEDIN_AUDIT_STATUSES),
+    evidence: z.string(),
+    fix: z.string(),
+});
+
+export const aiLinkedInAnalysisSchema = z.object({
+    summary: z.string().min(1),
+    audit: z.record(z.string(), z.record(z.string(), linkedinEvaluationSchema)).superRefine((audit, context) => {
+        for (const category of LINKEDIN_AUDIT_CATEGORIES) {
+            const expected = LINKEDIN_AUDIT_RUBRIC.filter(item => item.category === category).map(item => item.id);
+            const actual = Object.keys(audit[category] || {});
+            if (actual.length !== expected.length || expected.some(id => !actual.includes(id))) {
+                context.addIssue({ code: "custom", message: `Incomplete ${category} audit.` });
+            }
+        }
+        if (Object.keys(audit).length !== LINKEDIN_AUDIT_CATEGORIES.length) {
+            context.addIssue({ code: "custom", message: "Unexpected audit category." });
+        }
+    }),
+});
 
 // --- Base Constants ---
 export const MAX_TITLE_LENGTH = 255;
@@ -144,7 +175,7 @@ export const saveVersionSchema = z.object({
     company: z.string().max(MAX_TITLE_LENGTH).nullish(),
     targetRole: z.string().max(MAX_TITLE_LENGTH).nullish(),
     jobDescription: z.string().max(MAX_JOB_DESC_LENGTH).nullish(),
-    content: z.string().min(1, "Content is required"),
+    content: z.string().min(1, "Content is required").optional(),
     matchScore: z.number().int().min(0).max(100).nullish(),
     feedback: z.unknown().optional(),
 });

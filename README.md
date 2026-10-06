@@ -182,7 +182,7 @@ flowchart TB
 
 ### Payment and credit grant — current flow
 
-The current implementation verifies the Razorpay checkout signature and uses a conditional transaction update to avoid granting credits twice. Finalization is initiated by the browser; there is no independent Razorpay webhook route yet.
+The current implementation creates a server-priced Razorpay order, verifies the Checkout signature against its stored order, confirms the payment is captured, and grants credits once. The signed webhook also recovers captured payments when the browser callback is lost.
 
 ```mermaid
 sequenceDiagram
@@ -202,11 +202,13 @@ sequenceDiagram
     UI->>RP: Complete checkout
     RP-->>UI: Payment ID and signature
     UI->>API: POST /api/payments/verify
-    API->>API: Verify HMAC signature
+    API->>API: Verify HMAC against stored order
+    API->>RP: Fetch captured payment status
     API->>DB: pending -> success and add credits atomically
     DB-->>API: Applied or already processed
     API-->>UI: Updated entitlement
-    Note over UI,DB: Target improvement: signed provider webhook<br/>plus reconciliation if the browser callback is lost
+    RP-->>API: Signed captured-payment webhook
+    API->>DB: Grant credits if still pending
 ```
 
 ### Recommended production target
@@ -283,7 +285,7 @@ flowchart TB
 | --- | --- | --- | --- |
 | P0 | `src/lib/rate-limit.ts` stores counters in an in-memory `Map`, so limits reset and are not shared across serverless instances. Expensive routes now require a session, validate bounded input, and apply the local limiter, but enforcement is still instance-local. | Replace the local implementation with a Redis-compatible sliding-window limiter behind the existing route boundaries. | Prevents limits from being bypassed across instances and deployments. |
 | P0 | URL analyzers resolve DNS, reject non-public destinations, revalidate the final redirect, and block unsafe subrequests, but Chromium still runs with `--no-sandbox` in the web runtime on serverless hosts. | Move browsing to a sandboxed worker with controlled egress, DNS pinning, and strict CPU, memory, and time limits. | Reduces browser-exploit, DNS-rebinding, and noisy-neighbor risk. |
-| P0 | Payment credits are finalized by `/api/payments/verify` after the browser returns from checkout; no Razorpay webhook handler or reconciliation worker exists. | Treat signed Razorpay webhooks as the source of truth. Store provider event IDs, process them idempotently, model explicit transaction states, and reconcile stale pending orders. | A closed tab or network failure should not leave a paid customer without credits. |
+| P0 | Checkout verification and the signed Razorpay webhook both grant credits idempotently, but there is no scheduled reconciliation of stale pending orders. | Add a reconciliation job for paid orders whose callback and webhook both failed, with payment-state monitoring and alerts. | A lost callback and delayed webhook should not leave a paid customer without credits. |
 | P1 | AI calls, PDF generation, URL scraping, and file parsing run synchronously inside Route Handlers. | Introduce a durable job table and queue with separate AI, document, and browser workers. Return `202 Accepted` with a job ID and expose progress through polling or server-sent events. | Avoids request timeouts and supports retries, cancellation, backpressure, and dead-letter handling. |
 | P1 | AI routes now use the Azure-first provider gateway with bounded task budgets; several routes also validate structured output and reserve/refund credits atomically. Prompt versioning, a shared operation service, and an immutable credit ledger are still missing. | Add prompt versions, idempotency keys, typed provider output, and an `AiOperationService` backed by an immutable credit ledger. | Makes retries, audits, model changes, and cost reporting consistent. |
 | P1 | The `ai_usage` table is defined but not written by the application. | Record operation, model, prompt version, token counts, latency, credit cost, idempotency key, result status, and trace ID for every AI attempt. | Enables cost attribution, abuse detection, quality analysis, and safe retries. |

@@ -89,7 +89,7 @@ export default async function PublicPortfolioPage({ params }: PortfolioPageProps
                     {targetUser?.image ? (
                         <Image
                             src={targetUser.image}
-                            alt={portfolio.title}
+                            alt={`${targetUser.name} profile photo`}
                             width={72}
                             height={72}
                             className="w-18 h-18 rounded-2xl border-2 border-white shadow-md object-cover"

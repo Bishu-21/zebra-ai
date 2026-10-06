@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { m, AnimatePresence } from "framer-motion";
 import {
     RiCloseCircleLine,
@@ -54,20 +54,74 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
     const [analysis, setAnalysis] = useState<TailorAnalysis | null>(null);
     const [availableResumes, setAvailableResumes] = useState<Resume[]>(resumes);
     const [isUploadingResume, setIsUploadingResume] = useState(false);
+    const [jobUrl, setJobUrl] = useState("");
+    const [importingJob, setImportingJob] = useState(false);
+    const [jobSource, setJobSource] = useState("");
     const fileInputRef = React.useRef<HTMLInputElement>(null);
+    const jobFileInputRef = React.useRef<HTMLInputElement>(null);
     const router = useRouter();
+
+    const importJobUrl = useCallback(async (url: string) => {
+        setImportingJob(true);
+        setError(null);
+        setJobSource("");
+        try {
+            const response = await fetch("/api/jobs/scrape", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ url }),
+            });
+            const data = await response.json();
+            if (!response.ok || !data.success) throw new Error(data.error || "Could not read this job page. Upload a PDF or paste its description.");
+            if (!data.description?.trim()) throw new Error("The page did not provide a readable job description. Upload a PDF or paste the description.");
+            setFormData(current => ({ ...current, company: data.company || "", targetRole: data.position || "", jobDescription: data.description }));
+            setAnalysis(null);
+            setJobSource(data.fieldSource === "page-metadata" ? `${url} (page text imported; check company and role)` : url);
+        } catch (cause) {
+            setError(`${cause instanceof Error ? cause.message : "Could not import this job page."} Any text already entered has been kept.`);
+        } finally {
+            setImportingJob(false);
+        }
+    }, []);
 
     React.useEffect(() => {
         const open = () => {
             setIsOpen(true);
             sessionStorage.removeItem("zebu:pending-tool");
+            const pendingUrl = sessionStorage.getItem("zebu:pending-job-url");
+            if (pendingUrl) {
+                sessionStorage.removeItem("zebu:pending-job-url");
+                setJobUrl(pendingUrl);
+                void importJobUrl(pendingUrl);
+            }
         };
         window.addEventListener("zebu:open-role_match", open);
         if (sessionStorage.getItem("zebu:pending-tool") === "role_match") open();
         return () => window.removeEventListener("zebu:open-role_match", open);
-    }, []);
+    }, [importJobUrl]);
 
-    const isBusy = loading || isUploadingResume;
+    const isBusy = loading || isUploadingResume || importingJob;
+
+    const importJobFile = async (file?: File) => {
+        if (!file || isBusy) return;
+        setImportingJob(true);
+        setError(null);
+        setJobSource("");
+        try {
+            const body = new FormData();
+            body.append("file", file);
+            const response = await fetch("/api/jobs/extract", { method: "POST", body });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Could not read the job document.");
+            setFormData(current => ({ ...current, jobDescription: data.jobDescription, company: "", targetRole: "" }));
+            setAnalysis(null);
+            setJobSource(file.name);
+        } catch (cause) {
+            setError(`${cause instanceof Error ? cause.message : "Could not read the job document."} Any text already entered has been kept.`);
+        } finally {
+            setImportingJob(false);
+            if (jobFileInputRef.current) jobFileInputRef.current.value = "";
+        }
+    };
 
     const refreshDashboard = () => {
         try {
@@ -179,13 +233,6 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
         if (savingVersion) return;
         if (!formData.resumeId || !formData.jobDescription || !analysis) return;
 
-        const baseResume = availableResumes.find(r => r.id === formData.resumeId);
-        if (!baseResume) return;
-        if (typeof baseResume.content !== "string" || !baseResume.content) {
-            showToast("The selected resume content is unavailable. Refresh and try again.", "error");
-            return;
-        }
-
         setSavingVersion(true);
         try {
             const res = await fetch("/api/resume-versions", {
@@ -197,8 +244,6 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                     company: formData.company,
                     targetRole: formData.targetRole,
                     jobDescription: formData.jobDescription,
-                    // Save an unchanged snapshot. Suggested edits remain pending human review.
-                    content: baseResume.content,
                     matchScore: analysis.matchScore,
                     feedback: analysis
                 }),
@@ -360,6 +405,18 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                                         </div>
 
                                         <div className="space-y-1.5">
+                                            <label htmlFor="role-match-job-url" className="text-xs font-semibold text-neutral-500">Job link</label>
+                                            <div className="flex flex-col gap-2 sm:flex-row">
+                                                <input id="role-match-job-url" type="url" value={jobUrl} onChange={event => setJobUrl(event.target.value)} disabled={isBusy} placeholder="https://company.com/careers/role" className="min-w-0 flex-1 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-xs outline-none focus:border-neutral-900" />
+                                                <button type="button" onClick={() => void importJobUrl(jobUrl.trim())} disabled={isBusy || !jobUrl.trim()} className="rounded-xl bg-neutral-950 px-4 py-2.5 text-xs font-semibold text-white disabled:opacity-40">{importingJob ? "Importing…" : "Import job"}</button>
+                                                <input ref={jobFileInputRef} type="file" accept=".pdf,.txt,application/pdf,text/plain" className="hidden" onChange={event => void importJobFile(event.target.files?.[0])} />
+                                                <button type="button" onClick={() => jobFileInputRef.current?.click()} disabled={isBusy} className="rounded-xl border border-neutral-200 px-4 py-2.5 text-xs font-semibold disabled:opacity-40">Upload PDF or TXT</button>
+                                            </div>
+                                            {jobSource && <p role="status" className="text-xs text-emerald-700">Imported from {jobSource}. Check the fields and description before analysis.</p>}
+                                            {importingJob && <p role="status" className="text-xs text-neutral-500">Reading the job source…</p>}
+                                        </div>
+
+                                        <div className="space-y-1.5">
                                             <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider flex items-center gap-1.5">
                                                 <RiInformationLine size={14} />
                                                 Target Job Description
@@ -391,7 +448,7 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                                                 </AnimatePresence>
 
                                                 <textarea
-                                                    placeholder="Paste the full job requirements from the recruiter..."
+                                                    placeholder="Import a job link or PDF above, or paste the description here."
                                                     className="w-full min-h-[220px] p-4 text-xs font-medium text-[#0A0A0A] focus:outline-none transition-all resize-none leading-relaxed bg-transparent placeholder:text-neutral-400"
                                                     value={formData.jobDescription}
                                                     onChange={(e) => setFormData({...formData, jobDescription: e.target.value})}
@@ -412,8 +469,8 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                                                 </div>
                                                 <button
                                                     type="button"
-                                                    onClick={handleTailor}
-                                                    disabled={loading}
+                                                    onClick={() => formData.jobDescription.trim() ? void handleTailor() : jobUrl.trim() ? void importJobUrl(jobUrl.trim()) : jobFileInputRef.current?.click()}
+                                                    disabled={isBusy}
                                                     className="px-3 py-1.5 bg-white text-red-700 border border-red-200 rounded-full font-bold text-xs hover:bg-red-100/50 transition-all flex items-center gap-1 shrink-0"
                                                 >
                                                     <RiRefreshLine size={14} />

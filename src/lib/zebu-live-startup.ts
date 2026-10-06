@@ -1,0 +1,2 @@
+export const TOKEN_REQUEST_TIMEOUT_MS = 30_000;
+export const LIVE_HANDSHAKE_TIMEOUT_MS = 25_000;

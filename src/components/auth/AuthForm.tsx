@@ -2,7 +2,9 @@
 
 import React, { useState } from "react";
 import { signIn, signUp, authClient } from "@/lib/auth-client";
+import type { SignInSocialProvider } from "@/lib/auth-providers";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
 interface AuthFormProps {
@@ -46,27 +48,37 @@ export function AuthForm({
       if (mode === "forgot") {
         const { error } = await authClient.requestPasswordReset({
           email,
-          redirectTo: `${typeof window !== "undefined" ? window.location.origin : ""}/signin`,
+          redirectTo: `${window.location.origin}/reset-password`,
         });
+        if (error?.code === "RESET_PASSWORD_DISABLED") throw new Error("Password reset email is not available yet.");
         if (error) throw new Error(error.message || "Failed to send reset link");
-        setSuccessMessage("Password reset email sent. Please check your inbox.");
+        setSuccessMessage("If this email has an account, you will receive a password reset link shortly.");
         return;
       }
 
       if (mode === "signup") {
-        const { error } = await signUp.email({
+        const { data, error } = await signUp.email({
           email,
           password,
           name,
           callbackURL: resolvedCallbackURL,
         });
         if (error) throw new Error(error.message || "Failed to sign up");
+        if (!data?.token) {
+          setSuccessMessage("Check your inbox for a verification link, then sign in. You can request another link from the sign-in form.");
+          setMode("signin");
+          return;
+        }
       } else {
         const { error } = await signIn.email({
           email,
           password,
           callbackURL: resolvedCallbackURL,
         });
+        if (error?.status === 403) {
+          setSuccessMessage("Please verify your email using the link we sent, then sign in.");
+          return;
+        }
         if (error) throw new Error(error.message || "Failed to sign in");
       }
 
@@ -83,7 +95,7 @@ export function AuthForm({
     }
   };
 
-  const handleSocialSignIn = async (provider: "google") => {
+  const handleSocialSignIn = async (provider: SignInSocialProvider) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -147,10 +159,13 @@ export function AuthForm({
       <form onSubmit={handleAuth} className="space-y-4">
         {mode === "signup" && (
           <div className="space-y-1">
-            <label className="block text-xs font-semibold text-neutral-400 uppercase tracking-wider pl-1">
+            <label htmlFor="auth-name" className="block text-xs font-semibold text-neutral-600 uppercase tracking-wider pl-1">
               Full Name
             </label>
             <input
+              id="auth-name"
+              name="name"
+              autoComplete="name"
               type="text"
               required
               value={name}
@@ -162,10 +177,13 @@ export function AuthForm({
         )}
 
         <div className="space-y-1">
-          <label className="block text-xs font-semibold text-neutral-400 uppercase tracking-wider pl-1">
+          <label htmlFor="auth-email" className="block text-xs font-semibold text-neutral-600 uppercase tracking-wider pl-1">
             Email Address
           </label>
           <input
+            id="auth-email"
+            name="email"
+            autoComplete="email"
             type="email"
             required
             value={email}
@@ -178,7 +196,7 @@ export function AuthForm({
         {mode !== "forgot" && (
           <div className="space-y-1">
             <div className="flex items-center justify-between pl-1">
-              <label className="block text-xs font-semibold text-neutral-400 uppercase tracking-wider">
+              <label htmlFor="auth-password" className="block text-xs font-semibold text-neutral-600 uppercase tracking-wider">
                 Password
               </label>
               {mode === "signin" && (
@@ -196,6 +214,9 @@ export function AuthForm({
               )}
             </div>
             <input
+              id="auth-password"
+              name="password"
+              autoComplete={mode === "signup" ? "new-password" : "current-password"}
               type="password"
               required
               value={password}
@@ -220,6 +241,11 @@ export function AuthForm({
             : "Send Reset Link"}
         </button>
       </form>
+      {mode === "signup" && (
+        <p className="mt-3 text-xs leading-5 text-neutral-600">
+          Creating an account requires your name and email to provide the service. Read our <Link href="/privacy" className="font-semibold underline">Privacy Policy</Link> and <Link href="/terms" className="font-semibold underline">Terms of Service</Link>. AI processing and payment details are explained there before you use those features.
+        </p>
+      )}
 
       {mode !== "forgot" && (
         <>

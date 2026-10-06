@@ -7,6 +7,7 @@ import { checkDistributedRateLimit } from "@/lib/rate-limit";
 import { generateAiResponse } from "@/lib/azure-foundry";
 import { isAllowedZebuRoute, zebuPlanSchema, zebuTurnSchema, type ZebuPlan } from "@/lib/zebu-contract";
 import { executeDeadlineCheck, executeQuickStats, executeSearch, executeSuggestNext, executeSummary } from "@/lib/zebu-actions";
+import { extractJobUrlFromZebuMessage } from "@/lib/zebu-job-intake";
 
 const actionVariants = [
   { type: "object", additionalProperties: false, required: ["type"], properties: { type: { const: "none" } } },
@@ -16,6 +17,7 @@ const actionVariants = [
   { type: "object", additionalProperties: false, required: ["type", "entityType", "query"], properties: { type: { const: "summarize" }, entityType: { enum: ["resume", "application", "work"] }, query: { type: "string" } } },
   { type: "object", additionalProperties: false, required: ["type"], properties: { type: { const: "quick_stats" } } },
   { type: "object", additionalProperties: false, required: ["type", "flow"], properties: { type: { const: "start_flow" }, flow: { enum: ["resume", "application", "cover_letter"] } } },
+  { type: "object", additionalProperties: false, required: ["type"], properties: { type: { const: "open_proof_flow" } } },
   { type: "object", additionalProperties: false, required: ["type", "query"], properties: { type: { const: "open_resume" }, query: { type: "string" } } },
   { type: "object", additionalProperties: false, required: ["type", "query"], properties: { type: { const: "open_application" }, query: { type: "string" } } },
   { type: "object", additionalProperties: false, required: ["type"], properties: { type: { const: "deadline_check" } } },
@@ -56,6 +58,12 @@ export async function POST(request: NextRequest) {
     const parsed = zebuTurnSchema.safeParse(await request.json().catch(() => null));
     if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid Zebu request" }, { status: 400 });
 
+    const jobUrl = extractJobUrlFromZebuMessage(parsed.data.message);
+    if (jobUrl) return NextResponse.json({
+      spokenResponse: "I’ll import this job into role matching. Review the extracted details before analysis.",
+      action: { type: "open_tool", tool: "role_match", jobUrl },
+    } satisfies ZebuPlan);
+
     const [userResumes, userApplications, legacyJobs, userWork] = await Promise.all([
       db.query.resumes.findMany({ where: eq(resumes.userId, auth.user.id), orderBy: [desc(resumes.updatedAt)], columns: { id: true, title: true, targetRole: true, updatedAt: true }, limit: 20 }),
       db.query.applications.findMany({ where: eq(applications.userId, auth.user.id), orderBy: [desc(applications.updatedAt)], columns: { id: true, company: true, position: true, status: true, deadline: true, updatedAt: true }, limit: 30 }),
@@ -64,7 +72,7 @@ export async function POST(request: NextRequest) {
     ]);
     const context = JSON.stringify({ user: { name: auth.user.name }, currentPage: parsed.data.currentPage, selectedEntity: parsed.data.currentContext, resumes: userResumes, applications: userApplications, legacyJobs, work: userWork });
     const systemPrompt = `You are Zebu, Zebra AI's concise, warm voice workspace agent. Choose at most one action.
-Use search for broad finding; open_resume/open_application when the user clearly asks to open one; summarize for a saved entity summary; quick_stats for counts; deadline_check for deadlines; suggest_next for recommendations; start_flow only to navigate to a creation screen. Use open_tool for resume analysis or role matching. Do not mutate workspace records; navigate the user to the relevant deterministic form for creation or updates.
+Use search for broad finding; open_resume/open_application when the user clearly asks to open one; summarize for a saved entity summary; quick_stats for counts; deadline_check for deadlines; suggest_next for recommendations; start_flow only to navigate to a creation screen. Use open_tool for resume analysis or role matching. Use open_proof_flow when the user wants to add evidence or a proof link to a work item or portfolio project; this opens a reviewed Zebra workflow and does not save by itself. Do not mutate workspace records; navigate the user to the relevant deterministic form for other creation or updates.
 Page mapping: home=/dashboard, applications=/dashboard/job-tracker, resumes=/dashboard/resumes, work=/dashboard/work, cover letters=/dashboard/cover-letters, portfolio=/dashboard/portfolio, analytics=/dashboard/analytics, settings=/dashboard/settings.
 Use only facts in WORKSPACE_CONTEXT and tool results. Never create, update, delete, externally submit, email, publish, spend credits, browse the public web, or navigate externally. Keep the response voice-friendly and under 120 words.
 WORKSPACE_CONTEXT=${context}`;
