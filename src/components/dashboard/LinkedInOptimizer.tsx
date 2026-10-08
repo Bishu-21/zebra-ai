@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { LinkedInAuditResults, type LinkedInAuditResult } from "./LinkedInAuditResults";
 import { LinkedInSeoChecklist } from "./LinkedInSeoChecklist";
 import { LinkedInDraftReview } from "./LinkedInDraftReview";
@@ -22,6 +22,7 @@ export function LinkedInOptimizer({ initialResult, initialAuditId, initialDrafts
   const [busy, setBusy] = useState(false);
   const [extracting, setExtracting] = useState(false);
   const [drafting, setDrafting] = useState(false);
+  const requestPending = useRef(false);
   const [error, setError] = useState("");
   const profileUrlValid = validateLinkedInProfileUrl(linkedinUrl) !== null;
 
@@ -43,7 +44,8 @@ export function LinkedInOptimizer({ initialResult, initialAuditId, initialDrafts
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (busy) return;
+    if (requestPending.current) return;
+    requestPending.current = true;
     setBusy(true);
     setError("");
     try {
@@ -59,12 +61,14 @@ export function LinkedInOptimizer({ initialResult, initialAuditId, initialDrafts
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "The audit could not be completed.");
     } finally {
+      requestPending.current = false;
       setBusy(false);
     }
   }
 
   async function createDrafts() {
-    if (!auditId || drafting) return;
+    if (!auditId || requestPending.current) return;
+    requestPending.current = true;
     setDrafting(true);
     setError("");
     try {
@@ -73,7 +77,7 @@ export function LinkedInOptimizer({ initialResult, initialAuditId, initialDrafts
       if (!response.ok) throw new Error(data.error || "Could not create profile drafts.");
       setDrafts(data.drafts);
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not create profile drafts."); }
-    finally { setDrafting(false); }
+    finally { requestPending.current = false; setDrafting(false); }
   }
 
   return <div className="space-y-8 px-5 py-8 sm:px-8">
@@ -113,7 +117,7 @@ export function LinkedInOptimizer({ initialResult, initialAuditId, initialDrafts
       <p className="text-xs text-neutral-500">{profileText.length.toLocaleString()} / 30,000 characters. Your source text is stored privately so proposals can be checked against it.</p>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-xs text-neutral-500">Visual, network, and account-only checks remain unassessed until you verify them.</p>
-        <button disabled={busy || extracting || profileText.trim().length < 100 || !profileUrlValid || targetRole.trim().length < 3} className="rounded-xl bg-neutral-950 px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50">{busy ? "Auditing…" : "Run 45-check audit · 1 credit"}</button>
+        <button disabled={busy || drafting || extracting || profileText.trim().length < 100 || !profileUrlValid || targetRole.trim().length < 3} className="rounded-xl bg-neutral-950 px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50">{busy ? "Auditing…" : "Run 45-check audit · 1 credit"}</button>
       </div>
       {error && <p role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}
     </form>
@@ -127,7 +131,7 @@ export function LinkedInOptimizer({ initialResult, initialAuditId, initialDrafts
       {auditId && !drafts && <div className="rounded-3xl border border-neutral-200 bg-white p-6">
         <h2 className="text-xl font-semibold">Turn the findings into profile edits</h2>
         <p className="mt-2 text-sm text-neutral-600">The agent will propose evidence-linked headline, About, and experience rewrites. One draft generation costs one credit; no credit is charged again when reopening saved drafts.</p>
-        <button type="button" disabled={drafting} onClick={createDrafts} className="mt-4 rounded-xl bg-neutral-950 px-5 py-3 text-sm font-semibold text-white disabled:opacity-50">{drafting ? "Drafting…" : "Create reviewable drafts · 1 credit"}</button>
+        <button type="button" disabled={busy || drafting} onClick={createDrafts} className="mt-4 rounded-xl bg-neutral-950 px-5 py-3 text-sm font-semibold text-white disabled:opacity-50">{drafting ? "Drafting…" : "Create reviewable drafts · 1 credit"}</button>
       </div>}
     </div>}
     {auditId && drafts && <LinkedInDraftReview auditId={auditId} drafts={drafts} onChange={setDrafts} />}
