@@ -17,7 +17,7 @@ export default function TermsOfServicePage() {
             </nav>
             <main className="max-w-3xl mx-auto px-6 py-16">
                 <h1 className="text-4xl font-black tracking-tight mb-2">Terms of Service</h1>
-                <p className="text-sm text-black/40 font-semibold mb-12">Last updated: April 6, 2026</p>
+                <p className="text-sm text-black/40 font-semibold mb-12">Last updated: October 24, 2026</p>
 
                 <div className="prose-zebra space-y-10">
                     <Section title="1. Acceptance of Terms">
@@ -25,12 +25,13 @@ export default function TermsOfServicePage() {
                     </Section>
 
                     <Section title="2. Description of Service">
-                        <p>Zebra AI is an AI-powered career document platform that provides:</p>
+                        <p>Zebra AI is a resume and job-application workspace that provides:</p>
                         <ul>
-                            <li>A real-time resume compiler with live preview.</li>
-                            <li>AI-assisted content generation (copilot and RAG assistant).</li>
-                            <li>Template-based resume formatting and export.</li>
-                            <li>Career analytics and job tracking tools.</li>
+                            <li>A structured resume editor with live preview.</li>
+                            <li>AI-assisted suggestions (editor copilot and chat) that remain pending until you approve them.</li>
+                            <li>PDF export of resumes and cover letters. DOCX export is not available.</li>
+                            <li>Job application tracking and account analytics.</li>
+                            <li>Optional public portfolio pages for selected work.</li>
                         </ul>
                     </Section>
 
