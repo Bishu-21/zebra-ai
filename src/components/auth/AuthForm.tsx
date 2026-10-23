@@ -124,18 +124,18 @@ export function AuthForm({
               height={24}
               className="w-6 h-6 object-contain"
             />
-            <span className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Zebra AI Access
             </span>
           </div>
-          <h2 className="text-2xl font-bold tracking-tight text-[#0A0A0A]">
+          <h2 className="text-2xl font-bold tracking-tight text-foreground">
             {mode === "signin"
               ? "Welcome back"
               : mode === "signup"
               ? "Create your account"
               : "Reset password"}
           </h2>
-          <p className="text-xs font-normal text-neutral-500 mt-1">
+          <p className="text-sm font-normal text-muted-foreground mt-1">
             {mode === "forgot"
               ? "Enter your email to receive password recovery instructions."
               : "Sign in to manage your resumes and applications."}
@@ -159,7 +159,7 @@ export function AuthForm({
       <form onSubmit={handleAuth} className="space-y-4">
         {mode === "signup" && (
           <div className="space-y-1">
-            <label htmlFor="auth-name" className="block text-xs font-semibold text-neutral-600 uppercase tracking-wider pl-1">
+            <label htmlFor="auth-name" className="block text-sm font-medium text-foreground pl-1">
               Full Name
             </label>
             <input
@@ -171,13 +171,13 @@ export function AuthForm({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="John Doe"
-              className="w-full bg-neutral-50 border border-neutral-200/80 focus:bg-white focus:border-[#0A0A0A] focus-visible:ring-2 focus-visible:ring-[#0A0A0A] rounded-full px-4 py-2.5 text-base sm:text-xs font-semibold text-[#0A0A0A] outline-none transition-all"
+              className="w-full bg-neutral-50 border border-neutral-200/80 focus:bg-white focus:border-primary focus-visible:ring-2 focus-visible:ring-primary rounded-full px-4 py-2.5 text-base font-semibold text-foreground outline-none transition-all"
             />
           </div>
         )}
 
         <div className="space-y-1">
-          <label htmlFor="auth-email" className="block text-xs font-semibold text-neutral-600 uppercase tracking-wider pl-1">
+          <label htmlFor="auth-email" className="block text-sm font-medium text-foreground pl-1">
             Email Address
           </label>
           <input
@@ -189,14 +189,14 @@ export function AuthForm({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="name@company.com"
-            className="w-full bg-neutral-50 border border-neutral-200/80 focus:bg-white focus:border-[#0A0A0A] focus-visible:ring-2 focus-visible:ring-[#0A0A0A] rounded-full px-4 py-2.5 text-base sm:text-xs font-semibold text-[#0A0A0A] outline-none transition-all"
+            className="w-full bg-neutral-50 border border-neutral-200/80 focus:bg-white focus:border-primary focus-visible:ring-2 focus-visible:ring-primary rounded-full px-4 py-2.5 text-base font-semibold text-foreground outline-none transition-all"
           />
         </div>
 
         {mode !== "forgot" && (
           <div className="space-y-1">
             <div className="flex items-center justify-between pl-1">
-              <label htmlFor="auth-password" className="block text-xs font-semibold text-neutral-600 uppercase tracking-wider">
+              <label htmlFor="auth-password" className="block text-sm font-medium text-foreground">
                 Password
               </label>
               {mode === "signin" && (
@@ -207,7 +207,7 @@ export function AuthForm({
                     setError(null);
                     setSuccessMessage(null);
                   }}
-                  className="text-[11px] text-neutral-500 hover:text-[#0A0A0A] font-medium transition-colors"
+                  className="min-h-11 text-sm text-muted-foreground hover:text-foreground font-medium transition-colors"
                 >
                   Forgot password?
                 </button>
@@ -222,7 +222,7 @@ export function AuthForm({
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full bg-neutral-50 border border-neutral-200/80 focus:bg-white focus:border-[#0A0A0A] focus-visible:ring-2 focus-visible:ring-[#0A0A0A] rounded-full px-4 py-2.5 text-base sm:text-xs font-semibold text-[#0A0A0A] outline-none transition-all"
+              className="w-full bg-neutral-50 border border-neutral-200/80 focus:bg-white focus:border-primary focus-visible:ring-2 focus-visible:ring-primary rounded-full px-4 py-2.5 text-base font-semibold text-foreground outline-none transition-all"
             />
           </div>
         )}
@@ -230,7 +230,7 @@ export function AuthForm({
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full py-3 bg-[#0A0A0A] text-white rounded-full text-xs font-bold shadow-2xs hover:bg-neutral-800 active:scale-95 transition-all disabled:opacity-40"
+          className="w-full min-h-11 py-3 bg-primary text-white rounded-full text-sm font-semibold shadow-sm hover:bg-neutral-800 active:scale-95 transition-all disabled:opacity-40"
         >
           {isLoading
             ? "Processing..."
@@ -255,7 +255,7 @@ export function AuthForm({
               <div className="w-full border-t border-neutral-200/60" />
             </div>
             <div className="relative flex justify-center text-[10px] uppercase">
-              <span className="bg-white px-3 text-neutral-400 font-semibold tracking-wider">
+              <span className="bg-white px-3 text-muted-foreground font-semibold tracking-wider">
                 Or
               </span>
             </div>
@@ -266,7 +266,7 @@ export function AuthForm({
             type="button"
             onClick={() => handleSocialSignIn("google")}
             disabled={isLoading}
-            className="w-full py-3 bg-white border border-neutral-200/80 rounded-full text-xs font-bold text-[#0A0A0A] hover:bg-neutral-100 transition-all flex items-center justify-center gap-2.5 shadow-2xs active:scale-95 disabled:opacity-40"
+            className="w-full min-h-11 py-3 bg-white border border-neutral-200/80 rounded-full text-sm font-semibold text-foreground hover:bg-neutral-100 transition-all flex items-center justify-center gap-2.5 shadow-sm active:scale-95 disabled:opacity-40"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -281,7 +281,7 @@ export function AuthForm({
 
       {/* Mode Switcher */}
       <div className="mt-6 text-center pt-4 border-t border-neutral-200/60">
-        <p className="text-xs font-normal text-neutral-500">
+        <p className="text-sm font-normal text-muted-foreground">
           {mode === "signin" && (
             <>
               New to Zebra AI?{" "}
@@ -292,7 +292,7 @@ export function AuthForm({
                   setError(null);
                   setSuccessMessage(null);
                 }}
-                className="text-[#0A0A0A] font-bold hover:underline ml-1 transition-colors"
+                className="text-foreground font-bold hover:underline ml-1 transition-colors"
               >
                 Create an account
               </button>
@@ -308,7 +308,7 @@ export function AuthForm({
                   setError(null);
                   setSuccessMessage(null);
                 }}
-                className="text-[#0A0A0A] font-bold hover:underline ml-1 transition-colors"
+                className="text-foreground font-bold hover:underline ml-1 transition-colors"
               >
                 Sign In
               </button>
@@ -324,7 +324,7 @@ export function AuthForm({
                   setError(null);
                   setSuccessMessage(null);
                 }}
-                className="text-[#0A0A0A] font-bold hover:underline ml-1 transition-colors"
+                className="text-foreground font-bold hover:underline ml-1 transition-colors"
               >
                 Back to Sign In
               </button>
