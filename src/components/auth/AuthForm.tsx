@@ -125,7 +125,7 @@ export function AuthForm({
               className="w-6 h-6 object-contain"
             />
             <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Zebra AI Access
+              Zebra AI
             </span>
           </div>
           <h2 className="text-2xl font-bold tracking-tight text-foreground">
