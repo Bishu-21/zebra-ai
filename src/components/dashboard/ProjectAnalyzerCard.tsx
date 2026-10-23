@@ -60,7 +60,7 @@ export function ProjectAnalyzerCard() {
                 <div className="mb-12">
                     <h2 className="text-4xl font-bold tracking-tighter text-black mb-4">Project Proof Analyzer</h2>
                     <p className="text-black/50 text-sm max-w-xl leading-relaxed">
-                        Provide a link to your GitHub repository or live demo. We&apos;ll analyze the technical depth, quality, and evidence to generate high-impact resume bullet points.
+                        Add a GitHub repository or live demo link to review the project and draft resume bullets grounded in its evidence.
                     </p>
                 </div>
                 
