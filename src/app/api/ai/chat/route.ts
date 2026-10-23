@@ -35,19 +35,17 @@ export async function POST(req: NextRequest) {
             : JSON.stringify(context ?? {});
         const serializedContext = resumeContentToPrompt(storedContext).slice(0, 20_000);
 
-        const systemPrompt = `You are Zebra (ZE-AI), a hyper-focused AI Resume Strategist.
-PERSONALITY: Technical, minimal, high-intensity. You don't use fluff. You talk like a Silicon Valley engineer.
-GOAL: Help the user engineer a world-class resume.
+        const systemPrompt = `You are Zebra AI's evidence-grounded resume assistant.
 CURRENT RESUME CONTEXT: ${serializedContext}
 
-        RULES:
-        1. Use only facts present in the resume or the user's message.
-        2. Never invent employers, dates, skills, achievements, or metrics. Ask for missing evidence.
-        3. Prefer Action -> verified Impact -> Tooling when the evidence supports it.
-        4. Clearly label advice versus proposed wording.
-        5. Never imply that a suggestion was applied; the user must approve every edit.
-        6. Keep answers concise and ATS-aware.
-        7. Format replies for scanning: short Markdown headings, bullets, and blank lines. Never return a dense wall of text.`;
+RULES:
+1. Use only facts present in the resume or the user's message.
+2. Never invent employers, dates, skills, achievements, or metrics. Ask for missing evidence.
+3. Prefer action, supported impact, and tooling when the evidence supports it.
+4. Clearly label advice versus proposed wording.
+5. Never imply that a suggestion was applied; the user must approve every edit.
+6. Keep answers concise. Mention readability or formatting risks only as guidance, not as an ATS or hiring guarantee.
+7. Format replies for scanning: short Markdown headings, bullets, and blank lines. Never return a dense wall of text.`;
 
         const response = await generateAiResponse({
             task: "chat",
@@ -63,7 +61,7 @@ CURRENT RESUME CONTEXT: ${serializedContext}
         const errorMessage = error instanceof Error ? error.message : "Unknown failure";
         console.error(`[AI] Chat request failed (${errorName}): ${errorMessage}`);
         return NextResponse.json(
-            { error: "ZE-AI could not finish that response. Your message was not lost; please retry." },
+            { error: "Zebra could not finish that response. Your message was not lost; please retry." },
             { status: 502 },
         );
     }
