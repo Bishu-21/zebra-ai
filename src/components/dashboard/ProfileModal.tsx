@@ -120,10 +120,7 @@ export function ProfileModal({ isOpen, onCloseAction, userName, userImage }: Pro
             {isOpen && (
                 <div className="fixed inset-0 z-[150] overflow-hidden">
                     <m.div
-                        ref={dialogRef}
-                        role="dialog"
-                        aria-modal="true"
-                        aria-labelledby="account-center-title"
+                        aria-hidden="true"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
@@ -132,6 +129,10 @@ export function ProfileModal({ isOpen, onCloseAction, userName, userImage }: Pro
                     />
 
                     <m.div
+                        ref={dialogRef}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="account-center-title"
                         initial={{ x: "100%" }}
                         animate={{ x: 0 }}
                         exit={{ x: "100%" }}
