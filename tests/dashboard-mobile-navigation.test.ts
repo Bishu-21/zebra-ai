@@ -7,6 +7,12 @@ const headerSource = readFileSync("src/components/dashboard/Header.tsx", "utf8")
 const sidebarSource = readFileSync("src/components/dashboard/Sidebar.tsx", "utf8");
 
 describe("Dashboard mobile navigation regressions", () => {
+    test("closed mobile navigation is inert and open navigation contains focus", () => {
+        assert.match(sidebarSource, /inert=\{isMobile && !isDrawerOpen \? true : undefined\}/);
+        assert.match(sidebarSource, /useDialogFocus\(isMobile && isDrawerOpen, closeDrawer\)/);
+        assert.match(sidebarSource, /ref=\{navigationRef\}/);
+    });
+
     test("drawer callbacks remain stable when open state changes", () => {
         assert.match(shellSource, /const openNav = useCallback\(\(\) => setIsNavOpen\(true\), \[\]\)/);
         assert.match(shellSource, /const closeNav = useCallback\(\(\) => setIsNavOpen\(false\), \[\]\)/);

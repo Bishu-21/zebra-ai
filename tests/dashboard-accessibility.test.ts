@@ -3,6 +3,18 @@ import { readFileSync } from "node:fs";
 import { describe, test } from "node:test";
 
 describe("Dashboard overlay accessibility", () => {
+    test("profile dialog focus target is the content panel", () => {
+        const source = readFileSync("src/components/dashboard/ProfileModal.tsx", "utf8");
+        assert.match(source, /<m\.div\s+ref=\{dialogRef\}[^>]*className="absolute top-0 right-0/);
+    });
+
+    test("sidebar profile opens with a native button separate from sign-out", () => {
+        const source = readFileSync("src/components/dashboard/Sidebar.tsx", "utf8");
+        assert.match(source, /<button\b[^>]*onClick=\{onOpenProfileAction\}[^>]*>/);
+        const profileButton = source.slice(source.indexOf("onClick={onOpenProfileAction}"), source.indexOf("</button>", source.indexOf("onClick={onOpenProfileAction}")));
+        assert.doesNotMatch(profileButton, /handleSignOut/);
+    });
+
     test("profile control is a named keyboard-native button", () => {
         const source = readFileSync("src/components/dashboard/Header.tsx", "utf8");
         assert.match(source, /<button[\s\S]*?aria-label=\{`Open profile/);
