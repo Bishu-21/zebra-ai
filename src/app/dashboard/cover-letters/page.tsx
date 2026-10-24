@@ -2,7 +2,7 @@ import React, { Suspense } from "react";
 import { getSafeSession } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { resumes as resumesTable, coverLetters as coverLettersTable } from "@/lib/schema";
-import { and, eq, desc, lt, or } from "drizzle-orm";
+import { and, eq, desc, inArray, lt, or } from "drizzle-orm";
 import Link from "next/link";
 import { GenerateCoverLetter } from "@/components/dashboard/GenerateCoverLetter";
 import {
@@ -13,6 +13,7 @@ import {
 import { CoverLetterActions } from "@/components/dashboard/CoverLetterActions";
 import { DashboardPage, DashboardPageHeader } from "@/components/dashboard/DashboardPage";
 import { decodeCursor, paginateRows } from "@/lib/pagination";
+import { candidateNameFromStoredResume, missingReferencedResumeIds } from "@/lib/cover-letter-document";
 
 function formatTimeAgo(date: Date) {
   const now = new Date();
@@ -58,13 +59,13 @@ async function CoverLettersContent({ userId, cursor: rawCursor }: { userId: stri
   const cursor = decodeCursor(rawCursor);
   const [userResumes, letterRows] = await Promise.all([
     db.query.resumes.findMany({
-      columns: { id: true, title: true },
+      columns: { id: true, title: true, content: true },
       where: eq(resumesTable.userId, userId),
       orderBy: [desc(resumesTable.updatedAt)],
       limit: 50,
     }),
     db.query.coverLetters.findMany({
-      columns: { id: true, title: true, content: true, createdAt: true },
+      columns: { id: true, title: true, content: true, createdAt: true, resumeId: true },
       where: and(
         eq(coverLettersTable.userId, userId),
         cursor ? or(
@@ -77,14 +78,33 @@ async function CoverLettersContent({ userId, cursor: rawCursor }: { userId: stri
     }),
   ]);
   const letterPage = paginateRows(letterRows, 24, letter => ({ id: letter.id, timestamp: letter.createdAt }));
+  const resumeOptions = userResumes.map((resume) => ({
+    id: resume.id,
+    title: resume.title,
+    candidateName: candidateNameFromStoredResume(resume.content),
+  }));
+  const candidateNameByResumeId = new Map(resumeOptions.map((resume) => [resume.id, resume.candidateName]));
   const letters = letterPage.items;
+  const missingResumeIds = missingReferencedResumeIds(
+    letters.map((letter) => letter.resumeId),
+    userResumes.map((resume) => resume.id),
+  );
+  if (missingResumeIds.length > 0) {
+    const referencedResumes = await db.query.resumes.findMany({
+      columns: { id: true, content: true },
+      where: and(eq(resumesTable.userId, userId), inArray(resumesTable.id, missingResumeIds)),
+    });
+    for (const resume of referencedResumes) {
+      candidateNameByResumeId.set(resume.id, candidateNameFromStoredResume(resume.content));
+    }
+  }
 
   return (
     <DashboardPage>
       <DashboardPageHeader
         title="Cover Letters"
         description="Create evidence-grounded drafts for a specific role, then review and edit every claim before use."
-        actions={<GenerateCoverLetter resumes={userResumes} />}
+        actions={<GenerateCoverLetter resumes={resumeOptions} />}
       />
 
       {letters.length === 0 ? (
@@ -96,7 +116,7 @@ async function CoverLettersContent({ userId, cursor: rawCursor }: { userId: stri
           <p className="text-sm text-muted-foreground mb-6 max-w-md leading-6">
             Generate your first professional cover letter by matching your resume to a job description.
           </p>
-          <GenerateCoverLetter resumes={userResumes} />
+          <GenerateCoverLetter resumes={resumeOptions} />
         </div>
       ) : (
         <div className="space-y-6">
@@ -130,7 +150,9 @@ async function CoverLettersContent({ userId, cursor: rawCursor }: { userId: stri
                     id: letter.id,
                     title: letter.title,
                     content: letter.content,
-                    createdAt: letter.createdAt
+                    createdAt: letter.createdAt,
+                    resumeId: letter.resumeId,
+                    candidateName: letter.resumeId ? candidateNameByResumeId.get(letter.resumeId) : undefined,
                 }} />
             </div>
           ))}

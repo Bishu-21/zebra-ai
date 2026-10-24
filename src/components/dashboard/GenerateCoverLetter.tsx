@@ -15,11 +15,14 @@ import {
 } from "react-icons/ri";
 import { useRouter } from "next/navigation";
 import { m, AnimatePresence } from "framer-motion";
-import { sanitizeHtml } from "@/lib/utils";
 import { useHydrated } from "@/hooks/useHydrated";
 import { useDialogFocus } from "@/hooks/useDialogFocus";
+import { formatCoverLetterDate } from "@/lib/cover-letter-document";
+import { CoverLetterDocument } from "@/components/dashboard/CoverLetterDocument";
 
-export function GenerateCoverLetter({ resumes }: { resumes: { id: string; title: string }[] }) {
+type ResumeOption = { id: string; title: string; candidateName?: string };
+
+export function GenerateCoverLetter({ resumes }: { resumes: ResumeOption[] }) {
     const [isOpen, setIsOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
@@ -62,7 +65,15 @@ export function GenerateCoverLetter({ resumes }: { resumes: { id: string; title:
             const response = await fetch(`/api/resumes?${query.toString()}`);
             const data = await response.json();
             if (!response.ok) throw new Error(data.error || "Could not load resumes");
-            setResumeOptions((current) => cursor ? [...current, ...(data.resumes || [])] : (data.resumes || []));
+            setResumeOptions((current) => {
+                const names = new Map(current.map((resume) => [resume.id, resume.candidateName]));
+                const incoming = ((data.resumes || []) as ResumeOption[]).map((resume) => ({
+                    id: resume.id,
+                    title: resume.title,
+                    candidateName: resume.candidateName || names.get(resume.id),
+                }));
+                return cursor ? [...current, ...incoming] : incoming;
+            });
             setResumeCursor(data.page?.nextCursor ?? null);
         } catch (cause) {
             setError(cause instanceof Error ? cause.message : "Could not load resumes");
@@ -177,7 +188,8 @@ export function GenerateCoverLetter({ resumes }: { resumes: { id: string; title:
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     content: generatedContent,
-                    title: formData.title || "Cover Letter"
+                    title: formData.title || "Cover Letter",
+                    resumeId: formData.resumeId || undefined,
                 }),
             });
 
@@ -200,35 +212,7 @@ export function GenerateCoverLetter({ resumes }: { resumes: { id: string; title:
         }
     };
 
-    const renderFormattedContent = (content: string) => {
-        if (!content) return null;
-        
-        return content.split('\n').map((line, i) => {
-            const trimmed = line.trim();
-            if (!trimmed) return <div key={i} className="h-4 sm:h-6" />;
-            
-            const formatted = trimmed
-                .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-neutral-950">$1</strong>')
-                .replace(/\*(.*?)\*/g, '<strong class="font-bold text-neutral-950">$1</strong>');
-
-            if (trimmed.startsWith('-') || trimmed.startsWith('•')) {
-                return (
-                    <li key={i} className="ml-4 sm:ml-6 mb-3 sm:mb-4 list-none relative flex gap-3 sm:gap-4 text-neutral-900">
-                        <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 mt-2 flex-shrink-0" />
-                        <span dangerouslySetInnerHTML={{ __html: sanitizeHtml(formatted.replace(/^[•-]\s*/, '')) }} />
-                    </li>
-                );
-            }
-
-            return (
-                <p 
-                    key={i} 
-                    className="mb-4 sm:mb-6 text-left sm:text-justify leading-relaxed text-neutral-900"
-                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(formatted) }}
-                />
-            );
-        });
-    };
+    const selectedCandidateName = resumeOptions.find((resume) => resume.id === formData.resumeId)?.candidateName;
 
     return (
         <>
@@ -507,37 +491,12 @@ export function GenerateCoverLetter({ resumes }: { resumes: { id: string; title:
 
                                         <div className="bg-neutral-100 rounded-2xl p-2 sm:p-4 md:p-6 border border-neutral-200 overflow-x-auto">
                                             {/* Letter Preview Design */}
-                                            <div 
-                                                id="preview-letter-content"
-                                                className="bg-white p-6 sm:p-10 md:p-16 rounded-xl shadow-xs border border-neutral-200 text-neutral-900 w-full max-w-[210mm] mx-auto min-h-[500px] relative"
-                                                style={{ fontFamily: "'STIX Two Text', Georgia, serif" }}
-                                            >
-                                                <div className="mb-10 sm:mb-14 flex justify-between items-start gap-4">
-                                                    <div className="font-sans">
-                                                        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-neutral-950 uppercase leading-none">Draft</h1>
-                                                        <p className="text-xs font-semibold text-neutral-700 uppercase tracking-widest mt-2">Personalized Cover Letter</p>
-                                                        <div className="h-0.5 w-16 bg-neutral-950 mt-4" />
-                                                    </div>
-                                                    <div className="text-right font-sans shrink-0">
-                                                        <p className="text-xs uppercase tracking-wider font-semibold text-neutral-500 mb-1">Zebra AI Generated</p>
-                                                        <p className="text-xs sm:text-sm font-semibold text-neutral-800">
-                                                            {isMounted ? new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : "---"}
-                                                        </p>
-                                                    </div>
-                                                </div>
-
-                                                <div className="text-sm sm:text-base leading-relaxed font-normal text-left sm:text-justify text-neutral-900">
-                                                    {renderFormattedContent(generatedContent || "")}
-                                                </div>
-                                                
-                                                <div className="mt-12 sm:mt-16 pt-8 border-t border-neutral-200 flex justify-between items-end font-sans">
-                                                    <div>
-                                                        <p className="text-sm sm:text-base italic text-neutral-700 mb-6 font-serif">Sincerely,</p>
-                                                        <div className="w-40 h-px bg-neutral-300 mb-3" />
-                                                        <p className="text-lg sm:text-xl font-bold text-neutral-950 tracking-tight">Applicant Name</p>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                            <CoverLetterDocument
+                                                content={generatedContent || ""}
+                                                candidateName={selectedCandidateName}
+                                                dateLabel={isMounted ? formatCoverLetterDate() : null}
+                                                className="p-6 sm:p-10 md:p-16 rounded-xl shadow-xs border border-neutral-200 w-full max-w-[210mm] mx-auto min-h-[500px]"
+                                            />
                                         </div>
                                     </div>
                                 )}
