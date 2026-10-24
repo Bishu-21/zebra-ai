@@ -12,6 +12,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import Image from "next/image";
 import { PublicMobileNav } from "@/components/landing/PublicMobileNav";
+import { BrandIntro } from "@/components/landing/BrandIntro";
 
 export default function Home() {
   const faqPageSchema: WithContext<FAQPage> = {
@@ -31,6 +32,7 @@ export default function Home() {
     <div className="flex flex-col min-h-screen bg-background text-foreground selection:bg-primary/20 selection:text-primary font-sans scroll-smooth">
       <JsonLd schema={faqPageSchema} />
       <AuthModal />
+      <BrandIntro />
       <div className="grain-overlay" />
 
       {/* TopNavBar */}
@@ -114,6 +116,8 @@ export default function Home() {
               <span className="text-xs font-black uppercase tracking-widest text-accent-gray">Legal</span>
               <Link className="text-accent-dark hover:text-primary text-sm font-bold transition-colors duration-200" href="/terms">Terms</Link>
               <Link className="text-accent-dark hover:text-primary text-sm font-bold transition-colors duration-200" href="/privacy">Privacy</Link>
+              <Link className="text-accent-dark hover:text-primary text-sm font-bold transition-colors duration-200" href="/cookies">Cookies</Link>
+              <Link className="text-accent-dark hover:text-primary text-sm font-bold transition-colors duration-200" href="/refunds">Refunds</Link>
             </div>
           </div>
         </div>

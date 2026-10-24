@@ -45,6 +45,12 @@ export const DASHBOARD_NAV_ITEMS: NavigationItem[] = [
     match: (pathname: string) => pathname.startsWith("/dashboard/portfolio"),
   },
   {
+    href: "/dashboard/linkedin",
+    label: "LinkedIn Optimizer",
+    breadcrumb: "LinkedIn Optimizer",
+    match: (pathname: string) => pathname.startsWith("/dashboard/linkedin"),
+  },
+  {
     href: "/dashboard/analytics",
     label: "Analytics",
     breadcrumb: "Analytics",

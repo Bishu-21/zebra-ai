@@ -118,7 +118,7 @@ export function useZebuWakeWord(options: { paused: boolean; onWake: () => void }
         setState("error");
         void readMicrophonePermission().then((permission) => {
           setError(permission === "granted"
-            ? "Microphone access is allowed, but Chrome’s wake-word speech service did not start. Tap “Hey Zebu” to retry."
+            ? "Microphone access is allowed, but Chrome’s wake-word speech service did not start. Tap the wake-word button to retry."
             : "Chrome is blocking microphone access for wake listening. Allow it in Site settings, then retry.");
         });
         return;

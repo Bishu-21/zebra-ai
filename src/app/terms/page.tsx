@@ -7,6 +7,7 @@ export const metadata = {
 };
 
 export default function TermsOfServicePage() {
+    const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim();
     return (
         <div className="min-h-screen bg-[#FAFAFA]">
             <nav className="h-16 border-b border-black/5 bg-white/80 backdrop-blur-md sticky top-0 z-50 flex items-center px-8">
@@ -16,7 +17,7 @@ export default function TermsOfServicePage() {
             </nav>
             <main className="max-w-3xl mx-auto px-6 py-16">
                 <h1 className="text-4xl font-black tracking-tight mb-2">Terms of Service</h1>
-                <p className="text-sm text-black/40 font-semibold mb-12">Last updated: April 6, 2026</p>
+                <p className="text-sm text-black/40 font-semibold mb-12">Last updated: October 24, 2026</p>
 
                 <div className="prose-zebra space-y-10">
                     <Section title="1. Acceptance of Terms">
@@ -24,12 +25,13 @@ export default function TermsOfServicePage() {
                     </Section>
 
                     <Section title="2. Description of Service">
-                        <p>Zebra AI is an AI-powered career document platform that provides:</p>
+                        <p>Zebra AI is a resume and job-application workspace that provides:</p>
                         <ul>
-                            <li>A real-time resume compiler with live preview.</li>
-                            <li>AI-assisted content generation (copilot and RAG assistant).</li>
-                            <li>Template-based resume formatting and export.</li>
-                            <li>Career analytics and job tracking tools.</li>
+                            <li>A structured resume editor with live preview.</li>
+                            <li>AI-assisted suggestions (editor copilot and chat) that remain pending until you approve them.</li>
+                            <li>PDF export of resumes and cover letters. DOCX export is not available.</li>
+                            <li>Job application tracking and account analytics.</li>
+                            <li>Optional public portfolio pages for selected work.</li>
                         </ul>
                     </Section>
 
@@ -48,7 +50,7 @@ export default function TermsOfServicePage() {
                             <li><strong>Credit Packs:</strong> Paid packs provide the number of credits displayed at checkout. Credits are not an unlimited subscription.</li>
                             <li>Payments are processed securely via Razorpay.</li>
                             <li>Purchases are one-time charges and do not auto-renew.</li>
-                            <li>Any refund eligibility and process will be shown at purchase or provided by support in accordance with applicable law.</li>
+                            <li>See our <Link href="/refunds" className="underline">Refund Policy</Link> for how to request a review of a purchase.</li>
                         </ul>
                     </Section>
 
@@ -103,7 +105,7 @@ export default function TermsOfServicePage() {
                     </Section>
 
                     <Section title="12. Contact">
-                        <p>For questions about these Terms, contact us at: <strong>legal@zebra-ai.app</strong></p>
+                        <p>For questions about these Terms: {supportEmail ? <a href={`mailto:${supportEmail}`} className="underline">{supportEmail}</a> : "A contact address will be published before paid launch."}</p>
                     </Section>
                 </div>
 

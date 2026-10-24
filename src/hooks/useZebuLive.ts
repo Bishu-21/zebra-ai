@@ -5,10 +5,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { ZebuDisplayCard, ZebuPlan } from "@/lib/zebu-contract";
 import { withZebuTimeout } from "@/lib/zebu-live-timeout";
 import { describeMicrophoneCaptureFailure, isMicrophonePermissionFailure } from "@/lib/zebu-microphone-error";
+import { parseZebuWorkspaceCommand, type ZebuWorkspaceCommand } from "@/lib/zebu-local-intent";
+import { LIVE_HANDSHAKE_TIMEOUT_MS, TOKEN_REQUEST_TIMEOUT_MS } from "@/lib/zebu-live-startup";
 
 export type ZebuLiveState = "idle" | "connecting" | "listening" | "processing" | "speaking" | "error";
 export type ZebuMicrophonePermission = "unknown" | "granted" | "prompt" | "denied" | "unsupported";
-type LiveUiAction = Extract<ZebuPlan["action"], { type: "navigate" | "open_tool" }>;
+type LiveUiAction = Extract<ZebuPlan["action"], { type: "navigate" | "open_tool" | "start_flow" | "open_proof_flow" }>;
 type TokenResponse = { token: string; model: string; config: Record<string, unknown>; expiresAt: number; error?: string };
 type ToolResult = { result: Record<string, unknown>; cards?: ZebuDisplayCard[]; uiAction?: LiveUiAction; error?: string };
 type CaptureNodes = { source: MediaStreamAudioSourceNode; processor: AudioWorkletNode; analyser: AnalyserNode; mute: GainNode };
@@ -16,8 +18,6 @@ type FailureStage = "capture" | "audio" | "worklet" | "session";
 
 const EPHEMERAL_TOKEN_WARNING = "Warning: Ephemeral token support is experimental and may change in future versions.";
 const MICROPHONE_START_TIMEOUT_MS = 20_000;
-const TOKEN_REQUEST_TIMEOUT_MS = 12_000;
-const LIVE_HANDSHAKE_TIMEOUT_MS = 15_000;
 const TOOL_REQUEST_TIMEOUT_MS = 30_000;
 const TURN_COMPLETION_TIMEOUT_MS = 40_000;
 
@@ -75,8 +75,9 @@ function describeCaptureFailure(caught: unknown, stage: FailureStage, permission
   return "Microphone permission is allowed, but Zebu’s audio processor did not load. Refresh the dashboard and retry.";
 }
 
-export function useZebuLive(options: { currentPage: string; currentContext?: string; onAction: (action: LiveUiAction) => void; onCards: (cards: ZebuDisplayCard[]) => void }) {
+export function useZebuLive(options: { currentPage: string; currentContext?: string; onAction: (action: LiveUiAction) => void; onCards: (cards: ZebuDisplayCard[]) => void; onWorkspaceCommand?: (command: ZebuWorkspaceCommand, transcript: string) => void }) {
   const sessionRef = useRef<Session | null>(null);
+  const resumeHandleRef = useRef<string | null>(null);
   const sessionPromiseRef = useRef<Promise<Session> | null>(null);
   const capturePromiseRef = useRef<Promise<void> | null>(null);
   const captureAttemptRef = useRef(0);
@@ -88,6 +89,11 @@ export function useZebuLive(options: { currentPage: string; currentContext?: str
   const sourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set());
   const nextPlaybackTimeRef = useRef(0);
   const turnCompleteRef = useRef(false);
+  const currentUtteranceRef = useRef("");
+  const localCommandTimerRef = useRef<number | null>(null);
+  const lastLocalCommandRef = useRef<{ value: string; time: number } | null>(null);
+  const lastTurnCompleteAtRef = useRef(0);
+  const suppressModelOutputRef = useRef(false);
   const closingRef = useRef(false);
   const lifecycleRef = useRef(0);
   const connectionAttemptRef = useRef(0);
@@ -223,6 +229,7 @@ export function useZebuLive(options: { currentPage: string; currentContext?: str
           timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           currentPage: optionsRef.current.currentPage,
           currentContext: optionsRef.current.currentContext,
+          resumeHandle: resumeHandleRef.current ?? undefined,
         }),
         signal: tokenAbort.signal,
       }), TOKEN_REQUEST_TIMEOUT_MS, "Zebu's authorization request timed out. Check your connection and retry.", {
@@ -235,6 +242,18 @@ export function useZebuLive(options: { currentPage: string; currentContext?: str
       let rejectHandshake: (error: Error) => void = () => undefined;
       let sessionReady = false;
       const handshakeFailure = new Promise<never>((_, reject) => { rejectHandshake = reject; });
+      const handleWorkspaceCommand = (transcript: string) => {
+        const command = parseZebuWorkspaceCommand(transcript);
+        if (!command || !optionsRef.current.onWorkspaceCommand) return;
+        const value = JSON.stringify(command);
+        const previous = lastLocalCommandRef.current;
+        if (previous?.value === value && Date.now() - previous.time < 3_000) return;
+        lastLocalCommandRef.current = { value, time: Date.now() };
+        suppressModelOutputRef.current = true;
+        stopPlayback();
+        setResponseText("");
+        optionsRef.current.onWorkspaceCommand(command, transcript);
+      };
       const sdkConnection = connectWithoutKnownSdkNoise(() => ai.live.connect({
         model: tokenData.model,
         config: tokenData.config,
@@ -246,6 +265,12 @@ export function useZebuLive(options: { currentPage: string; currentContext?: str
           },
           onmessage: (message) => {
             if (connectionAttempt !== connectionAttemptRef.current || lifecycle !== lifecycleRef.current) return;
+            if (message.sessionResumptionUpdate?.resumable && message.sessionResumptionUpdate.newHandle) {
+              resumeHandleRef.current = message.sessionResumptionUpdate.newHandle;
+            }
+            if (message.goAway) {
+              setError("Zebu's voice connection is renewing. Your workspace work is still saved; tap the mic if it disconnects.");
+            }
             if (message.serverContent?.interrupted) {
               turnCompleteRef.current = false;
               stopPlayback();
@@ -253,17 +278,28 @@ export function useZebuLive(options: { currentPage: string; currentContext?: str
             }
             const input = message.serverContent?.inputTranscription?.text;
             if (input) {
-              if (turnCompleteRef.current) {
+              if (turnCompleteRef.current && Date.now() - lastTurnCompleteAtRef.current > 1_000) {
                 turnCompleteRef.current = false;
+                currentUtteranceRef.current = input;
+                suppressModelOutputRef.current = false;
                 setTranscript(input);
                 setResponseText("");
                 setState("listening");
-              } else setTranscript((value) => value + input);
+              } else {
+                currentUtteranceRef.current += input;
+                setTranscript((value) => value + input);
+              }
+              if (localCommandTimerRef.current !== null) clearTimeout(localCommandTimerRef.current);
+              const transcript = currentUtteranceRef.current;
+              localCommandTimerRef.current = window.setTimeout(() => {
+                localCommandTimerRef.current = null;
+                handleWorkspaceCommand(transcript);
+              }, 450);
             }
             const output = message.serverContent?.outputTranscription?.text;
-            if (output) setResponseText((value) => value + output);
+            if (output && !suppressModelOutputRef.current) setResponseText((value) => value + output);
             for (const part of message.serverContent?.modelTurn?.parts ?? []) {
-              if (part.inlineData?.data) {
+              if (part.inlineData?.data && !suppressModelOutputRef.current) {
                 void playAudio(part.inlineData.data).catch(() => {
                   setError("Zebu replied, but Chrome paused audio playback. Tap the mic once to re-enable sound.");
                 });
@@ -278,7 +314,13 @@ export function useZebuLive(options: { currentPage: string; currentContext?: str
             }
             if (message.serverContent?.turnComplete) {
               clearTurnTimeout();
+              if (localCommandTimerRef.current !== null) {
+                clearTimeout(localCommandTimerRef.current);
+                localCommandTimerRef.current = null;
+              }
+              handleWorkspaceCommand(currentUtteranceRef.current);
               turnCompleteRef.current = true;
+              lastTurnCompleteAtRef.current = Date.now();
               setTurnCount((value) => value + 1);
               if (sourcesRef.current.size === 0) setState(streamRef.current ? "listening" : "idle");
             }
@@ -291,6 +333,10 @@ export function useZebuLive(options: { currentPage: string; currentContext?: str
             }
             clearTurnTimeout();
             releaseCapture();
+            sessionRef.current = null;
+            sessionPromiseRef.current = null;
+            if (timeoutRef.current !== null) clearTimeout(timeoutRef.current);
+            timeoutRef.current = null;
             setError("Gemini Live disconnected. Tap the mic to start a new session, or use text mode.");
             setState("error");
           },
@@ -489,6 +535,11 @@ export function useZebuLive(options: { currentPage: string; currentContext?: str
     releaseCapture();
     stopPlayback();
     clearTurnTimeout();
+    if (localCommandTimerRef.current !== null) clearTimeout(localCommandTimerRef.current);
+    localCommandTimerRef.current = null;
+    currentUtteranceRef.current = "";
+    resumeHandleRef.current = null;
+    suppressModelOutputRef.current = false;
     sessionRef.current?.close();
     sessionRef.current = null;
     sessionPromiseRef.current = null;

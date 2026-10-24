@@ -21,6 +21,7 @@ import {
 } from "react-icons/ri";
 import { DASHBOARD_NAV_ITEMS } from "@/lib/constants/navigation";
 import { UserAvatar } from "@/components/dashboard/UserAvatar";
+import { useDialogFocus } from "@/hooks/useDialogFocus";
 
 interface SidebarProps {
     plan: string;
@@ -39,6 +40,7 @@ const NAV_ICONS: Record<string, React.ReactNode> = {
     "/dashboard/work": <RiFileTextLine size={18} />,
     "/dashboard/cover-letters": <RiArticleLine size={18} />,
     "/dashboard/portfolio": <RiBarChartGroupedLine size={18} />,
+    "/dashboard/linkedin": <RiLineChartLine size={18} />,
     "/dashboard/analytics": <RiLineChartLine size={18} />,
     "/dashboard/settings": <RiSettings4Line size={18} />,
 };
@@ -65,6 +67,7 @@ export function Sidebar({
             setInternalOpen(false);
         }
     }, [onCloseAction]);
+    const navigationRef = useDialogFocus(isMobile && isDrawerOpen, closeDrawer);
 
     useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth < 1024);
@@ -106,12 +109,15 @@ export function Sidebar({
 
             {/* Sidebar Desktop & Mobile */}
             <m.aside
+                ref={navigationRef}
                 id="dashboard-navigation"
+                inert={isMobile && !isDrawerOpen ? true : undefined}
+                aria-hidden={isMobile && !isDrawerOpen ? true : undefined}
                 initial={false}
                 animate={{
                     x: isMobile ? (isDrawerOpen ? 0 : "-100%") : 0,
                 }}
-                className="fixed lg:sticky top-0 left-0 h-screen w-[270px] bg-[#FAF9F6] border-r border-neutral-200/70 flex flex-col z-[70] overflow-hidden shadow-xl lg:shadow-none shrink-0"
+                className="fixed lg:sticky top-0 left-0 h-dvh w-[270px] max-w-[calc(100vw-2rem)] lg:max-w-none bg-muted border-r border-neutral-200/70 flex flex-col z-[70] overflow-hidden shadow-xl lg:shadow-none shrink-0"
                 transition={{ type: "spring", damping: 30, stiffness: 300 }}
             >
                 <div className="flex flex-col h-full">
@@ -125,13 +131,13 @@ export function Sidebar({
                                 height={28}
                                 className="w-7 h-7 object-contain group-hover:scale-105 transition-transform"
                             />
-                            <h1 className="text-lg font-bold tracking-tight text-[#0A0A0A]">Zebra AI</h1>
+                            <h1 className="text-lg font-bold tracking-tight text-foreground">Zebra AI</h1>
                         </Link>
 
                         {isMobile && (
                             <button
                                 onClick={closeDrawer}
-                                className="w-8 h-8 rounded-lg bg-neutral-200/60 flex items-center justify-center text-neutral-600 hover:text-[#0A0A0A] transition-colors"
+                                className="w-11 h-11 rounded-lg bg-neutral-200/60 flex items-center justify-center text-neutral-600 hover:text-foreground transition-colors"
                                 aria-label="Close Navigation"
                             >
                                 <RiCloseLine size={18} />
@@ -141,7 +147,7 @@ export function Sidebar({
 
                     {/* Menu Navigation Links */}
                     <div className="p-6 space-y-1 flex-grow overflow-y-auto custom-scrollbar">
-                        <p className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider mb-2 px-3">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-3">
                             Workspace
                         </p>
 
@@ -163,11 +169,11 @@ export function Sidebar({
                         <div className="mt-8 pt-6 border-t border-neutral-200/60">
                              <div className="relative bg-white border border-neutral-200/70 rounded-2xl p-4 flex flex-col space-y-3 shadow-2xs">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-xs font-semibold text-[#0A0A0A]">{plan} Plan</span>
-                                    <span className="text-xs font-bold text-neutral-500">{credits} Credits</span>
+                                    <span className="text-xs font-semibold text-foreground">{plan} Plan</span>
+                                    <span className="text-xs font-bold text-muted-foreground">{credits} Credits</span>
                                 </div>
-                                <p className="text-[11px] font-normal text-neutral-500 leading-relaxed">
-                                    Get credits to tailor applications & build proof.
+                                <p className="text-xs font-normal text-muted-foreground leading-relaxed">
+                                    Use credits for resume reviews, tailoring, and cover letters.
                                 </p>
                                 <CreditTopUp />
                              </div>
@@ -176,23 +182,28 @@ export function Sidebar({
 
                     {/* Bottom User Profile Section */}
                     <div className="px-6 py-4 mt-auto border-t border-neutral-200/60 shrink-0">
-                        <div
+                        <div className="flex items-center gap-2 p-2 rounded-xl bg-white border border-neutral-200">
+                          <button
+                            type="button"
                             onClick={onOpenProfileAction}
-                            className="group flex items-center gap-3 p-2 rounded-xl bg-white border border-neutral-200/80 hover:border-neutral-300 hover:shadow-xs transition-all cursor-pointer"
-                        >
-                            <div className="w-8 h-8 rounded-lg bg-[#0A0A0A] text-white flex items-center justify-center overflow-hidden shadow-xs shrink-0">
+                            aria-label={`Open profile for ${userName}`}
+                            className="group flex min-h-11 min-w-0 flex-1 items-center gap-3 rounded-lg text-left hover:bg-muted transition-colors"
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center overflow-hidden shadow-xs shrink-0">
                                 <UserAvatar name={userName} src={userImage} size={32} fallbackClassName="text-xs" />
                             </div>
 
                             <div className="flex-grow min-w-0">
-                                <p className="text-xs font-semibold text-[#0A0A0A] truncate">{userName}</p>
-                                <p className="text-[11px] font-medium text-neutral-400">{plan} Tier</p>
+                                <p className="text-xs font-semibold text-foreground truncate">{userName}</p>
+                                <p className="text-xs font-medium text-muted-foreground">{plan} Tier</p>
                             </div>
-
+                          </button>
                             <button
+                                type="button"
                                 onClick={handleSignOut}
-                                className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0"
+                                className="w-11 h-11 rounded-lg flex items-center justify-center text-muted-foreground hover:text-red-600 hover:bg-red-50 transition-colors shrink-0"
                                 title="Sign Out"
+                                aria-label="Sign out"
                             >
                                 <RiLogoutBoxRLine size={16} />
                             </button>

@@ -196,7 +196,7 @@ export function ShareModal({ isOpen, onCloseAction, resumeId, resumeTitle }: Sha
                                 {isPublic && qrDataUrl && (
                                     <m.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center gap-3">
                                         <div className="p-3 bg-white border-2 border-black/8 rounded-xl shadow-sm">
-                                            <Image src={qrDataUrl} alt="QR Code" width={140} height={140} className="rounded" />
+                                            <Image src={qrDataUrl} alt="QR code linking to the shared resume" width={140} height={140} className="rounded" />
                                         </div>
                                         <p className="text-[10px] text-[#737373] font-medium">Scan to view resume</p>
                                     </m.div>

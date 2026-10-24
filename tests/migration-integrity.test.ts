@@ -62,8 +62,11 @@ describe("Evidence compiler migration", () => {
         assert.match(usageSql, /ADD COLUMN IF NOT EXISTS "latency_ms" integer/);
         const runsSql = readFileSync(tailoringRunsMigrationPath, "utf8");
         assert.match(runsSql, /CREATE TABLE IF NOT EXISTS "tailoring_runs"/);
-        assert.equal(last?.idx, 12);
-        assert.equal(last?.tag, "0011_tailoring_runs");
+        assert.equal(journal.entries[12]?.tag, "0011_tailoring_runs");
+        assert.equal(journal.entries[13]?.tag, "0012_linkedin_audits");
+        assert.equal(journal.entries[14]?.tag, "0013_linkedin_workflow_rls");
+        assert.equal(last?.idx, 15);
+        assert.equal(last?.tag, "0014_github_installations");
     });
 
     test("quarantines direct schema scripts that bypass the migration journal", () => {

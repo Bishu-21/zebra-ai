@@ -21,6 +21,7 @@ import {
     formatResumeAuditRubricForPrompt,
     inferResumeAuditContext,
     normalizeResumeQualityAuditItems,
+    resolveProfessionalExperienceExpectation,
     RESUME_AUDIT_RUBRIC,
     RESUME_AUDIT_RESPONSE_FORMAT,
     RESUME_AUDIT_RUBRIC_VERSION,
@@ -69,9 +70,8 @@ export async function POST(req: NextRequest) {
         });
         const profileExpectation = careerStageHasExpectedProfessionalExperience(savedProfile?.careerStage);
         const auditContext = {
-            hasProfessionalExperience: evidenceContext.hasProfessionalExperience === true
-                ? true
-                : profileExpectation,
+            ...evidenceContext,
+            hasProfessionalExperience: resolveProfessionalExperienceExpectation(evidenceContext, profileExpectation),
         };
         const careerStageLabel = savedProfile?.careerStage && savedProfile.careerStage in CAREER_STAGE_LABELS
             ? CAREER_STAGE_LABELS[savedProfile.careerStage as CareerStage]
@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
         const savedProfileInstruction = careerStageLabel
             ? `Saved account profile: ${careerStageLabel}${savedProfile?.careerStage === "professional" ? ` with ${savedProfile.professionalExperienceYears ?? 0} years of experience` : ""}.`
             : "No saved career profile is available; rely on resume evidence.";
-        const candidateProfileInstruction = evidenceContext.hasProfessionalExperience
+        const candidateProfileInstruction = auditContext.hasProfessionalExperience
             ? "Professional experience entries are present; assess the experience criteria normally."
             : profileExpectation === true
                 ? "The saved freelancer/professional profile makes professional evidence relevant. Assess the EXP criteria and clearly explain if that evidence is absent from this resume."

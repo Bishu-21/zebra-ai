@@ -16,6 +16,8 @@ import {
     RiBriefcaseLine
 } from "react-icons/ri";
 import { CareerProfileForm } from "./CareerProfileForm";
+import { AiUsageHistory } from "./AiUsageHistory";
+import { ConnectedAccounts } from "./ConnectedAccounts";
 
 type TabType = "general" | "editor" | "career" | "billing" | "account";
 
@@ -34,7 +36,7 @@ const TABS: TabItem[] = [
     { id: "account", label: "Account & Security", description: "Profile details and security preferences", icon: RiUser3Line },
 ];
 
-export function SettingsView() {
+export function SettingsView({ connectionProviders, githubAppConfigured }: { connectionProviders: { linkedin: boolean; github: boolean }; githubAppConfigured: boolean }) {
     const searchParams = useSearchParams();
     const { settings, updateSettingsAction, resetSettingsAction } = useSettings();
     const { data: session } = useSession();
@@ -311,6 +313,8 @@ export function SettingsView() {
                                 <div className="p-4 bg-neutral-50 border border-neutral-200/70 rounded-2xl text-xs text-neutral-500 leading-relaxed">
                                     Credits are utilized whenever you run deep ATS scans, tailor resumes to specific job requirements, or generate AI cover letters. Credits do not expire.
                                 </div>
+
+                                <AiUsageHistory />
                             </div>
                         )}
 
@@ -331,6 +335,10 @@ export function SettingsView() {
                                         </div>
                                     </div>
                                 </div>
+
+                                <Divider />
+
+                                <ConnectedAccounts available={connectionProviders} githubAppConfigured={githubAppConfigured} />
 
                                 <Divider />
 

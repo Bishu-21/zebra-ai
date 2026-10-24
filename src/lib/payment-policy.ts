@@ -76,6 +76,9 @@ export async function grantCreditsForCapturedPayment(
     }
 
     if (pendingTx.status === "success") {
+        if (pendingTx.paymentId !== input.paymentId) {
+            return { status: "invalid", reason: "Order was fulfilled by a different payment." };
+        }
         return { status: "already_processed", addedCredits: plan.credits };
     }
     if (pendingTx.status !== "pending") {

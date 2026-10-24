@@ -2,6 +2,43 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db, sanitizeSecretText } from "./db";
 import * as schema from "./schema";
+import { isTransactionalEmailConfigured, sendTransactionalEmail } from "./transactional-email";
+
+/** Signed-in linking may proceed when the provider omits a verified email. Signed-out auto-link stays off. */
+export const ACCOUNT_LINKING = {
+	enabled: true,
+	disableImplicitLinking: true,
+	allowDifferentEmails: true,
+	updateUserInfoOnLink: false,
+	trustedProviders: ["linkedin", "github"],
+} as const;
+
+type SocialEnv = Record<string, string | undefined>;
+
+/** Identity-link providers. GitHub stays on read:user and user:email; repository reads use the App installation. */
+export function buildSocialProviders(env: SocialEnv) {
+	const google = Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET);
+	const linkedin = Boolean(env.LINKEDIN_CLIENT_ID && env.LINKEDIN_CLIENT_SECRET);
+	const github = Boolean(env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET);
+	return {
+		...(google ? { google: {
+			clientId: env.GOOGLE_CLIENT_ID!,
+			clientSecret: env.GOOGLE_CLIENT_SECRET!,
+		} } : {}),
+		...(linkedin ? { linkedin: {
+			clientId: env.LINKEDIN_CLIENT_ID!,
+			clientSecret: env.LINKEDIN_CLIENT_SECRET!,
+			disableSignUp: true,
+		} } : {}),
+		...(github ? { github: {
+			clientId: env.GITHUB_CLIENT_ID!,
+			clientSecret: env.GITHUB_CLIENT_SECRET!,
+			disableSignUp: true,
+			disableDefaultScope: true,
+			scope: ["read:user", "user:email"],
+		} } : {}),
+	};
+}
 
 /**
  * Resolves the effective base URL for Better Auth across local, preview, and production deployments.
@@ -63,8 +100,6 @@ export function getTrustedOrigins(): string[] {
 	return Array.from(new Set(origins));
 }
 
-const hasGoogleAuth = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
-
 function authLogValue(value: unknown): string {
 	if (value instanceof Error) return value.stack || value.message;
 	if (typeof value === "string") return value;
@@ -121,14 +156,41 @@ export const auth = betterAuth({
 	},
 	account: {
 		storeStateStrategy: "cookie",
+		encryptOAuthTokens: true,
+		accountLinking: {
+			enabled: ACCOUNT_LINKING.enabled,
+			disableImplicitLinking: ACCOUNT_LINKING.disableImplicitLinking,
+			allowDifferentEmails: ACCOUNT_LINKING.allowDifferentEmails,
+			updateUserInfoOnLink: ACCOUNT_LINKING.updateUserInfoOnLink,
+			trustedProviders: [...ACCOUNT_LINKING.trustedProviders],
+		},
 	},
 	emailAndPassword: {
 		enabled: true,
+		requireEmailVerification: isTransactionalEmailConfigured(),
+		revokeSessionsOnPasswordReset: true,
+		...(isTransactionalEmailConfigured() ? {
+			sendResetPassword: async ({ user, url }: { user: { email: string }; url: string }) => {
+				await sendTransactionalEmail({
+					to: user.email,
+					subject: "Reset your Zebra AI password",
+					text: `Use this link to reset your Zebra AI password:\n\n${url}\n\nIf you did not request this, you can ignore this email.`,
+				});
+			},
+		} : {}),
 	},
-	socialProviders: hasGoogleAuth ? {
-		google: {
-			clientId: process.env.GOOGLE_CLIENT_ID!,
-			clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+	...(isTransactionalEmailConfigured() ? {
+		emailVerification: {
+			sendOnSignUp: true,
+			sendOnSignIn: true,
+			sendVerificationEmail: async ({ user, url }: { user: { email: string }; url: string }) => {
+				await sendTransactionalEmail({
+					to: user.email,
+					subject: "Verify your Zebra AI email",
+					text: `Verify your Zebra AI email address with this link:\n\n${url}\n\nIf you did not create an account, you can ignore this email.`,
+				});
+			},
 		},
-	} : {},
+	} : {}),
+	socialProviders: buildSocialProviders(process.env),
 });

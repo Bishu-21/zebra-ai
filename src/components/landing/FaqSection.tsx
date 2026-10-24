@@ -60,7 +60,7 @@ export function FaqSection() {
               >
                 <button
                   onClick={() => toggleFaq(idx)}
-                  className="w-full text-left flex items-start justify-between gap-4 focus:outline-none"
+                  className="w-full text-left flex items-start justify-between gap-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
                   aria-expanded={isOpen}
                 >
                   <div className="flex items-start gap-4">

@@ -17,6 +17,7 @@ import { checkDistributedRateLimit } from "@/lib/rate-limit";
 import { generateAiResponse } from "@/lib/azure-foundry";
 import { extractJsonObject } from "@/lib/resume-ingestion";
 import { resumeContentToPrompt } from "@/lib/resume-content";
+import { ROLE_MATCH_RESPONSE_FORMAT } from "@/lib/role-match-response-format";
 
 export async function POST(req: NextRequest) {
     const { auth: authCtx, errorResponse } = await requireAuth();
@@ -157,6 +158,7 @@ TARGET JOB DESCRIPTION END`;
             telemetry: { userId: authCtx.user.id, operationId: idempotencyKey, creditsCost: 1 },
             systemPrompt: "You are Zebra AI's evidence-grounded role match analyst. Output strict JSON only and keep every proposed edit pending human approval.",
             prompt,
+            responseFormat: ROLE_MATCH_RESPONSE_FORMAT,
         });
         const parsed = aiRoleMatchSchema.safeParse(extractJsonObject(rawResponse));
         if (!parsed.success) {

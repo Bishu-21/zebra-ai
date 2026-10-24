@@ -1,0 +1,124 @@
+name: Deploy environment
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: ${{ inputs.environment }}
+      url: ${{ vars.APP_URL }}
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      APP_URL: ${{ vars.APP_URL }}
+      EXPECTED_DATABASE_HOST: ${{ vars.EXPECTED_DATABASE_HOST }}
+      PRODUCTION_DATABASE_HOST: ${{ vars.PRODUCTION_DATABASE_HOST }}
+      PRODUCTION_APP_URL: ${{ vars.PRODUCTION_APP_URL }}
+      DEPLOY_ENVIRONMENT: ${{ inputs.environment }}
+      VERCEL_CLI_VERSION: ${{ vars.VERCEL_CLI_VERSION }}
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Require explicit deployment configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in VERCEL_TOKEN VERCEL_ORG_ID VERCEL_PROJECT_ID APP_URL EXPECTED_DATABASE_HOST VERCEL_CLI_VERSION; do
+            test -n "${!name}" || { echo "Missing deployment setting: $name"; exit 1; }
+          done
+          [[ "$VERCEL_CLI_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo 'Pin an exact Vercel CLI version'; exit 1; }
+          if [[ "$DEPLOY_ENVIRONMENT" = staging ]]; then
+            for name in PRODUCTION_DATABASE_HOST PRODUCTION_APP_URL; do
+              test -n "${!name}" || { echo "Missing deployment setting: $name"; exit 1; }
+            done
+          fi
+      - run: npm ci
+      - name: Install pinned deployment CLI
+        run: npm install --global "vercel@$VERCEL_CLI_VERSION"
+      - name: Verify the selected Vercel project
+        shell: bash
+        run: |
+          set -euo pipefail
+          project_id=$(curl --fail --silent --show-error --retry 3 \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            "https://api.vercel.com/v9/projects/zebra-ai?teamId=$VERCEL_ORG_ID" | jq -r '.id')
+          test "$project_id" = "$VERCEL_PROJECT_ID" || { echo 'Vercel project must be zebra-ai'; exit 1; }
+      - name: Deploy checked revision
+        id: deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          build_env=(
+            --build-env "DEPLOY_ENVIRONMENT=$DEPLOY_ENVIRONMENT"
+            --build-env "APP_URL=$APP_URL"
+            --build-env "EXPECTED_DATABASE_HOST=$EXPECTED_DATABASE_HOST"
+          )
+          if [[ "$DEPLOY_ENVIRONMENT" = staging ]]; then
+            build_env+=(
+              --build-env "PRODUCTION_DATABASE_HOST=$PRODUCTION_DATABASE_HOST"
+              --build-env "PRODUCTION_APP_URL=$PRODUCTION_APP_URL"
+            )
+            deployment_url=$(vercel deploy --yes "${build_env[@]}" --token="$VERCEL_TOKEN")
+          else
+            deployment_url=$(vercel deploy --yes --prod "${build_env[@]}" --token="$VERCEL_TOKEN")
+          fi
+          [[ "$deployment_url" =~ ^https://[a-zA-Z0-9.-]+\.vercel\.app$ ]] || { echo 'Unexpected deployment URL'; exit 1; }
+          echo "url=$deployment_url" >> "$GITHUB_OUTPUT"
+      - name: Probe deployed revision
+        env:
+          BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+          DEPLOYMENT_URL: ${{ steps.deployment.outputs.url }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for path in / /api/auth/ok; do
+            status=$(curl --fail --silent --show-error --retry 5 --retry-all-errors --retry-delay 5 --max-time 30 \
+              --output /dev/null --write-out '%{http_code}' \
+              -H "x-vercel-protection-bypass: $BYPASS_SECRET" "${DEPLOYMENT_URL%/}$path")
+            test "$status" = 200 || { echo "Deployment probe failed: $path returned $status"; exit 1; }
+          done
+      - name: Point staging origin to the verified preview
+        if: inputs.environment == 'staging'
+        env:
+          DEPLOYMENT_URL: ${{ steps.deployment.outputs.url }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          hostname="${APP_URL#https://}"
+          deployment_host="${DEPLOYMENT_URL#https://}"
+          payload=$(jq -n --arg alias "$hostname" '{alias: $alias}')
+          assigned_alias=$(curl --fail --silent --show-error \
+            -X POST -H "Authorization: Bearer $VERCEL_TOKEN" \
+            -H 'Content-Type: application/json' --data "$payload" \
+            "https://api.vercel.com/v2/deployments/$deployment_host/aliases?teamId=$VERCEL_ORG_ID" | jq -r '.alias')
+          test "$assigned_alias" = "$hostname" || { echo 'Unexpected staging alias response'; exit 1; }
+      - name: Probe stable application origin
+        env:
+          BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for path in / /api/auth/ok; do
+            status=$(curl --fail --silent --show-error --retry 5 --retry-all-errors --retry-delay 5 --max-time 30 \
+              --output /dev/null --write-out '%{http_code}' \
+              -H "x-vercel-protection-bypass: $BYPASS_SECRET" "${APP_URL%/}$path")
+            test "$status" = 200 || { echo "Origin probe failed: $path returned $status"; exit 1; }
+          done

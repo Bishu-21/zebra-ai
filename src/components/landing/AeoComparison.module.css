@@ -1,0 +1,38 @@
+.row {
+  transition: transform 300ms ease, box-shadow 300ms ease;
+}
+
+.row:hover {
+  transform: translateX(0.25rem);
+}
+
+@supports (animation-timeline: view()) {
+  .row {
+    animation: comparison-row-arrive linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 85%;
+  }
+}
+
+@keyframes comparison-row-arrive {
+  from {
+    opacity: 0.35;
+    transform: translateX(-1.5rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row {
+    animation: none;
+    transition: box-shadow 200ms ease;
+  }
+
+  .row:hover {
+    transform: none;
+  }
+}

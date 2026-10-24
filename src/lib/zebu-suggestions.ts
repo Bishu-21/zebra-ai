@@ -5,7 +5,8 @@ export type ZebuSuggestion = {
     | { type: "tool"; name: "get_quick_stats" | "get_deadlines" | "suggest_next_action" }
     | { type: "navigate"; route: string }
     | { type: "event"; name: "add_application"; route: "/dashboard/job-tracker" }
-    | { type: "open_tool"; tool: "resume_analysis" | "role_match" };
+    | { type: "open_tool"; tool: "resume_analysis" | "role_match" }
+    | { type: "proof_flow" };
 };
 
 const suggestions: Record<string, ZebuSuggestion[]> = {
@@ -16,7 +17,7 @@ const suggestions: Record<string, ZebuSuggestion[]> = {
   ],
   "/dashboard/resumes": [
     { label: "Check a resume", prompt: "Open the resume analysis tool.", action: { type: "open_tool", tool: "resume_analysis" } },
-    { label: "Match to a role", prompt: "Open the role matching tool.", action: { type: "open_tool", tool: "role_match" } },
+    { label: "Match to a job link or PDF", prompt: "Open role matching so I can import a job link or PDF.", action: { type: "open_tool", tool: "role_match" } },
     { label: "Find latest resume", prompt: "Find and open my most recently updated resume." },
   ],
   "/dashboard/job-tracker": [
@@ -35,9 +36,9 @@ const suggestions: Record<string, ZebuSuggestion[]> = {
     { label: "Find target role", prompt: "Find the application I should write a cover letter for next." },
   ],
   "/dashboard/portfolio": [
+    { label: "Add project proof", prompt: "Help me add proof to a project.", action: { type: "proof_flow" } },
     { label: "Check publish state", prompt: "Is my portfolio currently published?" },
     { label: "Find missing proof", prompt: "What evidence is missing from my portfolio?" },
-    { label: "Summarize projects", prompt: "Summarize my saved projects." },
   ],
   "/dashboard/analytics": [
     { label: "Workspace totals", prompt: "Show my workspace stats.", action: { type: "tool", name: "get_quick_stats" } },
@@ -48,6 +49,11 @@ const suggestions: Record<string, ZebuSuggestion[]> = {
     { label: "What Zebu can do", prompt: "Briefly list the workspace actions you can perform and your limits." },
     { label: "Workspace totals", prompt: "Show my workspace stats.", action: { type: "tool", name: "get_quick_stats" } },
     { label: "Check deadlines", prompt: "Show my upcoming application deadlines.", action: { type: "tool", name: "get_deadlines" } },
+  ],
+  "/dashboard/linkedin": [
+    { label: "Audit my profile", prompt: "Help me review my LinkedIn profile evidence." },
+    { label: "Open applications", prompt: "Open applications.", action: { type: "navigate", route: "/dashboard/job-tracker" } },
+    { label: "Add application", prompt: "Add a new application.", action: { type: "event", name: "add_application", route: "/dashboard/job-tracker" } },
   ],
 };
 
@@ -60,6 +66,7 @@ const pageLabels: Record<string, string> = {
   "/dashboard/portfolio": "Portfolio",
   "/dashboard/analytics": "Analytics",
   "/dashboard/settings": "Settings",
+  "/dashboard/linkedin": "LinkedIn Optimizer",
 };
 
 function getParentPath(pathname: string): string {

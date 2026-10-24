@@ -5,6 +5,7 @@ import {
     canonicalizeResumeAuditProviderResponse,
     inferResumeAuditContext,
     normalizeResumeQualityAuditItems,
+    resolveProfessionalExperienceExpectation,
     RESUME_AUDIT_CATEGORIES,
     RESUME_AUDIT_RESPONSE_FORMAT,
     RESUME_AUDIT_RUBRIC,
@@ -156,6 +157,31 @@ describe("45-check resume audit rubric", () => {
         assert.ok(experienceItems.every((item) => item.status === "Not Applicable"));
         assert.equal(calculateResumeAuditScores(normalized).overall, 100);
         assert.equal(calculateResumeAuditScores(normalized).impact, 100);
+    });
+
+    test("current-student resume evidence overrides a stale professional account profile", () => {
+        const context = inferResumeAuditContext(JSON.stringify({
+            education: [{
+                school: "Brainware University",
+                degree: "B.Tech in Computer Science & Engineering (AI/ML) — 3rd Year",
+                period: "Aug 2024 — Present (Expected Graduation: July 2028)",
+            }],
+            experience: [],
+            projects: [{ title: "Zebra AI" }],
+        }));
+
+        assert.equal(context.isCurrentStudent, true);
+        assert.equal(resolveProfessionalExperienceExpectation(context, true), false);
+    });
+
+    test("real employment evidence remains assessable for a student", () => {
+        const context = inferResumeAuditContext(JSON.stringify({
+            education: [{ degree: "B.Tech — 3rd Year", period: "Present" }],
+            experience: [{ company: "Example Labs", role: "Engineering Intern", period: "Summer 2026" }],
+        }));
+
+        assert.equal(context.hasProfessionalExperience, true);
+        assert.equal(resolveProfessionalExperienceExpectation(context, false), true);
     });
 
     test("continues assessing experience checks when roles are present", () => {

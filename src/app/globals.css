@@ -1,5 +1,3 @@
-@import url('https://cdn.jsdelivr.net/npm/@fontsource/latin-modern-roman@5.0.11/index.css');
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=STIX+Two+Text:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 @import "tailwindcss";
 
 html {
@@ -60,8 +58,8 @@ html {
   --radius-lg: var(--radius-lg);
   --radius-xl: var(--radius-xl);
   
-  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: "Cardo", "Playfair Display", Georgia, serif;
+  --font-sans: ui-sans-serif, system-ui, sans-serif;
+  --font-serif: Georgia, serif;
 }
 
 @layer base {
@@ -407,27 +405,28 @@ html {
 .zebu-mic--large { width: 2.8rem; height: 2.8rem; }
 
 .zebu-launcher { position: fixed; right: 1.5rem; bottom: 1.5rem; z-index: 100; display: flex; align-items: center; gap: .45rem; }
-.zebu-fab { display: flex; height: 3.15rem; align-items: center; gap: .5rem; border-radius: 999px; background: #0a0a0a; padding: 0 1.1rem; color: #fff; font-size: .72rem; font-weight: 700; box-shadow: 0 14px 36px rgba(0, 0, 0, .2); transition: transform 160ms ease, box-shadow 160ms ease; }
-.zebu-fab:hover { transform: translateY(-2px); box-shadow: 0 18px 42px rgba(0, 0, 0, .24); }
+.zebu-fab { display: flex; min-height: 3.4rem; align-items: center; gap: .3rem; border: 1px solid rgba(10,10,10,.12); border-radius: 999px; background: #fff; padding: 0 1.1rem 0 .15rem; color: #0a0a0a; font-size: .72rem; font-weight: 700; box-shadow: 0 14px 36px rgba(0, 0, 0, .16); transition: transform 160ms ease, box-shadow 160ms ease; }
+.zebu-fab:hover { transform: translateY(-2px); box-shadow: 0 18px 42px rgba(0, 0, 0, .2); }
+.zebu-fab:focus-visible { outline: 3px solid #737373; outline-offset: 3px; }
 
-.zebu-orb { --zebu-volume: .08; position: relative; display: grid; width: 4.4rem; height: 4.4rem; flex: 0 0 auto; place-items: center; }
-.zebu-orb__core { position: relative; z-index: 2; display: flex; width: 3rem; height: 3rem; align-items: center; justify-content: center; gap: 2px; border-radius: .9rem; background: #0a0a0a; box-shadow: var(--shadow-lg); transform: scale(calc(.96 + var(--zebu-volume) * .28)); transition: transform 70ms linear; }
-.zebu-orb__bar { width: 2px; border-radius: 999px; background: #fff; animation: zebu-bars 1.15s ease-in-out infinite alternate; }
-.zebu-orb__bar:nth-child(1), .zebu-orb__bar:nth-child(5) { height: .42rem; animation-delay: -.15s; }
-.zebu-orb__bar:nth-child(2), .zebu-orb__bar:nth-child(4) { height: .82rem; animation-delay: -.35s; }
-.zebu-orb__bar:nth-child(3) { height: 1.15rem; animation-delay: -.55s; }
-.zebu-orb__ring { position: absolute; inset: .38rem; border: 1px solid rgba(10, 10, 10, .13); border-radius: 1.15rem; animation: zebu-ring 2.2s ease-out infinite; }
-.zebu-orb__ring--two { animation-delay: 1.1s; }
-.zebu-orb--processing .zebu-orb__ring { border-top-color: #0a0a0a; animation: zebu-spin .9s linear infinite; }
-.zebu-orb--speaking .zebu-orb__bar, .zebu-orb--listening .zebu-orb__bar { animation-duration: .42s; }
-.zebu-orb--processing .zebu-orb__bar { animation-duration: .72s; }
-.zebu-orb--error .zebu-orb__core { opacity: .45; }
-.zebu-expanded-status .zebu-orb { width: 3.4rem; height: 3.4rem; }
-.zebu-expanded-status .zebu-orb__core { width: 2.15rem; height: 2.15rem; border-radius: .7rem; }
-.zebu-expanded-status .zebu-orb__bar:nth-child(1), .zebu-expanded-status .zebu-orb__bar:nth-child(5) { height: .3rem; }
-.zebu-expanded-status .zebu-orb__bar:nth-child(2), .zebu-expanded-status .zebu-orb__bar:nth-child(4) { height: .58rem; }
-.zebu-expanded-status .zebu-orb__bar:nth-child(3) { height: .8rem; }
-.zebu-expanded-status .zebu-orb__ring { inset: .35rem; }
+.zebu-orb { --zebu-volume: .08; position: relative; display: grid; width: 4.4rem; height: 4.9rem; flex: 0 0 auto; place-items: center; }
+.zebu-pet { position: relative; z-index: 2; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 5px 4px rgba(0,0,0,.12)); transform-origin: 50% 90%; animation: zebu-pet-breathe 3s ease-in-out infinite; }
+.zebu-pet__head { transform-origin: 62px 72px; animation: zebu-pet-look 7s ease-in-out infinite; }
+.zebu-pet__ears { transform-origin: 64px 40px; animation: zebu-pet-ears 4.6s ease-in-out infinite; }
+.zebu-pet__tail { transform-origin: 99px 93px; animation: zebu-pet-tail 3.4s ease-in-out infinite; }
+.zebu-pet__eyes-open { animation: zebu-pet-eyes-open 5.7s steps(1, end) infinite; }
+.zebu-pet__eyes-closed { opacity: 0; animation: zebu-pet-eyes-closed 5.7s steps(1, end) infinite; }
+.zebu-orb__ring { position: absolute; z-index: 1; inset: .25rem; border: 1px solid rgba(10,10,10,.14); border-radius: 50%; opacity: 0; pointer-events: none; }
+.zebu-orb--listening .zebu-orb__ring { animation: zebu-pet-listen 1.5s ease-out infinite; }
+.zebu-orb--listening .zebu-pet__head { animation: zebu-pet-listening .8s ease-in-out infinite alternate; }
+.zebu-orb--processing .zebu-pet__head { animation: zebu-pet-think 1.4s ease-in-out infinite alternate; }
+.zebu-orb--speaking .zebu-pet { animation-duration: .45s; }
+.zebu-orb--speaking .zebu-pet__ears { animation-duration: 1.5s; }
+.zebu-orb--speaking .zebu-pet__mouth { animation: zebu-pet-talk .35s ease-in-out infinite alternate; transform-origin: 69px 94px; }
+.zebu-orb--error .zebu-pet { opacity: .6; animation: none; }
+.zebu-fab:hover .zebu-pet { animation: zebu-pet-hello .8s ease-in-out infinite; }
+.zebu-expanded-status .zebu-orb { width: 3rem; height: 3.4rem; }
+.zebu-fab .zebu-orb { width: 4rem; height: 4.5rem; margin-top: -.6rem; margin-bottom: -.5rem; }
 
 .zebu-card { display: flex; width: 100%; align-items: center; gap: .7rem; border: 1px solid rgba(10, 10, 10, .08); border-radius: .9rem; background: rgba(255, 255, 255, .9); padding: .65rem; transition: transform 150ms ease, border-color 150ms ease; animation: zebu-card-in 240ms ease-out both; }
 .zebu-card:not(:disabled):hover { transform: translateY(-1px); border-color: rgba(10, 10, 10, .28); }
@@ -435,8 +434,17 @@ html {
 .zebu-card--medium { border-left: 3px solid #737373; }
 
 @keyframes zebu-arrive { from { opacity: 0; transform: translateY(12px) scale(.96); } }
-@keyframes zebu-bars { to { transform: scaleY(.5); opacity: .62; } }
-@keyframes zebu-ring { from { transform: scale(.76); opacity: .55; } to { transform: scale(1.06); opacity: 0; } }
+@keyframes zebu-pet-breathe { 50% { transform: translateY(-2px) scale(calc(1 + var(--zebu-volume) * .025)); } }
+@keyframes zebu-pet-hello { 50% { transform: translateY(-5px) rotate(-3deg); } }
+@keyframes zebu-pet-look { 18%, 34% { transform: rotate(-4deg); } 58%, 72% { transform: rotate(3deg); } }
+@keyframes zebu-pet-ears { 7%, 13% { transform: rotate(-5deg); } 17%, 20% { transform: rotate(4deg); } }
+@keyframes zebu-pet-tail { 25%, 75% { transform: rotate(11deg); } 50% { transform: rotate(-4deg); } }
+@keyframes zebu-pet-eyes-open { 0%, 91%, 95%, 100% { opacity: 1; } 92%, 94% { opacity: 0; } }
+@keyframes zebu-pet-eyes-closed { 0%, 91%, 95%, 100% { opacity: 0; } 92%, 94% { opacity: 1; } }
+@keyframes zebu-pet-listen { from { transform: scale(.78); opacity: .55; } to { transform: scale(1.14); opacity: 0; } }
+@keyframes zebu-pet-listening { to { transform: rotate(-7deg) translateY(-2px); } }
+@keyframes zebu-pet-think { to { transform: rotate(7deg); } }
+@keyframes zebu-pet-talk { to { transform: translateY(2px) scaleY(1.25); } }
 @keyframes zebu-spin { to { transform: rotate(360deg); } }
 @keyframes zebu-pulse { to { opacity: .25; transform: scale(.82); } }
 @keyframes zebu-mic-live { 50% { box-shadow: 0 0 0 7px rgba(10, 10, 10, .08); } }
@@ -460,8 +468,10 @@ html {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .zebu-panel, .zebu-orb__bar, .zebu-orb__ring, .zebu-card, .zebu-mic--live, .zebu-working span,
+  .zebu-panel, .zebu-pet, .zebu-pet__head, .zebu-pet__ears, .zebu-pet__tail, .zebu-pet__eyes-open, .zebu-pet__eyes-closed, .zebu-pet__mouth, .zebu-orb__ring, .zebu-card, .zebu-mic--live, .zebu-working span,
   .zebra-loader__mark, .zebra-loader__contact, .zebra-loader__ground span { animation: none !important; }
+  .zebu-pet__eyes-open { opacity: 1; }
+  .zebu-pet__eyes-closed { opacity: 0; }
   .zebra-loader--page { animation-duration: 1ms; }
 }
 

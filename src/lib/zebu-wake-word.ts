@@ -1,4 +1,4 @@
-const WAKE_WORD_PATTERN = /\b(?:hey|hi|okay|ok)\s+z(?:e|ee)bu\b/i;
+const WAKE_WORD_PATTERN = /\b(?:hey|hi|okay|ok)\s+(?:zebu|zeebu|zeboo|sebu|zebra)\b/i;
 
 export function containsZebuWakeWord(transcript: string): boolean {
   const normalized = transcript

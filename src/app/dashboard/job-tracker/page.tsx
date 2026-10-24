@@ -1,6 +1,5 @@
 import React from "react";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { getSafeSession } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { resumes as resumesTable, resumeVersions as resumeVersionsTable, applications as applicationsTable, jobs as jobsTable } from "@/lib/schema";
 import { and, count, eq, desc, lt, or, sql } from "drizzle-orm";
@@ -14,9 +13,7 @@ import Link from "next/link";
 export default async function JobTrackerPage({ searchParams }: { searchParams: Promise<{ cursor?: string }> }) {
   let session = null;
   try {
-    session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    session = await getSafeSession();
   } catch (e) {
     console.error("Session fetch failed in job-tracker:", e);
   }

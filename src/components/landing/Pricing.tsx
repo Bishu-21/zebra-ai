@@ -55,7 +55,7 @@ export function Pricing() {
       name: PLANS.starter.name,
       icon: <FlashIcon />,
       price: PLANS.starter.displayPrice,
-      description: "Perfect for students & single applications.",
+      description: "For occasional resume reviews and applications.",
       features: [`${PLANS.starter.credits} AI Credits`, "Resume Quality Reviews", "Job Description Matching", "PDF Resume Export"],
       cta: `Buy ${PLANS.starter.credits} Credits`,
       featured: false
@@ -65,7 +65,7 @@ export function Pricing() {
       name: PLANS.pro.name,
       icon: <CrownIcon />,
       price: PLANS.pro.displayPrice,
-      description: "Strategic edge for active job seekers.",
+      description: "For reviewing and tailoring multiple applications.",
       features: [`${PLANS.pro.credits} AI Credits`, "Resume Quality Reviews", "Job Description Matching", "Cover Letter Generation"],
       cta: `Buy ${PLANS.pro.credits} Credits`,
       featured: true
@@ -75,7 +75,7 @@ export function Pricing() {
       name: PLANS.enterprise.name,
       icon: <EnterpriseIcon />,
       price: PLANS.enterprise.displayPrice,
-      description: "Full suite for career excellence.",
+      description: "For frequent reviews, tailoring, and cover letters.",
       features: [`${PLANS.enterprise.credits} AI Credits`, "Resume Quality Reviews", "Job Description Matching", "Cover Letter Generation"],
       cta: `Buy ${PLANS.enterprise.credits} Credits`,
       featured: false
@@ -95,7 +95,7 @@ export function Pricing() {
             <span className="text-xs font-bold tracking-[0.2em] uppercase text-primary">One-time credit packs</span>
           </m.div>
           <h2 className="text-4xl md:text-6xl font-bold tracking-[-0.04em] leading-[1.1] mb-5 md:mb-6 text-foreground">
-            Premium Career Tools, <span className="text-primary">Localized</span>
+            Choose a credit pack
           </h2>
           <p className="text-accent-dark text-lg leading-relaxed">
             Choose a one-time credit pack based on how many resume reviews, tailoring runs, or generated documents you expect to use.
@@ -118,7 +118,7 @@ export function Pricing() {
             >
               {plan.featured && (
                 <div className="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-primary text-white text-xs font-bold uppercase tracking-wider rounded-full shadow-lg shadow-black/10">
-                  Most Popular
+                  Featured pack
                 </div>
               )}
               <div className="flex items-center justify-between mb-8 mt-2">

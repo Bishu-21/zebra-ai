@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, integer, jsonb, index } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, integer, jsonb, index, uniqueIndex } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
 export const user = pgTable("user", {
@@ -18,6 +18,7 @@ export const user = pgTable("user", {
 });
 
 export const userRelations = relations(user, ({ many, one }) => ({
+    linkedinAudits: many(linkedinAudits),
     resumes: many(resumes),
     jobs: many(jobs),
     coverLetters: many(coverLetters),
@@ -38,6 +39,92 @@ export const userRelations = relations(user, ({ many, one }) => ({
     evidenceNodes: many(evidenceNodes),
     backgroundJobs: many(backgroundJobs),
     documentArtifacts: many(documentArtifacts),
+    githubInstallations: many(githubInstallations),
+}));
+
+export const linkedinAudits = pgTable("linkedin_audits", {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+    score: integer("score"),
+    feedback: jsonb("feedback").notNull(),
+    linkedinUrl: text("linkedin_url"),
+    sourceText: text("source_text"),
+    targetRole: text("target_role"),
+    drafts: jsonb("drafts"),
+    createdAt: timestamp("created_at").notNull(),
+    updatedAt: timestamp("updated_at"),
+}, (table) => [index("linkedin_audits_user_created_idx").on(table.userId, table.createdAt)]);
+
+export const linkedinAuditRelations = relations(linkedinAudits, ({ one }) => ({
+    user: one(user, { fields: [linkedinAudits.userId], references: [user.id] }),
+}));
+
+export const githubInstallations = pgTable("github_installations", {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+    installationId: text("installation_id").notNull(),
+    accountLogin: text("account_login").notNull(),
+    accountId: text("account_id").notNull(),
+    accountType: text("account_type").notNull(),
+    repositorySelection: text("repository_selection").notNull(),
+    permissions: jsonb("permissions").notNull(),
+    suspendedAt: timestamp("suspended_at"),
+    createdAt: timestamp("created_at").notNull(),
+    updatedAt: timestamp("updated_at").notNull(),
+}, (table) => [
+    uniqueIndex("github_installations_installation_id_unique").on(table.installationId),
+    uniqueIndex("github_installations_user_id_unique").on(table.userId),
+]);
+
+export const githubInstallationRepositories = pgTable("github_installation_repositories", {
+    id: text("id").primaryKey(),
+    githubInstallationId: text("github_installation_id").notNull().references(() => githubInstallations.id, { onDelete: "cascade" }),
+    userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+    repoId: text("repo_id").notNull(),
+    fullName: text("full_name").notNull(),
+    private: boolean("private").notNull(),
+    defaultBranch: text("default_branch"),
+    htmlUrl: text("html_url"),
+    language: text("language"),
+    topics: jsonb("topics").notNull(),
+    description: text("description"),
+    pushedAt: timestamp("pushed_at"),
+    authorship: text("authorship").notNull(),
+    readmeSha256: text("readme_sha256"),
+    readmeExcerpt: text("readme_excerpt"),
+    removedAt: timestamp("removed_at"),
+}, (table) => [
+    uniqueIndex("github_installation_repositories_repo_unique").on(table.githubInstallationId, table.repoId),
+    index("github_installation_repositories_user_idx").on(table.userId),
+]);
+
+export const githubSyncRuns = pgTable("github_sync_runs", {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+    githubInstallationId: text("github_installation_id").notNull().references(() => githubInstallations.id, { onDelete: "cascade" }),
+    status: text("status").notNull(),
+    errorCode: text("error_code"),
+    repoCount: integer("repo_count"),
+    startedAt: timestamp("started_at").notNull(),
+    finishedAt: timestamp("finished_at"),
+}, (table) => [
+    index("github_sync_runs_user_started_idx").on(table.userId, table.startedAt),
+]);
+
+export const githubInstallationRelations = relations(githubInstallations, ({ one, many }) => ({
+    user: one(user, { fields: [githubInstallations.userId], references: [user.id] }),
+    repositories: many(githubInstallationRepositories),
+    syncRuns: many(githubSyncRuns),
+}));
+
+export const githubInstallationRepositoryRelations = relations(githubInstallationRepositories, ({ one }) => ({
+    installation: one(githubInstallations, { fields: [githubInstallationRepositories.githubInstallationId], references: [githubInstallations.id] }),
+    user: one(user, { fields: [githubInstallationRepositories.userId], references: [user.id] }),
+}));
+
+export const githubSyncRunRelations = relations(githubSyncRuns, ({ one }) => ({
+    installation: one(githubInstallations, { fields: [githubSyncRuns.githubInstallationId], references: [githubInstallations.id] }),
+    user: one(user, { fields: [githubSyncRuns.userId], references: [user.id] }),
 }));
 
 export const session = pgTable("session", {

@@ -13,6 +13,7 @@ test("Zebu accepts bounded turns and safe actions", () => {
 
 test("Zebu route allow-list blocks external and malformed destinations", () => {
   assert.equal(isAllowedZebuRoute("/dashboard"), true);
+  assert.equal(isAllowedZebuRoute("/dashboard/linkedin"), true);
   assert.equal(isAllowedZebuRoute("/dashboard/applications/app_123"), true);
   assert.equal(isAllowedZebuRoute("/dashboard/resumes/resume-123"), true);
   assert.equal(isAllowedZebuRoute("https://example.com"), false);
@@ -31,8 +32,11 @@ test("Zebu rejects unsupported tools and oversized commands", () => {
 test("Zebu recognizes the wake phrase without triggering on ordinary brand mentions", () => {
   assert.equal(containsZebuWakeWord("Hey Zebu, show my deadlines"), true);
   assert.equal(containsZebuWakeWord("okay   zeebu!"), true);
+  assert.equal(containsZebuWakeWord("Hey Zebra, open applications"), true);
+  assert.equal(containsZebuWakeWord("hey sebu open applications"), true);
+  assert.equal(containsZebuWakeWord("hey zeboo"), true);
   assert.equal(containsZebuWakeWord("I opened Zebu yesterday"), false);
-  assert.equal(containsZebuWakeWord("Hey Zebra, open my resume"), false);
+  assert.equal(containsZebuWakeWord("The zebra logo looks good"), false);
 });
 
 test("Zebu rejects model-proposed writes until deterministic confirmation exists", () => {

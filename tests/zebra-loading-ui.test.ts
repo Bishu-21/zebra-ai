@@ -1,20 +1,19 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { describe, test } from "node:test";
 
 const loaderSource = readFileSync("src/components/ui/ZebraLoader.tsx", "utf8");
 const routeLoadingSource = readFileSync("src/app/dashboard/loading.tsx", "utf8");
 const routeLoaderSource = readFileSync("src/components/ui/ZebraRouteLoader.tsx", "utf8");
-const appLoadingSource = readFileSync("src/app/loading.tsx", "utf8");
 const workSource = readFileSync("src/app/dashboard/work/page.tsx", "utf8");
 const settingsSource = readFileSync("src/app/dashboard/settings/page.tsx", "utf8");
 const globalStyles = readFileSync("src/app/globals.css", "utf8");
 
 describe("Zebra loading experience", () => {
-    test("uses the existing Zebra mark in the dashboard route boundary", () => {
+    test("uses the existing Zebra mark in dashboard route boundaries without a duplicate public loader", () => {
         assert.match(loaderSource, /src="\/zebra_star\.svg"/);
         assert.match(routeLoadingSource, /<ZebraRouteLoader \/>/);
-        assert.match(appLoadingSource, /<ZebraLoader/);
+        assert.equal(existsSync("src/app/loading.tsx"), false);
     });
 
     test("replaces prominent plain-text workspace fallbacks", () => {

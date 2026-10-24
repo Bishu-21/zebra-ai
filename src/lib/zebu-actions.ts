@@ -9,6 +9,8 @@ import type { ZebuDisplayCard, ZebuPlan } from "@/lib/zebu-contract";
 import { getUserOwnedApplication, getUserOwnedResume } from "@/lib/auth-policy";
 import { Type, type FunctionDeclaration } from "@google/genai";
 import { validateStatusTransition } from "@/lib/application-state-machine";
+import { applicationFormToolResult, type ZebuLiveUiAction } from "@/lib/zebu-live-ui-actions";
+import { summarizePortfolioProofContext } from "@/lib/zebu-portfolio-context";
 
 type Result = Pick<ZebuPlan, "spokenResponse" | "displayCards" | "followUp">;
 const clean = (value: string) => value.replace(/[\\%_]/g, " ").trim().slice(0, 100);
@@ -206,6 +208,8 @@ export async function executeUpdateApplication(userId: string, rawArgs: Record<s
 
 export const zebuLiveToolDeclarations: FunctionDeclaration[] = [
   { name: "navigate_to_page", description: "Navigate to a safe Zebra workspace page.", parameters: { type: Type.OBJECT, properties: { page: { type: Type.STRING, enum: ["home", "resumes", "applications", "work", "cover_letters", "portfolio", "analytics", "settings"] } }, required: ["page"] } },
+  { name: "open_application_form", description: "Open the new application form in Zebra. Does not create or save a record.", parameters: { type: Type.OBJECT, properties: {} } },
+  { name: "start_portfolio_proof", description: "Open the reviewed portfolio proof workflow when the user asks to add a proof, evidence link, or first work item. This tool does not save or publish a record. The user supplies the project facts and proof link, reviews the exact change, and confirms in Zebra.", parameters: { type: Type.OBJECT, properties: {} } },
   { name: "search_workspace", description: "Search the user's saved resumes, applications, and work items.", parameters: { type: Type.OBJECT, properties: { query: { type: Type.STRING } }, required: ["query"] } },
   { name: "get_quick_stats", description: "Get counts for resumes, active applications, work items, cover letters, and portfolio state.", parameters: { type: Type.OBJECT, properties: {} } },
   { name: "get_deadlines", description: "Get upcoming saved application deadlines sorted by urgency.", parameters: { type: Type.OBJECT, properties: {} } },
@@ -216,10 +220,15 @@ export const zebuLiveToolDeclarations: FunctionDeclaration[] = [
   { name: "start_role_match", description: "Open the existing role-match tool without running or spending credits.", parameters: { type: Type.OBJECT, properties: {} } },
 ];
 
-export type ZebuLiveUiAction = { type: "navigate"; route: string } | { type: "open_tool"; tool: "resume_analysis" | "role_match" };
 export type ZebuLiveToolResult = { result: Record<string, unknown>; cards?: ZebuDisplayCard[]; uiAction?: ZebuLiveUiAction };
 
 export async function executeZebuLiveTool(name: string, args: Record<string, unknown>, userId: string): Promise<ZebuLiveToolResult> {
+  if (name === "open_application_form") return applicationFormToolResult();
+  if (name === "start_portfolio_proof") {
+    const items = await db.select({ id: workItems.id, title: workItems.title, proofUrl: workItems.proofUrl })
+      .from(workItems).where(eq(workItems.userId, userId)).orderBy(desc(workItems.updatedAt)).limit(51);
+    return { result: { success: true, ...summarizePortfolioProofContext(items), note: "Proof review opened; no work item has been saved." }, uiAction: { type: "open_proof_flow" } };
+  }
   if (name === "navigate_to_page") {
     const routes: Record<string, string> = { home: "/dashboard", resumes: "/dashboard/resumes", applications: "/dashboard/job-tracker", work: "/dashboard/work", cover_letters: "/dashboard/cover-letters", portfolio: "/dashboard/portfolio", analytics: "/dashboard/analytics", settings: "/dashboard/settings" };
     const route = routes[String(args.page ?? "")];

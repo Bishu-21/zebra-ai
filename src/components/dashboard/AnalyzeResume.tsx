@@ -15,6 +15,9 @@ import {
 import { useRouter } from "next/navigation";
 import { ResumeResultsModal } from "./ResumeResultsModal";
 import { ResumeAnalysisData } from "@/components/compiler/types";
+import { readApiResponse } from "@/lib/api-response";
+import { ResumeProcessingStatus } from "./ResumeProcessingStatus";
+import { loadResumeReviewOptions, type ResumeReviewOption } from "@/lib/resume-review-options";
 
 export function AnalyzeResume() {
   const [isOpen, setIsOpen] = useState(false);
@@ -27,19 +30,42 @@ export function AnalyzeResume() {
   const [activeResumeId, setActiveResumeId] = useState<string | null>(null);
   const [uploadedTitle, setUploadedTitle] = useState<string | null>(null);
   const [isResultsModalOpen, setIsResultsModalOpen] = useState(false);
+  const [savedResumes, setSavedResumes] = useState<ResumeReviewOption[]>([]);
+  const [isLoadingResumes, setIsLoadingResumes] = useState(false);
+  const [resumeListError, setResumeListError] = useState<string | null>(null);
+  const [resumeListAttempt, setResumeListAttempt] = useState(0);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
+  const openReview = React.useCallback(() => {
+    setIsLoadingResumes(true);
+    setResumeListError(null);
+    setResumeListAttempt(attempt => attempt + 1);
+    setIsOpen(true);
+  }, []);
+
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const controller = new AbortController();
+    void loadResumeReviewOptions(fetch, controller.signal)
+      .then(options => { if (!controller.signal.aborted) setSavedResumes(options); })
+      .catch(err => {
+        if (!controller.signal.aborted) setResumeListError(err instanceof Error ? err.message : "Could not load your saved resumes");
+      })
+      .finally(() => { if (!controller.signal.aborted) setIsLoadingResumes(false); });
+    return () => controller.abort();
+  }, [isOpen, resumeListAttempt]);
+
   React.useEffect(() => {
     const open = () => {
-      setIsOpen(true);
+      openReview();
       sessionStorage.removeItem("zebu:pending-tool");
     };
     window.addEventListener("zebu:open-resume_analysis", open);
     if (sessionStorage.getItem("zebu:pending-tool") === "resume_analysis") open();
     return () => window.removeEventListener("zebu:open-resume_analysis", open);
-  }, []);
+  }, [openReview]);
 
   const handleAnalysisFailure = (err: unknown) => {
     setError(err instanceof Error ? err.message : "Analysis failed");
@@ -68,8 +94,7 @@ export function AnalyzeResume() {
         body: formData,
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Upload failed");
+      const data = await readApiResponse<{ id: string; title?: string }>(res, "Upload failed");
 
       setContent("");
       setActiveResumeId(data.id);
@@ -88,21 +113,7 @@ export function AnalyzeResume() {
 
   const triggerAnalysis = async (textToAnalyze?: string, resumeId?: string) => {
     setIsAnalyzing(true);
-    const steps = [
-      "Initializing Analysis...",
-      "Evaluating ATS benchmarks...",
-      "Analyzing content impact...",
-      "Performing readability check...",
-      "Generating improvement suggestions...",
-      "Finalizing Report..."
-    ];
-    let stepIdx = 0;
-
-    setScanStep(steps[0]);
-    const stepInterval = setInterval(() => {
-      stepIdx++;
-      if (stepIdx < steps.length) setScanStep(steps[stepIdx]);
-    }, 1200);
+    setScanStep("Reviewing your resume against 45 evidence checks...");
 
     setError(null);
 
@@ -113,10 +124,8 @@ export function AnalyzeResume() {
         body: JSON.stringify(resumeId ? { resumeId } : { content: textToAnalyze }),
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Analysis failed");
+      const data = await readApiResponse<{ analysis: ResumeAnalysisData; resumeId: string }>(res, "Analysis failed");
 
-      clearInterval(stepInterval);
       setScanStep("Analysis Complete.");
 
       setAnalysisResult(data.analysis);
@@ -131,7 +140,6 @@ export function AnalyzeResume() {
       setError(err instanceof Error ? err.message : "Analysis failed");
       setIsAnalyzing(false);
       setIsUploading(false);
-      clearInterval(stepInterval);
     }
   };
 
@@ -153,7 +161,7 @@ export function AnalyzeResume() {
     <>
       {/* Launcher Card */}
       <div
-        onClick={() => setIsOpen(true)}
+        onClick={openReview}
         className="group/card relative overflow-hidden flex flex-col justify-between w-full h-full cursor-pointer transition-all p-7 bg-white border border-neutral-200/80 rounded-3xl hover:border-neutral-300 hover:shadow-xl active:scale-[0.99] group shadow-xs"
       >
         <div className="flex items-start justify-between mb-8">
@@ -214,10 +222,41 @@ export function AnalyzeResume() {
 
                   {/* Body Content */}
                   <div className="flex-grow overflow-y-auto p-6 sm:p-8 space-y-6">
+                      <div className="space-y-2">
+                          <label htmlFor="review-saved-resume" className="text-xs font-semibold text-neutral-600">Existing resume</label>
+                          <select
+                              id="review-saved-resume"
+                              value={savedResumes.some(resume => resume.id === activeResumeId) ? activeResumeId ?? "" : ""}
+                              disabled={isProcessing || isLoadingResumes || !!resumeListError}
+                              onChange={event => {
+                                  setActiveResumeId(event.target.value || null);
+                                  setUploadedTitle(null);
+                                  setContent("");
+                                  setError(null);
+                              }}
+                              className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-3 text-sm text-neutral-900 disabled:opacity-50"
+                          >
+                              <option value="">{isLoadingResumes ? "Loading your resumes..." : "Choose a saved resume"}</option>
+                              {savedResumes.map(resume => <option key={resume.id} value={resume.id}>{resume.title || "Untitled resume"}</option>)}
+                          </select>
+                          {resumeListError ? (
+                              <p role="alert" className="text-xs text-red-700">
+                                  {resumeListError} <button type="button" onClick={() => {
+                                      setIsLoadingResumes(true);
+                                      setResumeListError(null);
+                                      setResumeListAttempt(attempt => attempt + 1);
+                                  }} className="underline">Retry</button>
+                              </p>
+                          ) : !isLoadingResumes && savedResumes.length === 0 ? (
+                              <p className="text-xs text-neutral-500">No saved resumes yet. Paste or upload one below.</p>
+                          ) : (
+                              <p className="text-xs text-neutral-500">Review the saved version without uploading it again. Analysis uses one credit.</p>
+                          )}
+                      </div>
                       <div className="flex items-center justify-between">
                           <div>
                               <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Resume Content</h4>
-                              <p className="text-xs text-neutral-500 mt-0.5">Paste plain text or import a document below</p>
+                              <p className="text-xs text-neutral-500 mt-0.5">Or paste plain text or import a new document below</p>
                           </div>
                           <div>
                               <input
@@ -259,18 +298,7 @@ export function AnalyzeResume() {
                                       exit={{ opacity: 0 }}
                                       className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-white/80 backdrop-blur-xs gap-4 p-6"
                                   >
-                                      <RiLoader4Line className="animate-spin text-[#0A0A0A]" size={32} />
-                                      <div className="flex flex-col items-center gap-2 text-center">
-                                          <span className="text-xs font-bold text-[#0A0A0A]">{scanStep}</span>
-                                          <div className="w-40 h-1.5 bg-neutral-200 rounded-full overflow-hidden">
-                                              <m.div
-                                                  className="h-full bg-[#0A0A0A]"
-                                                  initial={{ width: "0%" }}
-                                                  animate={{ width: "100%" }}
-                                                  transition={{ duration: 6, ease: "linear" }}
-                                              />
-                                          </div>
-                                      </div>
+                                      <ResumeProcessingStatus key={isAnalyzing ? "analysis" : "upload"} stage={scanStep} />
                                   </m.div>
                               )}
                           </AnimatePresence>

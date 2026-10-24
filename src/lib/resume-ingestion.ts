@@ -1,6 +1,8 @@
+import { groundResumeContent } from "./resume-grounding";
+export { groundResumeContent } from "./resume-grounding";
 import mammoth from "mammoth";
 import { extractText, getDocumentProxy } from "unpdf";
-import type { ResumeContent, ResumeSourceSpan } from "@/components/compiler/types";
+import type { ResumeContent } from "@/components/compiler/types";
 import { generateAiResponse } from "@/lib/azure-foundry";
 import {
     MAX_AI_RESUME_TEXT_LENGTH,
@@ -24,63 +26,6 @@ export interface ResumeIngestionOptions {
 export interface ResumeIngestionResult {
     content: ResumeContent;
     warnings: string[];
-}
-
-function collectGroundingClaims(content: ResumeContent): Array<{ path: string; text: string }> {
-    const claims: Array<{ path: string; text: string }> = [];
-    const add = (path: string, value: string | undefined) => {
-        const text = value?.trim();
-        if (text) claims.push({ path, text });
-    };
-
-    Object.entries(content.basics).forEach(([field, value]) => add(`basics.${field}`, value));
-    content.experience.forEach((entry, index) => {
-        add(`experience.${index}.company`, entry.company);
-        add(`experience.${index}.location`, entry.location);
-        add(`experience.${index}.role`, entry.role);
-        add(`experience.${index}.period`, entry.period);
-        add(`experience.${index}.techStack`, entry.techStack);
-        add(`experience.${index}.link`, entry.link);
-        entry.highlights.forEach((value, bullet) => add(`experience.${index}.highlights.${bullet}`, value));
-    });
-    content.education.forEach((entry, index) => {
-        add(`education.${index}.school`, entry.school);
-        add(`education.${index}.location`, entry.location);
-        add(`education.${index}.degree`, entry.degree);
-        add(`education.${index}.gpa`, entry.gpa);
-        add(`education.${index}.period`, entry.period);
-        entry.highlights.forEach((value, bullet) => add(`education.${index}.highlights.${bullet}`, value));
-    });
-    content.projects.forEach((entry, index) => {
-        add(`projects.${index}.title`, entry.title);
-        add(`projects.${index}.techStack`, entry.techStack);
-        add(`projects.${index}.link`, entry.link);
-        entry.highlights.forEach((value, bullet) => add(`projects.${index}.highlights.${bullet}`, value));
-    });
-    content.skills.forEach((entry, index) => {
-        add(`skills.${index}.category`, entry.category);
-        entry.items.split(/[,;|]/).forEach((value, item) => add(`skills.${index}.items.${item}`, value));
-    });
-    content.certifications.forEach((entry, index) => {
-        add(`certifications.${index}.category`, entry.category);
-        entry.items.split(/[;|]/).forEach((value, item) => add(`certifications.${index}.items.${item}`, value));
-    });
-    return claims;
-}
-
-/** Locate every extracted claim in the preserved normalized source. */
-export function groundResumeContent(content: ResumeContent, sourceText: string): ResumeSourceSpan[] {
-    const searchable = sourceText.toLocaleLowerCase();
-    return collectGroundingClaims(content).map(({ path, text }) => {
-        const start = searchable.indexOf(text.toLocaleLowerCase());
-        return {
-            path,
-            text,
-            start: start >= 0 ? start : null,
-            end: start >= 0 ? start + text.length : null,
-            grounded: start >= 0,
-        };
-    });
 }
 
 function cleanFileName(value: string): string {

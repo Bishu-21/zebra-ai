@@ -33,6 +33,7 @@ export interface ResumeAuditCriterion {
 
 export interface ResumeAuditContext {
     hasProfessionalExperience?: boolean;
+    isCurrentStudent?: boolean;
 }
 
 export const RESUME_AUDIT_RUBRIC: readonly ResumeAuditCriterion[] = [
@@ -215,17 +216,36 @@ export function formatResumeAuditRubricForPrompt(): string {
 
 export function inferResumeAuditContext(source: string): ResumeAuditContext {
     try {
-        const parsed = JSON.parse(source) as { experience?: unknown };
+        const parsed = JSON.parse(source) as { experience?: unknown; education?: unknown };
         if (Array.isArray(parsed.experience)) {
-            return { hasProfessionalExperience: parsed.experience.length > 0 };
+            const hasProfessionalExperience = parsed.experience.some((entry) => {
+                if (!entry || typeof entry !== "object" || Array.isArray(entry)) return false;
+                const role = entry as Record<string, unknown>;
+                const employer = [role.company, role.employer].some((value) => typeof value === "string" && value.trim());
+                const title = [role.role, role.position, role.title].some((value) => typeof value === "string" && value.trim());
+                return employer && title;
+            });
+            const educationText = Array.isArray(parsed.education) ? JSON.stringify(parsed.education) : "";
+            const isCurrentStudent = /\b(?:student|first[- ]year|second[- ]year|third[- ]year|final[- ]year|1st\s+year|2nd\s+year|3rd\s+year|4th\s+year|expected\s+graduation|present)\b/i.test(educationText);
+            return { hasProfessionalExperience, isCurrentStudent };
         }
     } catch {
         // Plain-text imports are detected from conventional section headings.
     }
 
-    return {
-        hasProfessionalExperience: /(?:^|\n)\s*(?:professional\s+|work\s+|employment\s+)?experience\s*(?:\n|:|$)/im.test(source),
-    };
+    const hasProfessionalExperience = /(?:^|\n)\s*(?:professional\s+|work\s+|employment\s+)?experience\s*(?:\n|:|$)/im.test(source);
+    const hasEducation = /(?:^|\n)\s*education\s*(?:\n|:|$)/im.test(source);
+    const isCurrentStudent = hasEducation && /\b(?:student|first[- ]year|second[- ]year|third[- ]year|final[- ]year|1st\s+year|2nd\s+year|3rd\s+year|4th\s+year|expected\s+graduation|present)\b/i.test(source);
+    return { hasProfessionalExperience, isCurrentStudent };
+}
+
+export function resolveProfessionalExperienceExpectation(
+    evidence: ResumeAuditContext,
+    savedProfileExpectation: boolean | undefined,
+): boolean | undefined {
+    if (evidence.hasProfessionalExperience === true) return true;
+    if (evidence.isCurrentStudent === true) return false;
+    return savedProfileExpectation ?? evidence.hasProfessionalExperience;
 }
 
 /**
