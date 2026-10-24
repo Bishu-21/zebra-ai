@@ -278,7 +278,7 @@ export function GenerateCoverLetter({ resumes }: { resumes: { id: string; title:
                                             Cover Letter Generator
                                         </h2>
                                         <p className="text-xs font-medium text-neutral-600 mt-0.5">
-                                            Professional <span className="text-neutral-400">&middot;</span> Tailored <span className="text-neutral-400">&middot;</span> Precise
+                                            Draft a letter for a specific role.
                                         </p>
                                     </div>
                                 </div>
@@ -550,8 +550,8 @@ export function GenerateCoverLetter({ resumes }: { resumes: { id: string; title:
                                         <RiMailSendLine size={16} />
                                     </div>
                                     <div>
-                                        <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Secure Transaction</p>
-                                        <p className="text-xs font-medium text-neutral-700">1 AI Credit will be utilized</p>
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Generation cost</p>
+                                        <p className="text-xs font-medium text-neutral-700">Uses 1 credit</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3 justify-end">
