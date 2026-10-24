@@ -119,7 +119,7 @@ export function GenerateCoverLetter({ resumes }: { resumes: { id: string; title:
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     ...formData,
-                    intelligence: intelligence
+                    intelligence: intelligence ?? undefined
                 }),
             });
             const data = await res.json();
