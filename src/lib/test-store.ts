@@ -97,6 +97,10 @@ class IntegrationTestStore {
     preflightChecks = new Map<string, PreflightReport>();
     backgroundJobs = new Map<string, BackgroundJobRecord>();
     documentArtifacts = new Map<string, DocumentArtifactRecord>();
+    credits = new Map<string, number>();
+    creditRefunds = new Map<string, number>();
+    creditRefundFailures = new Map<string, number>();
+    creditRefundAttempts = new Map<string, number>();
 
     clear() {
         this.users.clear();
@@ -111,6 +115,10 @@ class IntegrationTestStore {
         this.preflightChecks.clear();
         this.backgroundJobs.clear();
         this.documentArtifacts.clear();
+        this.credits.clear();
+        this.creditRefunds.clear();
+        this.creditRefundFailures.clear();
+        this.creditRefundAttempts.clear();
     }
 }
 
