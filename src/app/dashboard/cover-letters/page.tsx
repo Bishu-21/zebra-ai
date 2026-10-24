@@ -2,7 +2,7 @@ import React, { Suspense } from "react";
 import { getSafeSession } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { resumes as resumesTable, coverLetters as coverLettersTable } from "@/lib/schema";
-import { and, eq, desc, lt, or } from "drizzle-orm";
+import { and, eq, desc, inArray, lt, or } from "drizzle-orm";
 import Link from "next/link";
 import { GenerateCoverLetter } from "@/components/dashboard/GenerateCoverLetter";
 import {
@@ -13,7 +13,7 @@ import {
 import { CoverLetterActions } from "@/components/dashboard/CoverLetterActions";
 import { DashboardPage, DashboardPageHeader } from "@/components/dashboard/DashboardPage";
 import { decodeCursor, paginateRows } from "@/lib/pagination";
-import { candidateNameFromStoredResume } from "@/lib/cover-letter-document";
+import { candidateNameFromStoredResume, missingReferencedResumeIds } from "@/lib/cover-letter-document";
 
 function formatTimeAgo(date: Date) {
   const now = new Date();
@@ -85,6 +85,19 @@ async function CoverLettersContent({ userId, cursor: rawCursor }: { userId: stri
   }));
   const candidateNameByResumeId = new Map(resumeOptions.map((resume) => [resume.id, resume.candidateName]));
   const letters = letterPage.items;
+  const missingResumeIds = missingReferencedResumeIds(
+    letters.map((letter) => letter.resumeId),
+    userResumes.map((resume) => resume.id),
+  );
+  if (missingResumeIds.length > 0) {
+    const referencedResumes = await db.query.resumes.findMany({
+      columns: { id: true, content: true },
+      where: and(eq(resumesTable.userId, userId), inArray(resumesTable.id, missingResumeIds)),
+    });
+    for (const resume of referencedResumes) {
+      candidateNameByResumeId.set(resume.id, candidateNameFromStoredResume(resume.content));
+    }
+  }
 
   return (
     <DashboardPage>

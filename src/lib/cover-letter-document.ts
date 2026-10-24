@@ -86,6 +86,22 @@ function listItemText(value: string): string {
     return value.replace(/^([*-]|•)\s+/, "");
 }
 
+function unwrapSupportedMarkdown(value: string): string {
+    let current = value;
+    let previous = "";
+    while (current !== previous) {
+        previous = current;
+        current = current
+            .replace(/\*\*(.+?)\*\*/g, "$1")
+            .replace(/\*(.+?)\*/g, "$1");
+    }
+    return current;
+}
+
+function identityText(value: string): string {
+    return unwrapSupportedMarkdown(value).replace(/\s+/g, " ").trim();
+}
+
 function formatInlineMarkdown(value: string): string {
     return escapeCoverLetterHtml(value)
         .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
@@ -125,27 +141,35 @@ export function formatCoverLetterBlocks(content: string): CoverLetterBlock[] {
 
 function nonEmptyLines(lines: string[]): { index: number; text: string }[] {
     return lines
-        .map((line, index) => ({ index, text: line.trim() }))
+        .map((line, index) => ({ index, text: identityText(line) }))
         .filter((line) => line.text.length > 0);
 }
 
 function inferNameFromLetter(lines: string[]): string | undefined {
     const populated = nonEmptyLines(lines);
     const closing = [...populated].reverse().find((line) => CLOSING_LINE.test(line.text));
-    if (closing) {
-        const after = populated.find((line) => line.index > closing.index);
-        if (after && isPlausibleInferredName(after.text)) {
-            return sanitizeCandidateName(after.text);
-        }
-    }
-
-    const salutation = populated.find((line) => SALUTATION_LINE.test(line.text));
-    const preamble = populated.filter((line) => (salutation ? line.index < salutation.index : line.index < 6));
-    const first = preamble[0];
-    if (first && isPlausibleInferredName(first.text)) {
-        return sanitizeCandidateName(first.text);
+    if (!closing) return undefined;
+    const after = populated.find((line) => line.index > closing.index);
+    if (after && isPlausibleInferredName(after.text)) {
+        return sanitizeCandidateName(after.text);
     }
     return undefined;
+}
+
+export function missingReferencedResumeIds(
+    referencedIds: Array<string | null | undefined>,
+    loadedIds: Iterable<string>,
+): string[] {
+    const known = new Set(loadedIds);
+    const missing: string[] = [];
+    const seen = new Set<string>();
+    for (const id of referencedIds) {
+        const resumeId = typeof id === "string" ? id.trim() : "";
+        if (!resumeId || known.has(resumeId) || seen.has(resumeId)) continue;
+        seen.add(resumeId);
+        missing.push(resumeId);
+    }
+    return missing;
 }
 
 function letterHasOwnLetterhead(lines: string[]): boolean {

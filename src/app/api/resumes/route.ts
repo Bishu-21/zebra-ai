@@ -7,6 +7,7 @@ import crypto from "crypto";
 import { resumeSchema } from "@/lib/validation";
 import { requireAuth, notFoundResponse } from "@/lib/auth-policy";
 import { paginateRows, parsePagination } from "@/lib/pagination";
+import { candidateNameFromStoredResume } from "@/lib/cover-letter-document";
 import { normalizeResumeContentForStorage } from "@/lib/resume-content";
 
 export async function GET(req: NextRequest) {
@@ -32,6 +33,7 @@ export async function GET(req: NextRequest) {
         isPublic: resumesTable.isPublic,
         createdAt: resumesTable.createdAt,
         updatedAt: resumesTable.updatedAt,
+        content: resumesTable.content,
       })
       .from(resumesTable)
       .where(and(eq(resumesTable.userId, authCtx.user.id), cursorCondition))
@@ -50,8 +52,9 @@ export async function GET(req: NextRequest) {
       .where(inArray(analysisTable.resumeId, resumeIds))
       .orderBy(analysisTable.resumeId, desc(analysisTable.createdAt)) : [];
     const analysisByResume = new Map(latestAnalyses.map(item => [item.resumeId, item]));
-    const resumes = page.items.map(resume => ({
+    const resumes = page.items.map(({ content, ...resume }) => ({
         ...resume,
+        candidateName: candidateNameFromStoredResume(content) ?? null,
         latestAnalysis: analysisByResume.get(resume.id) ?? null,
     }));
 

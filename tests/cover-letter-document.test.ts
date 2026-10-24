@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import {
     candidateNameFromStoredResume,
     composeCoverLetterDocument,
+    missingReferencedResumeIds,
     sanitizeCandidateName,
 } from "../src/lib/cover-letter-document";
 import { generateCoverLetterHtml } from "../src/lib/cover-letter-renderer";
@@ -29,6 +31,21 @@ ${"This paragraph keeps the letter long enough to paginate across two A4 pages w
 
 Sincerely,
 Priya Natarajan`;
+
+const COMPANY_BLOCK_LETTER = `Northwind
+Human Resources
+
+Dear Hiring Manager,
+
+I am writing to apply for the Senior Software Engineer role.
+
+I would welcome the chance to discuss this role.`;
+
+const MARKDOWN_CLOSING_LETTER = `Dear Hiring Manager,
+
+I am writing to apply for the Senior Software Engineer role at Northwind.
+
+**Sincerely,**`;
 
 describe("cover letter identity sanitization", () => {
     it("accepts confirmed resume names and rejects placeholders", () => {
@@ -92,6 +109,69 @@ describe("composeCoverLetterDocument", () => {
         assert.match(paragraph.html, /&lt;img src=&quot;x&quot;/);
         assert.match(paragraph.html, /<strong>safe<\/strong>/);
         assert.doesNotMatch(paragraph.html, /<img /);
+    });
+
+    it("does not treat a recipient or company name as the applicant signature", () => {
+        const model = composeCoverLetterDocument(COMPANY_BLOCK_LETTER, { dateLabel: DATE });
+        assert.equal(model.identityName, null);
+        assert.equal(model.appendedClosing, null);
+        assert.equal(model.letterheadName, null);
+        assert.doesNotMatch(JSON.stringify(model.appendedClosing), /Northwind/);
+        assert.doesNotMatch(JSON.stringify(model), /Sincerely/);
+    });
+
+    it("signs a company-block letter only with confirmed candidate identity", () => {
+        const model = composeCoverLetterDocument(COMPANY_BLOCK_LETTER, {
+            candidateName: "Priya Natarajan",
+            dateLabel: DATE,
+        });
+        assert.equal(model.identityName, "Priya Natarajan");
+        assert.deepEqual(model.appendedClosing, { greeting: "Sincerely,", name: "Priya Natarajan" });
+        assert.equal(model.letterheadName, null);
+    });
+
+    it("recognizes Markdown closings so a second signature is not appended", () => {
+        const model = composeCoverLetterDocument(MARKDOWN_CLOSING_LETTER, {
+            candidateName: "Priya Natarajan",
+            dateLabel: DATE,
+        });
+        assert.equal(model.hasExistingClosing, true);
+        assert.equal(model.appendedClosing, null);
+        const sincerelyBlocks = model.blocks.filter((block) => block.type === "paragraph" && block.html.toLowerCase().includes("sincerely"));
+        assert.equal(sincerelyBlocks.length, 1);
+    });
+
+    it("reads a Markdown signature name after a Markdown closing", () => {
+        const letter = `${MARKDOWN_CLOSING_LETTER}\n**Priya Natarajan**`;
+        const model = composeCoverLetterDocument(letter, { dateLabel: DATE });
+        assert.equal(model.hasExistingClosing, true);
+        assert.equal(model.identityName, "Priya Natarajan");
+        assert.equal(model.appendedClosing, null);
+    });
+});
+
+describe("cover letter resume identity lookup", () => {
+    it("lists referenced resume ids that are missing from the newest loaded page", () => {
+        assert.deepEqual(
+            missingReferencedResumeIds(["old-resume", "newest", "old-resume", "", null], ["newest", "second"]),
+            ["old-resume"],
+        );
+        assert.deepEqual(missingReferencedResumeIds(["newest"], ["newest"]), []);
+    });
+
+    it("loads identity for every referenced owned resume, not only the newest 50", () => {
+        const page = readFileSync("src/app/dashboard/cover-letters/page.tsx", "utf8");
+        assert.match(page, /missingReferencedResumeIds/);
+        assert.match(page, /inArray\(resumesTable\.id, missingResumeIds\)/);
+        assert.match(page, /eq\(resumesTable\.userId, userId\)/);
+        assert.match(page, /candidateNameFromStoredResume/);
+    });
+
+    it("returns candidate names from GET /api/resumes without resume content", () => {
+        const route = readFileSync("src/app/api/resumes/route.ts", "utf8");
+        assert.match(route, /candidateNameFromStoredResume/);
+        assert.match(route, /candidateName:\s*candidateNameFromStoredResume\(content\)/);
+        assert.match(route, /const resumes = page\.items\.map\(\(\{ content, \.\.\.resume \}\) =>/);
     });
 });
 
@@ -167,5 +247,20 @@ describe("generateCoverLetterHtml", () => {
         assert.doesNotMatch(html, /position:\s*absolute/);
         assert.equal(html.split("Sincerely").length - 1, 1);
         assert.equal(html.split("Priya Natarajan").length - 1, 2);
+    });
+
+    it("does not sign a company-block letter as the recipient company", () => {
+        const html = generateCoverLetterHtml(COMPANY_BLOCK_LETTER, "Northwind", { dateLabel: DATE });
+        assert.doesNotMatch(html, /Sincerely/);
+        assert.equal(html.split("Northwind").length - 1, 2);
+    });
+
+    it("does not append a second closing after a Markdown sincerely line", () => {
+        const html = generateCoverLetterHtml(MARKDOWN_CLOSING_LETTER, "Northwind", {
+            candidateName: "Priya Natarajan",
+            dateLabel: DATE,
+        });
+        assert.equal(html.split("Sincerely").length - 1, 1);
+        assert.doesNotMatch(html, /class="signature"/);
     });
 });
