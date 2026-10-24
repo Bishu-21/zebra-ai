@@ -22,6 +22,8 @@ export interface PolicyContext<TBody = unknown> {
  * and error boundaries. Expensive endpoints enforce their own distributed
  * rate limits because limits vary by operation.
  */
+const MAX_CREDIT_REFUND_ATTEMPTS = 3;
+
 export function withRequestPolicy<TBody = unknown>(
     options: RequestPolicyOptions<TBody>,
     handler: (req: Request, ctx: PolicyContext<TBody>) => Promise<NextResponse>
@@ -31,11 +33,26 @@ export function withRequestPolicy<TBody = unknown>(
         let reservedUserId: string | null = null;
         let reservedCost = 0;
         let refunded = false;
+        let refundInFlight: Promise<void> | null = null;
 
         const refundReservedCredits = async () => {
             if (!reservedUserId || reservedCost <= 0 || refunded) return;
-            refunded = true;
-            await refundUserCredits(reservedUserId, reservedCost);
+            if (!refundInFlight) {
+                const userId = reservedUserId;
+                const cost = reservedCost;
+                refundInFlight = (async () => {
+                    for (let attempt = 1; attempt <= MAX_CREDIT_REFUND_ATTEMPTS && !refunded; attempt++) {
+                        if (await refundUserCredits(userId, cost)) {
+                            refunded = true;
+                            return;
+                        }
+                    }
+                    console.error(
+                        `Request Policy Error in ${options.operationName || "unnamed route"}: failed to refund ${cost} credits after ${MAX_CREDIT_REFUND_ATTEMPTS} writes.`,
+                    );
+                })();
+            }
+            await refundInFlight;
         };
 
         try {

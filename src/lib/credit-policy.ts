@@ -83,6 +83,12 @@ export async function refundUserCredits(
 ): Promise<boolean> {
     if (!userId || cost <= 0) return false;
     if (usesSyntheticCreditLedger(userId)) {
+        testStore.creditRefundAttempts.set(userId, (testStore.creditRefundAttempts.get(userId) ?? 0) + 1);
+        const remainingFailures = testStore.creditRefundFailures.get(userId) ?? 0;
+        if (remainingFailures > 0) {
+            testStore.creditRefundFailures.set(userId, remainingFailures - 1);
+            return false;
+        }
         testStore.credits.set(userId, (testStore.credits.get(userId) ?? 0) + cost);
         testStore.creditRefunds.set(userId, (testStore.creditRefunds.get(userId) ?? 0) + 1);
         return true;

@@ -112,6 +112,38 @@ describe("withRequestPolicy credit settlement", () => {
         assert.equal(testStore.credits.get(USER_ID), 0);
         assert.equal(testStore.creditRefunds.get(USER_ID) ?? 0, 0);
     });
+
+    test("retries a failed refund write once and does not double-credit", async () => {
+        seedCredits(5);
+        testStore.creditRefundFailures.set(USER_ID, 1);
+        const POST = withRequestPolicy(
+            { requireAuth: true, creditCost: 1, operationName: "matrix-refund-retry" },
+            async () => NextResponse.json({ error: "Application not found" }, { status: 404 }),
+        );
+
+        const response = await POST(new Request("http://localhost/api/applications/missing/matrix", { method: "POST" }));
+
+        assert.equal(response.status, 404);
+        assert.equal(testStore.credits.get(USER_ID), 5);
+        assert.equal(testStore.creditRefunds.get(USER_ID), 1);
+        assert.equal(testStore.creditRefundAttempts.get(USER_ID), 2);
+    });
+
+    test("does not grant extra credits when a refund write keeps failing", async () => {
+        seedCredits(5);
+        testStore.creditRefundFailures.set(USER_ID, 10);
+        const POST = withRequestPolicy(
+            { requireAuth: true, creditCost: 1, operationName: "matrix-refund-exhausted" },
+            async () => NextResponse.json({ error: "Application not found" }, { status: 404 }),
+        );
+
+        const response = await POST(new Request("http://localhost/api/applications/missing/matrix", { method: "POST" }));
+
+        assert.equal(response.status, 404);
+        assert.equal(testStore.credits.get(USER_ID), 4);
+        assert.equal(testStore.creditRefunds.get(USER_ID) ?? 0, 0);
+        assert.equal(testStore.creditRefundAttempts.get(USER_ID), 3);
+    });
 });
 
 describe("POST /api/applications/[id]/matrix credits", () => {
