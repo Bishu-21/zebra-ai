@@ -1,9 +1,9 @@
 "use client";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { 
     RiDeleteBin6Line, 
     RiArrowRightSLine, 
-    RiCloseCircleLine, 
+    RiCloseLine, 
     RiCheckboxCircleLine, 
     RiFileCopyLine, 
     RiDownload2Line, 
@@ -11,6 +11,7 @@ import {
 } from "react-icons/ri";
 import { useRouter } from "next/navigation";
 import { sanitizeHtml } from "@/lib/utils";
+import { useDialogFocus } from "@/hooks/useDialogFocus";
 
 type CoverLetter = {
     id: string;
@@ -25,6 +26,12 @@ export function CoverLetterActions({ letter }: { letter: CoverLetter }) {
     const [isExporting, setIsExporting] = useState(false);
     const [copied, setCopied] = useState(false);
     const router = useRouter();
+
+    const handleClose = useCallback(() => {
+        setIsViewOpen(false);
+    }, []);
+
+    const dialogRef = useDialogFocus(isViewOpen, handleClose);
 
     const handleCopy = () => {
         navigator.clipboard.writeText(letter.content);
@@ -106,7 +113,7 @@ export function CoverLetterActions({ letter }: { letter: CoverLetter }) {
             return (
                 <p 
                     key={i} 
-                    className="mb-4 text-justify"
+                    className="mb-4 text-left sm:text-justify leading-relaxed"
                     dangerouslySetInnerHTML={{ __html: sanitizeHtml(formatted) }}
                 />
             );
@@ -115,10 +122,11 @@ export function CoverLetterActions({ letter }: { letter: CoverLetter }) {
 
     return (
         <>
-            <div className="flex items-center gap-3 pt-6 border-t border-[#F5F5F5] group-hover:border-[#EAEAEA] transition-colors duration-300">
+            <div className="flex items-center gap-3 pt-6 border-t border-neutral-100 group-hover:border-neutral-200 transition-colors duration-300">
                 <button 
                     onClick={() => setIsViewOpen(true)}
-                    className="flex-grow h-12 bg-[#0A0A0A] text-white rounded-xl text-xs font-bold hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 group/btn"
+                    aria-label="Preview cover letter"
+                    className="flex-grow h-12 bg-neutral-950 text-white rounded-xl text-xs font-semibold hover:bg-neutral-800 active:scale-[0.98] transition-all flex items-center justify-center gap-2 group/btn focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-950"
                 >
                     View Letter
                     <RiArrowRightSLine size={14} className="group-hover/btn:translate-x-1 transition-transform" />
@@ -126,10 +134,11 @@ export function CoverLetterActions({ letter }: { letter: CoverLetter }) {
                 <button 
                     onClick={handleDelete}
                     disabled={isDeleting}
-                    className="w-12 h-12 border border-[#EAEAEA] rounded-xl flex items-center justify-center text-red-400 hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-all duration-300 disabled:opacity-50"
+                    aria-label="Delete cover letter"
+                    className="w-12 h-12 border border-neutral-200 rounded-xl flex items-center justify-center text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-300 transition-colors disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-950"
                 >
                     {isDeleting ? (
-                        <span className="w-4 h-4 border-2 border-red-400/30 border-t-red-400 rounded-full animate-spin"></span>
+                        <span className="w-4 h-4 border-2 border-red-400/30 border-t-red-500 rounded-full animate-spin"></span>
                     ) : (
                         <RiDeleteBin6Line size={18} />
                     )}
@@ -137,83 +146,98 @@ export function CoverLetterActions({ letter }: { letter: CoverLetter }) {
             </div>
 
             {isViewOpen && (
-                <div className="fixed inset-0 z-[110] flex items-center justify-center p-0 md:p-10">
-                    <div className="absolute inset-0 bg-[#0A0A0A]/60 backdrop-blur-md" onClick={() => setIsViewOpen(false)}></div>
-                    <div className="relative bg-white w-full h-full md:h-auto md:max-w-4xl md:max-h-[92vh] md:rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                        
+                <div className="fixed inset-0 z-[110] flex items-center justify-center p-2 sm:p-4 md:p-6 lg:p-8 overflow-y-auto">
+                    <div 
+                        aria-hidden="true"
+                        className="fixed inset-0 bg-neutral-950/60 backdrop-blur-sm" 
+                        onClick={handleClose}
+                    />
+                    <div 
+                        ref={dialogRef}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby={`letter-title-${letter.id}`}
+                        className="relative bg-white w-full max-w-4xl max-h-[calc(100dvh-1rem)] sm:max-h-[calc(100dvh-2rem)] rounded-2xl sm:rounded-3xl shadow-2xl border border-neutral-200 flex flex-col overflow-hidden my-auto z-10"
+                    >
                         {/* Header */}
-                        <div className="px-6 py-5 md:p-8 border-b border-[#F5F5F5] flex items-center justify-between bg-white sticky top-0 z-10">
-                            <div className="flex items-center gap-3 md:gap-4">
-                                <div className="hidden sm:flex w-12 h-12 bg-black/5 text-black rounded-2xl items-center justify-center">
-                                    <RiMailSendLine size={24} />
+                        <div className="px-4 py-3.5 sm:px-6 sm:py-5 border-b border-neutral-200 flex items-center justify-between bg-neutral-50/90 backdrop-blur-xl shrink-0">
+                            <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1 mr-2">
+                                <div className="hidden sm:flex w-10 h-10 sm:w-11 sm:h-11 bg-neutral-950 text-white rounded-xl items-center justify-center shrink-0 shadow-xs">
+                                    <RiMailSendLine size={22} />
                                 </div>
-                                <div>
-                                    <h2 className="text-lg md:text-xl font-black text-[#0A0A0A] truncate max-w-[200px] md:max-w-[400px]">{letter.title}</h2>
-                                    <p className="text-[0.7rem] font-bold text-[#B5B5B5] uppercase tracking-wider hidden sm:block">AI-Tailored Professional Letter</p>
+                                <div className="min-w-0">
+                                    <h2 id={`letter-title-${letter.id}`} className="text-base sm:text-lg font-bold text-neutral-950 truncate max-w-[180px] xs:max-w-[240px] sm:max-w-[340px] md:max-w-[420px]">{letter.title}</h2>
+                                    <p className="text-xs font-medium text-neutral-600 hidden sm:block">AI-Tailored Professional Letter</p>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2 md:gap-4">
+                            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                                 <button 
                                     onClick={handleCopy}
-                                    className="flex items-center justify-center w-10 h-10 md:w-auto md:px-5 md:py-2.5 bg-[#F9F9F9] border border-[#EAEAEA] hover:border-black rounded-xl text-xs font-bold transition-all text-[#0A0A0A]"
-                                    title="Copy Text"
+                                    aria-label="Copy letter text"
+                                    className="flex items-center justify-center min-h-9 sm:min-h-10 px-3 sm:px-4 py-2 bg-neutral-100 hover:bg-neutral-200 border border-neutral-200 rounded-xl text-xs font-semibold transition-colors text-neutral-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-950"
                                 >
-                                    {copied ? <RiCheckboxCircleLine size={20} className="text-green-500" /> : <RiFileCopyLine size={20} className="md:size-4 md:mr-2" />}
-                                    <span className="hidden md:inline">{copied ? "Copied!" : "Copy Text"}</span>
+                                    {copied ? <RiCheckboxCircleLine size={18} className="text-emerald-600 sm:mr-1.5" /> : <RiFileCopyLine size={18} className="sm:mr-1.5" />}
+                                    <span className="hidden sm:inline">{copied ? "Copied!" : "Copy Text"}</span>
                                 </button>
                                 <button 
                                     onClick={downloadPDF}
                                     disabled={isExporting}
-                                    className="flex items-center justify-center w-10 h-10 md:w-auto md:px-5 md:py-2.5 bg-[#0A0A0A] text-white rounded-xl text-xs font-bold transition-all hover:bg-zinc-800 disabled:opacity-50"
-                                    title="Download PDF"
+                                    aria-label="Download PDF"
+                                    className="flex items-center justify-center min-h-9 sm:min-h-10 px-3 sm:px-4 py-2 bg-neutral-950 text-white rounded-xl text-xs font-semibold transition-colors hover:bg-neutral-800 disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-950"
                                 >
                                     {isExporting ? (
-                                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin sm:mr-1.5"></span>
                                     ) : (
-                                        <RiDownload2Line size={20} className="md:size-4 md:mr-2" />
+                                        <RiDownload2Line size={18} className="sm:mr-1.5" />
                                     )}
-                                    <span className="hidden md:inline">Download PDF</span>
+                                    <span className="hidden sm:inline">Download PDF</span>
                                 </button>
-                                <button onClick={() => setIsViewOpen(false)} className="text-[#B5B5B5] hover:text-[#0A0A0A] transition-colors ml-2">
-                                    <RiCloseCircleLine size={28} />
+                                <button 
+                                    onClick={handleClose} 
+                                    aria-label="Close preview"
+                                    className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center text-neutral-500 hover:text-neutral-950 hover:bg-neutral-200/60 rounded-xl transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-950 ml-1"
+                                >
+                                    <RiCloseLine size={22} />
                                 </button>
                             </div>
                         </div>
 
                         {/* Content */}
-                        <div className="flex-grow overflow-y-auto p-4 md:p-12 custom-scrollbar bg-[#F5F5F7]">
+                        <div className="flex-grow overflow-y-auto p-4 sm:p-6 md:p-8 bg-neutral-100/50">
                             <div 
                                 id={`letter-content-${letter.id}`}
-                                className="bg-white p-8 md:p-16 rounded-[1rem] md:rounded-[1.5rem] shadow-sm border border-[#EAEAEA] font-serif text-[0.95rem] md:text-[1.1rem] leading-[1.8] text-[#1A1A1A] max-w-[210mm] mx-auto min-h-[297mm] flex flex-col"
+                                className="bg-white p-6 sm:p-10 md:p-14 rounded-xl shadow-xs border border-neutral-200 font-serif text-sm sm:text-base leading-relaxed text-neutral-900 max-w-[210mm] w-full mx-auto flex flex-col"
                             >
                                 <div className="flex-grow">
                                     {renderFormattedContent(letter.content)}
                                 </div>
-                                <div className="mt-12 pt-8 border-t border-[#F5F5F5] text-[0.7rem] text-[#B5B5B5] text-center font-sans uppercase tracking-[0.2em] print:hidden">
-                                    Generated by Zebra AI • High Conversion Technology
+                                <div className="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-neutral-200 text-xs text-neutral-600 text-center font-sans tracking-wider print:hidden">
+                                    Generated by Zebra AI
                                 </div>
                             </div>
                         </div>
 
                         {/* Footer (Mobile Only) */}
-                        <div className="md:hidden p-6 border-t border-[#F5F5F5] bg-white flex gap-4">
+                        <div className="md:hidden p-3.5 border-t border-neutral-200 bg-white flex gap-3 shrink-0">
                             <button 
-                                onClick={() => setIsViewOpen(false)}
-                                className="flex-grow bg-[#F9F9F9] text-[#0A0A0A] py-4 rounded-2xl font-black text-sm transition-all border border-[#EAEAEA]"
+                                onClick={handleClose}
+                                aria-label="Close preview"
+                                className="flex-grow bg-neutral-100 text-neutral-900 py-2.5 rounded-xl font-semibold text-xs transition-colors border border-neutral-200 hover:bg-neutral-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-950"
                             >
                                 Close
                             </button>
                             <button 
                                 onClick={downloadPDF}
                                 disabled={isExporting}
-                                className="flex-grow bg-[#0A0A0A] text-white py-4 rounded-2xl font-black text-sm transition-all shadow-lg shadow-black/10 disabled:opacity-50 flex items-center justify-center gap-2"
+                                aria-label="Download PDF"
+                                className="flex-grow bg-neutral-950 text-white py-2.5 rounded-xl font-semibold text-xs transition-colors shadow-xs disabled:opacity-50 flex items-center justify-center gap-2 hover:bg-neutral-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-950"
                             >
                                 {isExporting ? (
-                                    <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                                 ) : (
                                     <>
                                         Download PDF
-                                        <RiDownload2Line size={18} />
+                                        <RiDownload2Line size={16} />
                                     </>
                                 )}
                             </button>
