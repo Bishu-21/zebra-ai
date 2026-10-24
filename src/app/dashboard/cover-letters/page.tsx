@@ -13,6 +13,7 @@ import {
 import { CoverLetterActions } from "@/components/dashboard/CoverLetterActions";
 import { DashboardPage, DashboardPageHeader } from "@/components/dashboard/DashboardPage";
 import { decodeCursor, paginateRows } from "@/lib/pagination";
+import { candidateNameFromStoredResume } from "@/lib/cover-letter-document";
 
 function formatTimeAgo(date: Date) {
   const now = new Date();
@@ -58,13 +59,13 @@ async function CoverLettersContent({ userId, cursor: rawCursor }: { userId: stri
   const cursor = decodeCursor(rawCursor);
   const [userResumes, letterRows] = await Promise.all([
     db.query.resumes.findMany({
-      columns: { id: true, title: true },
+      columns: { id: true, title: true, content: true },
       where: eq(resumesTable.userId, userId),
       orderBy: [desc(resumesTable.updatedAt)],
       limit: 50,
     }),
     db.query.coverLetters.findMany({
-      columns: { id: true, title: true, content: true, createdAt: true },
+      columns: { id: true, title: true, content: true, createdAt: true, resumeId: true },
       where: and(
         eq(coverLettersTable.userId, userId),
         cursor ? or(
@@ -77,6 +78,12 @@ async function CoverLettersContent({ userId, cursor: rawCursor }: { userId: stri
     }),
   ]);
   const letterPage = paginateRows(letterRows, 24, letter => ({ id: letter.id, timestamp: letter.createdAt }));
+  const resumeOptions = userResumes.map((resume) => ({
+    id: resume.id,
+    title: resume.title,
+    candidateName: candidateNameFromStoredResume(resume.content),
+  }));
+  const candidateNameByResumeId = new Map(resumeOptions.map((resume) => [resume.id, resume.candidateName]));
   const letters = letterPage.items;
 
   return (
@@ -84,7 +91,7 @@ async function CoverLettersContent({ userId, cursor: rawCursor }: { userId: stri
       <DashboardPageHeader
         title="Cover Letters"
         description="Create evidence-grounded drafts for a specific role, then review and edit every claim before use."
-        actions={<GenerateCoverLetter resumes={userResumes} />}
+        actions={<GenerateCoverLetter resumes={resumeOptions} />}
       />
 
       {letters.length === 0 ? (
@@ -96,7 +103,7 @@ async function CoverLettersContent({ userId, cursor: rawCursor }: { userId: stri
           <p className="text-sm text-muted-foreground mb-6 max-w-md leading-6">
             Generate your first professional cover letter by matching your resume to a job description.
           </p>
-          <GenerateCoverLetter resumes={userResumes} />
+          <GenerateCoverLetter resumes={resumeOptions} />
         </div>
       ) : (
         <div className="space-y-6">
@@ -130,7 +137,9 @@ async function CoverLettersContent({ userId, cursor: rawCursor }: { userId: stri
                     id: letter.id,
                     title: letter.title,
                     content: letter.content,
-                    createdAt: letter.createdAt
+                    createdAt: letter.createdAt,
+                    resumeId: letter.resumeId,
+                    candidateName: letter.resumeId ? candidateNameByResumeId.get(letter.resumeId) : undefined,
                 }} />
             </div>
           ))}
