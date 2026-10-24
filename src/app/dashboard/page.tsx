@@ -41,7 +41,7 @@ export default async function DashboardPage() {
       return (
         <div className="p-12 text-center">
             <h1 className="text-2xl font-bold mb-4">Connection Issue</h1>
-            <p className="text-sm text-[#737373]">Unable to connect to the session server. Please try refreshing.</p>
+            <p className="text-sm text-muted-foreground">Unable to connect to the session server. Please try refreshing.</p>
         </div>
       );
   }
@@ -57,7 +57,7 @@ export default async function DashboardPage() {
       <div className="p-10 max-w-4xl mx-auto my-12 bg-amber-50 border border-amber-200 rounded-3xl text-center space-y-4 shadow-sm">
         <h2 className="text-2xl font-bold text-amber-900">Database Service Temporarily Unavailable</h2>
         <p className="text-sm text-amber-800 max-w-md mx-auto leading-relaxed">
-          We are currently experiencing transient connectivity issues with our database service. Your data is safe. Please refresh the page in a few moments.
+          We could not load your workspace. Refresh the page to try again.
         </p>
         <a 
           href="/dashboard"
@@ -294,55 +294,55 @@ async function renderDashboardContent(session: NonNullable<Awaited<ReturnType<ty
   }).slice(0, 15);
 
   return (
-    <div className="p-6 md:p-10 pb-32 max-w-[90rem] mx-auto overflow-x-hidden">
+    <div className="p-4 sm:p-6 md:p-10 pb-32 max-w-[90rem] mx-auto">
       {/* Welcome Banner + Compact Cute Metrics Widget */}
-      <div className="mb-8 flex flex-col xl:flex-row xl:items-center justify-between gap-6 bg-[#FAF9F6] p-6 md:p-8 rounded-3xl border border-neutral-200/70 shadow-xs">
+      <div className="mb-8 flex flex-col xl:flex-row xl:items-center justify-between gap-6 bg-muted p-6 md:p-8 rounded-3xl border border-neutral-200/70 shadow-xs">
         {/* Left: Greeting */}
         <div className="space-y-1">
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-[#0A0A0A]">
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
               Welcome back{session.user.name ? `, ${session.user.name.split(' ')[0]}` : ''}.
           </h1>
-          <p className="text-sm font-medium text-neutral-500 max-w-md leading-relaxed">
-            Manage your resumes, application proof, and AI optimizations from your workspace.
+          <p className="text-sm font-medium text-muted-foreground max-w-md leading-relaxed">
+            Manage your resumes, reviews, and applications.
           </p>
         </div>
 
         {/* Right: Metrics Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-white p-3 rounded-2xl border border-neutral-200/80 shadow-xs shrink-0">
+        <div className="grid min-w-0 w-full xl:w-auto grid-cols-2 sm:grid-cols-4 gap-3 bg-white p-3 rounded-2xl border border-neutral-200/80 shadow-xs">
           {stats.map((stat, i) => (
-            <div key={i} className="flex flex-col p-3 rounded-xl bg-[#FAF9F6] border border-neutral-200/60 hover:bg-neutral-100/80 transition-colors min-w-[110px]">
-              <div className="flex items-center justify-between mb-2">
-                <div className="w-7 h-7 rounded-lg bg-white border border-neutral-200/70 flex items-center justify-center text-[#0A0A0A] shadow-2xs">
+            <div key={i} className="flex min-w-0 flex-col p-3 rounded-xl bg-muted border border-neutral-200/60 hover:bg-neutral-100/80 transition-colors">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                <div className="w-7 h-7 rounded-lg bg-white border border-neutral-200/70 flex items-center justify-center text-foreground shadow-2xs">
                   <stat.icon size={14} />
                 </div>
-                <span className="text-xl font-bold tracking-tight text-[#0A0A0A]">
+                <span className="max-w-full break-all text-xl font-bold tabular-nums tracking-tight text-foreground">
                   {stat.customValue !== undefined ? stat.customValue : stat.value}
                 </span>
               </div>
-              <span className="text-xs font-medium text-neutral-500 truncate">{stat.label}</span>
+              <span className="text-sm font-medium text-muted-foreground break-words">{stat.label}</span>
             </div>
           ))}
         </div>
       </div>
 
       {/* Primary User Journey Hero Anchor: Continue Your Application */}
-      <div className="mb-10 p-6 md:p-8 bg-[#0A0A0A] text-white rounded-3xl shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+      <div className="mb-10 p-6 md:p-8 bg-primary text-white rounded-3xl shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="space-y-2 max-w-2xl">
           <h2 className="text-xl md:text-2xl font-bold tracking-tight text-white">
             {nextAction.title}
           </h2>
-          <p className="text-xs md:text-sm text-neutral-400 font-normal leading-relaxed">
+          <p className="text-sm text-neutral-300 font-normal leading-relaxed">
             {nextAction.description}
           </p>
         </div>
 
         {latestApp ? <Link
           href={nextAction.actionHref}
-          className="inline-flex items-center gap-2 bg-white text-[#0A0A0A] px-6 py-3 rounded-xl font-bold text-xs hover:bg-neutral-100 transition-all shadow-md active:scale-95 shrink-0"
+          className="inline-flex items-center gap-2 bg-white text-foreground px-6 py-3 rounded-xl font-bold text-xs hover:bg-neutral-100 transition-all shadow-md active:scale-95 shrink-0"
         >
           <span>{nextAction.actionLabel}</span>
           <RiArrowRightSLine size={16} />
-        </Link> : <div className="rounded-full bg-white p-1 text-[#0A0A0A]"><AddApplicationDrawer onboarding resumes={userResumes.map(({ id, title }) => ({ id, title }))} /></div>}
+        </Link> : <div className="rounded-full bg-white p-1 text-foreground"><AddApplicationDrawer onboarding resumes={userResumes.map(({ id, title }) => ({ id, title }))} /></div>}
       </div>
 
       {/* Two secondary destinations keep the home page focused. */}
@@ -350,24 +350,24 @@ async function renderDashboardContent(session: NonNullable<Awaited<ReturnType<ty
         <Link href="/dashboard/resumes" className="group flex min-h-24 items-center justify-between rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-xs transition hover:border-neutral-300 hover:shadow-md">
           <div className="flex items-center gap-4">
             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-neutral-100 text-neutral-700"><RiFileTextLine size={19} /></span>
-            <div><h2 className="text-sm font-bold">Manage resumes</h2><p className="mt-1 text-xs text-neutral-500">Open, create, or review a resume.</p></div>
+            <div><h2 className="text-sm font-bold">Manage resumes</h2><p className="mt-1 text-sm text-muted-foreground">Open, create, or review a resume.</p></div>
           </div>
-          <RiArrowRightSLine className="text-neutral-400 transition-transform group-hover:translate-x-0.5" />
+          <RiArrowRightSLine className="text-muted-foreground transition-transform group-hover:translate-x-0.5" />
         </Link>
         <Link href="/dashboard/job-tracker" className="group flex min-h-24 items-center justify-between rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-xs transition hover:border-neutral-300 hover:shadow-md">
           <div className="flex items-center gap-4">
             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-neutral-100 text-neutral-700"><RiFlashlightLine size={19} /></span>
-            <div><h2 className="text-sm font-bold">View applications</h2><p className="mt-1 text-xs text-neutral-500">Track roles, deadlines, and progress.</p></div>
+            <div><h2 className="text-sm font-bold">View applications</h2><p className="mt-1 text-sm text-muted-foreground">Track roles, deadlines, and progress.</p></div>
           </div>
-          <RiArrowRightSLine className="text-neutral-400 transition-transform group-hover:translate-x-0.5" />
+          <RiArrowRightSLine className="text-muted-foreground transition-transform group-hover:translate-x-0.5" />
         </Link>
       </div>
 
       <details className="rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-xs">
-        <summary className="cursor-pointer text-sm font-bold text-[#0A0A0A] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0A0A0A]">More tools</summary>
+        <summary className="cursor-pointer text-sm font-bold text-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary">More tools</summary>
       <section aria-labelledby="workspace-actions-title" className="mb-12 mt-8">
         <div className="mb-5">
-          <h2 id="workspace-actions-title" className="text-xl font-bold tracking-tight text-[#0A0A0A] md:text-2xl">Create and improve</h2>
+          <h2 id="workspace-actions-title" className="text-xl font-bold tracking-tight text-foreground md:text-2xl">Create and improve</h2>
           <p className="mt-1 text-sm text-neutral-600">Review or import a resume, match it to a role, build a new one, or add project evidence.</p>
         </div>
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-6">
@@ -383,17 +383,17 @@ async function renderDashboardContent(session: NonNullable<Awaited<ReturnType<ty
             className="group/card relative overflow-hidden flex flex-col justify-between h-full cursor-pointer transition-all p-7 bg-white border border-neutral-200/80 rounded-3xl hover:border-neutral-300 hover:shadow-xl active:scale-[0.99] group shadow-xs min-h-[200px]"
           >
             <div className="flex items-start justify-between mb-8">
-              <div className="w-11 h-11 bg-neutral-100 rounded-full flex items-center justify-center text-neutral-600 group-hover/card:bg-[#0A0A0A] group-hover/card:text-white transition-colors duration-300">
+              <div className="w-11 h-11 bg-neutral-100 rounded-full flex items-center justify-center text-neutral-600 group-hover/card:bg-primary group-hover/card:text-white transition-colors duration-300">
                 <RiAddLine size={22} />
               </div>
               <div className="flex items-center gap-1 opacity-0 group-hover/card:opacity-100 transition-opacity">
-                  <span className="text-xs font-semibold text-neutral-500">Build Resume</span>
-                  <RiArrowRightSLine size={16} className="text-[#0A0A0A]" />
+                  <span className="text-xs font-semibold text-muted-foreground">Build Resume</span>
+                  <RiArrowRightSLine size={16} className="text-foreground" />
               </div>
             </div>
             <div>
-              <h3 className="font-bold text-xl mb-1.5 text-[#0A0A0A] tracking-tight">Build New Resume</h3>
-              <p className="text-xs text-neutral-500 font-normal leading-relaxed">
+              <h3 className="font-bold text-xl mb-1.5 text-foreground tracking-tight">Build New Resume</h3>
+              <p className="text-sm text-muted-foreground font-normal leading-relaxed">
                 Create a new resume with guided AI suggestions.
               </p>
             </div>
@@ -416,17 +416,17 @@ async function renderDashboardContent(session: NonNullable<Awaited<ReturnType<ty
       {/* Recent Activity Section */}
       <div className="mt-12">
         <div className="flex items-center gap-2 mb-6 pb-4 border-b border-neutral-200/70">
-            <h2 className="text-xl md:text-2xl font-bold text-[#0A0A0A] tracking-tight">Recent Activity</h2>
+            <h2 className="text-xl md:text-2xl font-bold text-foreground tracking-tight">Recent Activity</h2>
         </div>
 
         
         {intelligenceReports.length === 0 ? (
             <div className="py-14 bg-white rounded-3xl border border-neutral-200/80 p-8 flex flex-col items-center justify-center text-center shadow-xs">
-                <div className="w-12 h-12 bg-neutral-100 rounded-2xl flex items-center justify-center text-neutral-500 mb-3 shadow-2xs">
+                <div className="w-12 h-12 bg-neutral-100 rounded-2xl flex items-center justify-center text-muted-foreground mb-3 shadow-2xs">
                     <RiArticleLine size={22} />
                 </div>
-                <p className="text-[#0A0A0A] text-sm font-semibold mb-1">No reports yet</p>
-                <p className="text-neutral-500 text-xs font-normal max-w-sm leading-relaxed">
+                <p className="text-foreground text-sm font-semibold mb-1">No reports yet</p>
+                <p className="text-muted-foreground text-xs font-normal max-w-sm leading-relaxed">
                   Analyze a resume to generate AI insights, score breakdowns, and recommendations here.
                 </p>
             </div>

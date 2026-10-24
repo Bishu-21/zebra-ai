@@ -1,6 +1,11 @@
 import { db, executeWithDbRetry } from "@/lib/db";
 import { user as userTable } from "@/lib/schema";
 import { eq, sql, gte, and } from "drizzle-orm";
+import { testStore } from "@/lib/test-store";
+
+function usesSyntheticCreditLedger(userId: string): boolean {
+    return process.env.NODE_ENV === "test" && Boolean(process.env.TEST_AUTH_USER_ID) && testStore.credits.has(userId);
+}
 
 export interface CreditReservationResult {
     success: boolean;
@@ -18,6 +23,20 @@ export async function reserveUserCredits(
 ): Promise<CreditReservationResult> {
     if (!userId || cost <= 0) {
         return { success: false, error: "Invalid credit reservation parameters." };
+    }
+
+    if (usesSyntheticCreditLedger(userId)) {
+        const current = testStore.credits.get(userId) ?? 0;
+        if (current < cost) {
+            return {
+                success: false,
+                remainingCredits: current,
+                error: `Insufficient credits. Required: ${cost}, available: ${current}.`,
+            };
+        }
+        const remaining = current - cost;
+        testStore.credits.set(userId, remaining);
+        return { success: true, remainingCredits: remaining };
     }
 
     if (process.env.NODE_ENV === "test" && process.env.TEST_AUTH_USER_ID) {
@@ -63,6 +82,11 @@ export async function refundUserCredits(
     cost: number = 1
 ): Promise<boolean> {
     if (!userId || cost <= 0) return false;
+    if (usesSyntheticCreditLedger(userId)) {
+        testStore.credits.set(userId, (testStore.credits.get(userId) ?? 0) + cost);
+        testStore.creditRefunds.set(userId, (testStore.creditRefunds.get(userId) ?? 0) + 1);
+        return true;
+    }
     if (process.env.NODE_ENV === "test" && process.env.TEST_AUTH_USER_ID) return true;
 
     try {

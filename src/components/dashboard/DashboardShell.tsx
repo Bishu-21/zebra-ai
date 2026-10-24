@@ -61,7 +61,7 @@ export function DashboardShell({ plan, credits, userName, userImage, shouldPromp
                         onCloseAction={closeNav}
                         onOpenProfileAction={openProfile}
                     />
-                    <div className="flex-grow flex flex-col h-screen overflow-hidden relative">
+                    <div className="min-w-0 flex-grow flex flex-col h-dvh overflow-hidden relative">
                         <Header
                             userName={userName}
                             userImage={userImage}
