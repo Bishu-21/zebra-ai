@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { 
     RiAddLine, 
-    RiCloseCircleLine, 
+    RiCloseLine, 
     RiAlertLine, 
     RiArrowDropDownLine,
     RiFileCopyLine,
@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { m, AnimatePresence } from "framer-motion";
 import { sanitizeHtml } from "@/lib/utils";
 import { useHydrated } from "@/hooks/useHydrated";
+import { useDialogFocus } from "@/hooks/useDialogFocus";
 
 export function GenerateCoverLetter({ resumes }: { resumes: { id: string; title: string }[] }) {
     const [isOpen, setIsOpen] = useState(false);
@@ -44,6 +45,14 @@ export function GenerateCoverLetter({ resumes }: { resumes: { id: string; title:
     } | null>(null);
     const [enriching, setEnriching] = useState(false);
     const router = useRouter();
+
+    const handleClose = useCallback(() => {
+        if (!loading && !isExporting) {
+            setIsOpen(false);
+        }
+    }, [loading, isExporting]);
+
+    const dialogRef = useDialogFocus(isOpen, handleClose);
 
     const loadResumes = useCallback(async (cursor?: string) => {
         setLoadingResumes(true);
@@ -110,7 +119,7 @@ export function GenerateCoverLetter({ resumes }: { resumes: { id: string; title:
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     ...formData,
-                    intelligence: intelligence // Pass intelligence as optional enrichment
+                    intelligence: intelligence
                 }),
             });
             const data = await res.json();
@@ -196,16 +205,16 @@ export function GenerateCoverLetter({ resumes }: { resumes: { id: string; title:
         
         return content.split('\n').map((line, i) => {
             const trimmed = line.trim();
-            if (!trimmed) return <div key={i} className="h-6" />;
+            if (!trimmed) return <div key={i} className="h-4 sm:h-6" />;
             
             const formatted = trimmed
-                .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-black">$1</strong>')
-                .replace(/\*(.*?)\*/g, '<strong class="font-bold text-black">$1</strong>');
+                .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-neutral-950">$1</strong>')
+                .replace(/\*(.*?)\*/g, '<strong class="font-bold text-neutral-950">$1</strong>');
 
             if (trimmed.startsWith('-') || trimmed.startsWith('•')) {
                 return (
-                    <li key={i} className="ml-6 mb-4 list-none relative flex gap-4">
-                        <span className="w-1.5 h-1.5 rounded-full bg-black/20 mt-2.5 flex-shrink-0" />
+                    <li key={i} className="ml-4 sm:ml-6 mb-3 sm:mb-4 list-none relative flex gap-3 sm:gap-4 text-neutral-900">
+                        <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 mt-2 flex-shrink-0" />
                         <span dangerouslySetInnerHTML={{ __html: sanitizeHtml(formatted.replace(/^[•-]\s*/, '')) }} />
                     </li>
                 );
@@ -214,7 +223,7 @@ export function GenerateCoverLetter({ resumes }: { resumes: { id: string; title:
             return (
                 <p 
                     key={i} 
-                    className="mb-6 text-justify leading-relaxed"
+                    className="mb-4 sm:mb-6 text-left sm:text-justify leading-relaxed text-neutral-900"
                     dangerouslySetInnerHTML={{ __html: sanitizeHtml(formatted) }}
                 />
             );
@@ -227,7 +236,7 @@ export function GenerateCoverLetter({ resumes }: { resumes: { id: string; title:
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setIsOpen(true)}
-                className="flex w-full items-center justify-center gap-2 bg-foreground text-white px-5 py-3 rounded-full font-bold transition-all shadow-[var(--shadow-sm)] text-xs group md:w-auto"
+                className="flex w-full items-center justify-center gap-2 bg-neutral-950 text-white px-5 py-3 rounded-xl font-semibold transition-all shadow-xs text-xs group md:w-auto hover:bg-neutral-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-950"
             >
                 <RiAddLine size={16} />
                 Generate Cover Letter
@@ -235,150 +244,174 @@ export function GenerateCoverLetter({ resumes }: { resumes: { id: string; title:
 
             <AnimatePresence>
                 {isOpen && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-10 overflow-hidden">
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto">
                         <m.div 
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="absolute inset-0 bg-black/60 backdrop-blur-md" 
-                            onClick={() => !loading && setIsOpen(false)}
+                            className="fixed inset-0 bg-neutral-950/60 backdrop-blur-sm" 
+                            onClick={handleClose}
+                            aria-hidden="true"
                         />
                         
                         <m.div 
-                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                            ref={dialogRef}
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="cover-letter-dialog-title"
+                            initial={{ scale: 0.95, opacity: 0, y: 16 }}
                             animate={{ scale: 1, opacity: 1, y: 0 }}
-                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                            className="relative bg-[#F9F9FB] w-full h-full md:h-auto md:max-w-5xl md:max-h-[92vh] md:rounded-[3.5rem] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.3)] border border-white/40 flex flex-col overflow-hidden"
+                            exit={{ scale: 0.95, opacity: 0, y: 16 }}
+                            className="relative bg-white w-full max-w-5xl max-h-[calc(100dvh-1rem)] sm:max-h-[calc(100dvh-2rem)] rounded-2xl sm:rounded-3xl shadow-2xl border border-neutral-200 flex flex-col overflow-hidden my-auto z-10"
                         >
-                            {/* Animated Background Decor */}
-                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-black via-zinc-500 to-black animate-gradient-x" />
+                            {/* Accent Line */}
+                            <div className="w-full h-1 bg-neutral-950" />
                             
                             {/* Header */}
-                            <div className="p-10 border-b border-black/5 flex items-center justify-between bg-white/60 backdrop-blur-xl sticky top-0 z-10">
-                                <div className="flex items-center gap-6">
-                                    <div className="w-14 h-14 bg-black rounded-2xl flex items-center justify-center text-white shadow-lg shadow-black/10">
-                                        <RiMailSendLine size={30} />
+                            <div className="px-4 py-4 sm:px-6 sm:py-5 border-b border-neutral-200 flex items-center justify-between bg-neutral-50/90 backdrop-blur-xl shrink-0">
+                                <div className="flex items-center gap-3 sm:gap-4">
+                                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-neutral-950 text-white rounded-xl flex items-center justify-center shrink-0 shadow-xs">
+                                        <RiMailSendLine size={24} />
                                     </div>
                                     <div>
-                                        <h2 className="text-3xl font-black text-black tracking-tighter">Cover Letter Generator</h2>
-                                        <div className="flex items-center gap-3 mt-1">
-                                            <p className="text-[0.7rem] font-bold text-black/40 uppercase tracking-widest">
-                                                Professional <span className="opacity-40">&middot;</span> Tailored <span className="opacity-40">&middot;</span> Precise
-                                            </p>
-                                        </div>
+                                        <h2 id="cover-letter-dialog-title" className="text-base sm:text-lg md:text-xl font-bold tracking-tight text-neutral-950">
+                                            Cover Letter Generator
+                                        </h2>
+                                        <p className="text-xs font-medium text-neutral-600 mt-0.5">
+                                            Professional <span className="text-neutral-400">&middot;</span> Tailored <span className="text-neutral-400">&middot;</span> Precise
+                                        </p>
                                     </div>
                                 </div>
                                 <button 
-                                    onClick={() => setIsOpen(false)} 
-                                    className="w-12 h-12 flex items-center justify-center text-black/30 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all duration-300"
+                                    onClick={handleClose}
+                                    type="button"
+                                    aria-label="Close generator dialog"
+                                    className="w-10 h-10 flex items-center justify-center text-neutral-500 hover:text-neutral-950 hover:bg-neutral-200/60 rounded-xl transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-950"
                                 >
-                                    <RiCloseCircleLine size={32} />
+                                    <RiCloseLine size={24} />
                                 </button>
                             </div>
 
-                            <div className="flex-grow overflow-y-auto p-8 md:p-12 no-scrollbar bg-gradient-to-b from-transparent to-white/50">
+                            {/* Body */}
+                            <div className="flex-grow overflow-y-auto p-4 sm:p-6 md:p-8 bg-neutral-50/40">
                                 {!success ? (
-                                    <div className="space-y-10 max-w-4xl mx-auto">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                                            <div className="group space-y-4">
-                                                <label className="text-[0.7rem] font-black uppercase tracking-[0.2em] text-black/30 group-hover:text-black transition-colors">Select Resume Context</label>
+                                    <div className="space-y-6 sm:space-y-8 max-w-4xl mx-auto">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                                            <div className="space-y-2">
+                                                <label htmlFor="cover-letter-resume-select" className="text-xs font-semibold uppercase tracking-wider text-neutral-700">
+                                                    Select Resume Context
+                                                </label>
                                                 <div className="relative">
                                                     <select 
-                                                        className="w-full bg-white border-2 border-transparent hover:border-black/5 focus:border-black/30 rounded-[1.5rem] px-8 py-6 text-[0.95rem] font-bold outline-none transition-all appearance-none cursor-pointer text-black shadow-sm"
+                                                        id="cover-letter-resume-select"
+                                                        className="w-full bg-white border border-neutral-300 hover:border-neutral-400 focus:border-neutral-950 focus:ring-1 focus:ring-neutral-950 rounded-xl px-4 py-3 sm:py-3.5 text-sm font-medium outline-none transition-all appearance-none cursor-pointer text-neutral-900 shadow-xs pr-10"
                                                         value={formData.resumeId}
                                                         onChange={(e) => setFormData({...formData, resumeId: e.target.value})}
                                                     >
                                                         {resumeOptions.map(r => <option key={r.id} value={r.id}>{r.title}</option>)}
                                                         {resumeOptions.length === 0 && <option value="">No Resumes Found (Template mode)</option>}
                                                     </select>
-                                                    <div className="absolute right-8 top-1/2 -translate-y-1/2 pointer-events-none text-black/30">
-                                                        <RiArrowDropDownLine size={28} />
+                                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-500">
+                                                        <RiArrowDropDownLine size={24} />
                                                     </div>
                                                 </div>
                                                 {resumeCursor && (
-                                                    <button type="button" disabled={loadingResumes} onClick={() => void loadResumes(resumeCursor)} className="text-xs font-bold text-black/50 underline disabled:opacity-50">
+                                                    <button 
+                                                        type="button" 
+                                                        disabled={loadingResumes} 
+                                                        onClick={() => void loadResumes(resumeCursor)} 
+                                                        className="text-xs font-semibold text-neutral-700 hover:text-neutral-950 underline disabled:opacity-50"
+                                                    >
                                                         {loadingResumes ? "Loading resumes…" : "Load more resumes"}
                                                     </button>
                                                 )}
                                             </div>
-                                            <div className="group space-y-4">
-                                                <label className="text-[0.7rem] font-black uppercase tracking-[0.2em] text-black/30 group-hover:text-black transition-colors">Internal Reference Title</label>
+                                            <div className="space-y-2">
+                                                <label htmlFor="cover-letter-title-input" className="text-xs font-semibold uppercase tracking-wider text-neutral-700">
+                                                    Internal Reference Title
+                                                </label>
                                                 <input 
+                                                    id="cover-letter-title-input"
                                                     type="text"
                                                     placeholder="e.g., Senior AI Engineer at Vercel"
-                                                    className="w-full bg-white border-2 border-transparent hover:border-black/5 focus:border-black/30 rounded-[1.5rem] px-8 py-6 text-[0.95rem] font-bold outline-none transition-all text-black placeholder:text-black/20 shadow-sm"
+                                                    className="w-full bg-white border border-neutral-300 hover:border-neutral-400 focus:border-neutral-950 focus:ring-1 focus:ring-neutral-950 rounded-xl px-4 py-3 sm:py-3.5 text-sm font-medium outline-none transition-all text-neutral-900 placeholder:text-neutral-600 shadow-xs"
                                                     value={formData.title}
                                                     onChange={(e) => setFormData({...formData, title: e.target.value})}
                                                 />
                                             </div>
                                         </div>
 
-                                        {/* Magic Scrape Feature - Reimagined */}
-                                        <div className="relative p-1 bg-black/10 rounded-[3rem] overflow-hidden group shadow-xl">
-                                            <div className="absolute inset-0 bg-white/40 backdrop-blur-3xl rounded-[3rem]" />
-                                            <div className="relative p-10 space-y-6">
-                                                <div className="flex items-center justify-between">
-                                                    <label className="text-[0.75rem] font-black uppercase tracking-[0.25em] text-black flex items-center gap-3">
-                                                        <div className="w-8 h-8 bg-black text-white rounded-xl flex items-center justify-center shadow-lg shadow-black/10">
-                                                            <RiExternalLinkLine size={16} />
-                                                        </div>
-                                                        Import from Job URL
-                                                    </label>
+                                        {/* Import from Job URL */}
+                                        <div className="bg-white border border-neutral-200 rounded-2xl p-4 sm:p-6 shadow-xs space-y-4">
+                                            <div className="flex items-center gap-2.5">
+                                                <div className="w-7 h-7 bg-neutral-950 text-white rounded-lg flex items-center justify-center shrink-0">
+                                                    <RiExternalLinkLine size={14} />
                                                 </div>
-                                                
-                                                <div className="flex flex-col md:flex-row gap-4">
-                                                    <div className="relative flex-grow">
-                                                        <input 
-                                                            type="text"
-                                                            placeholder="Paste LinkedIn, Indeed, or any Job URL..."
-                                                            className="w-full bg-white border-2 border-black/5 focus:border-black rounded-[1.5rem] px-8 py-5 text-[0.95rem] font-bold outline-none transition-all text-black shadow-inner"
-                                                            value={scrapeUrl}
-                                                            onChange={(e) => setScrapeUrl(e.target.value)}
-                                                        />
-                                                        <RiExternalLinkLine className="absolute right-8 top-1/2 -translate-y-1/2 text-black/20" size={20} />
-                                                    </div>
-                                                    <m.button 
-                                                        whileHover={{ scale: 1.02 }}
-                                                        whileTap={{ scale: 0.98 }}
-                                                        onClick={handleScrape}
-                                                        disabled={scraping || !scrapeUrl.trim()}
-                                                        className="bg-black text-white px-12 py-5 rounded-[1.5rem] font-black text-sm hover:bg-zinc-900 disabled:opacity-50 transition-all flex items-center justify-center gap-3 shadow-lg shadow-black/10"
-                                                    >
-                                                        {scraping ? <RiLoader4Line className="animate-spin" size={24} /> : <RiDownload2Line size={24} />}
-                                                        {scraping ? "Extracting..." : "Extract Description"}
-                                                    </m.button>
-                                                </div>
-                                                <p className="text-[0.75rem] font-bold text-black/40 leading-relaxed max-w-2xl">
-                                                    Automatically extract role details and requirements from supported job platforms.
-                                                </p>
+                                                <label htmlFor="cover-letter-url-input" className="text-xs font-bold uppercase tracking-wider text-neutral-950">
+                                                    Import from Job URL
+                                                </label>
                                             </div>
+                                            
+                                            <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3">
+                                                <div className="relative flex-grow">
+                                                    <input 
+                                                        id="cover-letter-url-input"
+                                                        type="text"
+                                                        placeholder="Paste LinkedIn, Indeed, or job posting URL..."
+                                                        className="w-full bg-neutral-50 border border-neutral-300 focus:bg-white focus:border-neutral-950 focus:ring-1 focus:ring-neutral-950 rounded-xl px-4 py-2.5 sm:py-3 text-sm font-medium outline-none transition-all text-neutral-900 placeholder:text-neutral-600 pr-10"
+                                                        value={scrapeUrl}
+                                                        onChange={(e) => setScrapeUrl(e.target.value)}
+                                                    />
+                                                    <RiExternalLinkLine className="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" size={18} />
+                                                </div>
+                                                <m.button 
+                                                    whileHover={{ scale: 1.01 }}
+                                                    whileTap={{ scale: 0.99 }}
+                                                    type="button"
+                                                    onClick={handleScrape}
+                                                    disabled={scraping || !scrapeUrl.trim()}
+                                                    className="bg-neutral-900 text-white px-5 py-2.5 sm:py-3 rounded-xl font-semibold text-xs hover:bg-neutral-800 disabled:opacity-50 transition-colors flex items-center justify-center gap-2 shadow-xs shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-950"
+                                                >
+                                                    {scraping ? <RiLoader4Line className="animate-spin" size={16} /> : <RiDownload2Line size={16} />}
+                                                    {scraping ? "Extracting..." : "Extract Description"}
+                                                </m.button>
+                                            </div>
+                                            <p className="text-xs text-neutral-600 leading-normal">
+                                                Automatically extracts job title, company, and role requirements from supported platforms.
+                                            </p>
                                         </div>
 
-                                        <div className="space-y-4">
-                                            <div className="flex items-center justify-between px-2">
-                                                <label className="text-[0.7rem] font-black uppercase tracking-[0.2em] text-black/30">Target Job Description</label>
-                                                <span className="text-[0.65rem] font-bold text-black/20 uppercase tracking-widest">{formData.jobDescription.length} characters</span>
+                                        <div className="space-y-2">
+                                            <div className="flex items-center justify-between">
+                                                <label htmlFor="cover-letter-jd-input" className="text-xs font-semibold uppercase tracking-wider text-neutral-700">
+                                                    Target Job Description
+                                                </label>
+                                                <span className="text-xs font-medium text-neutral-500">
+                                                    {formData.jobDescription.length} characters
+                                                </span>
                                             </div>
                                             <textarea 
-                                                placeholder="Paste the job description here. Our system will analyze key skills and requirements..."
-                                                className="w-full bg-white border-2 border-transparent focus:border-blue-500/20 rounded-[2.5rem] px-10 py-10 text-[1.1rem] font-medium outline-none transition-all min-h-[350px] resize-none leading-[1.7] text-black shadow-sm placeholder:text-black/10 no-scrollbar"
+                                                id="cover-letter-jd-input"
+                                                placeholder="Paste the job description here. Include key requirements, responsibilities, and company information..."
+                                                className="w-full bg-white border border-neutral-300 hover:border-neutral-400 focus:border-neutral-950 focus:ring-1 focus:ring-neutral-950 rounded-xl p-4 sm:p-5 text-sm font-medium outline-none transition-all min-h-[220px] sm:min-h-[280px] resize-y leading-relaxed text-neutral-900 shadow-xs placeholder:text-neutral-600"
                                                 value={formData.jobDescription}
                                                 onChange={(e) => {
                                                     setFormData({...formData, jobDescription: e.target.value});
-                                                    if (intelligence) setIntelligence(null); // Reset intelligence when text changes
+                                                    if (intelligence) setIntelligence(null);
                                                 }}
                                             />
 
                                             {formData.jobDescription.length > 50 && !intelligence && (
-                                                <div className="flex justify-center -mt-8 relative z-20">
+                                                <div className="flex justify-center pt-2">
                                                     <m.button
-                                                        whileHover={{ scale: 1.05 }}
-                                                        whileTap={{ scale: 0.95 }}
+                                                        whileHover={{ scale: 1.02 }}
+                                                        whileTap={{ scale: 0.98 }}
+                                                        type="button"
                                                         onClick={handleEnrich}
                                                         disabled={enriching}
-                                                        className="bg-white border border-black/5 text-black px-8 py-3 rounded-2xl font-black text-xs shadow-xl flex items-center gap-3 hover:bg-black hover:text-white transition-all group"
+                                                        className="bg-white border border-neutral-300 text-neutral-900 px-5 py-2.5 rounded-xl font-semibold text-xs shadow-xs flex items-center gap-2 hover:bg-neutral-100 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-950"
                                                     >
-                                                        {enriching ? <RiLoader4Line className="animate-spin" size={16} /> : <RiMailSendLine size={16} className="text-black group-hover:text-white" />}
+                                                        {enriching ? <RiLoader4Line className="animate-spin" size={14} /> : <RiMailSendLine size={14} className="text-neutral-700" />}
                                                         {enriching ? "Analyzing..." : "Analyze with Azure AI"}
                                                     </m.button>
                                                 </div>
@@ -386,31 +419,31 @@ export function GenerateCoverLetter({ resumes }: { resumes: { id: string; title:
 
                                             {intelligence && (
                                                 <m.div 
-                                                    initial={{ opacity: 0, y: 10 }}
+                                                    initial={{ opacity: 0, y: 8 }}
                                                     animate={{ opacity: 1, y: 0 }}
-                                                    className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4"
+                                                    className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 pt-2"
                                                 >
-                                                    <div className="bg-black/[0.02] p-6 rounded-[2rem] border border-black/5">
-                                                        <p className="text-[0.6rem] font-black uppercase tracking-widest text-black mb-4">Role Skills</p>
-                                                        <div className="flex flex-wrap gap-2">
+                                                    <div className="bg-white p-4 rounded-xl border border-neutral-200 shadow-xs">
+                                                        <p className="text-xs font-bold uppercase tracking-wider text-neutral-900 mb-3">Role Skills</p>
+                                                        <div className="flex flex-wrap gap-1.5">
                                                             {intelligence.skills.slice(0, 8).map((s, i) => (
-                                                                <span key={i} className="px-3 py-1.5 bg-white text-black text-[0.65rem] font-bold rounded-lg border border-black/5 shadow-sm">{s}</span>
+                                                                <span key={i} className="px-2.5 py-1 bg-neutral-100 text-neutral-800 text-xs font-medium rounded-md border border-neutral-200">{s}</span>
                                                             ))}
                                                         </div>
                                                     </div>
-                                                    <div className="bg-black/[0.02] p-6 rounded-[2rem] border border-black/5">
-                                                        <p className="text-[0.6rem] font-black uppercase tracking-widest text-black mb-4">Company Signals</p>
-                                                        <div className="flex flex-wrap gap-2">
+                                                    <div className="bg-white p-4 rounded-xl border border-neutral-200 shadow-xs">
+                                                        <p className="text-xs font-bold uppercase tracking-wider text-neutral-900 mb-3">Company Signals</p>
+                                                        <div className="flex flex-wrap gap-1.5">
                                                             {intelligence.companySignals.slice(0, 5).map((s, i) => (
-                                                                <span key={i} className="px-3 py-1.5 bg-white text-black text-[0.65rem] font-bold rounded-lg border border-black/5 shadow-sm">{s}</span>
+                                                                <span key={i} className="px-2.5 py-1 bg-neutral-100 text-neutral-800 text-xs font-medium rounded-md border border-neutral-200">{s}</span>
                                                             ))}
                                                         </div>
                                                     </div>
-                                                    <div className="bg-black/[0.02] p-6 rounded-[2rem] border border-black/5">
-                                                        <p className="text-[0.6rem] font-black uppercase tracking-widest text-black mb-4">Requirements</p>
-                                                        <div className="flex flex-wrap gap-2">
+                                                    <div className="bg-white p-4 rounded-xl border border-neutral-200 shadow-xs">
+                                                        <p className="text-xs font-bold uppercase tracking-wider text-neutral-900 mb-3">Requirements</p>
+                                                        <div className="flex flex-wrap gap-1.5">
                                                             {intelligence.requirements.slice(0, 5).map((s, i) => (
-                                                                <span key={i} className="px-3 py-1.5 bg-white text-black text-[0.65rem] font-bold rounded-lg border border-black/5 shadow-sm truncate max-w-full">{s}</span>
+                                                                <span key={i} className="px-2.5 py-1 bg-neutral-100 text-neutral-800 text-xs font-medium rounded-md border border-neutral-200 truncate max-w-full">{s}</span>
                                                             ))}
                                                         </div>
                                                     </div>
@@ -420,84 +453,88 @@ export function GenerateCoverLetter({ resumes }: { resumes: { id: string; title:
 
                                         {error && (
                                             <m.div 
-                                                initial={{ opacity: 0, x: -20 }}
-                                                animate={{ opacity: 1, x: 0 }}
-                                                className="bg-red-500/5 text-red-600 p-6 rounded-3xl border border-red-500/10 flex items-start gap-4 text-sm font-bold shadow-sm"
+                                                initial={{ opacity: 0, y: 6 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                role="alert"
+                                                className="bg-red-50 text-red-700 p-4 rounded-xl border border-red-200 flex items-start gap-3 text-xs font-medium"
                                             >
-                                                <RiAlertLine size={24} className="mt-0.5 flex-shrink-0" />
-                                                <div className="space-y-1">
-                                                    <p>Intelligence Error</p>
-                                                    <p className="text-red-600/60 font-medium">{error}</p>
+                                                <RiAlertLine size={18} className="mt-0.5 flex-shrink-0 text-red-600" />
+                                                <div className="space-y-0.5">
+                                                    <p className="font-semibold text-red-800">Generation Notice</p>
+                                                    <p className="text-red-700">{error}</p>
                                                 </div>
                                             </m.div>
                                         )}
                                     </div>
                                 ) : (
-                                    <div className="space-y-10 animate-in slide-in-from-bottom-12 duration-700 max-w-4xl mx-auto">
-                                        <div className="bg-black text-white p-8 rounded-[2.5rem] flex items-center justify-between shadow-2xl shadow-black/20">
-                                            <div className="flex items-center gap-5">
-                                                <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-green-400">
-                                                    <RiCheckLine size={30} />
+                                    <div className="space-y-6 max-w-4xl mx-auto">
+                                        <div className="bg-neutral-950 text-white p-4 sm:p-6 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md">
+                                            <div className="flex items-center gap-3 sm:gap-4">
+                                                <div className="w-10 h-10 bg-emerald-500/20 text-emerald-400 rounded-xl flex items-center justify-center shrink-0">
+                                                    <RiCheckLine size={24} />
                                                 </div>
                                                 <div>
-                                                    <p className="text-xl font-black tracking-tight">Letter Ready</p>
-                                                    <p className="text-xs font-bold text-white/40 uppercase tracking-widest">Drafted and ready for review</p>
+                                                    <p className="text-base sm:text-lg font-bold tracking-tight text-white">Letter Ready</p>
+                                                    <p className="text-xs font-medium text-neutral-400">Drafted and ready for review</p>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-3">
+                                            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                                                 <m.button 
-                                                    whileHover={{ scale: 1.05 }}
-                                                    whileTap={{ scale: 0.95 }}
+                                                    whileHover={{ scale: 1.02 }}
+                                                    whileTap={{ scale: 0.98 }}
+                                                    type="button"
                                                     onClick={handleCopy}
-                                                    className="bg-white/10 hover:bg-white/20 px-6 py-4 rounded-xl transition-all flex items-center gap-3 text-sm font-black"
+                                                    aria-label="Copy letter text"
+                                                    className="bg-neutral-800 hover:bg-neutral-700 px-4 py-2.5 rounded-xl transition-colors flex items-center gap-2 text-xs font-semibold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
                                                 >
-                                                    {copied ? <RiCheckLine size={20} className="text-green-400" /> : <RiFileCopyLine size={20} />}
+                                                    {copied ? <RiCheckLine size={16} className="text-emerald-400" /> : <RiFileCopyLine size={16} />}
                                                     {copied ? "Copied" : "Copy Text"}
                                                 </m.button>
                                                 <m.button 
-                                                    whileHover={{ scale: 1.05 }}
-                                                    whileTap={{ scale: 0.95 }}
+                                                    whileHover={{ scale: 1.02 }}
+                                                    whileTap={{ scale: 0.98 }}
+                                                    type="button"
                                                     onClick={downloadPDF}
                                                     disabled={isExporting}
-                                                    className="bg-black hover:bg-zinc-900 text-white px-6 py-4 rounded-xl transition-all disabled:opacity-50 flex items-center gap-3 text-sm font-black"
+                                                    aria-label="Download PDF"
+                                                    className="bg-white hover:bg-neutral-100 text-neutral-950 px-4 py-2.5 rounded-xl transition-colors disabled:opacity-50 flex items-center gap-2 text-xs font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
                                                 >
-                                                    {isExporting ? <RiLoader4Line className="animate-spin" size={20} /> : <RiDownload2Line size={20} />}
+                                                    {isExporting ? <RiLoader4Line className="animate-spin" size={16} /> : <RiDownload2Line size={16} />}
                                                     Export PDF
                                                 </m.button>
                                             </div>
                                         </div>
 
-                                        <div className="bg-white rounded-[3.5rem] p-4 md:p-16 border border-black/5 relative shadow-[inset_0_2px_10px_rgba(0,0,0,0.02)] overflow-hidden">
+                                        <div className="bg-neutral-100 rounded-2xl p-2 sm:p-4 md:p-6 border border-neutral-200 overflow-x-auto">
                                             {/* Letter Preview Design */}
                                             <div 
                                                 id="preview-letter-content"
-                                                className="bg-white p-12 md:p-24 rounded-2xl shadow-sm border border-black/5 text-black/90 max-w-[210mm] mx-auto min-h-[900px] relative"
-                                                style={{ fontFamily: "'STIX Two Text', serif" }}
+                                                className="bg-white p-6 sm:p-10 md:p-16 rounded-xl shadow-xs border border-neutral-200 text-neutral-900 w-full max-w-[210mm] mx-auto min-h-[500px] relative"
+                                                style={{ fontFamily: "'STIX Two Text', Georgia, serif" }}
                                             >
-                                                {/* Professional Header Decor */}
-                                                <div className="mb-20 flex justify-between items-start">
+                                                <div className="mb-10 sm:mb-14 flex justify-between items-start gap-4">
                                                     <div className="font-sans">
-                                                        <h1 className="text-4xl font-black tracking-tighter text-black uppercase leading-none">Draft</h1>
-                                                        <p className="text-[0.7rem] font-bold text-black uppercase tracking-[0.3em] mt-3">Personalized Cover Letter</p>
-                                                        <div className="h-1 w-20 bg-black mt-6" />
+                                                        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-neutral-950 uppercase leading-none">Draft</h1>
+                                                        <p className="text-xs font-semibold text-neutral-700 uppercase tracking-widest mt-2">Personalized Cover Letter</p>
+                                                        <div className="h-0.5 w-16 bg-neutral-950 mt-4" />
                                                     </div>
-                                                    <div className="text-right font-sans">
-                                                        <p className="text-[0.7rem] uppercase tracking-widest font-black text-black/20 mb-3">Zebra AI System Generated</p>
-                                                        <p className="text-[0.9rem] font-bold text-black/70">
+                                                    <div className="text-right font-sans shrink-0">
+                                                        <p className="text-xs uppercase tracking-wider font-semibold text-neutral-500 mb-1">Zebra AI Generated</p>
+                                                        <p className="text-xs sm:text-sm font-semibold text-neutral-800">
                                                             {isMounted ? new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : "---"}
                                                         </p>
                                                     </div>
                                                 </div>
 
-                                                <div className="text-[1.15rem] leading-[1.85] font-normal tracking-normal text-justify">
+                                                <div className="text-sm sm:text-base leading-relaxed font-normal text-left sm:text-justify text-neutral-900">
                                                     {renderFormattedContent(generatedContent || "")}
                                                 </div>
                                                 
-                                                <div className="mt-24 pt-12 border-t border-black/5 flex justify-between items-end font-sans">
+                                                <div className="mt-12 sm:mt-16 pt-8 border-t border-neutral-200 flex justify-between items-end font-sans">
                                                     <div>
-                                                        <p className="text-lg font-serif italic text-black/60 mb-8">Sincerely,</p>
-                                                        <div className="w-48 h-px bg-black/10 mb-4" />
-                                                        <p className="text-2xl font-black text-black tracking-tight">Applicant Name</p>
+                                                        <p className="text-sm sm:text-base italic text-neutral-700 mb-6 font-serif">Sincerely,</p>
+                                                        <div className="w-40 h-px bg-neutral-300 mb-3" />
+                                                        <p className="text-lg sm:text-xl font-bold text-neutral-950 tracking-tight">Applicant Name</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -506,50 +543,53 @@ export function GenerateCoverLetter({ resumes }: { resumes: { id: string; title:
                                 )}
                             </div>
 
-                            {/* Footer Sticky */}
-                            <div className="p-10 border-t border-black/5 flex items-center justify-between bg-white/80 backdrop-blur-2xl">
+                            {/* Footer */}
+                            <div className="px-4 py-3.5 sm:px-6 sm:py-4 border-t border-neutral-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white/95 backdrop-blur-xl shrink-0">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-black/5 rounded-xl flex items-center justify-center text-black/20">
-                                        <RiMailSendLine size={20} />
+                                    <div className="w-8 h-8 bg-neutral-100 rounded-lg flex items-center justify-center text-neutral-600 shrink-0">
+                                        <RiMailSendLine size={16} />
                                     </div>
                                     <div>
-                                        <p className="text-[0.65rem] font-black uppercase tracking-[0.2em] text-black/40">Secure Transaction</p>
-                                        <p className="text-xs font-bold text-black/60">1 AI Credit will be utilized</p>
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Secure Transaction</p>
+                                        <p className="text-xs font-medium text-neutral-700">1 AI Credit will be utilized</p>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-6">
+                                <div className="flex items-center gap-3 justify-end">
                                     {!success ? (
                                         <>
                                             <button 
-                                                onClick={() => setIsOpen(false)}
-                                                className="px-8 py-4 text-sm font-black text-black/30 hover:text-black transition-colors"
+                                                type="button"
+                                                onClick={handleClose}
+                                                className="px-4 py-2.5 text-xs font-semibold text-neutral-600 hover:text-neutral-950 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-950 rounded-lg"
                                             >
                                                 Cancel
                                             </button>
                                             <m.button 
-                                                whileHover={{ scale: 1.05 }}
-                                                whileTap={{ scale: 0.95 }}
+                                                whileHover={{ scale: 1.02 }}
+                                                whileTap={{ scale: 0.98 }}
+                                                type="button"
                                                 onClick={handleGenerate}
                                                 disabled={loading || !formData.jobDescription}
-                                                className="bg-black text-white px-12 py-5 rounded-[1.5rem] font-black text-sm hover:shadow-2xl hover:shadow-black/20 transition-all disabled:opacity-50 flex items-center gap-4"
+                                                className="bg-neutral-950 text-white px-5 py-2.5 rounded-xl font-semibold text-xs hover:bg-neutral-800 transition-colors disabled:opacity-50 flex items-center gap-2 shadow-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-950"
                                             >
                                                 {loading ? (
                                                     <>
-                                                        <RiLoader4Line className="animate-spin" size={24} />
+                                                        <RiLoader4Line className="animate-spin" size={16} />
                                                         Generating...
                                                     </>
                                                 ) : (
                                                     <>
                                                         Generate Cover Letter
-                                                        <RiCheckLine size={22} className="text-white" />
+                                                        <RiCheckLine size={16} />
                                                     </>
                                                 )}
                                             </m.button>
                                         </>
                                     ) : (
                                         <button 
-                                            onClick={() => setIsOpen(false)}
-                                            className="bg-black text-white px-14 py-5 rounded-[1.5rem] font-black text-sm hover:scale-[1.02] transition-all shadow-xl shadow-black/20 active:scale-[0.98]"
+                                            type="button"
+                                            onClick={handleClose}
+                                            className="bg-neutral-950 text-white px-6 py-2.5 rounded-xl font-semibold text-xs hover:bg-neutral-800 transition-colors shadow-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-950"
                                         >
                                             Done
                                         </button>
