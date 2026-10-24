@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAuth, AuthContext } from "@/lib/auth-policy";
-import { reserveUserCredits } from "@/lib/credit-policy";
+import { refundUserCredits, reserveUserCredits } from "@/lib/credit-policy";
 import { getErrorMessage } from "@/lib/async-error-handler";
 import { z } from "zod";
 
@@ -27,9 +27,18 @@ export function withRequestPolicy<TBody = unknown>(
     handler: (req: Request, ctx: PolicyContext<TBody>) => Promise<NextResponse>
 ) {
     return async (req: Request): Promise<NextResponse> => {
-        try {
-            let authCtx: AuthContext | null = null;
+        let authCtx: AuthContext | null = null;
+        let reservedUserId: string | null = null;
+        let reservedCost = 0;
+        let refunded = false;
 
+        const refundReservedCredits = async () => {
+            if (!reservedUserId || reservedCost <= 0 || refunded) return;
+            refunded = true;
+            await refundUserCredits(reservedUserId, reservedCost);
+        };
+
+        try {
             // 1. Auth policy check
             if (options.requireAuth !== false) {
                 const { auth, errorResponse } = await requireAuth();
@@ -66,11 +75,19 @@ export function withRequestPolicy<TBody = unknown>(
                         available: creditRes.remainingCredits ?? 0,
                     }, { status: 402 });
                 }
+                reservedUserId = userId;
+                reservedCost = options.creditCost;
             }
 
-            // 4. Delegate to underlying handler
-            return await handler(req, { auth: authCtx, body });
+            // 4. Delegate to underlying handler. A reserved charge is kept only
+            // when the handler finishes with a successful response.
+            const response = await handler(req, { auth: authCtx, body });
+            if (response.status >= 400) {
+                await refundReservedCredits();
+            }
+            return response;
         } catch (err) {
+            await refundReservedCredits();
             console.error(`Request Policy Error in ${options.operationName || "unnamed route"}:`, err);
             return NextResponse.json({ error: getErrorMessage(err) }, { status: 500 });
         }
