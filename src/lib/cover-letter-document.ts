@@ -20,7 +20,6 @@ export type CoverLetterBlock =
 
 export type CoverLetterDocumentModel = {
     letterheadName: string | null;
-    dateLabel: string | null;
     blocks: CoverLetterBlock[];
     appendedClosing: { greeting: string; name: string } | null;
     hasExistingClosing: boolean;
@@ -29,8 +28,6 @@ export type CoverLetterDocumentModel = {
 
 export type CoverLetterComposeOptions = {
     candidateName?: string | null;
-    dateLabel?: string | null;
-    now?: Date;
 };
 
 export function escapeCoverLetterHtml(value: string): string {
@@ -40,14 +37,6 @@ export function escapeCoverLetterHtml(value: string): string {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
-}
-
-export function formatCoverLetterDate(date: Date = new Date()): string {
-    return date.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-    });
 }
 
 export function sanitizeCandidateName(value: unknown): string | undefined {
@@ -180,13 +169,6 @@ function letterHasOwnLetterhead(lines: string[]): boolean {
     return Boolean(first && isPlausibleInferredName(first.text));
 }
 
-function letterHasOwnDate(lines: string[]): boolean {
-    const populated = nonEmptyLines(lines);
-    const salutation = populated.find((line) => SALUTATION_LINE.test(line.text));
-    const preamble = populated.filter((line) => (salutation ? line.index < salutation.index : line.index < 8));
-    return preamble.some((line) => isDateLine(line.text));
-}
-
 function letterHasClosing(lines: string[]): boolean {
     return nonEmptyLines(lines).some((line) => CLOSING_LINE.test(line.text));
 }
@@ -202,15 +184,9 @@ export function composeCoverLetterDocument(
     const identityName = confirmedName ?? inferredName ?? null;
     const hasExistingClosing = letterHasClosing(lines);
     const hasOwnLetterhead = letterHasOwnLetterhead(lines);
-    const hasOwnDate = letterHasOwnDate(lines);
-
-    const dateLabel = options.dateLabel === null || options.dateLabel === ""
-        ? null
-        : (options.dateLabel ?? (hasOwnDate ? null : formatCoverLetterDate(options.now)));
 
     return {
         letterheadName: hasOwnLetterhead ? null : identityName,
-        dateLabel: hasOwnDate ? null : dateLabel,
         blocks: formatCoverLetterBlocks(normalized),
         appendedClosing: hasExistingClosing || !identityName
             ? null
@@ -234,4 +210,21 @@ export function renderCoverLetterBlocksHtml(blocks: CoverLetterBlock[]): string 
         html += `<p class="cl-para">${block.html}</p>`;
     }
     return html;
+}
+
+/** Keep the final body block with the closing; oversized groups may still paginate. */
+export function splitCoverLetterEnding(
+    blocks: CoverLetterBlock[],
+    hasAppendedClosing = false,
+): { body: CoverLetterBlock[]; ending: CoverLetterBlock[] } {
+    const plainParagraph = (block: CoverLetterBlock) => block.type === "paragraph"
+        ? identityText(block.html.replaceAll("<strong>", "").replaceAll("</strong>", "")) : "";
+    const closingIndex = blocks.findLastIndex((block) =>
+        block.type === "paragraph" && CLOSING_LINE.test(plainParagraph(block)));
+    if (closingIndex < 0 && !hasAppendedClosing) return { body: blocks, ending: [] };
+    let start = closingIndex < 0 ? blocks.length : closingIndex;
+    let previous = start - 1;
+    while (previous >= 0 && blocks[previous].type === "blank") previous--;
+    if (previous >= 0 && !SALUTATION_LINE.test(plainParagraph(blocks[previous]))) start = previous;
+    return { body: blocks.slice(0, start), ending: blocks.slice(start) };
 }
