@@ -3,6 +3,7 @@
 import { sanitizeHtml } from "@/lib/utils";
 import {
     composeCoverLetterDocument,
+    splitCoverLetterEnding,
     type CoverLetterBlock,
 } from "@/lib/cover-letter-document";
 
@@ -37,15 +38,14 @@ function renderBlocks(blocks: CoverLetterBlock[]) {
 export function CoverLetterDocument({
     content,
     candidateName,
-    dateLabel,
     className = "",
 }: {
     content: string;
     candidateName?: string;
-    dateLabel?: string | null;
     className?: string;
 }) {
-    const model = composeCoverLetterDocument(content, { candidateName, dateLabel });
+    const model = composeCoverLetterDocument(content, { candidateName });
+    const parts = splitCoverLetterEnding(model.blocks, Boolean(model.appendedClosing));
 
     return (
         <article
@@ -59,16 +59,16 @@ export function CoverLetterDocument({
                     </h1>
                 </header>
             ) : null}
-            {model.dateLabel ? (
-                <p className="font-sans text-sm font-semibold text-neutral-900 mb-8">{model.dateLabel}</p>
-            ) : null}
-            <div className="text-sm sm:text-base leading-relaxed">{renderBlocks(model.blocks)}</div>
-            {model.appendedClosing ? (
-                <div className="mt-10">
-                    <p className="mb-6">{model.appendedClosing.greeting}</p>
-                    <p className="font-sans font-bold text-neutral-950 break-words">{model.appendedClosing.name}</p>
-                </div>
-            ) : null}
+            <div className="text-sm sm:text-base leading-relaxed">{renderBlocks(parts.body)}</div>
+            <div className="break-inside-avoid text-sm sm:text-base leading-relaxed">
+                {renderBlocks(parts.ending)}
+                {model.appendedClosing ? (
+                    <div className="mt-10">
+                        <p className="mb-6">{model.appendedClosing.greeting}</p>
+                        <p className="font-sans font-bold text-neutral-950 break-words">{model.appendedClosing.name}</p>
+                    </div>
+                ) : null}
+            </div>
         </article>
     );
 }

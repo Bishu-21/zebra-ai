@@ -15,9 +15,7 @@ import {
 } from "react-icons/ri";
 import { useRouter } from "next/navigation";
 import { m, AnimatePresence } from "framer-motion";
-import { useHydrated } from "@/hooks/useHydrated";
 import { useDialogFocus } from "@/hooks/useDialogFocus";
-import { formatCoverLetterDate } from "@/lib/cover-letter-document";
 import { CoverLetterDocument } from "@/components/dashboard/CoverLetterDocument";
 
 type ResumeOption = { id: string; title: string; candidateName?: string };
@@ -40,7 +38,6 @@ export function GenerateCoverLetter({ resumes }: { resumes: ResumeOption[] }) {
     const [isExporting, setIsExporting] = useState(false);
     const [scraping, setScraping] = useState(false);
     const [scrapeUrl, setScrapeUrl] = useState("");
-    const isMounted = useHydrated();
     const [intelligence, setIntelligence] = useState<{
         skills: string[];
         companySignals: string[];
@@ -493,9 +490,7 @@ export function GenerateCoverLetter({ resumes }: { resumes: ResumeOption[] }) {
                                             {/* Letter Preview Design */}
                                             <CoverLetterDocument
                                                 content={generatedContent || ""}
-                                                candidateName={selectedCandidateName}
-                                                dateLabel={isMounted ? formatCoverLetterDate() : null}
-                                                className="p-6 sm:p-10 md:p-16 rounded-xl shadow-xs border border-neutral-200 w-full max-w-[210mm] mx-auto min-h-[500px]"
+                                                candidateName={selectedCandidateName}                                                className="p-6 sm:p-10 md:p-16 rounded-xl shadow-xs border border-neutral-200 w-full max-w-[210mm] mx-auto min-h-[500px]"
                                             />
                                         </div>
                                     </div>

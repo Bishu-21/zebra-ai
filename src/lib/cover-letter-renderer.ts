@@ -8,6 +8,7 @@ import {
     composeCoverLetterDocument,
     escapeCoverLetterHtml,
     renderCoverLetterBlocksHtml,
+    splitCoverLetterEnding,
     type CoverLetterComposeOptions,
 } from "@/lib/cover-letter-document";
 
@@ -17,12 +18,11 @@ export function generateCoverLetterHtml(
     options: CoverLetterComposeOptions = {},
 ): string {
     const model = composeCoverLetterDocument(content, options);
-    const bodyHtml = renderCoverLetterBlocksHtml(model.blocks);
+    const parts = splitCoverLetterEnding(model.blocks, Boolean(model.appendedClosing));
+    const bodyHtml = renderCoverLetterBlocksHtml(parts.body);
+    const endingHtml = renderCoverLetterBlocksHtml(parts.ending);
     const letterhead = model.letterheadName
         ? `<header class="letterhead"><h1>${escapeCoverLetterHtml(model.letterheadName)}</h1></header>`
-        : "";
-    const date = model.dateLabel
-        ? `<p class="date-section">${escapeCoverLetterHtml(model.dateLabel)}</p>`
         : "";
     const closing = model.appendedClosing
         ? `<div class="signature"><p>${escapeCoverLetterHtml(model.appendedClosing.greeting)}</p><p class="signature-name">${escapeCoverLetterHtml(model.appendedClosing.name)}</p></div>`
@@ -66,12 +66,6 @@ export function generateCoverLetterHtml(
             text-transform: none;
             margin: 0;
         }
-        .date-section {
-            margin: 0 0 8mm 0;
-            font-weight: 600;
-            color: #111111;
-            font-size: 11pt;
-        }
         .cl-content {
             font-family: Georgia, 'Times New Roman', serif;
             font-size: 12pt;
@@ -86,6 +80,7 @@ export function generateCoverLetterHtml(
             widows: 3;
         }
         .cl-blank { height: 0.8em; }
+        .cl-ending { break-inside: avoid; page-break-inside: avoid; }
         .cl-list {
             margin: 0 0 1em 0;
             padding-left: 1.2em;
@@ -115,11 +110,10 @@ export function generateCoverLetterHtml(
 </head>
 <body>
     ${letterhead}
-    ${date}
     <div class="cl-content">
         ${bodyHtml}
+        <div class="cl-ending">${endingHtml}${closing}</div>
     </div>
-    ${closing}
 </body>
 </html>`;
 }

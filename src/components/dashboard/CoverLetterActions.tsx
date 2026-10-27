@@ -11,9 +11,7 @@ import {
 } from "react-icons/ri";
 import { useRouter } from "next/navigation";
 import { useDialogFocus } from "@/hooks/useDialogFocus";
-import { formatCoverLetterDate } from "@/lib/cover-letter-document";
 import { CoverLetterDocument } from "@/components/dashboard/CoverLetterDocument";
-import { useHydrated } from "@/hooks/useHydrated";
 
 type CoverLetter = {
     id: string;
@@ -29,7 +27,6 @@ export function CoverLetterActions({ letter }: { letter: CoverLetter }) {
     const [isDeleting, setIsDeleting] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
     const [copied, setCopied] = useState(false);
-    const isMounted = useHydrated();
     const router = useRouter();
 
     const handleClose = useCallback(() => {
@@ -184,9 +181,7 @@ export function CoverLetterActions({ letter }: { letter: CoverLetter }) {
                         <div className="flex-grow overflow-y-auto p-4 sm:p-6 md:p-8 bg-neutral-100/50">
                             <CoverLetterDocument
                                 content={letter.content}
-                                candidateName={letter.candidateName}
-                                dateLabel={isMounted ? formatCoverLetterDate() : null}
-                                className="p-6 sm:p-10 md:p-14 rounded-xl shadow-xs border border-neutral-200 max-w-[210mm] w-full mx-auto"
+                                candidateName={letter.candidateName}                                className="p-6 sm:p-10 md:p-14 rounded-xl shadow-xs border border-neutral-200 max-w-[210mm] w-full mx-auto"
                             />
                         </div>
 
