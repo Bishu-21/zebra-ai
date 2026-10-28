@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import {
   RiArrowDownSLine,
   RiArrowRightLine,
-  RiDeleteBin6Line,
+  RiDeleteBinLine,
   RiExternalLinkLine,
   RiFileTextLine,
   RiSearchLine,
@@ -144,18 +144,18 @@ export function JobBoard({ initialJobs, resumes = [], versions = [] }: {
                     <select value={job.status} onChange={(event) => updateStatus(job.id, event.target.value as Job["status"])} className={`appearance-none rounded-full py-1.5 pl-3 pr-8 text-xs font-semibold outline-none ${statusClasses(String(job.status))}`}>
                       {BOARD_STATUSES.map((status) => <option key={status}>{status}</option>)}
                     </select>
-                    <RiArrowDownSLine className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2" size={14} />
+                    <RiArrowDownSLine aria-hidden="true" className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 shrink-0" size={14} />
                   </div>
                 </div>
                 <div className="relative pointer-events-none mt-3 flex min-w-0 items-center gap-2 text-xs text-muted-foreground md:mt-0"><RiFileTextLine className="shrink-0" size={15} /><span className="truncate">{linkedResume(job)}</span></div>
                 <p className="relative pointer-events-none mt-3 text-xs text-muted-foreground md:mt-0">{formatRelativeTime(job.updatedAt)}</p>
                 <div className="relative z-10 mt-4 flex items-center justify-end gap-1 md:mt-0">
                   {detailHref ? (
-                    <Link href={detailHref} className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground" aria-label="Open application"><RiArrowRightLine size={16} /></Link>
+                    <Link href={detailHref} className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-950" aria-label="Open application"><RiArrowRightLine size={16} aria-hidden="true" /></Link>
                   ) : job.url ? (
-                    <a href={job.url} target="_blank" rel="noreferrer" className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground" aria-label="Open job listing"><RiExternalLinkLine size={16} /></a>
+                    <a href={job.url} target="_blank" rel="noreferrer" className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-950" aria-label="Open job listing"><RiExternalLinkLine size={16} aria-hidden="true" /></a>
                   ) : null}
-                  <button disabled={busyId === job.id} onClick={() => removeJob(job.id)} className="rounded-lg p-2 text-muted-foreground hover:bg-rose-50 hover:text-rose-600 disabled:opacity-40" aria-label="Delete application"><RiDeleteBin6Line size={16} /></button>
+                  <button disabled={busyId === job.id} onClick={() => removeJob(job.id)} className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground hover:bg-rose-50 hover:text-rose-600 disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-950" aria-label="Delete application"><RiDeleteBinLine size={16} aria-hidden="true" /></button>
                 </div>
               </article>
               );

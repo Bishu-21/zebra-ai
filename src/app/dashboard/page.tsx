@@ -3,6 +3,7 @@ import {
     RiFileTextLine, 
     RiAddLine, 
     RiFlashlightLine, 
+    RiBriefcaseLine,
     RiArrowRightSLine, 
     RiCheckboxCircleLine, 
     RiRadarLine, 
@@ -349,14 +350,14 @@ async function renderDashboardContent(session: NonNullable<Awaited<ReturnType<ty
       <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Link href="/dashboard/resumes" className="group flex min-h-24 items-center justify-between rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-xs transition hover:border-neutral-300 hover:shadow-md">
           <div className="flex items-center gap-4">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-neutral-100 text-neutral-700"><RiFileTextLine size={19} /></span>
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-neutral-100 text-neutral-700" aria-hidden="true"><RiFileTextLine size={19} /></span>
             <div><h2 className="text-sm font-bold">Manage resumes</h2><p className="mt-1 text-sm text-muted-foreground">Open, create, or review a resume.</p></div>
           </div>
           <RiArrowRightSLine className="text-muted-foreground transition-transform group-hover:translate-x-0.5" />
         </Link>
         <Link href="/dashboard/job-tracker" className="group flex min-h-24 items-center justify-between rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-xs transition hover:border-neutral-300 hover:shadow-md">
           <div className="flex items-center gap-4">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-neutral-100 text-neutral-700"><RiFlashlightLine size={19} /></span>
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-neutral-100 text-neutral-700" aria-hidden="true"><RiBriefcaseLine size={19} /></span>
             <div><h2 className="text-sm font-bold">View applications</h2><p className="mt-1 text-sm text-muted-foreground">Track roles, deadlines, and progress.</p></div>
           </div>
           <RiArrowRightSLine className="text-muted-foreground transition-transform group-hover:translate-x-0.5" />

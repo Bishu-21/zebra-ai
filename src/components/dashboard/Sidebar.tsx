@@ -12,12 +12,14 @@ import {
     RiHome5Line,
     RiFileTextLine,
     RiBriefcaseLine,
-    RiBarChartGroupedLine,
+    RiFolder2Line,
     RiSettings4Line,
     RiLogoutBoxRLine,
     RiCloseLine,
     RiArticleLine,
-    RiLineChartLine
+    RiLineChartLine,
+    RiLinkedinLine,
+    RiGlobalLine
 } from "react-icons/ri";
 import { DASHBOARD_NAV_ITEMS } from "@/lib/constants/navigation";
 import { UserAvatar } from "@/components/dashboard/UserAvatar";
@@ -34,15 +36,15 @@ interface SidebarProps {
 }
 
 const NAV_ICONS: Record<string, React.ReactNode> = {
-    "/dashboard": <RiHome5Line size={18} />,
-    "/dashboard/job-tracker": <RiBriefcaseLine size={18} />,
-    "/dashboard/resumes": <RiFileTextLine size={18} />,
-    "/dashboard/work": <RiFileTextLine size={18} />,
-    "/dashboard/cover-letters": <RiArticleLine size={18} />,
-    "/dashboard/portfolio": <RiBarChartGroupedLine size={18} />,
-    "/dashboard/linkedin": <RiLineChartLine size={18} />,
-    "/dashboard/analytics": <RiLineChartLine size={18} />,
-    "/dashboard/settings": <RiSettings4Line size={18} />,
+    "/dashboard": <RiHome5Line size={18} aria-hidden="true" />,
+    "/dashboard/job-tracker": <RiBriefcaseLine size={18} aria-hidden="true" />,
+    "/dashboard/resumes": <RiFileTextLine size={18} aria-hidden="true" />,
+    "/dashboard/work": <RiFolder2Line size={18} aria-hidden="true" />,
+    "/dashboard/cover-letters": <RiArticleLine size={18} aria-hidden="true" />,
+    "/dashboard/portfolio": <RiGlobalLine size={18} aria-hidden="true" />,
+    "/dashboard/linkedin": <RiLinkedinLine size={18} aria-hidden="true" />,
+    "/dashboard/analytics": <RiLineChartLine size={18} aria-hidden="true" />,
+    "/dashboard/settings": <RiSettings4Line size={18} aria-hidden="true" />,
 };
 
 export function Sidebar({
@@ -140,7 +142,7 @@ export function Sidebar({
                                 className="w-11 h-11 rounded-lg bg-neutral-200/60 flex items-center justify-center text-neutral-600 hover:text-foreground transition-colors"
                                 aria-label="Close Navigation"
                             >
-                                <RiCloseLine size={18} />
+                                <RiCloseLine size={18} aria-hidden="true" />
                             </button>
                         )}
                     </div>
@@ -205,7 +207,7 @@ export function Sidebar({
                                 title="Sign Out"
                                 aria-label="Sign out"
                             >
-                                <RiLogoutBoxRLine size={16} />
+                                <RiLogoutBoxRLine size={16} aria-hidden="true" />
                             </button>
                         </div>
                     </div>

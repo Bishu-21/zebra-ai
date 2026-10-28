@@ -38,7 +38,8 @@ export function DashboardLink({
       }`}
     >
       <span
-        className={`transition-transform duration-200 ${
+        aria-hidden="true"
+        className={`shrink-0 transition-transform duration-200 ${
           isActive
             ? "text-white"
             : "text-muted-foreground group-hover:text-foreground"
