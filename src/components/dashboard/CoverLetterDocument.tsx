@@ -10,15 +10,15 @@ import {
 function renderBlocks(blocks: CoverLetterBlock[]) {
     return blocks.map((block, index) => {
         if (block.type === "blank") {
-            return <div key={index} className="h-4 sm:h-5" />;
+            return null;
         }
         if (block.type === "list") {
             return (
-                <ul key={index} className="mb-4 ml-5 list-disc space-y-2 text-neutral-900">
+                <ul key={index} className="mb-[10pt] ml-5 list-disc space-y-2 text-neutral-900">
                     {block.items.map((item, itemIndex) => (
                         <li
                             key={`${index}-${itemIndex}`}
-                            className="text-left sm:text-justify leading-relaxed"
+                            className="text-left leading-[1.4]"
                             dangerouslySetInnerHTML={{ __html: sanitizeHtml(item) }}
                         />
                     ))}
@@ -28,7 +28,7 @@ function renderBlocks(blocks: CoverLetterBlock[]) {
         return (
             <p
                 key={index}
-                className="mb-4 text-left sm:text-justify leading-relaxed text-neutral-900"
+                className="mb-[10pt] text-left leading-[1.4] text-neutral-900"
                 dangerouslySetInnerHTML={{ __html: sanitizeHtml(block.html) }}
             />
         );
@@ -50,21 +50,21 @@ export function CoverLetterDocument({
     return (
         <article
             className={`bg-white text-neutral-950 ${className}`}
-            style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
+            style={{ fontFamily: "Arial, Helvetica, sans-serif" }}
         >
             {model.letterheadName ? (
-                <header className="mb-8 sm:mb-10 pb-4 border-b border-neutral-950">
+                <header className="mb-6 pb-3 border-b border-neutral-950">
                     <h1 className="font-sans text-xl sm:text-2xl font-bold tracking-tight text-neutral-950 break-words">
                         {model.letterheadName}
                     </h1>
                 </header>
             ) : null}
-            <div className="text-sm sm:text-base leading-relaxed">{renderBlocks(parts.body)}</div>
-            <div className="break-inside-avoid text-sm sm:text-base leading-relaxed">
+            <div className="text-sm sm:text-base leading-[1.4]">{renderBlocks(parts.body)}</div>
+            <div className="break-inside-avoid text-sm sm:text-base leading-[1.4]">
                 {renderBlocks(parts.ending)}
                 {model.appendedClosing ? (
-                    <div className="mt-10">
-                        <p className="mb-6">{model.appendedClosing.greeting}</p>
+                    <div className="mt-0">
+                        <p className="mb-[10pt]">{model.appendedClosing.greeting}</p>
                         <p className="font-sans font-bold text-neutral-950 break-words">{model.appendedClosing.name}</p>
                     </div>
                 ) : null}

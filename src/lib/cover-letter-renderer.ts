@@ -48,12 +48,12 @@ export function generateCoverLetterHtml(
         body {
             font-family: Arial, Helvetica, sans-serif;
             font-size: 12pt;
-            line-height: 1.55;
+            line-height: 1.4;
             -webkit-font-smoothing: antialiased;
         }
         .letterhead {
-            margin: 0 0 8mm 0;
-            padding: 0 0 4mm 0;
+            margin: 0 0 6mm 0;
+            padding: 0 0 3mm 0;
             border-bottom: 1pt solid #000000;
         }
         .letterhead h1 {
@@ -67,39 +67,38 @@ export function generateCoverLetterHtml(
             margin: 0;
         }
         .cl-content {
-            font-family: Georgia, 'Times New Roman', serif;
+            font-family: Arial, Helvetica, sans-serif;
             font-size: 12pt;
             color: #111111;
-            line-height: 1.55;
+            line-height: 1.4;
         }
         .cl-para {
-            margin: 0 0 1em 0;
-            text-align: justify;
+            margin: 0 0 10pt 0;
+            text-align: left;
             overflow-wrap: break-word;
             orphans: 3;
             widows: 3;
         }
-        .cl-blank { height: 0.8em; }
         .cl-ending { break-inside: avoid; page-break-inside: avoid; }
         .cl-list {
-            margin: 0 0 1em 0;
+            margin: 0 0 10pt 0;
             padding-left: 1.2em;
         }
         .cl-list li {
             margin-bottom: 0.4em;
-            text-align: justify;
+            text-align: left;
             overflow-wrap: break-word;
         }
         strong { font-weight: 700; color: #000000; }
         .signature {
-            margin-top: 10mm;
-            font-family: Georgia, 'Times New Roman', serif;
+            margin-top: 0;
+            font-family: Arial, Helvetica, sans-serif;
             font-size: 12pt;
             page-break-inside: avoid;
         }
-        .signature p { margin: 0; }
-        .signature-name {
-            margin-top: 8mm;
+        .signature p { margin: 0 0 10pt; }
+        .signature .signature-name {
+            margin: 0;
             font-family: Arial, Helvetica, sans-serif;
             font-weight: 700;
             font-size: 12pt;
