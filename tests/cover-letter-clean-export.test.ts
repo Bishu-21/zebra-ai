@@ -47,3 +47,9 @@ describe("clean cover-letter exports", () => {
         assert.equal(html.split("Sincerely").length - 1, 1);
     });
 });
+
+it("normalizes blank-line runs without changing letter text", () => {
+    const normal = generateCoverLetterHtml("Dear Hiring Manager,\n\nMy experience fits this role.\n\nSincerely,\nAlex Example", "Application");
+    const spaced = generateCoverLetterHtml("Dear Hiring Manager,\n\n\n\nMy experience fits this role.\n\n\nSincerely,\nAlex Example", "Application");
+    assert.equal(spaced, normal);
+});

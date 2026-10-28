@@ -200,7 +200,6 @@ export function renderCoverLetterBlocksHtml(blocks: CoverLetterBlock[]): string 
     let html = "";
     for (const block of blocks) {
         if (block.type === "blank") {
-            html += '<div class="cl-blank"></div>';
             continue;
         }
         if (block.type === "list") {
