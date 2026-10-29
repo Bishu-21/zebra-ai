@@ -1,4 +1,4 @@
-/** Cover Letters chrome aligned with the sidebar. Reuses PR #24 AppIcon mappings. */
+/** Dashboard content chrome aligned with the sidebar. Reuses PR #24 AppIcon mappings. */
 export const featureChrome = {
     label: "block font-sans text-xs font-medium text-muted-foreground",
     input: "h-11 w-full rounded-xl border border-neutral-200 bg-white px-3.5 font-sans text-sm font-medium text-foreground outline-none transition-colors placeholder:text-neutral-400 hover:border-neutral-300 focus:border-neutral-950 focus:ring-1 focus:ring-neutral-950",
@@ -10,10 +10,12 @@ export const featureChrome = {
     ghostButton: "inline-flex min-h-11 items-center justify-center rounded-xl px-3 font-sans text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-950",
     iconButton: "inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-950",
     card: "flex flex-col rounded-2xl border border-neutral-200/70 bg-white p-4 font-sans",
-    dialog: "relative z-10 my-auto flex w-full max-h-[calc(100dvh-1.5rem)] flex-col overflow-hidden rounded-2xl border border-neutral-200/70 bg-white font-sans shadow-lg",
-    dialogHeader: "flex shrink-0 items-center justify-between gap-3 border-b border-neutral-200/70 px-4 py-3",
+    emptyState: "flex flex-col items-center justify-center rounded-2xl border border-neutral-200/70 bg-white px-6 py-12 text-center font-sans",
+    dialog: "relative z-10 my-auto flex w-full max-h-[calc(100dvh-1.5rem)] flex-col overflow-hidden rounded-2xl border border-neutral-200/70 bg-white font-sans shadow-lg max-[640px]:mb-16 max-[640px]:max-h-[calc(100dvh-6rem)]",
+    dialogHeader: "flex shrink-0 items-start justify-between gap-3 border-b border-neutral-200/70 px-4 py-3 sm:items-center",
     dialogBody: "min-h-0 flex-1 overflow-y-auto px-4 py-4",
     dialogFooter: "flex shrink-0 flex-col gap-3 border-t border-neutral-200/70 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between",
     backdrop: "fixed inset-0 bg-black/40",
     fieldIcon: "pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400",
+    sectionTitle: "text-base font-semibold tracking-tight text-foreground",
 } as const;

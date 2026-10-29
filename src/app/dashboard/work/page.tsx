@@ -1,5 +1,6 @@
 "use client";
 
+import { FeatureIcon } from "@/components/dashboard/FeatureIcon";
 import React, { useState, useEffect } from "react";
 import { m, AnimatePresence } from "framer-motion";
 import {
@@ -7,8 +8,8 @@ import {
     RiFolder2Line,
     RiAwardLine,
     RiBriefcase4Line,
-    RiExternalLinkLine,
-    RiDeleteBin6Line,
+    RiLink,
+    RiDeleteBinLine,
     RiMagicLine,
     RiCheckboxCircleLine,
     RiLockLine,
@@ -19,6 +20,10 @@ import {
 } from "react-icons/ri";
 import { useToast } from "@/components/ui/Toast";
 import { ZebraLoader } from "@/components/ui/ZebraLoader";
+import { DashboardPage, DashboardPageHeader } from "@/components/dashboard/DashboardPage";
+import { AppIcon } from "@/components/ui/AppIcon";
+import { featureChrome } from "@/components/dashboard/feature-chrome";
+import { useDialogFocus } from "@/hooks/useDialogFocus";
 
 interface WorkItem {
     id: string;
@@ -51,6 +56,8 @@ export default function MyWorkPage() {
     const [result, setResult] = useState("");
     const [proofUrl, setProofUrl] = useState("");
     const [isPublic, setIsPublic] = useState(false);
+    const closeAddModal = React.useCallback(() => { if (!submitting) setIsAddModalOpen(false); }, [submitting]);
+    const addDialogRef = useDialogFocus(isAddModalOpen, closeAddModal);
 
     const fetchItems = React.useCallback(async (cursor?: string) => {
         try {
@@ -166,34 +173,27 @@ export default function MyWorkPage() {
     };
 
     return (
-        <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-8 pb-32">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-[#0A0A0A] mb-1">Work</h1>
-                    <p className="text-xs font-normal text-neutral-500 leading-relaxed">
-                        Organize your projects, hackathons, internships, certificates, and proof in one place.
-                    </p>
-                </div>
-                <button
-                    onClick={() => setIsAddModalOpen(true)}
-                    className="inline-flex items-center justify-center gap-2 bg-[#0A0A0A] text-white px-4 py-2 rounded-full font-bold text-xs hover:bg-neutral-800 transition-all shadow-2xs active:scale-95 shrink-0"
-                >
-                    <RiAddLine size={16} /> Add project
-                </button>
-            </div>
+        <DashboardPage>
+            <DashboardPageHeader
+                title="Work"
+                description="Organize your projects, internships, courses, and proof in one place."
+                actions={
+                    <button type="button" onClick={() => setIsAddModalOpen(true)} className={featureChrome.primaryButton}>
+                        <AppIcon icon={RiAddLine} size={16} /> Add project
+                    </button>
+                }
+            />
 
-            {/* Filter & Search Bar */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white border border-neutral-100 p-3 rounded-2xl shadow-sm">
-                <div className="flex items-center gap-1 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
+            <div className={`${featureChrome.card} flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between`}>
+                <div className="flex w-full items-center gap-1 overflow-x-auto pb-1 sm:w-auto sm:pb-0">
                     {["All", "Project", "Internship", "Hackathon", "Course", "Award"].map((cat) => (
                         <button
                             key={cat}
                             onClick={() => setFilter(cat)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+                            className={`min-h-11 whitespace-nowrap rounded-xl px-3 text-sm font-medium ${
                                 filter === cat
-                                    ? "bg-[#0A0A0A] text-white shadow-sm"
-                                    : "text-neutral-500 hover:text-[#0A0A0A] hover:bg-neutral-50"
+                                    ? "bg-foreground text-white"
+                                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
                             }`}
                         >
                             {cat}
@@ -202,13 +202,13 @@ export default function MyWorkPage() {
                 </div>
 
                 <div className="relative w-full sm:w-64">
-                    <RiSearchLine className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
+                    <RiSearchLine aria-hidden="true" className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
                     <input
                         type="text"
-                        placeholder="Search your work..."
+                        placeholder="Search your work"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-9 pr-4 py-1.5 bg-neutral-50 border border-neutral-200 rounded-xl text-xs font-medium text-neutral-800 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#0A0A0A]"
+                        className={`${featureChrome.input} pl-10`}
                     />
                 </div>
             </div>
@@ -221,22 +221,15 @@ export default function MyWorkPage() {
                     detail="Gathering projects, achievements, and proof."
                 />
             ) : filteredItems.length === 0 ? (
-                <div className="py-16 px-6 border-2 border-dashed border-neutral-200 rounded-3xl text-center flex flex-col items-center justify-center space-y-4">
-                    <div className="w-14 h-14 rounded-2xl bg-neutral-100 flex items-center justify-center text-neutral-400">
-                        <RiFolder2Line className="w-7 h-7" />
-                    </div>
-                    <div>
-                        <h3 className="text-base font-bold text-[#0A0A0A]">No work items saved yet</h3>
-                        <p className="text-xs text-neutral-500 max-w-sm mx-auto mt-1">
-                            Add a project, internship, or hackathon to build proof for your applications.
-                        </p>
-                    </div>
-                    <button
-                        onClick={() => setIsAddModalOpen(true)}
-                        className="inline-flex items-center justify-center gap-2 bg-[#0A0A0A] text-white px-4 py-2 rounded-xl font-bold text-xs hover:bg-neutral-800 transition-all shadow-sm"
-                    >
-                        <RiAddLine className="w-4 h-4" />
-                        + Add project
+                <div className={featureChrome.emptyState}>
+                    <FeatureIcon feature="Work" size={22} className="text-muted-foreground" />
+                    <h3 className="mt-4 text-base font-semibold tracking-tight text-foreground">No work items yet</h3>
+                    <p className="mt-1 max-w-sm text-sm leading-6 text-muted-foreground">
+                        Add a project, internship, or course to use as proof in applications.
+                    </p>
+                    <button type="button" onClick={() => setIsAddModalOpen(true)} className={`${featureChrome.primaryButton} mt-4`}>
+                        <AppIcon icon={RiAddLine} size={16} />
+                        Add project
                     </button>
                 </div>
             ) : (
@@ -247,48 +240,48 @@ export default function MyWorkPage() {
                             key={item.id}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="bg-white border border-neutral-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-4 group relative"
+                            className={`${featureChrome.card} justify-between gap-4`}
                         >
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between">
-                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-neutral-50 border border-neutral-100 text-[11px] font-bold text-neutral-700">
+                                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-muted px-2.5 py-1 text-xs font-medium text-foreground">
                                         {getCategoryIcon(item.category)}
                                         {item.category}
                                     </span>
                                     <div className="flex items-center gap-2">
                                         {item.isPublic ? (
-                                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md" title="Public in Portfolio">
-                                                <RiGlobalLine className="w-3 h-3" /> Public
+                                            <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-foreground" title="Public in Portfolio">
+                                                <AppIcon icon={RiGlobalLine} size={12} /> Public
                                             </span>
                                         ) : (
-                                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-neutral-400 bg-neutral-100 px-2 py-0.5 rounded-md" title="Private to You">
-                                                <RiLockLine className="w-3 h-3" /> Private
+                                            <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground" title="Private to You">
+                                                <AppIcon icon={RiLockLine} size={12} /> Private
                                             </span>
                                         )}
                                         <button
                                             onClick={() => handleDelete(item.id)}
-                                            className="text-neutral-300 hover:text-red-500 transition-colors p-1"
-                                            title="Delete item"
+                                            className={featureChrome.iconButton}
+                                            aria-label="Delete work item"
                                         >
-                                            <RiDeleteBin6Line className="w-4 h-4" />
+                                            <AppIcon icon={RiDeleteBinLine} size={16} />
                                         </button>
                                     </div>
                                 </div>
 
                                 <div>
-                                    <h3 className="text-base font-bold text-[#0A0A0A] group-hover:text-neutral-700 transition-colors">
+                                    <h3 className="text-sm font-semibold tracking-tight text-foreground">
                                         {item.title}
                                     </h3>
                                     {item.description && (
-                                        <p className="text-xs text-neutral-600 line-clamp-3 mt-1 font-medium leading-relaxed">
+                                        <p className="mt-1 line-clamp-3 text-sm leading-6 text-muted-foreground">
                                             {item.description}
                                         </p>
                                     )}
                                 </div>
 
                                 {item.result && (
-                                    <div className="bg-neutral-50 p-2.5 rounded-xl border border-neutral-100 text-[11px] text-neutral-700">
-                                        <span className="font-bold text-[#0A0A0A]">Key Result / Proof: </span>
+                                    <div className="rounded-xl bg-muted px-3 py-2 text-sm text-foreground">
+                                        <span className="font-medium">Result: </span>
                                         {item.result}
                                     </div>
                                 )}
@@ -296,7 +289,7 @@ export default function MyWorkPage() {
                                 {item.tools && item.tools.length > 0 && (
                                     <div className="flex flex-wrap gap-1 pt-1">
                                         {item.tools.map((tool, idx) => (
-                                            <span key={idx} className="text-[10px] font-semibold text-neutral-600 bg-neutral-100 px-2 py-0.5 rounded-md">
+                                            <span key={idx} className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-foreground">
                                                 {tool}
                                             </span>
                                         ))}
@@ -310,10 +303,10 @@ export default function MyWorkPage() {
                                         href={item.proofUrl}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-1 text-blue-600 font-bold hover:underline"
+                                        className="inline-flex items-center gap-1 text-sm font-medium text-foreground hover:underline"
                                     >
-                                        <RiExternalLinkLine className="w-3.5 h-3.5" />
-                                        View Proof Link
+                                        <AppIcon icon={RiLink} size={14} />
+                                        View proof
                                     </a>
                                 </div>
                             )}
@@ -326,7 +319,7 @@ export default function MyWorkPage() {
                                 type="button"
                                 disabled={loadingMore}
                                 onClick={() => void fetchItems(nextCursor)}
-                                className="rounded-xl border border-neutral-200 bg-white px-5 py-2.5 text-xs font-bold text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
+                                className={featureChrome.secondaryButton}
                             >
                                 {loadingMore ? "Loading…" : "Load more work"}
                             </button>
@@ -335,48 +328,52 @@ export default function MyWorkPage() {
                 </div>
             )}
 
-            {/* Add Work Item Modal */}
             <AnimatePresence>
                 {isAddModalOpen && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <div className={featureChrome.backdrop} onClick={closeAddModal} />
                         <m.div
-                            initial={{ opacity: 0, scale: 0.95 }}
+                            ref={addDialogRef}
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="add-work-title"
+                            initial={{ opacity: 0, scale: 0.98 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto"
+                            exit={{ opacity: 0, scale: 0.98 }}
+                            className={`${featureChrome.dialog} max-w-lg`}
                         >
-                            <div className="flex items-center justify-between border-b border-neutral-100 pb-4">
-                                <div>
-                                    <h2 className="text-xl font-black text-[#0A0A0A]">Add What You Built</h2>
-                                    <p className="text-xs text-neutral-500 font-medium">Add details of your real experience so Zebra can present it honestly.</p>
+                            <div className={featureChrome.dialogHeader}>
+                                <div className="flex min-w-0 flex-1 items-start gap-2.5 sm:items-center">
+                                    <FeatureIcon feature="Work" size={18} className="text-muted-foreground" />
+                                    <div className="min-w-0">
+                                        <h2 id="add-work-title" className="text-base font-semibold tracking-tight text-foreground">Add work item</h2>
+                                        <p className={featureChrome.helper}>Describe a project or experience you can cite.</p>
+                                    </div>
                                 </div>
-                                <button
-                                    onClick={() => setIsAddModalOpen(false)}
-                                    className="text-neutral-400 hover:text-[#0A0A0A] font-bold text-sm"
-                                >
-                                    <RiCloseLine className="w-5 h-5" />
+                                <button type="button" onClick={closeAddModal} aria-label="Close add work" className={featureChrome.iconButton}>
+                                    <AppIcon icon={RiCloseLine} size={18} />
                                 </button>
                             </div>
 
-                            <form onSubmit={handleCreate} className="space-y-4 text-xs font-medium">
+                            <form id="add-work-form" onSubmit={handleCreate} className={`${featureChrome.dialogBody} space-y-4`}>
                                 <div>
-                                    <label className="block text-[#0A0A0A] font-bold mb-1">Title</label>
+                                    <label className={featureChrome.label}>Title</label>
                                     <input
                                         type="text"
-                                        placeholder="e.g. Campus Marketplace Web App"
+                                        placeholder="e.g. Campus marketplace web app"
                                         value={title}
                                         onChange={(e) => setTitle(e.target.value)}
-                                        className="w-full px-3.5 py-2.5 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#0A0A0A] focus:outline-none"
+                                        className={`mt-1.5 ${featureChrome.input}`}
                                         required
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-[#0A0A0A] font-bold mb-1">Category</label>
+                                    <label className={featureChrome.label}>Category</label>
                                     <select
                                         value={category}
                                         onChange={(e) => setCategory(e.target.value as WorkItem["category"])}
-                                        className="w-full px-3.5 py-2.5 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#0A0A0A] focus:outline-none"
+                                        className={`mt-1.5 ${featureChrome.select}`}
                                     >
                                         <option value="Project">Project</option>
                                         <option value="Internship">Internship</option>
@@ -388,46 +385,46 @@ export default function MyWorkPage() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-[#0A0A0A] font-bold mb-1">What did you do?</label>
+                                    <label className={featureChrome.label}>What did you do?</label>
                                     <textarea
                                         rows={3}
                                         placeholder="Explain your contribution, challenges solved, or what you built."
                                         value={description}
                                         onChange={(e) => setDescription(e.target.value)}
-                                        className="w-full px-3.5 py-2.5 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#0A0A0A] focus:outline-none"
+                                        className={`mt-1.5 ${featureChrome.textarea}`}
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-[#0A0A0A] font-bold mb-1">Tools or Skills Used (comma separated)</label>
+                                    <label className={featureChrome.label}>Tools or skills (comma separated)</label>
                                     <input
                                         type="text"
-                                        placeholder="React, Next.js, PostgreSQL, TailwindCSS"
+                                        placeholder="React, Next.js, PostgreSQL"
                                         value={toolsInput}
                                         onChange={(e) => setToolsInput(e.target.value)}
-                                        className="w-full px-3.5 py-2.5 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#0A0A0A] focus:outline-none"
+                                        className={`mt-1.5 ${featureChrome.input}`}
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-[#0A0A0A] font-bold mb-1">Result or Learning</label>
+                                    <label className={featureChrome.label}>Result or learning</label>
                                     <input
                                         type="text"
                                         placeholder="e.g. Used by 150 students, reduced load time by 30%"
                                         value={result}
                                         onChange={(e) => setResult(e.target.value)}
-                                        className="w-full px-3.5 py-2.5 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#0A0A0A] focus:outline-none"
+                                        className={`mt-1.5 ${featureChrome.input}`}
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-[#0A0A0A] font-bold mb-1">Link or Proof URL (GitHub / Demo / Certificate)</label>
+                                    <label className={featureChrome.label}>Proof URL</label>
                                     <input
                                         type="url"
                                         placeholder="https://github.com/yourusername/project"
                                         value={proofUrl}
                                         onChange={(e) => setProofUrl(e.target.value)}
-                                        className="w-full px-3.5 py-2.5 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#0A0A0A] focus:outline-none"
+                                        className={`mt-1.5 ${featureChrome.input}`}
                                     />
                                 </div>
 
@@ -439,32 +436,23 @@ export default function MyWorkPage() {
                                         onChange={(e) => setIsPublic(e.target.checked)}
                                         className="rounded border-neutral-300 text-[#0A0A0A] focus:ring-[#0A0A0A]"
                                     />
-                                    <label htmlFor="isPublic" className="text-xs text-neutral-700 font-semibold cursor-pointer">
-                                        Make visible on public portfolio
+                                    <label htmlFor="isPublic" className="cursor-pointer text-sm text-foreground">
+                                        Visible on public portfolio
                                     </label>
                                 </div>
-
-                                <div className="flex items-center justify-end gap-3 pt-4 border-t border-neutral-100">
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsAddModalOpen(false)}
-                                        className="px-4 py-2 text-neutral-500 hover:text-[#0A0A0A] font-bold text-xs"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={submitting}
-                                        className="bg-[#0A0A0A] text-white px-5 py-2.5 rounded-xl font-bold text-xs hover:bg-neutral-800 transition-all disabled:opacity-50"
-                                    >
-                                        {submitting ? "Saving..." : "Save Work Item"}
-                                    </button>
-                                </div>
                             </form>
+                            <div className={featureChrome.dialogFooter}>
+                                <button type="button" onClick={closeAddModal} className={featureChrome.ghostButton}>
+                                    Cancel
+                                </button>
+                                <button type="submit" form="add-work-form" disabled={submitting} className={featureChrome.primaryButton}>
+                                    {submitting ? "Saving..." : "Save work item"}
+                                </button>
+                            </div>
                         </m.div>
                     </div>
                 )}
             </AnimatePresence>
-        </div>
+        </DashboardPage>
     );
 }

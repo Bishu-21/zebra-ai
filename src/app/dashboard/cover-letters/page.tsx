@@ -3,10 +3,11 @@ import { getSafeSession } from "@/lib/auth-helpers";
 import Link from "next/link";
 import { GenerateCoverLetter } from "@/components/dashboard/GenerateCoverLetter";
 import {
-    RiArticleLine,
     RiTimeLine
 } from "react-icons/ri";
 import { CoverLetterActions } from "@/components/dashboard/CoverLetterActions";
+import { FeatureIcon } from "@/components/dashboard/FeatureIcon";
+import { featureChrome } from "@/components/dashboard/feature-chrome";
 import { DashboardPage } from "@/components/dashboard/DashboardPage";
 import { AppIcon } from "@/components/ui/AppIcon";
 import { loadCoverLetterWorkspace } from "@/lib/cover-letter-workspace";
@@ -59,21 +60,21 @@ async function CoverLettersContent({ userId, cursor: rawCursor }: { userId: stri
       <div className="flex flex-col gap-4 font-sans md:flex-row md:items-center md:justify-between">
         <div className="max-w-2xl">
           <div className="flex items-center gap-2.5">
-            <AppIcon icon={RiArticleLine} size={18} className="text-muted-foreground" />
+            <FeatureIcon feature="Cover Letters" size={18} className="text-muted-foreground" />
             <h1 className="text-xl font-semibold tracking-tight text-foreground">Cover Letters</h1>
           </div>
           <p className="mt-1 font-sans text-sm font-normal leading-6 text-muted-foreground">
             Create evidence-grounded drafts for a specific role, then review and edit every claim before use.
           </p>
         </div>
-        <div className="w-full shrink-0 md:w-auto">
+        {letters.length > 0 ? <div className="w-full shrink-0 md:w-auto">
           <GenerateCoverLetter resumes={resumeOptions} />
-        </div>
+        </div> : null}
       </div>
 
       {letters.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-neutral-200/70 bg-white px-6 py-12 text-center font-sans">
-          <AppIcon icon={RiArticleLine} size={22} className="text-muted-foreground" />
+        <div className={featureChrome.emptyState}>
+          <FeatureIcon feature="Cover Letters" size={22} className="text-muted-foreground" />
           <h2 className="mt-4 text-base font-semibold tracking-tight text-foreground">No cover letters yet</h2>
           <p className="mt-1 mb-5 max-w-md font-sans text-sm leading-6 text-muted-foreground">
             Generate your first cover letter by matching a resume to a job description.
@@ -86,10 +87,10 @@ async function CoverLettersContent({ userId, cursor: rawCursor }: { userId: stri
           {letters.map((letter) => (
             <div
                 key={letter.id}
-                className="group relative flex flex-col rounded-2xl border border-neutral-200/70 bg-white p-4 font-sans"
+                className={`${featureChrome.card} group relative`}
             >
                 <div className="flex items-center justify-between gap-2">
-                    <AppIcon icon={RiArticleLine} size={18} className="text-muted-foreground" />
+                    <FeatureIcon feature="Cover Letters" size={18} className="text-muted-foreground" />
                     <div className="flex items-center gap-1 font-sans text-xs text-muted-foreground">
                         <AppIcon icon={RiTimeLine} size={12} />
                         {formatTimeAgo(letter.createdAt)}

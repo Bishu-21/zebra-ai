@@ -87,14 +87,14 @@ export default async function AnalyticsPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, i) => (
-          <div key={i} className="bg-white rounded-[var(--radius-xl)] border border-border-subtle p-6 hover:border-neutral-300 hover:shadow-[var(--shadow-md)] transition-all group relative overflow-hidden">
+          <div key={i} className="relative rounded-2xl border border-neutral-200/70 bg-white p-5">
             <div className={`w-10 h-10 bg-muted group-hover:bg-foreground group-hover:text-white rounded-[var(--radius-md)] flex items-center justify-center ${stat.color} transition-all mb-6`}>
               <stat.icon size={20} />
             </div>
-            <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground mb-1">{stat.label}</p>
+            <p className="mb-1 text-xs font-medium text-muted-foreground">{stat.label}</p>
             <div className="flex items-end gap-2">
-              <h3 className="text-3xl font-bold tracking-tight">{stat.value}</h3>
-              <p className="pb-1 text-[0.6875rem] font-medium text-muted-foreground">{stat.sub}</p>
+              <h3 className="text-2xl font-semibold tracking-tight">{stat.value}</h3>
+              <p className="pb-1 text-xs font-medium text-muted-foreground">{stat.sub}</p>
             </div>
           </div>
         ))}
@@ -102,11 +102,11 @@ export default async function AnalyticsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Pipeline Health */}
-        <div className="lg:col-span-2 bg-white rounded-[var(--radius-xl)] border border-border-subtle p-6 md:p-8 flex flex-col relative overflow-hidden group shadow-[var(--shadow-sm)]">
+        <div className="relative flex flex-col overflow-hidden rounded-2xl border border-neutral-200/70 bg-white p-5 md:p-6 lg:col-span-2">
             <div className="flex items-center justify-between mb-10">
                 <div>
-                    <h2 className="text-lg font-bold tracking-tight">Resume score progress</h2>
-                    <p className="text-xs font-normal text-muted-foreground mt-1">Your latest saved analyses</p>
+                    <h2 className="text-base font-semibold tracking-tight">Resume score progress</h2>
+                    <p className="mt-1 text-sm text-muted-foreground">Your latest saved analyses</p>
                 </div>
                 <div className="flex items-center gap-2 px-4 py-2 bg-[#FAFAFA] rounded-xl border border-black/5">
                     <RiTimerFlashLine size={18} className="text-[#0A0A0A]" />
@@ -130,32 +130,30 @@ export default async function AnalyticsPage() {
                 ))}
             </div>
             <div className="flex justify-between items-center mt-6 pt-6 border-t border-black/5">
-                <p className="text-xs font-bold text-[#737373]">
+                <p className="text-sm text-muted-foreground">
                     {chartScores.length > 0
-                        ? `Tracking performance across your last ${chartScores.length} analyses.`
-                        : "No analysis data available yet. Start by analyzing a resume."}
+                        ? `Last ${chartScores.length} saved analyses.`
+                        : "No saved analyses yet."}
                 </p>
             </div>
         </div>
 
         {/* Intelligence Feed */}
-        <div className="bg-foreground rounded-[var(--radius-xl)] p-6 md:p-8 text-white flex flex-col shadow-[var(--shadow-lg)] relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-bl-[4rem] -mr-8 -mt-8" />
-
-            <h2 className="text-lg font-bold tracking-tight mb-8">Recent activity</h2>
+        <div className="relative flex flex-col overflow-hidden rounded-2xl border border-neutral-200/70 bg-white p-5 md:p-6">
+            <h2 className="mb-6 text-base font-semibold tracking-tight">Recent activity</h2>
             <div className="space-y-6 flex-grow">
                 {recentApplications.length > 0 ? recentApplications.map((application) => (
                     <div key={application.id} className="flex gap-4 items-start group">
-                        <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0 group-hover:bg-white group-hover:text-black transition-colors">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
                             <RiFlashlightLine size={14} />
                         </div>
                         <div>
-                            <p className="text-xs font-bold tracking-tight line-clamp-1">{application.position}</p>
-                            <p className="text-[0.6rem] font-bold text-white/40 uppercase tracking-widest mt-1">{application.company} · {application.status}</p>
+                            <p className="line-clamp-1 text-sm font-semibold tracking-tight">{application.position}</p>
+                            <p className="mt-1 text-xs text-muted-foreground">{application.company} · {application.status}</p>
                         </div>
                     </div>
                 )) : (
-                    <div className="flex flex-col items-center justify-center h-full text-white/40 italic text-sm">
+                    <div className="flex h-full flex-col items-center justify-center text-sm text-muted-foreground">
                         No recent activity logged.
                     </div>
                 )}
@@ -163,7 +161,7 @@ export default async function AnalyticsPage() {
 
             <Link
                 href="/dashboard/job-tracker"
-                className="mt-10 w-full py-4 bg-white/5 border border-white/10 rounded-2xl text-[0.65rem] font-black uppercase tracking-[0.2em] hover:bg-white hover:text-black transition-all text-center flex items-center justify-center gap-1.5"
+                className="mt-8 inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-4 text-sm font-medium text-foreground hover:bg-muted"
             >
                 View all applications <RiArrowRightUpLine size={14} />
             </Link>

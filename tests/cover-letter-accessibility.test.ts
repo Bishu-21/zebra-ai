@@ -79,7 +79,7 @@ describe("Cover letter accessibility and responsive dialogs", () => {
     });
 
     it("uses the Cover Letters sidebar identity icon in headings, entry, and preview chrome", () => {
-        assert.match(pageSource, /AppIcon icon=\{RiArticleLine\}/);
+        assert.match(pageSource, /FeatureIcon feature="Cover Letters"/);
         assert.match(generatorSource, /AppIcon icon=\{RiArticleLine\}/);
         assert.match(actionsSource, /AppIcon icon=\{RiArticleLine\}/);
         assert.match(generatorSource, /Generate cover letter/);

@@ -19,6 +19,7 @@ import { useRouter } from "next/navigation";
 import { AnimatePresence, m } from "framer-motion";
 import { useDialogFocus } from "@/hooks/useDialogFocus";
 import { CoverLetterDocument } from "@/components/dashboard/CoverLetterDocument";
+import { FeatureIcon } from "@/components/dashboard/FeatureIcon";
 import { AppIcon } from "@/components/ui/AppIcon";
 import { featureChrome } from "@/components/dashboard/feature-chrome";
 
@@ -251,7 +252,7 @@ export function GenerateCoverLetter({ resumes }: { resumes: ResumeOption[] }) {
                         >
                             <div className={featureChrome.dialogHeader}>
                                 <div className="flex min-w-0 items-center gap-2.5">
-                                    <AppIcon icon={RiArticleLine} size={18} className="text-muted-foreground" />
+                                    <FeatureIcon feature="Cover Letters" size={18} className="text-muted-foreground" />
                                     <div className="min-w-0">
                                         <h2 id="cover-letter-dialog-title" className="font-sans text-sm font-semibold tracking-tight text-foreground">
                                             Cover letter generator
