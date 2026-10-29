@@ -171,7 +171,7 @@ export function CoverLetterActions({ letter }: { letter: CoverLetter }) {
                                 <button 
                                     onClick={handleClose} 
                                     aria-label="Close preview"
-                                    className="w-10 h-10 flex items-center justify-center text-neutral-500 hover:text-neutral-950 hover:bg-neutral-200/60 rounded-xl transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-950 ml-1"
+                                    className="ml-1 flex h-11 w-11 items-center justify-center text-neutral-500 hover:text-neutral-950 hover:bg-neutral-200/60 rounded-xl transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-950"
                                 >
                                     <AppIcon icon={RiCloseLine} size={22} />
                                 </button>

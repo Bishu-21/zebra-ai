@@ -12,6 +12,7 @@ const appIcon = readFileSync("src/components/ui/AppIcon.tsx", "utf8");
 const analyze = readFileSync("src/components/dashboard/AnalyzeResume.tsx", "utf8");
 const tailor = readFileSync("src/components/dashboard/TailorResume.tsx", "utf8");
 const importer = readFileSync("src/components/dashboard/ImportResume.tsx", "utf8");
+const jobBoard = readFileSync("src/components/dashboard/JobBoard.tsx", "utf8");
 
 describe("icon meaning and family", () => {
     it("uses Remix icons through AppIcon with decorative hiding and no shrink", () => {
@@ -84,5 +85,12 @@ describe("dashboard navigation and tool dialogs", () => {
         assert.match(toolbar, /RiFileCopyLine/);
         assert.match(toolbar, /RiDeleteBinLine/);
         assert.doesNotMatch(toolbar, /RiDeleteBin6Line|RiFileDownloadLine|RiClipboardLine/);
+    });
+
+    it("keeps job-board icon actions at a 44px target and search icons off the input", () => {
+        assert.match(jobBoard, /h-11 w-11[^"]*" aria-label="Open job listing"/);
+        assert.match(jobBoard, /h-11 w-11[^"]*" aria-label="Delete application"/);
+        assert.match(jobBoard, /7\.5rem/);
+        assert.match(jobBoard, /RiSearchLine aria-hidden="true" className="pointer-events-none/);
     });
 });

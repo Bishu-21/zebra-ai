@@ -103,7 +103,7 @@ export function JobBoard({ initialJobs, resumes = [], versions = [] }: {
   };
 
   return (
-    <section className="overflow-hidden rounded-[var(--radius-xl)] border border-border-subtle bg-white shadow-[var(--shadow-sm)]">
+    <section className="overflow-x-auto rounded-[var(--radius-xl)] border border-border-subtle bg-white shadow-[var(--shadow-sm)]">
       <div className="flex flex-col gap-4 border-b border-border-subtle p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex gap-1 overflow-x-auto pb-1 sm:pb-0">
           {FILTERS.map((item) => (
@@ -113,7 +113,7 @@ export function JobBoard({ initialJobs, resumes = [], versions = [] }: {
           ))}
         </div>
         <label className="relative block w-full sm:w-64">
-          <RiSearchLine className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={15} />
+          <RiSearchLine aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 shrink-0 text-muted-foreground" size={15} />
           <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search company or role" className="w-full rounded-[var(--radius-md)] border border-border-subtle bg-muted/60 py-2.5 pl-9 pr-3 text-xs font-medium outline-none transition focus:border-neutral-300 focus:bg-white" />
         </label>
       </div>
@@ -125,14 +125,14 @@ export function JobBoard({ initialJobs, resumes = [], versions = [] }: {
         </div>
       ) : (
         <>
-          <div className="hidden grid-cols-[minmax(240px,2fr)_150px_minmax(180px,1fr)_120px_80px] gap-4 border-b border-border-subtle bg-muted/40 px-5 py-3 text-[0.6875rem] font-semibold uppercase tracking-[0.1em] text-muted-foreground md:grid">
-            <span>Company & role</span><span>Status</span><span>Resume</span><span>Updated</span><span className="text-right">Actions</span>
+          <div className="hidden gap-4 border-b border-border-subtle bg-muted/40 px-5 py-3 text-[0.6875rem] font-semibold uppercase tracking-[0.1em] text-muted-foreground md:grid md:grid-cols-[minmax(180px,2fr)_130px_minmax(120px,1fr)_7.5rem] lg:grid-cols-[minmax(200px,2fr)_140px_minmax(140px,1fr)_100px_7.5rem]">
+            <span>Company & role</span><span>Status</span><span>Resume</span><span className="hidden lg:block">Updated</span><span className="text-right">Actions</span>
           </div>
           <div className="divide-y divide-border-subtle">
             {visibleJobs.map((job) => {
               const detailHref = job.recordType === "job" ? null : `/dashboard/applications/${job.id}`;
               return (
-              <article key={job.id} className="group relative p-5 transition-colors hover:bg-muted/30 md:grid md:grid-cols-[minmax(240px,2fr)_150px_minmax(180px,1fr)_120px_80px] md:items-center md:gap-4">
+              <article key={job.id} className="group relative p-5 transition-colors hover:bg-muted/30 md:grid md:grid-cols-[minmax(180px,2fr)_130px_minmax(120px,1fr)_7.5rem] md:items-center md:gap-4 lg:grid-cols-[minmax(200px,2fr)_140px_minmax(140px,1fr)_100px_7.5rem]">
                 {detailHref ? <Link href={detailHref} className="absolute inset-0" aria-label={`Open ${job.position} at ${job.company}`} /> : null}
                 <div className="relative pointer-events-none min-w-0">
                   <div className="flex items-center gap-2"><span className="h-2 w-2 shrink-0 rounded-full bg-foreground" /><p className="truncate text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">{job.company}</p></div>
@@ -147,15 +147,15 @@ export function JobBoard({ initialJobs, resumes = [], versions = [] }: {
                     <RiArrowDownSLine aria-hidden="true" className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 shrink-0" size={14} />
                   </div>
                 </div>
-                <div className="relative pointer-events-none mt-3 flex min-w-0 items-center gap-2 text-xs text-muted-foreground md:mt-0"><RiFileTextLine className="shrink-0" size={15} /><span className="truncate">{linkedResume(job)}</span></div>
-                <p className="relative pointer-events-none mt-3 text-xs text-muted-foreground md:mt-0">{formatRelativeTime(job.updatedAt)}</p>
+                <div className="relative pointer-events-none mt-3 flex min-w-0 items-center gap-2 text-xs text-muted-foreground md:mt-0"><RiFileTextLine aria-hidden="true" className="shrink-0" size={15} /><span className="truncate">{linkedResume(job)}</span></div>
+                <p className="relative pointer-events-none mt-3 text-xs text-muted-foreground md:hidden lg:mt-0 lg:block">{formatRelativeTime(job.updatedAt)}</p>
                 <div className="relative z-10 mt-4 flex items-center justify-end gap-1 md:mt-0">
                   {detailHref ? (
-                    <Link href={detailHref} className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-950" aria-label="Open application"><RiArrowRightLine size={16} aria-hidden="true" /></Link>
+                    <Link href={detailHref} className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-950" aria-label="Open application"><RiArrowRightLine size={16} aria-hidden="true" /></Link>
                   ) : job.url ? (
-                    <a href={job.url} target="_blank" rel="noreferrer" className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-950" aria-label="Open job listing"><RiExternalLinkLine size={16} aria-hidden="true" /></a>
+                    <a href={job.url} target="_blank" rel="noreferrer" className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-950" aria-label="Open job listing"><RiExternalLinkLine size={16} aria-hidden="true" /></a>
                   ) : null}
-                  <button disabled={busyId === job.id} onClick={() => removeJob(job.id)} className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground hover:bg-rose-50 hover:text-rose-600 disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-950" aria-label="Delete application"><RiDeleteBinLine size={16} aria-hidden="true" /></button>
+                  <button disabled={busyId === job.id} onClick={() => removeJob(job.id)} className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-rose-50 hover:text-rose-600 disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-950" aria-label="Delete application"><RiDeleteBinLine size={16} aria-hidden="true" /></button>
                 </div>
               </article>
               );

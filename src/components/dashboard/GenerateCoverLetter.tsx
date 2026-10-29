@@ -252,7 +252,7 @@ export function GenerateCoverLetter({ resumes }: { resumes: ResumeOption[] }) {
                             <div className="w-full h-1 bg-neutral-950" />
                             
                             {/* Header */}
-                            <div className="px-4 py-4 sm:px-6 sm:py-5 border-b border-neutral-200 flex items-center justify-between bg-neutral-50/90 backdrop-blur-xl shrink-0">
+                            <div className="px-4 py-4 sm:px-6 sm:py-5 border-b border-neutral-200 flex items-center justify-between bg-neutral-50 shrink-0">
                                 <div className="flex items-center gap-3 sm:gap-4">
                                     <div className="w-10 h-10 sm:w-12 sm:h-12 bg-neutral-950 text-white rounded-xl flex items-center justify-center shrink-0 shadow-xs">
                                         <AppIcon icon={RiMailSendLine} size={22} />
@@ -270,7 +270,7 @@ export function GenerateCoverLetter({ resumes }: { resumes: ResumeOption[] }) {
                                     onClick={handleClose}
                                     type="button"
                                     aria-label="Close generator dialog"
-                                    className="w-10 h-10 flex items-center justify-center text-neutral-500 hover:text-neutral-950 hover:bg-neutral-200/60 rounded-xl transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-950"
+                                    className="flex h-11 w-11 items-center justify-center text-neutral-500 hover:text-neutral-950 hover:bg-neutral-200/60 rounded-xl transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-950"
                                 >
                                     <AppIcon icon={RiCloseLine} size={22} />
                                 </button>
