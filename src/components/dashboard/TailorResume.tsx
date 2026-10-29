@@ -3,12 +3,12 @@
 import React, { useCallback, useState } from "react";
 import { m, AnimatePresence } from "framer-motion";
 import {
-    RiCloseCircleLine,
+    RiCloseLine,
     RiCheckboxCircleLine,
     RiErrorWarningLine,
     RiInformationLine,
     RiMagicLine,
-    RiArrowDropDownLine,
+    RiArrowDownSLine,
     RiLoader4Line,
     RiArrowRightLine,
     RiFileTextLine,
@@ -321,11 +321,13 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                                     </div>
                                 </div>
                                 <button
+                                    type="button"
                                     onClick={() => !isBusy && setIsOpen(false)}
-                                    className="w-8 h-8 rounded-full bg-neutral-100 text-neutral-500 hover:bg-neutral-200 hover:text-[#0A0A0A] flex items-center justify-center transition-all disabled:opacity-40"
+                                    aria-label="Close job match"
+                                    className="flex h-10 w-10 items-center justify-center rounded-xl text-neutral-500 hover:bg-neutral-100 hover:text-[#0A0A0A] transition-all disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-950"
                                     disabled={isBusy}
                                 >
-                                    <RiCloseCircleLine size={18} />
+                                    <RiCloseLine size={20} aria-hidden="true" />
                                 </button>
                             </div>
 
@@ -350,7 +352,7 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                                                         {availableResumes.length === 0 && <option value="">No resumes yet</option>}
                                                     </select>
                                                     <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-400">
-                                                        <RiArrowDropDownLine size={20} />
+                                                        <RiArrowDownSLine size={20} aria-hidden="true" />
                                                     </div>
                                                     </div>
                                                     <input

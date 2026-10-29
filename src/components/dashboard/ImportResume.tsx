@@ -244,10 +244,12 @@ export function ImportResume() {
                                     </div>
                                 </div>
                                 <button
+                                    type="button"
                                     onClick={() => setIsModalOpen(false)}
-                                    className="w-8 h-8 rounded-full bg-neutral-100 text-neutral-500 hover:bg-neutral-200 hover:text-[#0A0A0A] flex items-center justify-center transition-all"
+                                    aria-label="Close import resume"
+                                    className="flex h-10 w-10 items-center justify-center rounded-xl text-neutral-500 hover:bg-neutral-100 hover:text-[#0A0A0A] transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-950"
                                 >
-                                    <RiCloseLine size={18} />
+                                    <RiCloseLine size={20} aria-hidden="true" />
                                 </button>
                             </div>
 

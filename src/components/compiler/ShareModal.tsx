@@ -159,8 +159,8 @@ export function ShareModal({ isOpen, onCloseAction, resumeId, resumeTitle }: Sha
                             <RiShareLine size={14} className="text-black" />
                             <span className="text-sm font-semibold text-[#0A0A0A]">Share Resume</span>
                         </div>
-                        <button onClick={onCloseAction} className="w-7 h-7 rounded-md flex items-center justify-center text-[#737373] hover:bg-[#F5F5F5] transition-all">
-                            <RiCloseLine size={16} />
+                        <button type="button" onClick={onCloseAction} aria-label="Close share dialog" className="flex h-10 w-10 items-center justify-center rounded-xl text-[#737373] hover:bg-[#F5F5F5] transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-950">
+                            <RiCloseLine size={18} aria-hidden="true" />
                         </button>
                     </div>
 

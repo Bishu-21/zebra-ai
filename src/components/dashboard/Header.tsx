@@ -56,13 +56,13 @@ export function Header({ credits, userName, userImage, isNavOpen = false, onOpen
                     <Link href="/dashboard" className="hover:text-foreground cursor-pointer transition-colors shrink-0">
                         Zebra AI
                     </Link>
-                    <RiArrowRightSLine size={16} className="text-muted-foreground shrink-0" />
+                    <RiArrowRightSLine size={16} aria-hidden="true" className="text-muted-foreground shrink-0" />
                     {breadcrumbInfo.parent ? (
                         <>
                             <Link href={breadcrumbInfo.parent.href} className="hover:text-foreground cursor-pointer transition-colors shrink-0">
                                 {breadcrumbInfo.parent.label}
                             </Link>
-                            <RiArrowRightSLine size={16} className="text-muted-foreground shrink-0" />
+                            <RiArrowRightSLine size={16} aria-hidden="true" className="text-muted-foreground shrink-0" />
                             <span className="text-foreground font-semibold truncate">{breadcrumbInfo.title}</span>
                         </>
                     ) : (
@@ -79,7 +79,7 @@ export function Header({ credits, userName, userImage, isNavOpen = false, onOpen
                     title="Talk to Zebu"
                     aria-label="Open Zebu and start listening"
                 >
-                    <RiMicLine size={18} />
+                    <RiMicLine size={18} aria-hidden="true" />
                 </button>
                 {/* Credits Badge (Hidden on Phone < 768px, available in drawer) */}
                 <div className="hidden md:flex bg-neutral-100 px-3 py-1.5 rounded-full items-center border border-neutral-200/80 shadow-xs">
@@ -93,7 +93,7 @@ export function Header({ credits, userName, userImage, isNavOpen = false, onOpen
                     title="Settings"
                     aria-label="Settings"
                 >
-                    <RiSettings4Line size={18} className="group-hover:rotate-45 transition-transform duration-300" />
+                    <RiSettings4Line size={18} aria-hidden="true" className="group-hover:rotate-45 transition-transform duration-300" />
                 </Link>
 
                 {/* Profile Avatar (Visible on all breakpoints) */}

@@ -2,21 +2,24 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import { 
-    RiAddLine, 
     RiCloseLine, 
     RiAlertLine, 
-    RiArrowDropDownLine,
+    RiArrowDownSLine,
     RiFileCopyLine,
     RiDownload2Line,
     RiCheckLine,
     RiMailSendLine,
-    RiExternalLinkLine,
+    RiArticleLine,
+    RiLink,
+    RiFileSearchLine,
+    RiSearchEyeLine,
     RiLoader4Line
 } from "react-icons/ri";
 import { useRouter } from "next/navigation";
 import { m, AnimatePresence } from "framer-motion";
 import { useDialogFocus } from "@/hooks/useDialogFocus";
 import { CoverLetterDocument } from "@/components/dashboard/CoverLetterDocument";
+import { AppIcon } from "@/components/ui/AppIcon";
 
 type ResumeOption = { id: string; title: string; candidateName?: string };
 
@@ -214,12 +217,14 @@ export function GenerateCoverLetter({ resumes }: { resumes: ResumeOption[] }) {
     return (
         <>
             <m.button 
+                type="button"
+                data-cover-letter-trigger
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setIsOpen(true)}
                 className="flex w-full items-center justify-center gap-2 bg-neutral-950 text-white px-5 py-3 rounded-xl font-semibold transition-all shadow-xs text-xs group md:w-auto hover:bg-neutral-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-950"
             >
-                <RiAddLine size={16} />
+                <AppIcon icon={RiArticleLine} size={16} />
                 Generate Cover Letter
             </m.button>
 
@@ -249,10 +254,10 @@ export function GenerateCoverLetter({ resumes }: { resumes: ResumeOption[] }) {
                             <div className="w-full h-1 bg-neutral-950" />
                             
                             {/* Header */}
-                            <div className="px-4 py-4 sm:px-6 sm:py-5 border-b border-neutral-200 flex items-center justify-between bg-neutral-50/90 backdrop-blur-xl shrink-0">
+                            <div className="px-4 py-4 sm:px-6 sm:py-5 border-b border-neutral-200 flex items-center justify-between bg-neutral-50 shrink-0">
                                 <div className="flex items-center gap-3 sm:gap-4">
                                     <div className="w-10 h-10 sm:w-12 sm:h-12 bg-neutral-950 text-white rounded-xl flex items-center justify-center shrink-0 shadow-xs">
-                                        <RiMailSendLine size={24} />
+                                        <AppIcon icon={RiArticleLine} size={22} />
                                     </div>
                                     <div>
                                         <h2 id="cover-letter-dialog-title" className="text-base sm:text-lg md:text-xl font-bold tracking-tight text-neutral-950">
@@ -267,9 +272,9 @@ export function GenerateCoverLetter({ resumes }: { resumes: ResumeOption[] }) {
                                     onClick={handleClose}
                                     type="button"
                                     aria-label="Close generator dialog"
-                                    className="w-10 h-10 flex items-center justify-center text-neutral-500 hover:text-neutral-950 hover:bg-neutral-200/60 rounded-xl transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-950"
+                                    className="flex h-11 w-11 items-center justify-center text-neutral-500 hover:text-neutral-950 hover:bg-neutral-200/60 rounded-xl transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-950"
                                 >
-                                    <RiCloseLine size={24} />
+                                    <AppIcon icon={RiCloseLine} size={22} />
                                 </button>
                             </div>
 
@@ -293,7 +298,7 @@ export function GenerateCoverLetter({ resumes }: { resumes: ResumeOption[] }) {
                                                         {resumeOptions.length === 0 && <option value="">No Resumes Found (Template mode)</option>}
                                                     </select>
                                                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-500">
-                                                        <RiArrowDropDownLine size={24} />
+                                                        <AppIcon icon={RiArrowDownSLine} size={20} />
                                                     </div>
                                                 </div>
                                                 {resumeCursor && (
@@ -325,9 +330,7 @@ export function GenerateCoverLetter({ resumes }: { resumes: ResumeOption[] }) {
                                         {/* Import from Job URL */}
                                         <div className="bg-white border border-neutral-200 rounded-2xl p-4 sm:p-6 shadow-xs space-y-4">
                                             <div className="flex items-center gap-2.5">
-                                                <div className="w-7 h-7 bg-neutral-950 text-white rounded-lg flex items-center justify-center shrink-0">
-                                                    <RiExternalLinkLine size={14} />
-                                                </div>
+                                                <AppIcon icon={RiLink} size={16} className="text-neutral-700" />
                                                 <label htmlFor="cover-letter-url-input" className="text-xs font-bold uppercase tracking-wider text-neutral-950">
                                                     Import from Job URL
                                                 </label>
@@ -339,11 +342,11 @@ export function GenerateCoverLetter({ resumes }: { resumes: ResumeOption[] }) {
                                                         id="cover-letter-url-input"
                                                         type="text"
                                                         placeholder="Paste LinkedIn, Indeed, or job posting URL..."
-                                                        className="w-full bg-neutral-50 border border-neutral-300 focus:bg-white focus:border-neutral-950 focus:ring-1 focus:ring-neutral-950 rounded-xl px-4 py-2.5 sm:py-3 text-sm font-medium outline-none transition-all text-neutral-900 placeholder:text-neutral-600 pr-10"
+                                                        className="w-full bg-neutral-50 border border-neutral-300 focus:bg-white focus:border-neutral-950 focus:ring-1 focus:ring-neutral-950 rounded-xl px-4 py-2.5 sm:py-3 text-sm font-medium outline-none transition-all text-neutral-900 placeholder:text-neutral-600 pl-10"
                                                         value={scrapeUrl}
                                                         onChange={(e) => setScrapeUrl(e.target.value)}
                                                     />
-                                                    <RiExternalLinkLine className="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" size={18} />
+                                                    <AppIcon icon={RiLink} size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
                                                 </div>
                                                 <m.button 
                                                     whileHover={{ scale: 1.01 }}
@@ -351,9 +354,9 @@ export function GenerateCoverLetter({ resumes }: { resumes: ResumeOption[] }) {
                                                     type="button"
                                                     onClick={handleScrape}
                                                     disabled={scraping || !scrapeUrl.trim()}
-                                                    className="bg-neutral-900 text-white px-5 py-2.5 sm:py-3 rounded-xl font-semibold text-xs hover:bg-neutral-800 disabled:opacity-50 transition-colors flex items-center justify-center gap-2 shadow-xs shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-950"
+                                                    className="bg-neutral-900 text-white min-h-11 px-5 py-2.5 sm:py-3 rounded-xl font-semibold text-xs hover:bg-neutral-800 disabled:opacity-50 transition-colors flex items-center justify-center gap-2 shadow-xs shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-950"
                                                 >
-                                                    {scraping ? <RiLoader4Line className="animate-spin" size={16} /> : <RiDownload2Line size={16} />}
+                                                    {scraping ? <AppIcon icon={RiLoader4Line} size={16} className="animate-spin" /> : <AppIcon icon={RiFileSearchLine} size={16} />}
                                                     {scraping ? "Extracting..." : "Extract Description"}
                                                 </m.button>
                                             </div>
@@ -392,7 +395,7 @@ export function GenerateCoverLetter({ resumes }: { resumes: ResumeOption[] }) {
                                                         disabled={enriching}
                                                         className="bg-white border border-neutral-300 text-neutral-900 px-5 py-2.5 rounded-xl font-semibold text-xs shadow-xs flex items-center gap-2 hover:bg-neutral-100 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-950"
                                                     >
-                                                        {enriching ? <RiLoader4Line className="animate-spin" size={14} /> : <RiMailSendLine size={14} className="text-neutral-700" />}
+                                                        {enriching ? <AppIcon icon={RiLoader4Line} size={16} className="animate-spin" /> : <AppIcon icon={RiSearchEyeLine} size={16} className="text-neutral-700" />}
                                                         {enriching ? "Analyzing..." : "Analyze with Azure AI"}
                                                     </m.button>
                                                 </div>
@@ -439,7 +442,7 @@ export function GenerateCoverLetter({ resumes }: { resumes: ResumeOption[] }) {
                                                 role="alert"
                                                 className="bg-red-50 text-red-700 p-4 rounded-xl border border-red-200 flex items-start gap-3 text-xs font-medium"
                                             >
-                                                <RiAlertLine size={18} className="mt-0.5 flex-shrink-0 text-red-600" />
+                                                <AppIcon icon={RiAlertLine} size={18} className="mt-0.5 text-red-600" />
                                                 <div className="space-y-0.5">
                                                     <p className="font-semibold text-red-800">Generation Notice</p>
                                                     <p className="text-red-700">{error}</p>
@@ -451,8 +454,8 @@ export function GenerateCoverLetter({ resumes }: { resumes: ResumeOption[] }) {
                                     <div className="space-y-6 max-w-4xl mx-auto">
                                         <div className="bg-neutral-950 text-white p-4 sm:p-6 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md">
                                             <div className="flex items-center gap-3 sm:gap-4">
-                                                <div className="w-10 h-10 bg-emerald-500/20 text-emerald-400 rounded-xl flex items-center justify-center shrink-0">
-                                                    <RiCheckLine size={24} />
+                                                <div className="w-10 h-10 bg-white/10 text-white rounded-xl flex items-center justify-center shrink-0">
+                                                    <AppIcon icon={RiCheckLine} size={22} />
                                                 </div>
                                                 <div>
                                                     <p className="text-base sm:text-lg font-bold tracking-tight text-white">Letter Ready</p>
@@ -468,7 +471,7 @@ export function GenerateCoverLetter({ resumes }: { resumes: ResumeOption[] }) {
                                                     aria-label="Copy letter text"
                                                     className="bg-neutral-800 hover:bg-neutral-700 px-4 py-2.5 rounded-xl transition-colors flex items-center gap-2 text-xs font-semibold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
                                                 >
-                                                    {copied ? <RiCheckLine size={16} className="text-emerald-400" /> : <RiFileCopyLine size={16} />}
+                                                    {copied ? <AppIcon icon={RiCheckLine} size={16} /> : <AppIcon icon={RiFileCopyLine} size={16} />}
                                                     {copied ? "Copied" : "Copy Text"}
                                                 </m.button>
                                                 <m.button 
@@ -480,7 +483,7 @@ export function GenerateCoverLetter({ resumes }: { resumes: ResumeOption[] }) {
                                                     aria-label="Download PDF"
                                                     className="bg-white hover:bg-neutral-100 text-neutral-950 px-4 py-2.5 rounded-xl transition-colors disabled:opacity-50 flex items-center gap-2 text-xs font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
                                                 >
-                                                    {isExporting ? <RiLoader4Line className="animate-spin" size={16} /> : <RiDownload2Line size={16} />}
+                                                    {isExporting ? <AppIcon icon={RiLoader4Line} size={16} className="animate-spin" /> : <AppIcon icon={RiDownload2Line} size={16} />}
                                                     Export PDF
                                                 </m.button>
                                             </div>
@@ -499,10 +502,8 @@ export function GenerateCoverLetter({ resumes }: { resumes: ResumeOption[] }) {
 
                             {/* Footer */}
                             <div className="px-4 py-3.5 sm:px-6 sm:py-4 border-t border-neutral-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white/95 backdrop-blur-xl shrink-0">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 bg-neutral-100 rounded-lg flex items-center justify-center text-neutral-600 shrink-0">
-                                        <RiMailSendLine size={16} />
-                                    </div>
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <AppIcon icon={RiMailSendLine} size={16} className="text-neutral-600" />
                                     <div>
                                         <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Generation cost</p>
                                         <p className="text-xs font-medium text-neutral-700">Uses 1 credit</p>
@@ -528,13 +529,13 @@ export function GenerateCoverLetter({ resumes }: { resumes: ResumeOption[] }) {
                                             >
                                                 {loading ? (
                                                     <>
-                                                        <RiLoader4Line className="animate-spin" size={16} />
+                                                        <AppIcon icon={RiLoader4Line} size={16} className="animate-spin" />
                                                         Generating...
                                                     </>
                                                 ) : (
                                                     <>
                                                         Generate Cover Letter
-                                                        <RiCheckLine size={16} />
+                                                        <AppIcon icon={RiMailSendLine} size={16} />
                                                     </>
                                                 )}
                                             </m.button>

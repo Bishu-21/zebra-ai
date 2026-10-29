@@ -1,17 +1,18 @@
 "use client";
 import React, { useCallback, useState } from "react";
 import { 
-    RiDeleteBin6Line, 
+    RiDeleteBinLine, 
     RiArrowRightSLine, 
     RiCloseLine, 
-    RiCheckboxCircleLine, 
+    RiCheckLine, 
     RiFileCopyLine, 
     RiDownload2Line, 
-    RiMailSendLine
+    RiArticleLine
 } from "react-icons/ri";
 import { useRouter } from "next/navigation";
 import { useDialogFocus } from "@/hooks/useDialogFocus";
 import { CoverLetterDocument } from "@/components/dashboard/CoverLetterDocument";
+import { AppIcon } from "@/components/ui/AppIcon";
 
 type CoverLetter = {
     id: string;
@@ -104,7 +105,7 @@ export function CoverLetterActions({ letter }: { letter: CoverLetter }) {
                     className="flex-grow h-12 bg-neutral-950 text-white rounded-xl text-xs font-semibold hover:bg-neutral-800 active:scale-[0.98] transition-all flex items-center justify-center gap-2 group/btn focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-950"
                 >
                     View Letter
-                    <RiArrowRightSLine size={14} className="group-hover/btn:translate-x-1 transition-transform" />
+                    <AppIcon icon={RiArrowRightSLine} size={16} className="group-hover/btn:translate-x-1 transition-transform" />
                 </button>
                 <button 
                     onClick={handleDelete}
@@ -115,7 +116,7 @@ export function CoverLetterActions({ letter }: { letter: CoverLetter }) {
                     {isDeleting ? (
                         <span className="w-4 h-4 border-2 border-red-400/30 border-t-red-500 rounded-full animate-spin"></span>
                     ) : (
-                        <RiDeleteBin6Line size={18} />
+                        <AppIcon icon={RiDeleteBinLine} size={18} />
                     )}
                 </button>
             </div>
@@ -138,7 +139,7 @@ export function CoverLetterActions({ letter }: { letter: CoverLetter }) {
                         <div className="px-4 py-3.5 sm:px-6 sm:py-5 border-b border-neutral-200 flex items-center justify-between bg-neutral-50/90 backdrop-blur-xl shrink-0">
                             <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1 mr-2">
                                 <div className="hidden sm:flex w-10 h-10 sm:w-11 sm:h-11 bg-neutral-950 text-white rounded-xl items-center justify-center shrink-0 shadow-xs">
-                                    <RiMailSendLine size={22} />
+                                    <AppIcon icon={RiArticleLine} size={20} />
                                 </div>
                                 <div className="min-w-0">
                                     <h2 id={`letter-title-${letter.id}`} className="text-base sm:text-lg font-bold text-neutral-950 truncate max-w-[180px] xs:max-w-[240px] sm:max-w-[340px] md:max-w-[420px]">{letter.title}</h2>
@@ -151,7 +152,7 @@ export function CoverLetterActions({ letter }: { letter: CoverLetter }) {
                                     aria-label="Copy letter text"
                                     className="flex items-center justify-center min-h-9 sm:min-h-10 px-3 sm:px-4 py-2 bg-neutral-100 hover:bg-neutral-200 border border-neutral-200 rounded-xl text-xs font-semibold transition-colors text-neutral-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-950"
                                 >
-                                    {copied ? <RiCheckboxCircleLine size={18} className="text-emerald-600 sm:mr-1.5" /> : <RiFileCopyLine size={18} className="sm:mr-1.5" />}
+                                    {copied ? <AppIcon icon={RiCheckLine} size={16} className="sm:mr-1.5" /> : <AppIcon icon={RiFileCopyLine} size={16} className="sm:mr-1.5" />}
                                     <span className="hidden sm:inline">{copied ? "Copied!" : "Copy Text"}</span>
                                 </button>
                                 <button 
@@ -163,16 +164,16 @@ export function CoverLetterActions({ letter }: { letter: CoverLetter }) {
                                     {isExporting ? (
                                         <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin sm:mr-1.5"></span>
                                     ) : (
-                                        <RiDownload2Line size={18} className="sm:mr-1.5" />
+                                        <AppIcon icon={RiDownload2Line} size={16} className="sm:mr-1.5" />
                                     )}
                                     <span className="hidden sm:inline">Download PDF</span>
                                 </button>
                                 <button 
                                     onClick={handleClose} 
                                     aria-label="Close preview"
-                                    className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center text-neutral-500 hover:text-neutral-950 hover:bg-neutral-200/60 rounded-xl transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-950 ml-1"
+                                    className="ml-1 flex h-11 w-11 items-center justify-center text-neutral-500 hover:text-neutral-950 hover:bg-neutral-200/60 rounded-xl transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-950"
                                 >
-                                    <RiCloseLine size={22} />
+                                    <AppIcon icon={RiCloseLine} size={22} />
                                 </button>
                             </div>
                         </div>
@@ -205,7 +206,7 @@ export function CoverLetterActions({ letter }: { letter: CoverLetter }) {
                                 ) : (
                                     <>
                                         Download PDF
-                                        <RiDownload2Line size={16} />
+                                        <AppIcon icon={RiDownload2Line} size={16} />
                                     </>
                                 )}
                             </button>

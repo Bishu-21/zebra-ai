@@ -8,13 +8,13 @@ import {
 RiArrowDownSLine,
 RiArrowLeftLine,
 RiBallPenLine,
-RiCheckboxCircleFill,
-RiClipboardLine,
+RiCheckLine,
 RiCodeSSlashLine,
-RiDeleteBin6Line,
+RiDeleteBinLine,
 RiEditLine,
+RiFileCopyLine,
 RiFileCopy2Line,
-RiFileDownloadLine,
+RiDownload2Line,
 RiFocus2Line,RiFocus3Line,
 RiLoader4Line,
 RiMagicLine,
@@ -83,7 +83,7 @@ export function EditorToolbar({
 <header className={`min-h-14 bg-background border-b border-border-subtle flex flex-wrap items-center justify-between gap-2 px-3 py-2 shrink-0 select-none relative z-[150] transition-[padding] duration-300 ${showAiPanel ? "lg:pr-[432px]" : ""}`}>
                 <div className="flex min-w-0 max-w-full basis-full items-center gap-2 lg:basis-auto lg:min-w-[20rem] lg:flex-1">
                     <button onClick={() => router.push('/dashboard')} aria-label="Back to dashboard" className="w-11 h-11 shrink-0 rounded-[var(--radius-sm)] bg-muted flex items-center justify-center text-muted-foreground hover:bg-foreground hover:text-white transition-all">
-                        <RiArrowLeftLine size={14} />
+                        <RiArrowLeftLine size={16} aria-hidden="true" />
                     </button>
                     <div className="w-px h-5 bg-black/8" />
 
@@ -95,7 +95,7 @@ export function EditorToolbar({
                                 className="flex min-h-11 max-w-full items-center gap-2 px-2 py-1 rounded-[var(--radius-sm)] hover:bg-muted transition-all group"
                             >
                                 <span className="text-sm font-semibold text-foreground max-w-[120px] sm:max-w-[200px] truncate">{resume.title}</span>
-                                <RiArrowDownSLine size={14} className={`shrink-0 text-muted-foreground transition-transform duration-200 ${isMenuOpen ? 'rotate-180' : ''}`} />
+                                <RiArrowDownSLine size={16} aria-hidden="true" className={`shrink-0 text-muted-foreground transition-transform duration-200 ${isMenuOpen ? 'rotate-180' : ''}`} />
                             </button>
                         ) : (
                             <input
@@ -126,28 +126,28 @@ export function EditorToolbar({
                                         className="absolute top-full left-0 mt-1 w-56 bg-background/90 backdrop-blur-xl border border-border-subtle rounded-[var(--radius-lg)] shadow-[0_10px_40px_rgba(0,0,0,0.12)] overflow-hidden p-1.5"
                                     >
                                         <button onClick={() => { setIsMenuOpen(false); setShowShareModal(true); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-secondary hover:bg-muted rounded-[var(--radius-md)] transition-all">
-                                            <RiShareLine size={14} className="text-primary" />
+                                            <RiShareLine size={14} aria-hidden="true" className="text-primary" />
                                             Share and collaborate
                                         </button>
                                         <button onClick={() => { setIsMenuOpen(false); handleExportPdf(); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-secondary hover:bg-muted rounded-[var(--radius-md)] transition-all">
-                                            <RiFileDownloadLine size={14} />
+                                            <RiDownload2Line size={14} aria-hidden="true" />
                                             Export PDF
                                         </button>
                                         <button onClick={() => { setIsMenuOpen(false); copyToClipboard(); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-secondary hover:bg-muted rounded-[var(--radius-md)] transition-all">
-                                            <RiClipboardLine size={14} />
+                                            <RiFileCopyLine size={14} aria-hidden="true" />
                                             Copy text
                                         </button>
                                         <button onClick={() => { setIsMenuOpen(false); setIsRenaming(true); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-secondary hover:bg-muted rounded-[var(--radius-md)] transition-all">
-                                            <RiEditLine size={14} />
+                                            <RiEditLine size={14} aria-hidden="true" />
                                             Rename
                                         </button>
                                         <button onClick={handleDuplicate} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-secondary hover:bg-muted rounded-[var(--radius-md)] transition-all">
-                                            <RiFileCopy2Line size={14} />
+                                            <RiFileCopy2Line size={14} aria-hidden="true" />
                                             Duplicate
                                         </button>
                                         <div className="h-px bg-border-subtle my-1" />
                                         <button onClick={handleDelete} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-red-500 hover:bg-red-50 rounded-[var(--radius-md)] transition-all">
-                                            <RiDeleteBin6Line size={14} />
+                                            <RiDeleteBinLine size={14} aria-hidden="true" />
                                             Delete
                                         </button>
                                     </m.div>
@@ -176,8 +176,8 @@ export function EditorToolbar({
                         </button>
                     </div>
                     <div className="hidden sm:block w-px h-5 bg-black/8" />
-                    <button onClick={copyToClipboard} className="h-11 min-w-11 justify-center px-2 sm:px-3 rounded-[var(--radius-md)] text-[10px] font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-all flex items-center gap-1.5" title="Copy">
-                        {copying ? <RiCheckboxCircleFill className="text-emerald-500" size={12} /> : <RiClipboardLine size={12} />}
+                    <button onClick={copyToClipboard} aria-label="Copy resume text" className="h-11 min-w-11 justify-center px-2 sm:px-3 rounded-[var(--radius-md)] text-[10px] font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-all flex items-center gap-1.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-950" title="Copy">
+                        {copying ? <RiCheckLine className="shrink-0" size={14} aria-hidden="true" /> : <RiFileCopyLine size={14} aria-hidden="true" />}
                         <span className="hidden sm:block">Copy</span>
                     </button>
 
@@ -202,7 +202,7 @@ export function EditorToolbar({
                         title="Export PDF"
                         className="flex h-11 px-2 sm:px-3 rounded-[var(--radius-md)] text-[10px] font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-all items-center gap-1.5 disabled:opacity-50"
                     >
-                        {isGeneratingPdf ? <RiLoader4Line size={12} className="animate-spin" /> : <RiFileDownloadLine size={12} />}
+                        {isGeneratingPdf ? <RiLoader4Line size={14} aria-hidden="true" className="animate-spin shrink-0" /> : <RiDownload2Line size={14} aria-hidden="true" className="shrink-0" />}
                         <span>{isGeneratingPdf ? "Exporting..." : "Export PDF"}</span>
                     </button>
                     <button
@@ -210,7 +210,7 @@ export function EditorToolbar({
                         title="Focus Mode"
                         className={`hidden lg:flex h-11 px-3 rounded-[var(--radius-md)] text-[10px] font-semibold transition-all items-center gap-1.5 ${isZenMode ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
                     >
-                        {isZenMode ? <RiFocus3Line size={12} /> : <RiFocus2Line size={12} />}
+                        {isZenMode ? <RiFocus3Line size={14} aria-hidden="true" /> : <RiFocus2Line size={14} aria-hidden="true" />}
                         {isZenMode ? "Focus Active" : "Focus Mode"}
                     </button>
                     <div className="hidden sm:block w-px h-5 bg-black/8" />
@@ -222,7 +222,7 @@ export function EditorToolbar({
                             </div>
                         )}
                         <button onClick={handleSave} disabled={isSaving} aria-label="Save resume" title="Save resume" className="h-11 shrink-0 px-2 sm:px-4 bg-primary hover:bg-primary-dark rounded-[var(--radius-md)] text-[10px] font-bold tracking-wide text-white transition-all flex items-center gap-1.5 disabled:opacity-40 active:scale-95">
-                            {isSaving && !settings.autoSave ? <RiLoader4Line size={12} className="animate-spin" /> : <RiSave3Line size={12} />}
+                            {isSaving && !settings.autoSave ? <RiLoader4Line size={14} aria-hidden="true" className="animate-spin shrink-0" /> : <RiSave3Line size={14} aria-hidden="true" className="shrink-0" />}
                             <span>{isSaving && !settings.autoSave ? "Saving..." : "Save"}</span>
                         </button>
                     </div>

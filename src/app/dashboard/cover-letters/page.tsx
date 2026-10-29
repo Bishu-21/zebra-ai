@@ -6,8 +6,7 @@ import { and, eq, desc, inArray, lt, or } from "drizzle-orm";
 import Link from "next/link";
 import { GenerateCoverLetter } from "@/components/dashboard/GenerateCoverLetter";
 import {
-    RiMagicLine,
-    RiFileTextLine,
+    RiArticleLine,
     RiTimeLine
 } from "react-icons/ri";
 import { CoverLetterActions } from "@/components/dashboard/CoverLetterActions";
@@ -110,7 +109,7 @@ async function CoverLettersContent({ userId, cursor: rawCursor }: { userId: stri
       {letters.length === 0 ? (
         <div className="bg-white rounded-[var(--radius-xl)] border border-border-subtle p-10 md:p-16 flex flex-col items-center justify-center text-center shadow-[var(--shadow-sm)]">
           <div className="w-14 h-14 bg-muted rounded-[var(--radius-lg)] flex items-center justify-center text-foreground mb-6">
-            <RiMagicLine size={26} />
+            <RiArticleLine size={26} aria-hidden="true" />
           </div>
           <h2 className="text-lg font-bold mb-2 tracking-tight text-foreground">No cover letters yet</h2>
           <p className="text-sm text-muted-foreground mb-6 max-w-md leading-6">
@@ -120,7 +119,7 @@ async function CoverLettersContent({ userId, cursor: rawCursor }: { userId: stri
         </div>
       ) : (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 max-[640px]:pr-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
           {letters.map((letter) => (
             <div
                 key={letter.id}
@@ -128,10 +127,10 @@ async function CoverLettersContent({ userId, cursor: rawCursor }: { userId: stri
             >
                 <div className="flex items-start justify-between mb-6">
                     <div className="w-11 h-11 bg-muted rounded-[var(--radius-md)] flex items-center justify-center text-muted-foreground border border-border-subtle group-hover:bg-foreground group-hover:text-white transition-colors">
-                        <RiFileTextLine size={20} />
+                        <RiArticleLine size={20} aria-hidden="true" />
                     </div>
                     <div className="flex items-center gap-1.5 text-[0.6875rem] font-semibold text-muted-foreground bg-muted px-3 py-1.5 rounded-full">
-                        <RiTimeLine size={12} className="opacity-50" />
+                        <RiTimeLine size={12} aria-hidden="true" className="opacity-50" />
                         {formatTimeAgo(letter.createdAt)}
                     </div>
                 </div>

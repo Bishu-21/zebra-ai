@@ -7,6 +7,7 @@ describe("Cover letter accessibility and responsive dialogs", () => {
     const actionsSource = readFileSync("src/components/dashboard/CoverLetterActions.tsx", "utf8");
 
     it("attaches dialog semantics and useDialogFocus to the generator content container, not the backdrop", () => {
+        assert.match(generatorSource, /data-cover-letter-trigger/);
         assert.match(generatorSource, /useDialogFocus\(isOpen,\s*handleClose\)/);
         assert.match(generatorSource, /className="fixed inset-0 bg-neutral-950\/60 backdrop-blur-sm"[^>]*aria-hidden="true"/);
         assert.doesNotMatch(generatorSource, /aria-hidden="true"[^>]*role="dialog"/);
