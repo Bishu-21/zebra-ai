@@ -128,12 +128,12 @@ export function EditorCanvas({
                         className={`flex flex-col overflow-hidden transition-[padding,max-width] duration-500 bg-background ${isZenMode && !isNarrowLayout ? "max-w-3xl mx-auto border-x border-border-subtle" : "border-r border-border-subtle"}`}
                     >
                         <div className="h-8 bg-muted/30 border-b border-border-subtle flex items-center justify-between px-4 shrink-0">
-                                            <span className="text-[10px] font-semibold text-muted-foreground tracking-wide uppercase">{viewMode === "source" ? (isFlatImport ? "Preserved Resume Source" : "JSON Source") : sections.find(s => s.id === activeSection)?.label}</span>
+                                            <span className="text-xs font-medium text-neutral-600">{viewMode === "source" ? (isFlatImport ? "Preserved Resume Source" : "JSON Source") : sections.find(s => s.id === activeSection)?.label}</span>
                             {isZenMode && !isNarrowLayout && (
                                 <div className="flex items-center gap-3">
                                     {sections.map(s => (
                                         <button key={s.id} onClick={() => setActiveSection(s.id)}
-                                            className={`text-[9px] font-bold uppercase tracking-widest transition-all ${activeSection === s.id ? "text-primary" : "text-muted-foreground/60 hover:text-foreground"}`}>
+                                            className={`text-xs font-medium transition-all ${activeSection === s.id ? "text-primary" : "text-muted-foreground/60 hover:text-foreground"}`}>
                                             {s.label}
                                         </button>
                                     ))}
@@ -144,7 +144,7 @@ export function EditorCanvas({
                             <div className="flex items-center gap-2 overflow-x-auto px-4 py-2 bg-muted/30 border-b border-border-subtle shrink-0 custom-scrollbar" style={{ scrollbarWidth: 'none' }}>
                                 {sections.map(s => (
                                     <button key={s.id} onClick={() => setActiveSection(s.id)}
-                                        className={`px-3 py-1.5 rounded-[var(--radius-full)] text-[10px] font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${activeSection === s.id ? "bg-foreground text-white" : "bg-background border border-border-subtle text-muted-foreground"}`}>
+                                        className={`px-3 py-1.5 rounded-[var(--radius-full)] text-sm font-medium whitespace-nowrap transition-all flex items-center gap-1.5 ${activeSection === s.id ? "bg-foreground text-white" : "bg-background border border-border-subtle text-muted-foreground"}`}>
                                         <s.icon size={12} />
                                         {s.label}
                                     </button>
