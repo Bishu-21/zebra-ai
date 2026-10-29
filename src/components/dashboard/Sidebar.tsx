@@ -9,16 +9,11 @@ import { signOut } from "@/lib/auth-client";
 import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 import {
-    RiHome5Line,
     RiFileTextLine,
-    RiBriefcaseLine,
-    RiBarChartGroupedLine,
-    RiSettings4Line,
     RiLogoutBoxRLine,
     RiCloseLine,
-    RiArticleLine,
-    RiLineChartLine
 } from "react-icons/ri";
+import { FeatureIcon } from "./FeatureIcon";
 import { DASHBOARD_NAV_ITEMS } from "@/lib/constants/navigation";
 import { UserAvatar } from "@/components/dashboard/UserAvatar";
 import { useDialogFocus } from "@/hooks/useDialogFocus";
@@ -34,15 +29,15 @@ interface SidebarProps {
 }
 
 const NAV_ICONS: Record<string, React.ReactNode> = {
-    "/dashboard": <RiHome5Line size={18} />,
-    "/dashboard/job-tracker": <RiBriefcaseLine size={18} />,
-    "/dashboard/resumes": <RiFileTextLine size={18} />,
-    "/dashboard/work": <RiFileTextLine size={18} />,
-    "/dashboard/cover-letters": <RiArticleLine size={18} />,
-    "/dashboard/portfolio": <RiBarChartGroupedLine size={18} />,
-    "/dashboard/linkedin": <RiLineChartLine size={18} />,
-    "/dashboard/analytics": <RiLineChartLine size={18} />,
-    "/dashboard/settings": <RiSettings4Line size={18} />,
+    "/dashboard": <FeatureIcon feature="Home" size={18} />,
+    "/dashboard/job-tracker": <FeatureIcon feature="Applications" size={18} />,
+    "/dashboard/resumes": <FeatureIcon feature="Resumes" size={18} />,
+    "/dashboard/work": <FeatureIcon feature="Work" size={18} />,
+    "/dashboard/cover-letters": <FeatureIcon feature="Cover Letters" size={18} />,
+    "/dashboard/portfolio": <FeatureIcon feature="Portfolio" size={18} />,
+    "/dashboard/linkedin": <FeatureIcon feature="LinkedIn Optimizer" size={18} />,
+    "/dashboard/analytics": <FeatureIcon feature="Analytics" size={18} />,
+    "/dashboard/settings": <FeatureIcon feature="Settings" size={18} />,
 };
 
 export function Sidebar({
@@ -129,6 +124,7 @@ export function Sidebar({
                                 alt="Zebra AI"
                                 width={28}
                                 height={28}
+                                loading="eager"
                                 className="w-7 h-7 object-contain group-hover:scale-105 transition-transform"
                             />
                             <h1 className="text-lg font-bold tracking-tight text-foreground">Zebra AI</h1>

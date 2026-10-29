@@ -1,17 +1,20 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
+import { DashboardPage, DashboardPageHeader } from "@/components/dashboard/DashboardPage";
+import { featureChrome } from "@/components/dashboard/feature-chrome";
+import { useRef, useState, type FormEvent, type ReactNode } from "react";
 import { LinkedInAuditResults, type LinkedInAuditResult } from "./LinkedInAuditResults";
 import { LinkedInSeoChecklist } from "./LinkedInSeoChecklist";
 import { LinkedInDraftReview } from "./LinkedInDraftReview";
 import { validateLinkedInProfileUrl, type LinkedInDraft } from "@/lib/linkedin-workflow";
 
-export function LinkedInOptimizer({ initialResult, initialAuditId, initialDrafts, initialUrl, initialTargetRole }: {
+export function LinkedInOptimizer({ initialResult, initialAuditId, initialDrafts, initialUrl, initialTargetRole, children }: {
   initialResult?: LinkedInAuditResult | null;
   initialAuditId?: string | null;
   initialDrafts?: LinkedInDraft[] | null;
   initialUrl?: string | null;
   initialTargetRole?: string | null;
+  children?: ReactNode;
 }) {
   const [profileText, setProfileText] = useState("");
   const [linkedinUrl, setLinkedinUrl] = useState(initialUrl || "");
@@ -80,27 +83,26 @@ export function LinkedInOptimizer({ initialResult, initialAuditId, initialDrafts
     finally { requestPending.current = false; setDrafting(false); }
   }
 
-  return <div className="space-y-8 px-5 py-8 sm:px-8">
-    <header className="max-w-3xl">
-      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">Career presence</p>
-      <h1 className="mt-3 text-3xl font-bold tracking-tight text-neutral-950 sm:text-4xl">Make your LinkedIn profile work harder</h1>
-      <p className="mt-3 text-sm leading-6 text-neutral-600">Bring your profile evidence, choose a target role, then review specific edits grounded in your own words. Your LinkedIn URL identifies the profile; Zebra does not scrape it or post changes to your account.</p>
-    </header>
+  return <DashboardPage>
+    <DashboardPageHeader
+      title="LinkedIn Optimizer"
+      description="Bring your profile evidence, choose a target role, then review specific edits grounded in your own words. Your LinkedIn URL identifies the profile; Zebra does not scrape it or post changes to your account."
+    />
 
     <nav aria-label="Optimization steps" className="grid gap-3 text-sm sm:grid-cols-3">
-      <div className="rounded-2xl border border-neutral-200 bg-white p-4"><strong>1. Add evidence</strong><p className="mt-1 text-neutral-500">Paste or import your profile</p></div>
-      <div className="rounded-2xl border border-neutral-200 bg-white p-4"><strong>2. Audit</strong><p className="mt-1 text-neutral-500">See evidence-backed priorities</p></div>
-      <div className="rounded-2xl border border-neutral-200 bg-white p-4"><strong>3. Review drafts</strong><p className="mt-1 text-neutral-500">Approve, edit, and copy</p></div>
+      <div className={featureChrome.card}><strong className="font-semibold">1. Add evidence</strong><p className="mt-1 text-sm text-muted-foreground">Paste or import your profile</p></div>
+      <div className={featureChrome.card}><strong className="font-semibold">2. Audit</strong><p className="mt-1 text-sm text-muted-foreground">See evidence-backed priorities</p></div>
+      <div className={featureChrome.card}><strong className="font-semibold">3. Review drafts</strong><p className="mt-1 text-sm text-muted-foreground">Approve, edit, and copy</p></div>
     </nav>
 
-    <form onSubmit={submit} className="space-y-5 rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm">
-      <div><p className="text-xs font-semibold uppercase tracking-widest text-neutral-500">Step 1 · Source and goal</p><h2 className="mt-2 text-xl font-semibold">What profile are we improving?</h2></div>
+    <form onSubmit={submit} className={`${featureChrome.card} space-y-5 p-5`}>
+      <div><p className={featureChrome.helper}>Step 1 · Source and goal</p><h2 className="mt-1 text-base font-semibold tracking-tight">What profile are we improving?</h2></div>
       <div className="grid gap-5 md:grid-cols-2">
         <label className="block text-sm font-medium">Target role or service
-          <input required value={targetRole} onChange={event => setTargetRole(event.target.value)} minLength={3} maxLength={120} placeholder="e.g. Frontend developer" className="mt-2 w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-900" />
+          <input required value={targetRole} onChange={event => setTargetRole(event.target.value)} minLength={3} maxLength={120} placeholder="e.g. Frontend developer" className={`mt-2 ${featureChrome.input}`} />
         </label>
         <label className="block text-sm font-medium">LinkedIn profile URL
-          <input required type="url" value={linkedinUrl} onChange={event => setLinkedinUrl(event.target.value)} placeholder="https://www.linkedin.com/in/your-name/" aria-invalid={linkedinUrl.length > 0 && !profileUrlValid} className="mt-2 w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-900" />
+          <input required type="url" value={linkedinUrl} onChange={event => setLinkedinUrl(event.target.value)} placeholder="https://www.linkedin.com/in/your-name/" aria-invalid={linkedinUrl.length > 0 && !profileUrlValid} className={`mt-2 ${featureChrome.input}`} />
           {linkedinUrl.length > 0 && !profileUrlValid && <span className="mt-1 block text-xs text-rose-700">Use a profile URL beginning with https://www.linkedin.com/in/</span>}
         </label>
       </div>
@@ -112,29 +114,30 @@ export function LinkedInOptimizer({ initialResult, initialAuditId, initialDrafts
         {extracting && <p role="status" className="mt-2 text-sm">Reading export…</p>}
       </div>
       <label className="block text-sm font-medium">Profile text
-        <textarea required minLength={100} maxLength={30000} value={profileText} onChange={event => setProfileText(event.target.value)} rows={12} placeholder="Paste your headline, About, Experience, Skills, Education, and Featured sections. Include section labels so the audit can tell what is missing." className="mt-2 w-full resize-y rounded-xl border border-neutral-300 px-4 py-3 leading-6 outline-none focus:border-neutral-900" />
+        <textarea required minLength={100} maxLength={30000} value={profileText} onChange={event => setProfileText(event.target.value)} rows={12} placeholder="Paste your headline, About, Experience, Skills, Education, and Featured sections. Include section labels so the audit can tell what is missing." className={`mt-2 ${featureChrome.textarea}`} />
       </label>
       <p className="text-xs text-neutral-500">{profileText.length.toLocaleString()} / 30,000 characters. Your source text is stored privately so proposals can be checked against it.</p>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-xs text-neutral-500">Visual, network, and account-only checks remain unassessed until you verify them.</p>
-        <button disabled={busy || drafting || extracting || profileText.trim().length < 100 || !profileUrlValid || targetRole.trim().length < 3} className="rounded-xl bg-neutral-950 px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50">{busy ? "Auditing…" : "Run 45-check audit · 1 credit"}</button>
+        <button disabled={busy || drafting || extracting || profileText.trim().length < 100 || !profileUrlValid || targetRole.trim().length < 3} className={featureChrome.primaryButton}>{busy ? "Auditing…" : "Run 45-check audit · 1 credit"}</button>
       </div>
       {error && <p role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}
     </form>
 
     {result && <div className="space-y-5">
-      <div className="rounded-3xl border border-neutral-200 bg-white p-6">
-        <p className="text-xs font-semibold uppercase tracking-widest text-neutral-500">Step 2 · Audit</p>
-        <p className="mt-2 text-sm text-neutral-600">Review what the evidence supports, then ask the agent for editable profile text.</p>
+      <div className={`${featureChrome.card} p-5`}>
+        <p className={featureChrome.helper}>Step 2 · Audit</p>
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">Review what the evidence supports, then ask the agent for editable profile text.</p>
       </div>
       <LinkedInAuditResults result={result} />
-      {auditId && !drafts && <div className="rounded-3xl border border-neutral-200 bg-white p-6">
-        <h2 className="text-xl font-semibold">Turn the findings into profile edits</h2>
-        <p className="mt-2 text-sm text-neutral-600">The agent will propose evidence-linked headline, About, and experience rewrites. One draft generation costs one credit; no credit is charged again when reopening saved drafts.</p>
-        <button type="button" disabled={busy || drafting} onClick={createDrafts} className="mt-4 rounded-xl bg-neutral-950 px-5 py-3 text-sm font-semibold text-white disabled:opacity-50">{drafting ? "Drafting…" : "Create reviewable drafts · 1 credit"}</button>
+      {auditId && !drafts && <div className={`${featureChrome.card} p-5`}>
+        <h2 className="text-base font-semibold tracking-tight">Turn the findings into profile edits</h2>
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">The agent will propose evidence-linked headline, About, and experience rewrites. One draft generation costs one credit; no credit is charged again when reopening saved drafts.</p>
+        <button type="button" disabled={busy || drafting} onClick={createDrafts} className={`${featureChrome.primaryButton} mt-4`}>{drafting ? "Drafting…" : "Create reviewable drafts · 1 credit"}</button>
       </div>}
     </div>}
     {auditId && drafts && <LinkedInDraftReview auditId={auditId} drafts={drafts} onChange={setDrafts} />}
     <LinkedInSeoChecklist />
-  </div>;
+    {children}
+  </DashboardPage>;
 }

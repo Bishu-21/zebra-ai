@@ -8,6 +8,9 @@ import {
     RiRadarLine, 
     RiArticleLine
 } from "react-icons/ri";
+import { FeatureIcon } from "@/components/dashboard/FeatureIcon";
+import { DashboardPage as DashboardPageFrame } from "@/components/dashboard/DashboardPage";
+import { featureChrome } from "@/components/dashboard/feature-chrome";
 import Link from "next/link";
 import { AnalyzeResume } from "@/components/dashboard/AnalyzeResume";
 import { TailorResume } from "@/components/dashboard/TailorResume";
@@ -84,8 +87,8 @@ async function renderDashboardContent(session: NonNullable<Awaited<ReturnType<ty
   const pendingChangesCount = latestApp?.changes?.filter(c => c.status === "pending").length || 0;
 
   let nextAction = {
-      title: "Start with the job you want",
-      description: "1. Paste a job link or enter the role. 2. Attach or import your resume. 3. Review suggestions in your application workspace.",
+      title: "Start an application",
+      description: "Add a role and your resume, then review suggestions in your application workspace.",
       actionLabel: "Start an application",
       actionHref: "/dashboard/job-tracker"
   };
@@ -294,70 +297,69 @@ async function renderDashboardContent(session: NonNullable<Awaited<ReturnType<ty
   }).slice(0, 15);
 
   return (
-    <div className="p-4 sm:p-6 md:p-10 pb-32 max-w-[90rem] mx-auto">
-      {/* Welcome Banner + Compact Cute Metrics Widget */}
-      <div className="mb-8 flex flex-col xl:flex-row xl:items-center justify-between gap-6 bg-muted p-6 md:p-8 rounded-3xl border border-neutral-200/70 shadow-xs">
-        {/* Left: Greeting */}
+    <DashboardPageFrame className="max-w-[90rem]">
+      <div className="space-y-5">
         <div className="space-y-1">
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
+          <h1 className="flex items-center gap-2.5 text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+              <FeatureIcon feature="Home" size={18} className="text-muted-foreground" />
               Welcome back{session.user.name ? `, ${session.user.name.split(' ')[0]}` : ''}.
           </h1>
-          <p className="text-sm font-medium text-muted-foreground max-w-md leading-relaxed">
+          <p className="max-w-md text-sm font-normal leading-6 text-muted-foreground">
             Manage your resumes, reviews, and applications.
           </p>
         </div>
 
         {/* Right: Metrics Cards */}
-        <div className="grid min-w-0 w-full xl:w-auto grid-cols-2 sm:grid-cols-4 gap-3 bg-white p-3 rounded-2xl border border-neutral-200/80 shadow-xs">
+        <div className="grid min-w-0 w-full grid-cols-2 sm:grid-cols-4 gap-3">
           {stats.map((stat, i) => (
-            <div key={i} className="flex min-w-0 flex-col p-3 rounded-xl bg-muted border border-neutral-200/60 hover:bg-neutral-100/80 transition-colors">
+            <div key={i} className="flex min-w-0 flex-col p-4 rounded-xl bg-white border border-neutral-200/80">
               <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                <div className="w-7 h-7 rounded-lg bg-white border border-neutral-200/70 flex items-center justify-center text-foreground shadow-2xs">
+                <div className="w-7 h-7 flex items-center justify-center text-neutral-600">
                   <stat.icon size={14} />
                 </div>
                 <span className="max-w-full break-all text-xl font-bold tabular-nums tracking-tight text-foreground">
                   {stat.customValue !== undefined ? stat.customValue : stat.value}
                 </span>
               </div>
-              <span className="text-sm font-medium text-muted-foreground break-words">{stat.label}</span>
+              <span className="break-words text-sm font-medium text-muted-foreground">{stat.label}</span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Primary User Journey Hero Anchor: Continue Your Application */}
-      <div className="mb-10 p-6 md:p-8 bg-primary text-white rounded-3xl shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-        <div className="space-y-2 max-w-2xl">
-          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-white">
+      {/* Next application step */}
+      <div className={`${featureChrome.card} flex flex-col items-start justify-between gap-5 p-5 md:flex-row md:items-center`}>
+        <div className="max-w-2xl space-y-2">
+          <h2 className="text-lg font-semibold tracking-tight text-foreground">
             {nextAction.title}
           </h2>
-          <p className="text-sm text-neutral-300 font-normal leading-relaxed">
+          <p className="text-sm font-normal leading-6 text-muted-foreground">
             {nextAction.description}
           </p>
         </div>
 
         {latestApp ? <Link
           href={nextAction.actionHref}
-          className="inline-flex items-center gap-2 bg-white text-foreground px-6 py-3 rounded-xl font-bold text-xs hover:bg-neutral-100 transition-all shadow-md active:scale-95 shrink-0"
+          className={`${featureChrome.primaryButton} shrink-0`}
         >
           <span>{nextAction.actionLabel}</span>
           <RiArrowRightSLine size={16} />
-        </Link> : <div className="rounded-full bg-white p-1 text-foreground"><AddApplicationDrawer onboarding resumes={userResumes.map(({ id, title }) => ({ id, title }))} /></div>}
+        </Link> : <div className="w-full md:w-auto shrink-0"><AddApplicationDrawer onboarding resumes={userResumes.map(({ id, title }) => ({ id, title }))} /></div>}
       </div>
 
       {/* Two secondary destinations keep the home page focused. */}
       <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Link href="/dashboard/resumes" className="group flex min-h-24 items-center justify-between rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-xs transition hover:border-neutral-300 hover:shadow-md">
+        <Link href="/dashboard/resumes" className="group flex min-h-24 items-center justify-between rounded-2xl border border-neutral-200/70 bg-white p-5">
           <div className="flex items-center gap-4">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-neutral-100 text-neutral-700"><RiFileTextLine size={19} /></span>
-            <div><h2 className="text-sm font-bold">Manage resumes</h2><p className="mt-1 text-sm text-muted-foreground">Open, create, or review a resume.</p></div>
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted text-neutral-700"><FeatureIcon feature="Resumes" size={18} /></span>
+            <div><h2 className="text-sm font-semibold">Manage resumes</h2><p className="mt-1 text-sm text-muted-foreground">Open, create, or review a resume.</p></div>
           </div>
           <RiArrowRightSLine className="text-muted-foreground transition-transform group-hover:translate-x-0.5" />
         </Link>
-        <Link href="/dashboard/job-tracker" className="group flex min-h-24 items-center justify-between rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-xs transition hover:border-neutral-300 hover:shadow-md">
+        <Link href="/dashboard/job-tracker" className="group flex min-h-24 items-center justify-between rounded-2xl border border-neutral-200/70 bg-white p-5">
           <div className="flex items-center gap-4">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-neutral-100 text-neutral-700"><RiFlashlightLine size={19} /></span>
-            <div><h2 className="text-sm font-bold">View applications</h2><p className="mt-1 text-sm text-muted-foreground">Track roles, deadlines, and progress.</p></div>
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted text-neutral-700"><FeatureIcon feature="Applications" size={18} /></span>
+            <div><h2 className="text-sm font-semibold">View applications</h2><p className="mt-1 text-sm text-muted-foreground">Track roles, deadlines, and progress.</p></div>
           </div>
           <RiArrowRightSLine className="text-muted-foreground transition-transform group-hover:translate-x-0.5" />
         </Link>
@@ -435,6 +437,6 @@ async function renderDashboardContent(session: NonNullable<Awaited<ReturnType<ty
         )}
       </div>
       </details>
-    </div>
+    </DashboardPageFrame>
   );
 }

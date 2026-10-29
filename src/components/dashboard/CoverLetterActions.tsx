@@ -1,16 +1,20 @@
 "use client";
-import React, { useState } from "react";
-import { 
-    RiDeleteBin6Line, 
-    RiArrowRightSLine, 
-    RiCloseCircleLine, 
-    RiCheckboxCircleLine, 
-    RiFileCopyLine, 
-    RiDownload2Line, 
-    RiMailSendLine
+import React, { useCallback, useState } from "react";
+import {
+    RiDeleteBinLine,
+    RiCloseLine,
+    RiCheckLine,
+    RiFileCopyLine,
+    RiDownload2Line,
+    RiArticleLine,
+    RiLoader4Line,
+    RiEyeLine,
 } from "react-icons/ri";
 import { useRouter } from "next/navigation";
 import { sanitizeHtml } from "@/lib/utils";
+import { useDialogFocus } from "@/hooks/useDialogFocus";
+import { AppIcon } from "@/components/ui/AppIcon";
+import { featureChrome } from "@/components/dashboard/feature-chrome";
 
 type CoverLetter = {
     id: string;
@@ -25,6 +29,10 @@ export function CoverLetterActions({ letter }: { letter: CoverLetter }) {
     const [isExporting, setIsExporting] = useState(false);
     const [copied, setCopied] = useState(false);
     const router = useRouter();
+    const handleClose = useCallback(() => {
+        setIsViewOpen(false);
+    }, []);
+    const dialogRef = useDialogFocus(isViewOpen, handleClose);
 
     const handleCopy = () => {
         navigator.clipboard.writeText(letter.content);
@@ -34,7 +42,7 @@ export function CoverLetterActions({ letter }: { letter: CoverLetter }) {
 
     const handleDelete = async () => {
         if (!confirm("Are you sure you want to delete this cover letter? This action cannot be undone.")) return;
-        
+
         setIsDeleting(true);
         try {
             const res = await fetch("/api/cover-letters", {
@@ -62,7 +70,7 @@ export function CoverLetterActions({ letter }: { letter: CoverLetter }) {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     content: letter.content,
-                    title: letter.title
+                    title: letter.title,
                 }),
             });
 
@@ -86,26 +94,26 @@ export function CoverLetterActions({ letter }: { letter: CoverLetter }) {
     };
 
     const renderFormattedContent = (content: string) => {
-        return content.split('\n').map((line, i) => {
+        return content.split("\n").map((line, i) => {
             if (!line.trim()) return <div key={i} className="h-4" />;
-            
-            // Handle bullet points
-            if (line.trim().startsWith('* ') || line.trim().startsWith('- ')) {
+
+            if (line.trim().startsWith("* ") || line.trim().startsWith("- ")) {
                 const text = line.trim().substring(2);
-                const formatted = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                                     .replace(/\*(.*?)\*/g, '<strong>$1</strong>');
+                const formatted = text
+                    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+                    .replace(/\*(.*?)\*/g, "<strong>$1</strong>");
                 return (
-                    <li key={i} className="ml-6 list-disc mb-2" dangerouslySetInnerHTML={{ __html: sanitizeHtml(formatted) }} />
+                    <li key={i} className="mb-2 ml-6 list-disc" dangerouslySetInnerHTML={{ __html: sanitizeHtml(formatted) }} />
                 );
             }
 
-            // Handle bold/italics
-            const formatted = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                                 .replace(/\*(.*?)\*/g, '<strong>$1</strong>');
-            
+            const formatted = line
+                .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+                .replace(/\*(.*?)\*/g, "<strong>$1</strong>");
+
             return (
-                <p 
-                    key={i} 
+                <p
+                    key={i}
                     className="mb-4 text-justify"
                     dangerouslySetInnerHTML={{ __html: sanitizeHtml(formatted) }}
                 />
@@ -115,108 +123,92 @@ export function CoverLetterActions({ letter }: { letter: CoverLetter }) {
 
     return (
         <>
-            <div className="flex items-center gap-3 pt-6 border-t border-[#F5F5F5] group-hover:border-[#EAEAEA] transition-colors duration-300">
-                <button 
+            <div className="mt-4 flex items-center gap-2 border-t border-neutral-200/70 pt-3">
+                <button
                     onClick={() => setIsViewOpen(true)}
-                    className="flex-grow h-12 bg-[#0A0A0A] text-white rounded-xl text-xs font-bold hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 group/btn"
+                    aria-label="Preview cover letter"
+                    className={`${featureChrome.primaryButton} flex-1`}
                 >
-                    View Letter
-                    <RiArrowRightSLine size={14} className="group-hover/btn:translate-x-1 transition-transform" />
+                    <AppIcon icon={RiEyeLine} size={16} />
+                    View letter
                 </button>
-                <button 
+                <button
                     onClick={handleDelete}
                     disabled={isDeleting}
-                    className="w-12 h-12 border border-[#EAEAEA] rounded-xl flex items-center justify-center text-red-400 hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-all duration-300 disabled:opacity-50"
+                    aria-label="Delete cover letter"
+                    className={featureChrome.iconButton}
                 >
                     {isDeleting ? (
-                        <span className="w-4 h-4 border-2 border-red-400/30 border-t-red-400 rounded-full animate-spin"></span>
+                        <AppIcon icon={RiLoader4Line} size={16} className="animate-spin" />
                     ) : (
-                        <RiDeleteBin6Line size={18} />
+                        <AppIcon icon={RiDeleteBinLine} size={16} />
                     )}
                 </button>
             </div>
 
             {isViewOpen && (
-                <div className="fixed inset-0 z-[110] flex items-center justify-center p-0 md:p-10">
-                    <div className="absolute inset-0 bg-[#0A0A0A]/60 backdrop-blur-md" onClick={() => setIsViewOpen(false)}></div>
-                    <div className="relative bg-white w-full h-full md:h-auto md:max-w-4xl md:max-h-[92vh] md:rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                        
-                        {/* Header */}
-                        <div className="px-6 py-5 md:p-8 border-b border-[#F5F5F5] flex items-center justify-between bg-white sticky top-0 z-10">
-                            <div className="flex items-center gap-3 md:gap-4">
-                                <div className="hidden sm:flex w-12 h-12 bg-black/5 text-black rounded-2xl items-center justify-center">
-                                    <RiMailSendLine size={24} />
-                                </div>
-                                <div>
-                                    <h2 className="text-lg md:text-xl font-black text-[#0A0A0A] truncate max-w-[200px] md:max-w-[400px]">{letter.title}</h2>
-                                    <p className="text-[0.7rem] font-bold text-[#B5B5B5] uppercase tracking-wider hidden sm:block">AI-Tailored Professional Letter</p>
-                                </div>
+                <div className="fixed inset-0 z-[110] flex items-end justify-center overflow-y-auto p-3 sm:items-center sm:p-4">
+                    <div aria-hidden="true" className={featureChrome.backdrop} onClick={handleClose} />
+                    <div
+                        ref={dialogRef}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby={`letter-title-${letter.id}`}
+                        className={`${featureChrome.dialog} max-w-3xl`}
+                    >
+                        <div className={featureChrome.dialogHeader}>
+                            <div className="flex min-w-0 items-center gap-2.5">
+                                <AppIcon icon={RiArticleLine} size={18} className="text-muted-foreground" />
+                                <h2 id={`letter-title-${letter.id}`} className="truncate font-sans text-sm font-semibold tracking-tight text-foreground">
+                                    {letter.title}
+                                </h2>
                             </div>
-                            <div className="flex items-center gap-2 md:gap-4">
-                                <button 
-                                    onClick={handleCopy}
-                                    className="flex items-center justify-center w-10 h-10 md:w-auto md:px-5 md:py-2.5 bg-[#F9F9F9] border border-[#EAEAEA] hover:border-black rounded-xl text-xs font-bold transition-all text-[#0A0A0A]"
-                                    title="Copy Text"
-                                >
-                                    {copied ? <RiCheckboxCircleLine size={20} className="text-green-500" /> : <RiFileCopyLine size={20} className="md:size-4 md:mr-2" />}
-                                    <span className="hidden md:inline">{copied ? "Copied!" : "Copy Text"}</span>
-                                </button>
-                                <button 
-                                    onClick={downloadPDF}
-                                    disabled={isExporting}
-                                    className="flex items-center justify-center w-10 h-10 md:w-auto md:px-5 md:py-2.5 bg-[#0A0A0A] text-white rounded-xl text-xs font-bold transition-all hover:bg-zinc-800 disabled:opacity-50"
-                                    title="Download PDF"
-                                >
-                                    {isExporting ? (
-                                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                                    ) : (
-                                        <RiDownload2Line size={20} className="md:size-4 md:mr-2" />
-                                    )}
-                                    <span className="hidden md:inline">Download PDF</span>
-                                </button>
-                                <button onClick={() => setIsViewOpen(false)} className="text-[#B5B5B5] hover:text-[#0A0A0A] transition-colors ml-2">
-                                    <RiCloseCircleLine size={28} />
+                            <div className="flex shrink-0 items-center gap-1">
+                                <div className="hidden items-center gap-1 sm:flex">
+                                    <button onClick={handleCopy} aria-label="Copy letter text" className={featureChrome.secondaryButton}>
+                                        {copied ? <AppIcon icon={RiCheckLine} size={16} /> : <AppIcon icon={RiFileCopyLine} size={16} />}
+                                        {copied ? "Copied" : "Copy text"}
+                                    </button>
+                                    <button onClick={downloadPDF} disabled={isExporting} aria-label="Download PDF" className={featureChrome.primaryButton}>
+                                        {isExporting ? <AppIcon icon={RiLoader4Line} size={16} className="animate-spin" /> : <AppIcon icon={RiDownload2Line} size={16} />}
+                                        Download PDF
+                                    </button>
+                                </div>
+                                <button onClick={handleClose} aria-label="Close preview" className={featureChrome.iconButton}>
+                                    <AppIcon icon={RiCloseLine} size={18} />
                                 </button>
                             </div>
                         </div>
 
-                        {/* Content */}
-                        <div className="flex-grow overflow-y-auto p-4 md:p-12 custom-scrollbar bg-[#F5F5F7]">
-                            <div 
+                        <div className={`${featureChrome.dialogBody} bg-muted/40`}>
+                            <div
                                 id={`letter-content-${letter.id}`}
-                                className="bg-white p-8 md:p-16 rounded-[1rem] md:rounded-[1.5rem] shadow-sm border border-[#EAEAEA] font-serif text-[0.95rem] md:text-[1.1rem] leading-[1.8] text-[#1A1A1A] max-w-[210mm] mx-auto min-h-[297mm] flex flex-col"
+                                className="mx-auto min-h-[297mm] max-w-[210mm] rounded-xl border border-neutral-200/70 bg-white p-8 font-serif text-[0.95rem] leading-[1.8] text-[#1A1A1A] sm:p-12"
                             >
-                                <div className="flex-grow">
-                                    {renderFormattedContent(letter.content)}
-                                </div>
-                                <div className="mt-12 pt-8 border-t border-[#F5F5F5] text-[0.7rem] text-[#B5B5B5] text-center font-sans uppercase tracking-[0.2em] print:hidden">
-                                    Generated by Zebra AI • High Conversion Technology
-                                </div>
+                                {renderFormattedContent(letter.content)}
                             </div>
                         </div>
 
-                        {/* Footer (Mobile Only) */}
-                        <div className="md:hidden p-6 border-t border-[#F5F5F5] bg-white flex gap-4">
-                            <button 
-                                onClick={() => setIsViewOpen(false)}
-                                className="flex-grow bg-[#F9F9F9] text-[#0A0A0A] py-4 rounded-2xl font-black text-sm transition-all border border-[#EAEAEA]"
-                            >
+                        <div className={`${featureChrome.dialogFooter} sm:hidden`}>
+                            <button onClick={handleClose} aria-label="Close preview" className={featureChrome.ghostButton}>
                                 Close
                             </button>
-                            <button 
-                                onClick={downloadPDF}
-                                disabled={isExporting}
-                                className="flex-grow bg-[#0A0A0A] text-white py-4 rounded-2xl font-black text-sm transition-all shadow-lg shadow-black/10 disabled:opacity-50 flex items-center justify-center gap-2"
-                            >
-                                {isExporting ? (
-                                    <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                                ) : (
-                                    <>
-                                        Download PDF
-                                        <RiDownload2Line size={18} />
-                                    </>
-                                )}
-                            </button>
+                            <div className="flex gap-2">
+                                <button onClick={handleCopy} aria-label="Copy letter text" className={featureChrome.secondaryButton}>
+                                    {copied ? <AppIcon icon={RiCheckLine} size={16} /> : <AppIcon icon={RiFileCopyLine} size={16} />}
+                                    {copied ? "Copied" : "Copy"}
+                                </button>
+                                <button onClick={downloadPDF} disabled={isExporting} aria-label="Download PDF" className={featureChrome.primaryButton}>
+                                    {isExporting ? (
+                                        <AppIcon icon={RiLoader4Line} size={16} className="animate-spin" />
+                                    ) : (
+                                        <>
+                                            <AppIcon icon={RiDownload2Line} size={16} />
+                                            Download PDF
+                                        </>
+                                    )}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -31,5 +31,15 @@ export default async function LinkedInPage() {
       console.warn("LinkedIn proof suggestions unavailable:", error instanceof Error ? error.message : String(error));
     }
   }
-  return <><LinkedInOptimizer initialResult={initialResult} initialAuditId={initialAuditId} initialDrafts={initialDrafts} initialUrl={initialUrl} initialTargetRole={initialTargetRole} />{session && <div className="px-5 pb-8 sm:px-8"><LinkedInWeeklyPresence userId={session.user.id} proofs={proofs} /></div>}</>;
+  return (
+    <LinkedInOptimizer
+      initialResult={initialResult}
+      initialAuditId={initialAuditId}
+      initialDrafts={initialDrafts}
+      initialUrl={initialUrl}
+      initialTargetRole={initialTargetRole}
+    >
+      {session ? <LinkedInWeeklyPresence userId={session.user.id} proofs={proofs} /> : null}
+    </LinkedInOptimizer>
+  );
 }

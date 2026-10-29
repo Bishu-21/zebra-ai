@@ -1,5 +1,8 @@
 "use client";
 
+import { FeatureIcon } from "@/components/dashboard/FeatureIcon";
+import { featureChrome } from "@/components/dashboard/feature-chrome";
+import { AppIcon } from "@/components/ui/AppIcon";
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSettings } from "@/context/SettingsContext";
@@ -109,21 +112,20 @@ export function SettingsView({ connectionProviders, githubAppConfigured }: { con
     const user = session?.user as { plan?: string | null; credits?: number | null; email?: string | null; name?: string | null } | undefined;
 
     return (
-        <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-8 pb-32">
-            {/* Header */}
+        <div className="mx-auto w-full max-w-7xl space-y-6 px-5 py-6 pb-32 font-sans text-sm leading-6 sm:px-6 md:px-10 md:py-10">
             <div>
-                <h1 className="text-2xl font-bold tracking-tight text-[#0A0A0A] mb-1">
+                <h1 className="flex items-center gap-2.5 text-xl font-semibold tracking-tight text-foreground">
+                    <FeatureIcon feature="Settings" size={18} className="text-muted-foreground" />
                     Settings
                 </h1>
-                <p className="text-xs font-normal text-neutral-500 leading-relaxed">
-                    Configure your workspace, editor ergonomics, billing, and account preferences.
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                    Workspace preferences, editor settings, billing, and account details.
                 </p>
             </div>
 
-            {/* Main Settings Container */}
-            <div className="bg-white rounded-3xl border border-neutral-200/80 shadow-xs flex flex-col md:flex-row overflow-visible md:overflow-hidden min-h-[500px]">
+            <div className="flex flex-col overflow-visible rounded-2xl border border-neutral-200/70 bg-white md:flex-row md:overflow-hidden">
                 {/* Left Tab Navigation */}
-                <div className="sticky top-0 z-20 w-full md:static md:w-64 bg-[#FAF9F6] border-b md:border-b-0 md:border-r border-neutral-200/70 p-2.5 md:p-5 shrink-0">
+                <div className="sticky top-0 z-20 w-full md:static md:w-64 bg-neutral-50 border-b md:border-b-0 md:border-r border-neutral-200/70 p-2.5 md:p-3 shrink-0">
                     <nav
                         className="no-scrollbar flex gap-2 overflow-x-auto scroll-smooth md:block md:space-y-1.5"
                         aria-label="Settings sections"
@@ -143,7 +145,7 @@ export function SettingsView({ connectionProviders, githubAppConfigured }: { con
                                     tabIndex={isActive ? 0 : -1}
                                     onClick={(event) => handleTabChange(tab.id, event.currentTarget)}
                                     onKeyDown={(event) => handleTabKeyDown(event, index)}
-                                    className={`flex min-h-10 w-auto shrink-0 items-center gap-2 rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all text-left group md:w-full md:gap-3 md:rounded-2xl md:px-4 md:py-3 ${
+                                    className={`flex min-h-11 w-auto shrink-0 items-center gap-2 rounded-xl px-3.5 py-2.5 text-left text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black group md:w-full md:gap-3 md:px-4 md:py-3 ${
                                         isActive
                                             ? "bg-[#0A0A0A] text-white shadow-2xs"
                                             : "text-neutral-600 hover:text-[#0A0A0A] hover:bg-neutral-200/60"
@@ -162,7 +164,7 @@ export function SettingsView({ connectionProviders, githubAppConfigured }: { con
                     id={`settings-panel-${activeTab}`}
                     role="tabpanel"
                     aria-labelledby={`settings-tab-${activeTab}`}
-                    className="flex-grow p-5 sm:p-8 flex flex-col justify-between min-w-0"
+                    className="flex-grow p-4 sm:p-6 flex flex-col min-w-0"
                 >
                     <div>
                         {savedNotice && (
@@ -176,20 +178,20 @@ export function SettingsView({ connectionProviders, githubAppConfigured }: { con
                         )}
 
                         {/* Tab Title Banner */}
-                        <div className="border-b border-neutral-200/60 pb-4 mb-6">
-                            <h2 className="text-base font-bold text-[#0A0A0A] tracking-tight">
+                        <div className="border-b border-neutral-200/60 pb-4 mb-5">
+                            <h2 className="text-base font-semibold tracking-tight text-foreground">
                                 {activeTabMeta.label}
                             </h2>
-                            <p className="text-xs font-normal text-neutral-500 mt-0.5">
+                            <p className="mt-0.5 text-sm leading-6 text-muted-foreground">
                                 {activeTabMeta.description}
                             </p>
                         </div>
 
                         {/* General Tab */}
                         {activeTab === "general" && (
-                            <div className="space-y-6 max-w-2xl">
+                            <div className="space-y-4 w-full">
                                 <SettingRow 
-                                    title="Editor Font Size"
+                                    title="Editor font size"
                                     description="Text size used across input fields and text editors."
                                     control={
                                         <Select 
@@ -204,7 +206,7 @@ export function SettingsView({ connectionProviders, githubAppConfigured }: { con
                                 />
                                 <Divider />
                                 <SettingToggle 
-                                    title="Auto-Save"
+                                    title="Auto-save"
                                     description="Automatically save changes as you draft and compile."
                                     checked={settings.autoSave}
                                     onChange={(v) => {
@@ -214,7 +216,7 @@ export function SettingsView({ connectionProviders, githubAppConfigured }: { con
                                 />
                                 <Divider />
                                 <SettingToggle 
-                                    title="Compact Mode"
+                                    title="Compact mode"
                                     description="Reduce padding for tighter spacing in editor panels."
                                     checked={settings.compactView}
                                     onChange={(v) => {
@@ -237,9 +239,9 @@ export function SettingsView({ connectionProviders, githubAppConfigured }: { con
 
                         {/* Editor Tab */}
                         {activeTab === "editor" && (
-                            <div className="space-y-6 max-w-2xl">
+                            <div className="space-y-4 w-full">
                                 <SettingRow 
-                                    title="Default Resume Font"
+                                    title="Default resume font"
                                     description="Primary font family used for resume previews and PDF generation."
                                     control={
                                         <Select 
@@ -254,7 +256,7 @@ export function SettingsView({ connectionProviders, githubAppConfigured }: { con
                                 />
                                 <Divider />
                                 <SettingToggle 
-                                    title="Line Wrapping"
+                                    title="Line wrapping"
                                     description="Wrap long text lines inside input areas."
                                     checked={settings.lineWrapping}
                                     onChange={(v) => {
@@ -264,7 +266,7 @@ export function SettingsView({ connectionProviders, githubAppConfigured }: { con
                                 />
                                 <Divider />
                                 <SettingRow 
-                                    title="Preview Scale"
+                                    title="Preview scale"
                                     description="Default zoom level for the live resume preview pane."
                                     control={
                                         <Select 
@@ -286,32 +288,33 @@ export function SettingsView({ connectionProviders, githubAppConfigured }: { con
 
                         {/* Billing Tab */}
                         {activeTab === "billing" && (
-                            <div className="space-y-6 max-w-2xl">
+                            <div className="space-y-4 w-full">
                                 <div className="p-6 bg-[#FAF9F6] border border-neutral-200/80 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                     <div className="flex items-center gap-3.5">
                                         <div className="w-12 h-12 bg-[#0A0A0A] text-white rounded-2xl flex items-center justify-center shadow-2xs shrink-0">
                                             <RiFlashlightLine size={24} />
                                         </div>
                                         <div>
-                                            <h3 className="text-base font-bold text-[#0A0A0A]">
-                                                {user?.plan ? `${user.plan} Plan` : "Starter Plan"}
+                                            <h3 className="text-base font-semibold tracking-tight text-foreground">
+                                                {user?.plan ? `${user.plan} plan` : "Starter plan"}
                                             </h3>
-                                            <p className="text-xs text-neutral-500 mt-0.5">
-                                                Active credit balance: <span className="font-bold text-[#0A0A0A]">{user?.credits ?? 0} Credits</span>
+                                            <p className="mt-0.5 text-sm text-muted-foreground">
+                                                Credit balance: <span className="font-medium text-foreground">{user?.credits ?? 0}</span>
                                             </p>
                                         </div>
                                     </div>
 
-                                    <button 
+                                    <button
+                                        type="button"
                                         onClick={handleOpenCredits}
-                                        className="px-5 py-2.5 bg-[#0A0A0A] text-white rounded-full text-xs font-bold shadow-2xs hover:bg-neutral-800 active:scale-95 transition-all shrink-0"
+                                        className={`${featureChrome.primaryButton} shrink-0`}
                                     >
-                                        Get More Credits
+                                        Get more credits
                                     </button>
                                 </div>
 
-                                <div className="p-4 bg-neutral-50 border border-neutral-200/70 rounded-2xl text-xs text-neutral-500 leading-relaxed">
-                                    Credits are utilized whenever you run deep ATS scans, tailor resumes to specific job requirements, or generate AI cover letters. Credits do not expire.
+                                <div className="rounded-2xl border border-neutral-200/70 bg-neutral-50 p-4 text-sm leading-6 text-muted-foreground">
+                                    Credits are used for resume reviews, job matching, and cover letter generation. Credits do not expire.
                                 </div>
 
                                 <AiUsageHistory />
@@ -320,17 +323,17 @@ export function SettingsView({ connectionProviders, githubAppConfigured }: { con
 
                         {/* Account Tab */}
                         {activeTab === "account" && (
-                            <div className="space-y-6 max-w-2xl">
+                            <div className="space-y-4 w-full">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div className="space-y-1.5">
-                                        <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-400">Full Name</label>
-                                        <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-200/80 text-xs font-semibold text-[#0A0A0A]">
+                                        <label className={featureChrome.label}>Full name</label>
+                                        <div className="rounded-xl border border-neutral-200/80 bg-neutral-50 p-3 text-sm font-medium text-foreground">
                                             {user?.name || "User"}
                                         </div>
                                     </div>
                                     <div className="space-y-1.5">
-                                        <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-400">Email Address</label>
-                                        <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-200/80 text-xs font-semibold text-[#0A0A0A]">
+                                        <label className={featureChrome.label}>Email</label>
+                                        <div className="rounded-xl border border-neutral-200/80 bg-neutral-50 p-3 text-sm font-medium text-foreground">
                                             {user?.email || "user@example.com"}
                                         </div>
                                     </div>
@@ -343,38 +346,40 @@ export function SettingsView({ connectionProviders, githubAppConfigured }: { con
                                 <Divider />
 
                                 <div className="space-y-3">
-                                    <h4 className="text-xs font-bold text-[#0A0A0A]">Account Security</h4>
-                                    <button 
+                                    <h4 className="text-sm font-semibold text-foreground">Account security</h4>
+                                    <button
+                                        type="button"
                                         onClick={handleResetPassword}
-                                        className="py-2.5 px-4 bg-neutral-50 border border-neutral-200/80 hover:bg-neutral-100 rounded-full text-xs font-bold text-[#0A0A0A] transition-all inline-flex items-center gap-2"
+                                        className={featureChrome.secondaryButton}
                                     >
-                                        <RiMailLine size={16} />
-                                        <span>Send Password Reset Email</span>
+                                        <AppIcon icon={RiMailLine} size={16} />
+                                        <span>Send password reset email</span>
                                     </button>
                                 </div>
 
                                 <Divider />
 
                                 <div className="space-y-3">
-                                    <h4 className="text-xs font-bold text-[#0A0A0A]">Reset Workspace Preferences</h4>
-                                    <p className="text-xs text-neutral-500">Restore all editor and styling settings back to factory defaults.</p>
-                                    <button 
+                                    <h4 className="text-sm font-semibold text-foreground">Reset workspace preferences</h4>
+                                    <p className="text-sm leading-6 text-muted-foreground">Restore editor and styling settings to their defaults.</p>
+                                    <button
+                                        type="button"
                                         onClick={() => {
                                             resetSettingsAction();
                                             triggerNotice("Preferences reset to defaults");
                                             showToast("Settings reset to defaults", "success");
                                         }}
-                                        className="py-2.5 px-4 bg-white border border-neutral-200/80 hover:bg-neutral-100 rounded-full text-xs font-bold text-[#0A0A0A] transition-all shadow-2xs"
+                                        className={featureChrome.secondaryButton}
                                     >
-                                        Reset to Defaults
+                                        Reset to defaults
                                     </button>
                                 </div>
                             </div>
                         )}
                     </div>
 
-                    <div className="pt-6 border-t border-neutral-200/60 mt-8 flex justify-between items-center text-xs text-neutral-400">
-                        <span>Settings are persisted automatically across sessions.</span>
+                    <div className="pt-4 border-t border-neutral-200/60 mt-6 text-xs leading-5 text-neutral-600">
+                        <span>Preference changes are saved automatically.</span>
                     </div>
                 </div>
             </div>
@@ -418,9 +423,9 @@ function CareerProfileSettings() {
 function SettingRow({ title, description, control }: { title: string; description: string; control: React.ReactNode }) {
     return (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-6">
-            <div className="space-y-0.5 max-w-md">
-                <h4 className="text-xs font-bold text-[#0A0A0A]">{title}</h4>
-                <p className="text-xs font-normal text-neutral-500 leading-relaxed">{description}</p>
+            <div className="min-w-0 space-y-1 max-w-xl">
+                <h4 className="text-sm font-semibold text-foreground">{title}</h4>
+                <p className="text-sm font-normal leading-6 text-muted-foreground">{description}</p>
             </div>
             <div className="shrink-0">
                 {control}
@@ -435,12 +440,12 @@ function SettingToggle({ title, description, checked, onChange }: { title: strin
             type="button"
             role="switch"
             aria-checked={checked}
-            className="group flex w-full cursor-pointer items-center justify-between gap-4 text-left"
+            className="group flex min-h-11 w-full cursor-pointer items-center justify-between gap-4 rounded-lg text-left focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-black"
             onClick={() => onChange(!checked)}
         >
-            <div className="space-y-0.5 pr-4">
-                <h4 className="text-xs font-bold text-[#0A0A0A] group-hover:text-neutral-700 transition-colors">{title}</h4>
-                <p className="text-xs font-normal text-neutral-500 leading-relaxed">{description}</p>
+            <div className="min-w-0 space-y-1">
+                <h4 className="text-sm font-semibold text-foreground group-hover:text-neutral-700 transition-colors">{title}</h4>
+                <p className="text-sm font-normal leading-6 text-muted-foreground">{description}</p>
             </div>
             <span
                 aria-hidden="true"
@@ -458,7 +463,7 @@ function Select({ options, value, onChange }: { options: string[]; value: string
             <select 
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
-                className="w-full sm:w-auto bg-neutral-50 border border-neutral-200/80 focus:bg-white focus:border-[#0A0A0A] rounded-full px-4 py-2 pr-9 text-xs font-semibold text-[#0A0A0A] outline-none transition-all appearance-none cursor-pointer"
+                className={`${featureChrome.select} w-full sm:w-auto pr-9`}
             >
                 {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
             </select>

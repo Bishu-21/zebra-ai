@@ -2,6 +2,9 @@
 
 import { useState, useSyncExternalStore } from "react";
 import { useHydrated } from "@/hooks/useHydrated";
+import { AppIcon } from "@/components/ui/AppIcon";
+import { featureChrome } from "@/components/dashboard/feature-chrome";
+import { RiLink } from "react-icons/ri";
 
 type Proof = { id: string; project: string; skill: string; action: string; outcome: string | null; url: string | null };
 type Activity = { kind: "post" | "comment"; at: string; url: string };
@@ -52,23 +55,34 @@ export function LinkedInWeeklyPresence({ userId, proofs }: { userId: string; pro
     } catch { setError("Paste the LinkedIn URL of the post or comment you completed."); }
   }
 
-  return <section className="rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm" aria-label="Weekly LinkedIn presence">
-    <p className="text-xs font-semibold uppercase tracking-widest text-neutral-500">Weekly presence</p>
-    <h2 className="mt-2 text-xl font-semibold">One useful post and comment each week</h2>
-    <p className="mt-2 text-sm text-neutral-600">Week of {start ? start.toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "…"}. Track links after publishing; this browser stores your confirmations locally.</p>
+  return <section className={`${featureChrome.card} p-5`} aria-label="Weekly LinkedIn presence">
+    <p className={featureChrome.helper}>Weekly presence</p>
+    <h2 className="mt-1 text-base font-semibold tracking-tight">One post and one comment each week</h2>
+    <p className="mt-2 text-sm leading-6 text-muted-foreground">Week of {start ? start.toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "…"}. Confirm the published links here; this browser stores them locally.</p>
     <div className="mt-5 grid gap-3 sm:grid-cols-2">
-      <div className="rounded-xl bg-neutral-50 p-4"><strong>{postCount} posts</strong><p className="text-sm text-neutral-600">{postCount ? "Weekly goal reached" : "No post confirmed this week"}</p></div>
-      <div className="rounded-xl bg-neutral-50 p-4"><strong>{commentCount} comments</strong><p className="text-sm text-neutral-600">{commentCount ? "Weekly goal reached" : "No comment confirmed this week"}</p></div>
+      <div className="rounded-xl border border-neutral-200/70 bg-muted/40 p-4"><strong className="text-sm font-semibold">{postCount} posts</strong><p className={`mt-1 ${featureChrome.helper}`}>{postCount ? "Weekly goal reached" : "No post confirmed this week"}</p></div>
+      <div className="rounded-xl border border-neutral-200/70 bg-muted/40 p-4"><strong className="text-sm font-semibold">{commentCount} comments</strong><p className={`mt-1 ${featureChrome.helper}`}>{commentCount ? "Weekly goal reached" : "No comment confirmed this week"}</p></div>
     </div>
-    {proofs.length > 0 && <label className="mt-5 block text-sm font-medium">Choose a work example
-      <select value={selectedId} onChange={event => setSelectedId(event.target.value)} className="mt-2 w-full rounded-xl border border-neutral-300 px-3 py-2">
+    {proofs.length > 0 && <label className={`mt-5 block ${featureChrome.label}`}>Work example
+      <select value={selectedId} onChange={event => setSelectedId(event.target.value)} className={`mt-2 ${featureChrome.select}`}>
         {proofs.map(item => <option key={item.id} value={item.id}>{item.project} · {item.skill}</option>)}
       </select>
     </label>}
     <div className="mt-5 grid gap-4 lg:grid-cols-2">
-      <div className="rounded-xl border border-neutral-200 p-4"><h3 className="font-semibold">Post starting point</h3><p className="mt-2 whitespace-pre-line text-sm text-neutral-700">{postIdea}</p><a href="https://www.linkedin.com/dashboard/share/" target="_blank" rel="noopener noreferrer" className="mt-3 inline-block text-sm font-semibold underline">Start a post ↗</a></div>
-      <div className="rounded-xl border border-neutral-200 p-4"><h3 className="font-semibold">Comment angle</h3><p className="mt-2 text-sm text-neutral-700">{commentAngle}</p><a href="https://www.linkedin.com/feed/" target="_blank" rel="noopener noreferrer" className="mt-3 inline-block text-sm font-semibold underline">Comment on feed ↗</a></div>
+      <div className="rounded-xl border border-neutral-200/70 p-4"><h3 className="text-sm font-semibold">Post starting point</h3><p className="mt-2 whitespace-pre-line text-sm leading-6 text-foreground">{postIdea}</p><a href="https://www.linkedin.com/dashboard/share/" target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex min-h-11 items-center text-sm font-medium underline">Start a post</a></div>
+      <div className="rounded-xl border border-neutral-200/70 p-4"><h3 className="text-sm font-semibold">Comment angle</h3><p className="mt-2 text-sm leading-6 text-foreground">{commentAngle}</p><a href="https://www.linkedin.com/feed/" target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex min-h-11 items-center text-sm font-medium underline">Open feed</a></div>
     </div>
-    <div className="mt-5"><label htmlFor="linkedin-activity-url" className="text-sm font-medium">Link to your completed activity</label><input id="linkedin-activity-url" type="url" value={activityUrl} onChange={event => setActivityUrl(event.target.value)} placeholder="https://www.linkedin.com/..." className="mt-2 w-full rounded-xl border border-neutral-300 px-3 py-2" /><div className="mt-3 flex flex-wrap gap-2"><button type="button" onClick={() => record("post")} className="rounded-xl bg-neutral-950 px-4 py-2 text-sm font-semibold text-white">Record post</button><button type="button" onClick={() => record("comment")} className="rounded-xl border border-neutral-300 px-4 py-2 text-sm font-semibold">Record comment</button></div>{error && <p role="alert" className="mt-2 text-sm text-rose-700">{error}</p>}</div>
+    <div className="mt-5">
+      <label htmlFor="linkedin-activity-url" className={featureChrome.label}>Completed activity URL</label>
+      <div className="relative mt-2">
+        <AppIcon icon={RiLink} className={featureChrome.fieldIcon} />
+        <input id="linkedin-activity-url" type="url" value={activityUrl} onChange={event => setActivityUrl(event.target.value)} placeholder="https://www.linkedin.com/..." className={`${featureChrome.input} pl-10`} />
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button type="button" onClick={() => record("post")} className={featureChrome.primaryButton}>Record post</button>
+        <button type="button" onClick={() => record("comment")} className={featureChrome.secondaryButton}>Record comment</button>
+      </div>
+      {error && <p role="alert" className="mt-2 text-sm text-rose-700">{error}</p>}
+    </div>
   </section>;
 }

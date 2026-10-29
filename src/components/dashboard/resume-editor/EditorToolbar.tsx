@@ -9,12 +9,12 @@ RiArrowDownSLine,
 RiArrowLeftLine,
 RiBallPenLine,
 RiCheckboxCircleFill,
-RiClipboardLine,
 RiCodeSSlashLine,
-RiDeleteBin6Line,
+RiDeleteBinLine,
+RiDownload2Line,
 RiEditLine,
 RiFileCopy2Line,
-RiFileDownloadLine,
+RiFileCopyLine,
 RiFocus2Line,RiFocus3Line,
 RiLoader4Line,
 RiMagicLine,
@@ -130,11 +130,11 @@ export function EditorToolbar({
                                             Share and collaborate
                                         </button>
                                         <button onClick={() => { setIsMenuOpen(false); handleExportPdf(); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-secondary hover:bg-muted rounded-[var(--radius-md)] transition-all">
-                                            <RiFileDownloadLine size={14} />
+                                            <RiDownload2Line size={14} />
                                             Export PDF
                                         </button>
                                         <button onClick={() => { setIsMenuOpen(false); copyToClipboard(); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-secondary hover:bg-muted rounded-[var(--radius-md)] transition-all">
-                                            <RiClipboardLine size={14} />
+                                            <RiFileCopyLine size={14} />
                                             Copy text
                                         </button>
                                         <button onClick={() => { setIsMenuOpen(false); setIsRenaming(true); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-secondary hover:bg-muted rounded-[var(--radius-md)] transition-all">
@@ -147,7 +147,7 @@ export function EditorToolbar({
                                         </button>
                                         <div className="h-px bg-border-subtle my-1" />
                                         <button onClick={handleDelete} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-red-500 hover:bg-red-50 rounded-[var(--radius-md)] transition-all">
-                                            <RiDeleteBin6Line size={14} />
+                                            <RiDeleteBinLine size={14} />
                                             Delete
                                         </button>
                                     </m.div>
@@ -177,7 +177,7 @@ export function EditorToolbar({
                     </div>
                     <div className="hidden sm:block w-px h-5 bg-black/8" />
                     <button onClick={copyToClipboard} className="h-11 min-w-11 justify-center px-2 sm:px-3 rounded-[var(--radius-md)] text-[10px] font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-all flex items-center gap-1.5" title="Copy">
-                        {copying ? <RiCheckboxCircleFill className="text-emerald-500" size={12} /> : <RiClipboardLine size={12} />}
+                        {copying ? <RiCheckboxCircleFill className="text-emerald-500" size={12} /> : <RiFileCopyLine size={12} />}
                         <span className="hidden sm:block">Copy</span>
                     </button>
 
@@ -202,7 +202,7 @@ export function EditorToolbar({
                         title="Export PDF"
                         className="flex h-11 px-2 sm:px-3 rounded-[var(--radius-md)] text-[10px] font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-all items-center gap-1.5 disabled:opacity-50"
                     >
-                        {isGeneratingPdf ? <RiLoader4Line size={12} className="animate-spin" /> : <RiFileDownloadLine size={12} />}
+                        {isGeneratingPdf ? <RiLoader4Line size={12} className="animate-spin" /> : <RiDownload2Line size={12} />}
                         <span>{isGeneratingPdf ? "Exporting..." : "Export PDF"}</span>
                     </button>
                     <button

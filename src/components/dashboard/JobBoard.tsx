@@ -5,11 +5,13 @@ import { useMemo, useState } from "react";
 import {
   RiArrowDownSLine,
   RiArrowRightLine,
-  RiDeleteBin6Line,
-  RiExternalLinkLine,
+  RiDeleteBinLine,
+  RiLink,
   RiFileTextLine,
   RiSearchLine,
 } from "react-icons/ri";
+import { AppIcon } from "@/components/ui/AppIcon";
+import { featureChrome } from "@/components/dashboard/feature-chrome";
 import { formatRelativeTime } from "@/lib/utils";
 import type { ApplicationStatus } from "@/lib/application-state-machine";
 
@@ -103,59 +105,59 @@ export function JobBoard({ initialJobs, resumes = [], versions = [] }: {
   };
 
   return (
-    <section className="overflow-hidden rounded-[var(--radius-xl)] border border-border-subtle bg-white shadow-[var(--shadow-sm)]">
-      <div className="flex flex-col gap-4 border-b border-border-subtle p-4 sm:flex-row sm:items-center sm:justify-between">
+    <section className="overflow-hidden rounded-2xl border border-neutral-200/70 bg-white font-sans">
+      <div className="flex flex-col gap-4 border-b border-neutral-200/70 p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex gap-1 overflow-x-auto pb-1 sm:pb-0">
           {FILTERS.map((item) => (
-            <button key={item} onClick={() => setFilter(item)} className={`whitespace-nowrap rounded-[var(--radius-md)] px-3 py-2 text-xs font-semibold transition-colors ${filter === item ? "bg-foreground text-white" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}>
+            <button key={item} onClick={() => setFilter(item)} className={`min-h-11 whitespace-nowrap rounded-xl px-3 text-sm font-medium transition-colors ${filter === item ? "bg-foreground text-white" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}>
               {item}
             </button>
           ))}
         </div>
         <label className="relative block w-full sm:w-64">
-          <RiSearchLine className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={15} />
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search company or role" className="w-full rounded-[var(--radius-md)] border border-border-subtle bg-muted/60 py-2.5 pl-9 pr-3 text-xs font-medium outline-none transition focus:border-neutral-300 focus:bg-white" />
+          <RiSearchLine aria-hidden="true" className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" size={15} />
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search company or role" className={`${featureChrome.input} pl-10`} />
         </label>
       </div>
 
       {visibleJobs.length === 0 ? (
         <div className="px-6 py-16 text-center">
-          <p className="text-sm font-bold text-foreground">No applications found</p>
-          <p className="mt-1 text-xs text-muted-foreground">Change the filter or add a new opportunity.</p>
+          <p className="text-sm font-semibold text-foreground">No applications found</p>
+          <p className="mt-1 text-sm text-muted-foreground">Change the filter or add a new opportunity.</p>
         </div>
       ) : (
         <>
-          <div className="hidden grid-cols-[minmax(240px,2fr)_150px_minmax(180px,1fr)_120px_80px] gap-4 border-b border-border-subtle bg-muted/40 px-5 py-3 text-[0.6875rem] font-semibold uppercase tracking-[0.1em] text-muted-foreground md:grid">
-            <span>Company & role</span><span>Status</span><span>Resume</span><span>Updated</span><span className="text-right">Actions</span>
+          <div className="hidden grid-cols-[minmax(240px,2fr)_150px_minmax(180px,1fr)_120px_7.5rem] gap-4 border-b border-neutral-200/70 bg-muted/40 px-5 py-3 text-xs font-medium text-muted-foreground md:grid">
+            <span>Company and role</span><span>Status</span><span>Resume</span><span>Updated</span><span className="text-right">Actions</span>
           </div>
-          <div className="divide-y divide-border-subtle">
+          <div className="divide-y divide-neutral-200/70">
             {visibleJobs.map((job) => {
               const detailHref = job.recordType === "job" ? null : `/dashboard/applications/${job.id}`;
               return (
-              <article key={job.id} className="group relative p-5 transition-colors hover:bg-muted/30 md:grid md:grid-cols-[minmax(240px,2fr)_150px_minmax(180px,1fr)_120px_80px] md:items-center md:gap-4">
+              <article key={job.id} className="group relative p-5 transition-colors hover:bg-muted/30 md:grid md:grid-cols-[minmax(240px,2fr)_150px_minmax(180px,1fr)_120px_7.5rem] md:items-center md:gap-4">
                 {detailHref ? <Link href={detailHref} className="absolute inset-0" aria-label={`Open ${job.position} at ${job.company}`} /> : null}
                 <div className="relative pointer-events-none min-w-0">
-                  <div className="flex items-center gap-2"><span className="h-2 w-2 shrink-0 rounded-full bg-foreground" /><p className="truncate text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">{job.company}</p></div>
-                  <h2 className="mt-1 truncate text-sm font-bold text-foreground">{job.position}</h2>
-                  {job.deadline ? <p className="mt-1 text-xs text-muted-foreground">Deadline {new Date(job.deadline).toLocaleDateString()}</p> : null}
+                  <p className="truncate text-xs font-medium text-muted-foreground">{job.company}</p>
+                  <h2 className="mt-1 truncate text-sm font-semibold text-foreground">{job.position}</h2>
+                  {job.deadline ? <p className="mt-1 text-sm text-muted-foreground">Deadline {new Date(job.deadline).toLocaleDateString()}</p> : null}
                 </div>
                 <div className="relative z-10 mt-4 md:mt-0">
                   <div className="relative inline-block">
-                    <select value={job.status} onChange={(event) => updateStatus(job.id, event.target.value as Job["status"])} className={`appearance-none rounded-full py-1.5 pl-3 pr-8 text-xs font-semibold outline-none ${statusClasses(String(job.status))}`}>
+                    <select value={job.status} onChange={(event) => updateStatus(job.id, event.target.value as Job["status"])} className={`h-11 appearance-none rounded-xl py-1.5 pl-3 pr-8 text-sm font-medium outline-none ${statusClasses(String(job.status))}`}>
                       {BOARD_STATUSES.map((status) => <option key={status}>{status}</option>)}
                     </select>
-                    <RiArrowDownSLine className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2" size={14} />
+                    <AppIcon icon={RiArrowDownSLine} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2" size={14} />
                   </div>
                 </div>
-                <div className="relative pointer-events-none mt-3 flex min-w-0 items-center gap-2 text-xs text-muted-foreground md:mt-0"><RiFileTextLine className="shrink-0" size={15} /><span className="truncate">{linkedResume(job)}</span></div>
-                <p className="relative pointer-events-none mt-3 text-xs text-muted-foreground md:mt-0">{formatRelativeTime(job.updatedAt)}</p>
+                <div className="relative pointer-events-none mt-3 flex min-w-0 items-center gap-2 text-sm text-muted-foreground md:mt-0"><AppIcon icon={RiFileTextLine} size={15} /><span className="truncate">{linkedResume(job)}</span></div>
+                <p className="relative pointer-events-none mt-3 text-sm text-muted-foreground md:mt-0">{formatRelativeTime(job.updatedAt)}</p>
                 <div className="relative z-10 mt-4 flex items-center justify-end gap-1 md:mt-0">
                   {detailHref ? (
-                    <Link href={detailHref} className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground" aria-label="Open application"><RiArrowRightLine size={16} /></Link>
+                    <Link href={detailHref} className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground" aria-label="Open application"><AppIcon icon={RiArrowRightLine} size={16} /></Link>
                   ) : job.url ? (
-                    <a href={job.url} target="_blank" rel="noreferrer" className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground" aria-label="Open job listing"><RiExternalLinkLine size={16} /></a>
+                    <a href={job.url} target="_blank" rel="noreferrer" className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground" aria-label="Open job listing"><AppIcon icon={RiLink} size={16} /></a>
                   ) : null}
-                  <button disabled={busyId === job.id} onClick={() => removeJob(job.id)} className="rounded-lg p-2 text-muted-foreground hover:bg-rose-50 hover:text-rose-600 disabled:opacity-40" aria-label="Delete application"><RiDeleteBin6Line size={16} /></button>
+                  <button disabled={busyId === job.id} onClick={() => removeJob(job.id)} className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-muted-foreground hover:bg-rose-50 hover:text-rose-600 disabled:opacity-40" aria-label="Delete application"><AppIcon icon={RiDeleteBinLine} size={16} /></button>
                 </div>
               </article>
               );
