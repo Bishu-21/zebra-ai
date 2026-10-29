@@ -7,7 +7,7 @@ import {
     RiCheckLine, 
     RiFileCopyLine, 
     RiDownload2Line, 
-    RiMailSendLine
+    RiArticleLine
 } from "react-icons/ri";
 import { useRouter } from "next/navigation";
 import { useDialogFocus } from "@/hooks/useDialogFocus";
@@ -139,7 +139,7 @@ export function CoverLetterActions({ letter }: { letter: CoverLetter }) {
                         <div className="px-4 py-3.5 sm:px-6 sm:py-5 border-b border-neutral-200 flex items-center justify-between bg-neutral-50/90 backdrop-blur-xl shrink-0">
                             <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1 mr-2">
                                 <div className="hidden sm:flex w-10 h-10 sm:w-11 sm:h-11 bg-neutral-950 text-white rounded-xl items-center justify-center shrink-0 shadow-xs">
-                                    <AppIcon icon={RiMailSendLine} size={20} />
+                                    <AppIcon icon={RiArticleLine} size={20} />
                                 </div>
                                 <div className="min-w-0">
                                     <h2 id={`letter-title-${letter.id}`} className="text-base sm:text-lg font-bold text-neutral-950 truncate max-w-[180px] xs:max-w-[240px] sm:max-w-[340px] md:max-w-[420px]">{letter.title}</h2>

@@ -2,7 +2,6 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import { 
-    RiAddLine, 
     RiCloseLine, 
     RiAlertLine, 
     RiArrowDownSLine,
@@ -10,6 +9,7 @@ import {
     RiDownload2Line,
     RiCheckLine,
     RiMailSendLine,
+    RiArticleLine,
     RiLink,
     RiFileSearchLine,
     RiSearchEyeLine,
@@ -217,12 +217,14 @@ export function GenerateCoverLetter({ resumes }: { resumes: ResumeOption[] }) {
     return (
         <>
             <m.button 
+                type="button"
+                data-cover-letter-trigger
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setIsOpen(true)}
                 className="flex w-full items-center justify-center gap-2 bg-neutral-950 text-white px-5 py-3 rounded-xl font-semibold transition-all shadow-xs text-xs group md:w-auto hover:bg-neutral-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-950"
             >
-                <AppIcon icon={RiAddLine} size={16} />
+                <AppIcon icon={RiArticleLine} size={16} />
                 Generate Cover Letter
             </m.button>
 
@@ -255,7 +257,7 @@ export function GenerateCoverLetter({ resumes }: { resumes: ResumeOption[] }) {
                             <div className="px-4 py-4 sm:px-6 sm:py-5 border-b border-neutral-200 flex items-center justify-between bg-neutral-50 shrink-0">
                                 <div className="flex items-center gap-3 sm:gap-4">
                                     <div className="w-10 h-10 sm:w-12 sm:h-12 bg-neutral-950 text-white rounded-xl flex items-center justify-center shrink-0 shadow-xs">
-                                        <AppIcon icon={RiMailSendLine} size={22} />
+                                        <AppIcon icon={RiArticleLine} size={22} />
                                     </div>
                                     <div>
                                         <h2 id="cover-letter-dialog-title" className="text-base sm:text-lg md:text-xl font-bold tracking-tight text-neutral-950">

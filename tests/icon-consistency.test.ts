@@ -13,6 +13,8 @@ const analyze = readFileSync("src/components/dashboard/AnalyzeResume.tsx", "utf8
 const tailor = readFileSync("src/components/dashboard/TailorResume.tsx", "utf8");
 const importer = readFileSync("src/components/dashboard/ImportResume.tsx", "utf8");
 const jobBoard = readFileSync("src/components/dashboard/JobBoard.tsx", "utf8");
+const coverLettersPage = readFileSync("src/app/dashboard/cover-letters/page.tsx", "utf8");
+const zebuStyles = readFileSync("src/app/globals.css", "utf8");
 
 describe("icon meaning and family", () => {
     it("uses Remix icons through AppIcon with decorative hiding and no shrink", () => {
@@ -71,6 +73,52 @@ describe("dashboard navigation and tool dialogs", () => {
             dashboard.slice(dashboard.indexOf("View applications") - 220, dashboard.indexOf("View applications") + 40),
             /RiFlashlightLine/,
         );
+    });
+
+    it("reuses the sidebar Cover Letters icon for feature identity, not actions", () => {
+        const opener = generator.slice(
+            generator.indexOf("data-cover-letter-trigger"),
+            generator.indexOf("Generate Cover Letter") + 24,
+        );
+        assert.match(opener, /AppIcon icon=\{RiArticleLine\}/);
+        assert.doesNotMatch(opener, /RiAddLine|RiMailSendLine|RiMagicLine/);
+
+        const headingStart = generator.indexOf("w-10 h-10 sm:w-12 sm:h-12 bg-neutral-950");
+        const heading = generator.slice(headingStart, generator.indexOf("Cover Letter Generator") + 24);
+        assert.match(heading, /AppIcon icon=\{RiArticleLine\}/);
+        assert.doesNotMatch(heading, /RiMailSendLine|RiAddLine|RiMagicLine/);
+
+        const generateCta = generator.slice(
+            generator.indexOf("Generating..."),
+            generator.indexOf("Generating...") + 520,
+        );
+        assert.match(generateCta, /AppIcon icon=\{RiMailSendLine\}/);
+        assert.doesNotMatch(generateCta, /RiArticleLine/);
+        assert.match(generator, /AppIcon icon=\{RiMailSendLine\} size=\{16\} className="text-neutral-600"/);
+        assert.match(generator, /Generation cost/);
+
+        assert.match(coverLettersPage, /RiArticleLine size=\{26\}/);
+        assert.match(coverLettersPage, /RiArticleLine size=\{20\}/);
+        assert.doesNotMatch(coverLettersPage, /RiMagicLine|RiFileTextLine/);
+        assert.match(coverLettersPage, /RiTimeLine/);
+
+        assert.match(actions, /AppIcon icon=\{RiArticleLine\}/);
+        assert.doesNotMatch(actions, /RiMailSendLine/);
+        assert.match(actions, /AppIcon icon=\{RiFileCopyLine\}/);
+        assert.match(actions, /AppIcon icon=\{RiDownload2Line\}/);
+        assert.match(actions, /AppIcon icon=\{RiDeleteBinLine\}/);
+        assert.match(actions, /AppIcon icon=\{RiCloseLine\}/);
+    });
+
+    it("compacts the Zebu launcher at 390px so card text stays readable", () => {
+        const mobileBlock = zebuStyles.slice(
+            zebuStyles.indexOf("@media (max-width: 640px)"),
+            zebuStyles.indexOf("@media (prefers-reduced-motion"),
+        );
+        assert.match(mobileBlock, /\.zebu-fab \{[^}]*min-width: 2\.75rem/);
+        assert.match(mobileBlock, /\.zebu-fab > span \{/);
+        assert.match(mobileBlock, /clip: rect\(0, 0, 0, 0\)/);
+        assert.match(coverLettersPage, /max-\[640px\]:pr-16/);
     });
 
     it("uses a consistent close control on tool dialogs", () => {
