@@ -9,7 +9,7 @@ const sidebarSource = readFileSync("src/components/dashboard/Sidebar.tsx", "utf8
 describe("Dashboard mobile navigation regressions", () => {
     test("closed mobile navigation is inert and open navigation contains focus", () => {
         assert.match(sidebarSource, /inert=\{isMobile && !isDrawerOpen \? true : undefined\}/);
-        assert.match(sidebarSource, /useDialogFocus\(isMobile && isDrawerOpen, closeDrawer\)/);
+        assert.match(sidebarSource, /useDialogFocus<HTMLElement>\(isMobile && isDrawerOpen, closeDrawer\)/);
         assert.match(sidebarSource, /ref=\{navigationRef\}/);
     });
 
@@ -31,6 +31,16 @@ describe("Dashboard mobile navigation regressions", () => {
     test("open drawer supports Escape and prevents background scrolling", () => {
         assert.match(shellSource, /event\.key === "Escape"/);
         assert.match(shellSource, /document\.body\.style\.overflow = "hidden"/);
+    });
+
+    test("sidebar shell is a native aside so SSR HTML matches the first client render", () => {
+        assert.match(sidebarSource, /const \[isMobile, setIsMobile\] = useState\(false\)/);
+        assert.match(sidebarSource, /<aside/);
+        assert.match(sidebarSource, /hideOffCanvas \? "-translate-x-full" : "translate-x-0"/);
+        assert.doesNotMatch(sidebarSource, /<m\.aside/);
+        assert.doesNotMatch(sidebarSource, /from "framer-motion"/);
+        assert.doesNotMatch(sidebarSource, /AnimatePresence/);
+        assert.doesNotMatch(sidebarSource, /suppressHydrationWarning/);
     });
 
     test("sidebar header does not repeat the account plan", () => {

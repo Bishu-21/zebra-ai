@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { m, AnimatePresence } from "framer-motion";
 import { DashboardLink } from "./DashboardLink";
 import { CreditTopUp } from "./CreditTopUp";
 import Link from "next/link";
@@ -69,7 +68,7 @@ export function Sidebar({
             setInternalOpen(false);
         }
     }, [onCloseAction]);
-    const navigationRef = useDialogFocus(isMobile && isDrawerOpen, closeDrawer);
+    const navigationRef = useDialogFocus<HTMLElement>(isMobile && isDrawerOpen, closeDrawer);
 
     useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth < 1024);
@@ -94,33 +93,24 @@ export function Sidebar({
         });
     };
 
+    const hideOffCanvas = isMobile && !isDrawerOpen;
+
     return (
         <>
-            {/* Mobile / Tablet Overlay */}
-            <AnimatePresence>
-                {isDrawerOpen && (
-                    <m.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="lg:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-[60]"
-                        onClick={closeDrawer}
-                    />
-                )}
-            </AnimatePresence>
+            {isDrawerOpen ? (
+                <div
+                    className="lg:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-[60]"
+                    onClick={closeDrawer}
+                />
+            ) : null}
 
-            {/* Sidebar Desktop & Mobile */}
-            <m.aside
+            {/* Native aside: m.aside SSR'd as a hidden Suspense slot and failed hydration. */}
+            <aside
                 ref={navigationRef}
                 id="dashboard-navigation"
                 inert={isMobile && !isDrawerOpen ? true : undefined}
                 aria-hidden={isMobile && !isDrawerOpen ? true : undefined}
-                initial={false}
-                animate={{
-                    x: isMobile ? (isDrawerOpen ? 0 : "-100%") : 0,
-                }}
-                className="fixed lg:sticky top-0 left-0 h-dvh w-[270px] max-w-[calc(100vw-2rem)] lg:max-w-none bg-muted border-r border-neutral-200/70 flex flex-col z-[70] overflow-hidden shadow-xl lg:shadow-none shrink-0"
-                transition={{ type: "spring", damping: 30, stiffness: 300 }}
+                className={`fixed lg:sticky top-0 left-0 h-dvh w-[270px] max-w-[calc(100vw-2rem)] lg:max-w-none bg-muted border-r border-neutral-200/70 flex flex-col z-[70] overflow-hidden shadow-xl lg:shadow-none shrink-0 motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-out ${hideOffCanvas ? "-translate-x-full" : "translate-x-0"}`}
             >
                 <div className="flex flex-col h-full">
                     {/* Header Logo */}
@@ -212,7 +202,7 @@ export function Sidebar({
                         </div>
                     </div>
                 </div>
-            </m.aside>
+            </aside>
         </>
     );
 }
