@@ -10,7 +10,8 @@ import {
     RiTimeLine
 } from "react-icons/ri";
 import { CoverLetterActions } from "@/components/dashboard/CoverLetterActions";
-import { DashboardPage, DashboardPageHeader } from "@/components/dashboard/DashboardPage";
+import { DashboardPage } from "@/components/dashboard/DashboardPage";
+import { AppIcon } from "@/components/ui/AppIcon";
 import { decodeCursor, paginateRows } from "@/lib/pagination";
 import { candidateNameFromStoredResume, missingReferencedResumeIds } from "@/lib/cover-letter-document";
 
@@ -33,9 +34,9 @@ function CoverLettersLoadingState() {
         </div>
         <div className="h-10 w-40 rounded-xl bg-black/10" />
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {[0, 1, 2].map((item) => (
-          <div key={item} className="h-64 rounded-[var(--radius-xl)] border border-border-subtle bg-white" />
+          <div key={item} className="h-52 rounded-2xl border border-neutral-200/70 bg-white" />
         ))}
       </div>
     </DashboardPage>
@@ -100,49 +101,53 @@ async function CoverLettersContent({ userId, cursor: rawCursor }: { userId: stri
 
   return (
     <DashboardPage>
-      <DashboardPageHeader
-        title="Cover Letters"
-        description="Create evidence-grounded drafts for a specific role, then review and edit every claim before use."
-        actions={<GenerateCoverLetter resumes={resumeOptions} />}
-      />
+      <div className="flex flex-col gap-4 font-sans md:flex-row md:items-center md:justify-between">
+        <div className="max-w-2xl">
+          <div className="flex items-center gap-2.5">
+            <AppIcon icon={RiArticleLine} size={18} className="text-muted-foreground" />
+            <h1 className="text-xl font-semibold tracking-tight text-foreground">Cover Letters</h1>
+          </div>
+          <p className="mt-1 font-sans text-sm font-normal leading-6 text-muted-foreground">
+            Create evidence-grounded drafts for a specific role, then review and edit every claim before use.
+          </p>
+        </div>
+        <div className="w-full shrink-0 md:w-auto">
+          <GenerateCoverLetter resumes={resumeOptions} />
+        </div>
+      </div>
 
       {letters.length === 0 ? (
-        <div className="bg-white rounded-[var(--radius-xl)] border border-border-subtle p-10 md:p-16 flex flex-col items-center justify-center text-center shadow-[var(--shadow-sm)]">
-          <div className="w-14 h-14 bg-muted rounded-[var(--radius-lg)] flex items-center justify-center text-foreground mb-6">
-            <RiArticleLine size={26} aria-hidden="true" />
-          </div>
-          <h2 className="text-lg font-bold mb-2 tracking-tight text-foreground">No cover letters yet</h2>
-          <p className="text-sm text-muted-foreground mb-6 max-w-md leading-6">
-            Generate your first professional cover letter by matching your resume to a job description.
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-neutral-200/70 bg-white px-6 py-12 text-center font-sans">
+          <AppIcon icon={RiArticleLine} size={22} className="text-muted-foreground" />
+          <h2 className="mt-4 text-base font-semibold tracking-tight text-foreground">No cover letters yet</h2>
+          <p className="mt-1 mb-5 max-w-md font-sans text-sm leading-6 text-muted-foreground">
+            Generate your first cover letter by matching a resume to a job description.
           </p>
           <GenerateCoverLetter resumes={resumeOptions} />
         </div>
       ) : (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 max-[640px]:pr-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="space-y-4 max-[640px]:pb-24">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {letters.map((letter) => (
             <div
                 key={letter.id}
-                className="group relative bg-white border border-border-subtle rounded-[var(--radius-xl)] p-6 flex flex-col hover:border-neutral-300 hover:shadow-[var(--shadow-md)] transition-all"
+                className="group relative flex flex-col rounded-2xl border border-neutral-200/70 bg-white p-4 font-sans"
             >
-                <div className="flex items-start justify-between mb-6">
-                    <div className="w-11 h-11 bg-muted rounded-[var(--radius-md)] flex items-center justify-center text-muted-foreground border border-border-subtle group-hover:bg-foreground group-hover:text-white transition-colors">
-                        <RiArticleLine size={20} aria-hidden="true" />
-                    </div>
-                    <div className="flex items-center gap-1.5 text-[0.6875rem] font-semibold text-muted-foreground bg-muted px-3 py-1.5 rounded-full">
-                        <RiTimeLine size={12} aria-hidden="true" className="opacity-50" />
+                <div className="flex items-center justify-between gap-2">
+                    <AppIcon icon={RiArticleLine} size={18} className="text-muted-foreground" />
+                    <div className="flex items-center gap-1 font-sans text-xs text-muted-foreground">
+                        <AppIcon icon={RiTimeLine} size={12} />
                         {formatTimeAgo(letter.createdAt)}
                     </div>
                 </div>
 
-                <div className="flex-grow">
-                    <h3 className="text-base font-bold text-foreground mb-3 leading-snug line-clamp-2">
+                <div className="mt-3 flex-grow">
+                    <h3 className="line-clamp-2 text-sm font-semibold leading-snug tracking-tight text-foreground">
                         {letter.title}
                     </h3>
-                    <div className="relative text-sm text-muted-foreground line-clamp-4 leading-6 font-normal mb-6 overflow-hidden h-24">
+                    <p className="mt-1 line-clamp-3 font-sans text-sm leading-6 text-muted-foreground">
                         {letter.content.replace(/\*/g, '')}
-                        <div className="absolute bottom-0 left-0 w-full h-12 bg-gradient-to-t from-white to-transparent"></div>
-                    </div>
+                    </p>
                 </div>
 
                 <CoverLetterActions letter={{
@@ -157,7 +162,7 @@ async function CoverLettersContent({ userId, cursor: rawCursor }: { userId: stri
           ))}
           </div>
           {letterPage.page.nextCursor && (
-            <Link href={`/dashboard/cover-letters?cursor=${encodeURIComponent(letterPage.page.nextCursor)}`} className="inline-flex rounded-xl border border-neutral-200 bg-white px-4 py-2 text-xs font-bold text-neutral-700 hover:bg-neutral-50">
+            <Link href={`/dashboard/cover-letters?cursor=${encodeURIComponent(letterPage.page.nextCursor)}`} className="inline-flex min-h-11 items-center rounded-xl border border-neutral-200 bg-white px-4 font-sans text-sm font-medium text-foreground hover:bg-muted">
               View older cover letters
             </Link>
           )}
