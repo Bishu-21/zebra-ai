@@ -157,41 +157,41 @@ export function EditorToolbar({
                     </div>
 
                     <div className="hidden sm:flex items-center gap-2">
-                        <span className="px-2 py-0.5 bg-black/5 text-black rounded text-[10px] font-semibold tracking-wide border border-black/10">DRAFT</span>
+                        <span className="px-2 py-0.5 bg-black/5 text-black rounded text-xs font-medium border border-black/10">Draft</span>
                         {isStripeVersion && (
-                            <span className="px-2 py-0.5 bg-primary/10 text-primary rounded text-[10px] font-semibold tracking-wide flex items-center gap-1 border border-primary/20">
+                            <span className="px-2 py-0.5 bg-primary/10 text-primary rounded text-xs font-medium flex items-center gap-1 border border-primary/20">
                                 <RiMagicLine size={10} />
-                                TAILORED VERSION
+                                Tailored version
                             </span>
                         )}
                     </div>
                 </div>
                 <div className="flex w-full max-w-full flex-wrap items-center justify-end gap-2 lg:w-auto">
                     <div className="hidden sm:flex bg-muted p-0.5 rounded-[var(--radius-md)] items-center gap-0.5 border border-border-subtle">
-                        <button onClick={() => setViewMode("sheet")} className={`min-h-11 px-3 py-1 rounded-[var(--radius-sm)] text-[10px] font-semibold tracking-wide transition-all ${viewMode === "sheet" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
-                            <span className="flex items-center gap-1"><RiBallPenLine size={11} /> Editor</span>
+                        <button onClick={() => setViewMode("sheet")} className={`min-h-11 px-3 py-1 rounded-[var(--radius-sm)] text-xs font-medium transition-all ${viewMode === "sheet" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
+                            <span className="flex items-center gap-1"><RiBallPenLine size={16} /> Editor</span>
                         </button>
-                        <button onClick={() => setViewMode("source")} className={`min-h-11 px-3 py-1 rounded-[var(--radius-sm)] text-[10px] font-semibold tracking-wide transition-all ${viewMode === "source" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
-                            <span className="flex items-center gap-1"><RiCodeSSlashLine size={11} /> Source</span>
+                        <button onClick={() => setViewMode("source")} className={`min-h-11 px-3 py-1 rounded-[var(--radius-sm)] text-xs font-medium transition-all ${viewMode === "source" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
+                            <span className="flex items-center gap-1"><RiCodeSSlashLine size={16} /> Source</span>
                         </button>
                     </div>
                     <div className="hidden sm:block w-px h-5 bg-black/8" />
-                    <button onClick={copyToClipboard} className="h-11 min-w-11 justify-center px-2 sm:px-3 rounded-[var(--radius-md)] text-[10px] font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-all flex items-center gap-1.5" title="Copy">
-                        {copying ? <RiCheckboxCircleFill className="text-emerald-500" size={12} /> : <RiFileCopyLine size={12} />}
+                    <button onClick={copyToClipboard} className="h-11 min-w-11 justify-center px-2 sm:px-3 rounded-[var(--radius-md)] text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-all flex items-center gap-1.5" title="Copy">
+                        {copying ? <RiCheckboxCircleFill className="text-emerald-500" size={16} /> : <RiFileCopyLine size={16} />}
                         <span className="hidden sm:block">Copy</span>
                     </button>
 
                     <div className="hidden lg:flex bg-muted p-0.5 rounded-[var(--radius-md)] items-center gap-0.5 border border-border-subtle">
                         {(['modern', 'professional', 'minimal'] as const).map((t) => (
                             <button
-                                key={t}
+                                key={t.charAt(0).toUpperCase() + t.slice(1)}
                                 onClick={() => {
                                     setSelectedTemplate(t);
                                     localStorage.setItem(`resume-template-${resume.id}`, t);
                                 }}
-                                className={`min-h-11 px-2 py-1 rounded-[var(--radius-sm)] text-[9px] font-bold uppercase tracking-wider transition-all ${selectedTemplate === t ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                                className={`min-h-11 px-2 py-1 rounded-[var(--radius-sm)] text-xs font-medium transition-all ${selectedTemplate === t ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
                             >
-                                {t}
+                                {t.charAt(0).toUpperCase() + t.slice(1)}
                             </button>
                         ))}
                     </div>
@@ -200,17 +200,17 @@ export function EditorToolbar({
                         onClick={handleExportPdf}
                         disabled={isGeneratingPdf}
                         title="Export PDF"
-                        className="flex h-11 px-2 sm:px-3 rounded-[var(--radius-md)] text-[10px] font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-all items-center gap-1.5 disabled:opacity-50"
+                        className="flex h-11 px-2 sm:px-3 rounded-[var(--radius-md)] text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-all items-center gap-1.5 disabled:opacity-50"
                     >
-                        {isGeneratingPdf ? <RiLoader4Line size={12} className="animate-spin" /> : <RiDownload2Line size={12} />}
+                        {isGeneratingPdf ? <RiLoader4Line size={16} className="animate-spin" /> : <RiDownload2Line size={16} />}
                         <span>{isGeneratingPdf ? "Exporting..." : "Export PDF"}</span>
                     </button>
                     <button
                         onClick={() => setIsZenMode(!isZenMode)}
                         title="Focus Mode"
-                        className={`hidden lg:flex h-11 px-3 rounded-[var(--radius-md)] text-[10px] font-semibold transition-all items-center gap-1.5 ${isZenMode ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
+                        className={`hidden lg:flex h-11 px-3 rounded-[var(--radius-md)] text-sm font-medium transition-all items-center gap-1.5 ${isZenMode ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
                     >
-                        {isZenMode ? <RiFocus3Line size={12} /> : <RiFocus2Line size={12} />}
+                        {isZenMode ? <RiFocus3Line size={16} /> : <RiFocus2Line size={16} />}
                         {isZenMode ? "Focus Active" : "Focus Mode"}
                     </button>
                     <div className="hidden sm:block w-px h-5 bg-black/8" />
@@ -218,11 +218,11 @@ export function EditorToolbar({
                         {settings.autoSave && (
                             <div className={`hidden sm:flex items-center gap-1.5 transition-all duration-500 ${isSaving ? 'opacity-100' : 'opacity-40'}`}>
                                 <div className={`w-1.5 h-1.5 rounded-full ${isSaving ? 'bg-primary' : 'bg-muted-foreground/30'}`} />
-                                <span className="text-[0.65rem] font-bold text-muted-foreground/60 uppercase tracking-widest">{saveStatus === "saving" ? "Saving" : saveStatus === "error" ? "Save failed" : saveStatus === "unsaved" ? "Unsaved" : "Saved"}</span>
+                                <span className="text-xs font-medium text-neutral-600">{saveStatus === "saving" ? "Saving" : saveStatus === "error" ? "Save failed" : saveStatus === "unsaved" ? "Unsaved" : "Saved"}</span>
                             </div>
                         )}
-                        <button onClick={handleSave} disabled={isSaving} aria-label="Save resume" title="Save resume" className="h-11 shrink-0 px-2 sm:px-4 bg-primary hover:bg-primary-dark rounded-[var(--radius-md)] text-[10px] font-bold tracking-wide text-white transition-all flex items-center gap-1.5 disabled:opacity-40 active:scale-95">
-                            {isSaving && !settings.autoSave ? <RiLoader4Line size={12} className="animate-spin" /> : <RiSave3Line size={12} />}
+                        <button onClick={handleSave} disabled={isSaving} aria-label="Save resume" title="Save resume" className="h-11 shrink-0 px-2 sm:px-4 bg-primary hover:bg-primary-dark rounded-[var(--radius-md)] text-sm font-semibold text-white transition-all flex items-center gap-1.5 disabled:opacity-40 active:scale-95">
+                            {isSaving && !settings.autoSave ? <RiLoader4Line size={16} className="animate-spin" /> : <RiSave3Line size={16} />}
                             <span>{isSaving && !settings.autoSave ? "Saving..." : "Save"}</span>
                         </button>
                     </div>

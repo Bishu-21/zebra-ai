@@ -110,9 +110,9 @@ export function PreviewPane({ content, onJumpToSourceAction, template = "modern"
     return (
         <div ref={containerRef} className="flex-grow h-full bg-muted flex flex-col overflow-hidden relative min-h-0">
             {/* Preview header bar */}
-            <div className="h-9 bg-muted/80 border-b border-border-subtle flex items-center justify-between px-3 shrink-0">
+            <div className="min-h-11 bg-muted/80 border-b border-border-subtle flex items-center justify-between px-3 shrink-0">
                 <div className="flex items-center gap-4">
-                    <span className="text-[10px] font-bold text-muted-foreground tracking-wider uppercase">Compiled Output</span>
+                    <span className="text-xs font-medium text-neutral-600">Preview</span>
                     
                     {/* FONT SELECT */}
                     <div 
@@ -121,7 +121,7 @@ export function PreviewPane({ content, onJumpToSourceAction, template = "modern"
                         className="flex items-center gap-1.5 px-2 py-1 rounded bg-muted hover:bg-muted/80 transition-all cursor-pointer relative"
                     >
                         <RiFontSize size={11} className="text-muted-foreground" />
-                        <span className="text-[9px] font-bold text-foreground/60 truncate max-w-[80px]">{settings.resumeFont}</span>
+                        <span className="text-xs font-medium text-neutral-600 truncate max-w-[120px]">{settings.resumeFont}</span>
                         <RiArrowDownSLine size={10} className="text-muted-foreground/50" />
                         
                         {isFontOpen && (
