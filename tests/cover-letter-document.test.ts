@@ -151,10 +151,13 @@ describe("cover letter resume identity lookup", () => {
 
     it("loads identity for every referenced owned resume, not only the newest 50", () => {
         const page = readFileSync("src/app/dashboard/cover-letters/page.tsx", "utf8");
-        assert.match(page, /missingReferencedResumeIds/);
-        assert.match(page, /inArray\(resumesTable\.id, missingResumeIds\)/);
-        assert.match(page, /eq\(resumesTable\.userId, userId\)/);
-        assert.match(page, /candidateNameFromStoredResume/);
+        const workspace = readFileSync("src/lib/cover-letter-workspace.ts", "utf8");
+        assert.match(page, /loadCoverLetterWorkspace\(userId, rawCursor\)/);
+        assert.match(workspace, /missingReferencedResumeIds/);
+        assert.match(workspace, /inArray\(resumesTable\.id, missingResumeIds\)/);
+        assert.match(workspace, /eq\(resumesTable\.userId, userId\)/);
+        assert.match(workspace, /candidateNameFromStoredResume/);
+        assert.match(workspace, /executeWithDbRetry/);
     });
 
     it("returns candidate names from GET /api/resumes without resume content", () => {

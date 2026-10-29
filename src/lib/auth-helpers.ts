@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { cache } from "react";
 import { sanitizeSecretText } from "@/lib/db";
+import { collectErrorText, isTransientDbError } from "@/lib/db-errors";
 
 const SESSION_LOOKUP_TIMEOUT_MS = 15_000;
 
@@ -10,37 +11,6 @@ export class SessionUnavailableError extends Error {
         super("The session store is temporarily unavailable.");
         this.name = "SessionUnavailableError";
     }
-}
-
-function collectErrorText(error: unknown): string {
-    const values: unknown[] = [];
-    const seen = new Set<unknown>();
-    let current: unknown = error;
-
-    while (current && !seen.has(current)) {
-        seen.add(current);
-        values.push(current);
-        if (typeof current === "object" && current !== null) {
-            const record = current as Record<string, unknown>;
-            current = record.cause;
-            if (record.body) values.push(record.body);
-        } else {
-            break;
-        }
-    }
-
-    return values
-        .map((value) => {
-            if (typeof value === "string") return value;
-            if (value instanceof Error) return value.message;
-            try {
-                return JSON.stringify(value);
-            } catch {
-                return String(value);
-            }
-        })
-        .join(" ")
-        .toLowerCase();
 }
 
 function isAuthenticationFailure(error: unknown): boolean {
@@ -80,18 +50,12 @@ function isRetryableSessionError(error: unknown): boolean {
     if (isAuthenticationFailure(error)) return false;
     const text = collectErrorText(error);
 
-    // Check for transient network/Neon DB connection markers
+    if (isTransientDbError(error)) return true;
+
     return [
-        "connection terminated",
-        "connection timeout",
-        "websocket was closed",
         "failed_to_get_session",
         "failed to get session",
         "session lookup timed out",
-        "econnreset",
-        "etimedout",
-        "503",
-        "504"
     ].some((marker) => text.includes(marker));
 }
 
