@@ -9,8 +9,8 @@ import { SettingsProvider } from "@/context/SettingsContext";
 import { CareerProfilePrompt } from "./CareerProfilePrompt";
 import { ZebuProvider } from "@/context/ZebuContext";
 
-const ProfileModal = dynamic(() => import("./ProfileModal").then((module) => module.ProfileModal));
-const ZebuAssistant = dynamic(() => import("./ZebuAssistant").then((module) => module.ZebuAssistant));
+const ProfileModal = dynamic(() => import("./ProfileModal").then((module) => module.ProfileModal), { ssr: false });
+const ZebuAssistant = dynamic(() => import("./ZebuAssistant").then((module) => module.ZebuAssistant), { ssr: false });
 
 interface DashboardShellProps {
     plan: string;
@@ -51,7 +51,7 @@ export function DashboardShell({ plan, credits, userName, userImage, shouldPromp
         <SettingsProvider>
             <ZebuProvider>
               <ToastProvider>
-                <div className="min-h-screen bg-background flex font-sans text-foreground overflow-hidden">
+                <>
                     <Sidebar
                         plan={plan}
                         credits={credits}
@@ -87,7 +87,7 @@ export function DashboardShell({ plan, credits, userName, userImage, shouldPromp
                     )}
                     <CareerProfilePrompt shouldPrompt={shouldPromptCareerProfile} />
                     <ZebuAssistant />
-                </div>
+                </>
               </ToastProvider>
             </ZebuProvider>
         </SettingsProvider>
