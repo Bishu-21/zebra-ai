@@ -54,7 +54,7 @@ export function CoverLetterDocument({
         >
             {model.letterheadName ? (
                 <header className="mb-6 pb-3 border-b border-neutral-950">
-                    <h1 className="font-sans text-xl sm:text-2xl font-bold tracking-tight text-neutral-950 break-words">
+                    <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-neutral-950 break-words">
                         {model.letterheadName}
                     </h1>
                 </header>
@@ -65,7 +65,7 @@ export function CoverLetterDocument({
                 {model.appendedClosing ? (
                     <div className="mt-0">
                         <p className="mb-[10pt]">{model.appendedClosing.greeting}</p>
-                        <p className="font-sans font-bold text-neutral-950 break-words">{model.appendedClosing.name}</p>
+                        <p className="font-bold text-neutral-950 break-words">{model.appendedClosing.name}</p>
                     </div>
                 ) : null}
             </div>

@@ -16,10 +16,11 @@ import {
     RiLoader4Line
 } from "react-icons/ri";
 import { useRouter } from "next/navigation";
-import { m, AnimatePresence } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import { useDialogFocus } from "@/hooks/useDialogFocus";
 import { CoverLetterDocument } from "@/components/dashboard/CoverLetterDocument";
 import { AppIcon } from "@/components/ui/AppIcon";
+import { featureChrome } from "@/components/dashboard/feature-chrome";
 
 type ResumeOption = { id: string; title: string; candidateName?: string };
 
@@ -216,26 +217,24 @@ export function GenerateCoverLetter({ resumes }: { resumes: ResumeOption[] }) {
 
     return (
         <>
-            <m.button 
+            <button 
                 type="button"
                 data-cover-letter-trigger
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
                 onClick={() => setIsOpen(true)}
-                className="flex w-full items-center justify-center gap-2 bg-neutral-950 text-white px-5 py-3 rounded-xl font-semibold transition-all shadow-xs text-xs group md:w-auto hover:bg-neutral-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-950"
+                className={`${featureChrome.primaryButton} w-full md:w-auto`}
             >
                 <AppIcon icon={RiArticleLine} size={16} />
-                Generate Cover Letter
-            </m.button>
+                Generate cover letter
+            </button>
 
             <AnimatePresence>
                 {isOpen && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto">
+                    <div className="fixed inset-0 z-[100] flex items-end justify-center overflow-y-auto p-3 sm:items-center sm:p-4">
                         <m.div 
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="fixed inset-0 bg-neutral-950/60 backdrop-blur-sm" 
+                            className={featureChrome.backdrop}
                             onClick={handleClose}
                             aria-hidden="true"
                         />
@@ -245,25 +244,19 @@ export function GenerateCoverLetter({ resumes }: { resumes: ResumeOption[] }) {
                             role="dialog"
                             aria-modal="true"
                             aria-labelledby="cover-letter-dialog-title"
-                            initial={{ scale: 0.95, opacity: 0, y: 16 }}
-                            animate={{ scale: 1, opacity: 1, y: 0 }}
-                            exit={{ scale: 0.95, opacity: 0, y: 16 }}
-                            className="relative bg-white w-full max-w-5xl max-h-[calc(100dvh-1rem)] sm:max-h-[calc(100dvh-2rem)] rounded-2xl sm:rounded-3xl shadow-2xl border border-neutral-200 flex flex-col overflow-hidden my-auto z-10"
+                            initial={{ y: 16 }}
+                            animate={{ y: 0 }}
+                            exit={{ y: 16 }}
+                            className={`${featureChrome.dialog} ${success ? "max-w-3xl" : "max-w-xl"}`}
                         >
-                            {/* Accent Line */}
-                            <div className="w-full h-1 bg-neutral-950" />
-                            
-                            {/* Header */}
-                            <div className="px-4 py-4 sm:px-6 sm:py-5 border-b border-neutral-200 flex items-center justify-between bg-neutral-50 shrink-0">
-                                <div className="flex items-center gap-3 sm:gap-4">
-                                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-neutral-950 text-white rounded-xl flex items-center justify-center shrink-0 shadow-xs">
-                                        <AppIcon icon={RiArticleLine} size={22} />
-                                    </div>
-                                    <div>
-                                        <h2 id="cover-letter-dialog-title" className="text-base sm:text-lg md:text-xl font-bold tracking-tight text-neutral-950">
-                                            Cover Letter Generator
+                            <div className={featureChrome.dialogHeader}>
+                                <div className="flex min-w-0 items-center gap-2.5">
+                                    <AppIcon icon={RiArticleLine} size={18} className="text-muted-foreground" />
+                                    <div className="min-w-0">
+                                        <h2 id="cover-letter-dialog-title" className="font-sans text-sm font-semibold tracking-tight text-foreground">
+                                            Cover letter generator
                                         </h2>
-                                        <p className="text-xs font-medium text-neutral-600 mt-0.5">
+                                        <p className={featureChrome.helper}>
                                             Draft a letter for a specific role.
                                         </p>
                                     </div>
@@ -272,112 +265,100 @@ export function GenerateCoverLetter({ resumes }: { resumes: ResumeOption[] }) {
                                     onClick={handleClose}
                                     type="button"
                                     aria-label="Close generator dialog"
-                                    className="flex h-11 w-11 items-center justify-center text-neutral-500 hover:text-neutral-950 hover:bg-neutral-200/60 rounded-xl transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-950"
+                                    className={featureChrome.iconButton}
                                 >
-                                    <AppIcon icon={RiCloseLine} size={22} />
+                                    <AppIcon icon={RiCloseLine} size={18} />
                                 </button>
                             </div>
 
-                            {/* Body */}
-                            <div className="flex-grow overflow-y-auto p-4 sm:p-6 md:p-8 bg-neutral-50/40">
+                            <div className={featureChrome.dialogBody}>
                                 {!success ? (
-                                    <div className="space-y-6 sm:space-y-8 max-w-4xl mx-auto">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                                            <div className="space-y-2">
-                                                <label htmlFor="cover-letter-resume-select" className="text-xs font-semibold uppercase tracking-wider text-neutral-700">
-                                                    Select Resume Context
-                                                </label>
-                                                <div className="relative">
-                                                    <select 
-                                                        id="cover-letter-resume-select"
-                                                        className="w-full bg-white border border-neutral-300 hover:border-neutral-400 focus:border-neutral-950 focus:ring-1 focus:ring-neutral-950 rounded-xl px-4 py-3 sm:py-3.5 text-sm font-medium outline-none transition-all appearance-none cursor-pointer text-neutral-900 shadow-xs pr-10"
-                                                        value={formData.resumeId}
-                                                        onChange={(e) => setFormData({...formData, resumeId: e.target.value})}
-                                                    >
-                                                        {resumeOptions.map(r => <option key={r.id} value={r.id}>{r.title}</option>)}
-                                                        {resumeOptions.length === 0 && <option value="">No Resumes Found (Template mode)</option>}
-                                                    </select>
-                                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-500">
-                                                        <AppIcon icon={RiArrowDownSLine} size={20} />
-                                                    </div>
-                                                </div>
-                                                {resumeCursor && (
-                                                    <button 
-                                                        type="button" 
-                                                        disabled={loadingResumes} 
-                                                        onClick={() => void loadResumes(resumeCursor)} 
-                                                        className="text-xs font-semibold text-neutral-700 hover:text-neutral-950 underline disabled:opacity-50"
-                                                    >
-                                                        {loadingResumes ? "Loading resumes…" : "Load more resumes"}
-                                                    </button>
-                                                )}
+                                    <div className="space-y-4">
+                                        <div className="space-y-1.5">
+                                            <label htmlFor="cover-letter-resume-select" className={featureChrome.label}>
+                                                Resume
+                                            </label>
+                                            <div className="relative">
+                                                <select 
+                                                    id="cover-letter-resume-select"
+                                                    className={featureChrome.select}
+                                                    value={formData.resumeId}
+                                                    onChange={(e) => setFormData({...formData, resumeId: e.target.value})}
+                                                >
+                                                    {resumeOptions.map(r => <option key={r.id} value={r.id}>{r.title}</option>)}
+                                                    {resumeOptions.length === 0 && <option value="">No resumes found (template mode)</option>}
+                                                </select>
+                                                <AppIcon icon={RiArrowDownSLine} size={18} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                                             </div>
-                                            <div className="space-y-2">
-                                                <label htmlFor="cover-letter-title-input" className="text-xs font-semibold uppercase tracking-wider text-neutral-700">
-                                                    Internal Reference Title
-                                                </label>
-                                                <input 
-                                                    id="cover-letter-title-input"
-                                                    type="text"
-                                                    placeholder="e.g., Senior AI Engineer at Vercel"
-                                                    className="w-full bg-white border border-neutral-300 hover:border-neutral-400 focus:border-neutral-950 focus:ring-1 focus:ring-neutral-950 rounded-xl px-4 py-3 sm:py-3.5 text-sm font-medium outline-none transition-all text-neutral-900 placeholder:text-neutral-600 shadow-xs"
-                                                    value={formData.title}
-                                                    onChange={(e) => setFormData({...formData, title: e.target.value})}
-                                                />
-                                            </div>
+                                            {resumeCursor && (
+                                                <button 
+                                                    type="button" 
+                                                    disabled={loadingResumes} 
+                                                    onClick={() => void loadResumes(resumeCursor)} 
+                                                    className="font-sans text-xs font-medium text-muted-foreground underline hover:text-foreground disabled:opacity-50"
+                                                >
+                                                    {loadingResumes ? "Loading resumes…" : "Load more resumes"}
+                                                </button>
+                                            )}
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label htmlFor="cover-letter-title-input" className={featureChrome.label}>
+                                                Reference title
+                                            </label>
+                                            <input 
+                                                id="cover-letter-title-input"
+                                                type="text"
+                                                placeholder="e.g. Senior AI engineer at Vercel"
+                                                className={featureChrome.input}
+                                                value={formData.title}
+                                                onChange={(e) => setFormData({...formData, title: e.target.value})}
+                                            />
                                         </div>
 
-                                        {/* Import from Job URL */}
-                                        <div className="bg-white border border-neutral-200 rounded-2xl p-4 sm:p-6 shadow-xs space-y-4">
-                                            <div className="flex items-center gap-2.5">
-                                                <AppIcon icon={RiLink} size={16} className="text-neutral-700" />
-                                                <label htmlFor="cover-letter-url-input" className="text-xs font-bold uppercase tracking-wider text-neutral-950">
-                                                    Import from Job URL
-                                                </label>
-                                            </div>
-                                            
-                                            <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3">
-                                                <div className="relative flex-grow">
+                                        <div className="space-y-1.5">
+                                            <label htmlFor="cover-letter-url-input" className={featureChrome.label}>
+                                                Job URL
+                                            </label>
+                                            <div className="flex flex-col gap-2 sm:flex-row">
+                                                <div className="relative min-w-0 flex-1">
                                                     <input 
                                                         id="cover-letter-url-input"
                                                         type="text"
-                                                        placeholder="Paste LinkedIn, Indeed, or job posting URL..."
-                                                        className="w-full bg-neutral-50 border border-neutral-300 focus:bg-white focus:border-neutral-950 focus:ring-1 focus:ring-neutral-950 rounded-xl px-4 py-2.5 sm:py-3 text-sm font-medium outline-none transition-all text-neutral-900 placeholder:text-neutral-600 pl-10"
+                                                        placeholder="Paste a LinkedIn, Indeed, or job posting URL"
+                                                        className={`${featureChrome.input} pl-10`}
                                                         value={scrapeUrl}
                                                         onChange={(e) => setScrapeUrl(e.target.value)}
                                                     />
-                                                    <AppIcon icon={RiLink} size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
+                                                    <AppIcon icon={RiLink} size={16} className={featureChrome.fieldIcon} />
                                                 </div>
-                                                <m.button 
-                                                    whileHover={{ scale: 1.01 }}
-                                                    whileTap={{ scale: 0.99 }}
+                                                <button 
                                                     type="button"
                                                     onClick={handleScrape}
                                                     disabled={scraping || !scrapeUrl.trim()}
-                                                    className="bg-neutral-900 text-white min-h-11 px-5 py-2.5 sm:py-3 rounded-xl font-semibold text-xs hover:bg-neutral-800 disabled:opacity-50 transition-colors flex items-center justify-center gap-2 shadow-xs shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-950"
+                                                    className={`${featureChrome.secondaryButton} shrink-0`}
                                                 >
                                                     {scraping ? <AppIcon icon={RiLoader4Line} size={16} className="animate-spin" /> : <AppIcon icon={RiFileSearchLine} size={16} />}
-                                                    {scraping ? "Extracting..." : "Extract Description"}
-                                                </m.button>
+                                                    {scraping ? "Extracting…" : "Extract"}
+                                                </button>
                                             </div>
-                                            <p className="text-xs text-neutral-600 leading-normal">
-                                                Automatically extracts job title, company, and role requirements from supported platforms.
+                                            <p className={`${featureChrome.helper} hidden sm:block`}>
+                                                Pulls the title, company, and requirements from supported listings.
                                             </p>
                                         </div>
 
-                                        <div className="space-y-2">
-                                            <div className="flex items-center justify-between">
-                                                <label htmlFor="cover-letter-jd-input" className="text-xs font-semibold uppercase tracking-wider text-neutral-700">
-                                                    Target Job Description
+                                        <div className="space-y-1.5">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <label htmlFor="cover-letter-jd-input" className={featureChrome.label}>
+                                                    Job description
                                                 </label>
-                                                <span className="text-xs font-medium text-neutral-500">
+                                                <span className={featureChrome.helper}>
                                                     {formData.jobDescription.length} characters
                                                 </span>
                                             </div>
                                             <textarea 
                                                 id="cover-letter-jd-input"
-                                                placeholder="Paste the job description here. Include key requirements, responsibilities, and company information..."
-                                                className="w-full bg-white border border-neutral-300 hover:border-neutral-400 focus:border-neutral-950 focus:ring-1 focus:ring-neutral-950 rounded-xl p-4 sm:p-5 text-sm font-medium outline-none transition-all min-h-[220px] sm:min-h-[280px] resize-y leading-relaxed text-neutral-900 shadow-xs placeholder:text-neutral-600"
+                                                placeholder="Paste the job description, including requirements and company details."
+                                                className={featureChrome.textarea}
                                                 value={formData.jobDescription}
                                                 onChange={(e) => {
                                                     setFormData({...formData, jobDescription: e.target.value});
@@ -386,165 +367,138 @@ export function GenerateCoverLetter({ resumes }: { resumes: ResumeOption[] }) {
                                             />
 
                                             {formData.jobDescription.length > 50 && !intelligence && (
-                                                <div className="flex justify-center pt-2">
-                                                    <m.button
-                                                        whileHover={{ scale: 1.02 }}
-                                                        whileTap={{ scale: 0.98 }}
-                                                        type="button"
-                                                        onClick={handleEnrich}
-                                                        disabled={enriching}
-                                                        className="bg-white border border-neutral-300 text-neutral-900 px-5 py-2.5 rounded-xl font-semibold text-xs shadow-xs flex items-center gap-2 hover:bg-neutral-100 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-950"
-                                                    >
-                                                        {enriching ? <AppIcon icon={RiLoader4Line} size={16} className="animate-spin" /> : <AppIcon icon={RiSearchEyeLine} size={16} className="text-neutral-700" />}
-                                                        {enriching ? "Analyzing..." : "Analyze with Azure AI"}
-                                                    </m.button>
-                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleEnrich}
+                                                    disabled={enriching}
+                                                    className={featureChrome.secondaryButton}
+                                                >
+                                                    {enriching ? <AppIcon icon={RiLoader4Line} size={16} className="animate-spin" /> : <AppIcon icon={RiSearchEyeLine} size={16} />}
+                                                    {enriching ? "Analyzing…" : "Analyze role"}
+                                                </button>
                                             )}
 
                                             {intelligence && (
-                                                <m.div 
-                                                    initial={{ opacity: 0, y: 8 }}
-                                                    animate={{ opacity: 1, y: 0 }}
-                                                    className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 pt-2"
-                                                >
-                                                    <div className="bg-white p-4 rounded-xl border border-neutral-200 shadow-xs">
-                                                        <p className="text-xs font-bold uppercase tracking-wider text-neutral-900 mb-3">Role Skills</p>
+                                                <div className="grid grid-cols-1 gap-2 pt-1 sm:grid-cols-3">
+                                                    <div className="rounded-xl border border-neutral-200/70 bg-white p-3">
+                                                        <p className="mb-2 font-sans text-xs font-medium text-muted-foreground">Role skills</p>
                                                         <div className="flex flex-wrap gap-1.5">
                                                             {intelligence.skills.slice(0, 8).map((s, i) => (
-                                                                <span key={i} className="px-2.5 py-1 bg-neutral-100 text-neutral-800 text-xs font-medium rounded-md border border-neutral-200">{s}</span>
+                                                                <span key={i} className="rounded-lg border border-neutral-200 bg-muted px-2 py-0.5 font-sans text-xs font-medium text-foreground">{s}</span>
                                                             ))}
                                                         </div>
                                                     </div>
-                                                    <div className="bg-white p-4 rounded-xl border border-neutral-200 shadow-xs">
-                                                        <p className="text-xs font-bold uppercase tracking-wider text-neutral-900 mb-3">Company Signals</p>
+                                                    <div className="rounded-xl border border-neutral-200/70 bg-white p-3">
+                                                        <p className="mb-2 font-sans text-xs font-medium text-muted-foreground">Company signals</p>
                                                         <div className="flex flex-wrap gap-1.5">
                                                             {intelligence.companySignals.slice(0, 5).map((s, i) => (
-                                                                <span key={i} className="px-2.5 py-1 bg-neutral-100 text-neutral-800 text-xs font-medium rounded-md border border-neutral-200">{s}</span>
+                                                                <span key={i} className="rounded-lg border border-neutral-200 bg-muted px-2 py-0.5 font-sans text-xs font-medium text-foreground">{s}</span>
                                                             ))}
                                                         </div>
                                                     </div>
-                                                    <div className="bg-white p-4 rounded-xl border border-neutral-200 shadow-xs">
-                                                        <p className="text-xs font-bold uppercase tracking-wider text-neutral-900 mb-3">Requirements</p>
+                                                    <div className="rounded-xl border border-neutral-200/70 bg-white p-3">
+                                                        <p className="mb-2 font-sans text-xs font-medium text-muted-foreground">Requirements</p>
                                                         <div className="flex flex-wrap gap-1.5">
                                                             {intelligence.requirements.slice(0, 5).map((s, i) => (
-                                                                <span key={i} className="px-2.5 py-1 bg-neutral-100 text-neutral-800 text-xs font-medium rounded-md border border-neutral-200 truncate max-w-full">{s}</span>
+                                                                <span key={i} className="max-w-full truncate rounded-lg border border-neutral-200 bg-muted px-2 py-0.5 font-sans text-xs font-medium text-foreground">{s}</span>
                                                             ))}
                                                         </div>
                                                     </div>
-                                                </m.div>
+                                                </div>
                                             )}
                                         </div>
 
                                         {error && (
-                                            <m.div 
-                                                initial={{ opacity: 0, y: 6 }}
-                                                animate={{ opacity: 1, y: 0 }}
+                                            <div
                                                 role="alert"
-                                                className="bg-red-50 text-red-700 p-4 rounded-xl border border-red-200 flex items-start gap-3 text-xs font-medium"
+                                                className="flex items-start gap-2.5 rounded-xl border border-neutral-200/70 bg-muted px-3.5 py-3 font-sans text-sm"
                                             >
-                                                <AppIcon icon={RiAlertLine} size={18} className="mt-0.5 text-red-600" />
+                                                <AppIcon icon={RiAlertLine} size={16} className="mt-0.5 text-muted-foreground" />
                                                 <div className="space-y-0.5">
-                                                    <p className="font-semibold text-red-800">Generation Notice</p>
-                                                    <p className="text-red-700">{error}</p>
+                                                    <p className="font-semibold text-foreground">Could not generate</p>
+                                                    <p className="text-muted-foreground">{error}</p>
                                                 </div>
-                                            </m.div>
+                                            </div>
                                         )}
                                     </div>
                                 ) : (
-                                    <div className="space-y-6 max-w-4xl mx-auto">
-                                        <div className="bg-neutral-950 text-white p-4 sm:p-6 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md">
-                                            <div className="flex items-center gap-3 sm:gap-4">
-                                                <div className="w-10 h-10 bg-white/10 text-white rounded-xl flex items-center justify-center shrink-0">
-                                                    <AppIcon icon={RiCheckLine} size={22} />
-                                                </div>
+                                    <div className="space-y-4">
+                                        <div className="flex flex-col gap-3 rounded-xl border border-neutral-200/70 bg-muted/60 p-3 sm:flex-row sm:items-center sm:justify-between">
+                                            <div className="flex items-center gap-2.5">
+                                                <AppIcon icon={RiCheckLine} size={18} className="text-muted-foreground" />
                                                 <div>
-                                                    <p className="text-base sm:text-lg font-bold tracking-tight text-white">Letter Ready</p>
-                                                    <p className="text-xs font-medium text-neutral-400">Drafted and ready for review</p>
+                                                    <p className="font-sans text-sm font-semibold text-foreground">Letter ready</p>
+                                                    <p className={featureChrome.helper}>Drafted and ready for review</p>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-                                                <m.button 
-                                                    whileHover={{ scale: 1.02 }}
-                                                    whileTap={{ scale: 0.98 }}
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <button
                                                     type="button"
                                                     onClick={handleCopy}
                                                     aria-label="Copy letter text"
-                                                    className="bg-neutral-800 hover:bg-neutral-700 px-4 py-2.5 rounded-xl transition-colors flex items-center gap-2 text-xs font-semibold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+                                                    className={featureChrome.secondaryButton}
                                                 >
                                                     {copied ? <AppIcon icon={RiCheckLine} size={16} /> : <AppIcon icon={RiFileCopyLine} size={16} />}
-                                                    {copied ? "Copied" : "Copy Text"}
-                                                </m.button>
-                                                <m.button 
-                                                    whileHover={{ scale: 1.02 }}
-                                                    whileTap={{ scale: 0.98 }}
+                                                    {copied ? "Copied" : "Copy text"}
+                                                </button>
+                                                <button
                                                     type="button"
                                                     onClick={downloadPDF}
                                                     disabled={isExporting}
                                                     aria-label="Download PDF"
-                                                    className="bg-white hover:bg-neutral-100 text-neutral-950 px-4 py-2.5 rounded-xl transition-colors disabled:opacity-50 flex items-center gap-2 text-xs font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+                                                    className={featureChrome.primaryButton}
                                                 >
                                                     {isExporting ? <AppIcon icon={RiLoader4Line} size={16} className="animate-spin" /> : <AppIcon icon={RiDownload2Line} size={16} />}
-                                                    Export PDF
-                                                </m.button>
+                                                    Download PDF
+                                                </button>
                                             </div>
                                         </div>
 
-                                        <div className="bg-neutral-100 rounded-2xl p-2 sm:p-4 md:p-6 border border-neutral-200 overflow-x-auto">
-                                            {/* Letter Preview Design */}
-                                            <CoverLetterDocument
-                                                content={generatedContent || ""}
-                                                candidateName={selectedCandidateName}                                                className="p-6 sm:p-10 md:p-16 rounded-xl shadow-xs border border-neutral-200 w-full max-w-[210mm] mx-auto min-h-[500px]"
-                                            />
-                                        </div>
+                                        <CoverLetterDocument
+                                            content={generatedContent || ""}
+                                            candidateName={selectedCandidateName}
+                                            className="mx-auto w-full max-w-[210mm] rounded-xl border border-neutral-200/70 p-6 sm:p-10"
+                                        />
                                     </div>
                                 )}
                             </div>
 
-                            {/* Footer */}
-                            <div className="px-4 py-3.5 sm:px-6 sm:py-4 border-t border-neutral-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white/95 backdrop-blur-xl shrink-0">
-                                <div className="flex items-center gap-3 min-w-0">
-                                    <AppIcon icon={RiMailSendLine} size={16} className="text-neutral-600" />
-                                    <div>
-                                        <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Generation cost</p>
-                                        <p className="text-xs font-medium text-neutral-700">Uses 1 credit</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3 justify-end">
+                            <div className={featureChrome.dialogFooter}>
+                                <p className={featureChrome.helper}>Uses 1 credit</p>
+                                <div className="flex items-center justify-end gap-2">
                                     {!success ? (
                                         <>
-                                            <button 
+                                            <button
                                                 type="button"
                                                 onClick={handleClose}
-                                                className="px-4 py-2.5 text-xs font-semibold text-neutral-600 hover:text-neutral-950 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-950 rounded-lg"
+                                                className={featureChrome.ghostButton}
                                             >
                                                 Cancel
                                             </button>
-                                            <m.button 
-                                                whileHover={{ scale: 1.02 }}
-                                                whileTap={{ scale: 0.98 }}
+                                            <button
                                                 type="button"
                                                 onClick={handleGenerate}
                                                 disabled={loading || !formData.jobDescription}
-                                                className="bg-neutral-950 text-white px-5 py-2.5 rounded-xl font-semibold text-xs hover:bg-neutral-800 transition-colors disabled:opacity-50 flex items-center gap-2 shadow-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-950"
+                                                className={featureChrome.primaryButton}
                                             >
                                                 {loading ? (
                                                     <>
                                                         <AppIcon icon={RiLoader4Line} size={16} className="animate-spin" />
-                                                        Generating...
+                                                        Generating…
                                                     </>
                                                 ) : (
                                                     <>
-                                                        Generate Cover Letter
                                                         <AppIcon icon={RiMailSendLine} size={16} />
+                                                        Generate
                                                     </>
                                                 )}
-                                            </m.button>
+                                            </button>
                                         </>
                                     ) : (
-                                        <button 
+                                        <button
                                             type="button"
                                             onClick={handleClose}
-                                            className="bg-neutral-950 text-white px-6 py-2.5 rounded-xl font-semibold text-xs hover:bg-neutral-800 transition-colors shadow-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-950"
+                                            className={featureChrome.primaryButton}
                                         >
                                             Done
                                         </button>

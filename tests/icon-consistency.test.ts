@@ -25,17 +25,18 @@ describe("icon meaning and family", () => {
     });
 
     it("maps cover-letter extract and URL fields to search and link icons", () => {
-        assert.match(generator, /Extract Description/);
+        assert.match(generator, /Extract/);
         assert.match(generator, /AppIcon icon=\{RiFileSearchLine\}/);
         assert.match(generator, /AppIcon icon=\{RiLink\}/);
         assert.doesNotMatch(generator, /RiExternalLinkLine/);
-        assert.match(generator, /pointer-events-none absolute left-3.5/);
+        assert.match(generator, /featureChrome\.fieldIcon/);
+        assert.match(readFileSync("src/components/dashboard/feature-chrome.ts", "utf8"), /pointer-events-none absolute left-3.5/);
         const extractBlock = generator.slice(
-            generator.indexOf("Extract Description") - 400,
-            generator.indexOf("Extract Description") + 80,
+            generator.indexOf("{scraping ? \"Extracting"),
+            generator.indexOf("{scraping ? \"Extracting") + 280,
         );
         assert.doesNotMatch(extractBlock, /RiDownload2Line/);
-        assert.match(generator, /RiDownload2Line[\s\S]{0,120}Export PDF/);
+        assert.match(generator, /RiDownload2Line[\s\S]{0,120}Download PDF/);
     });
 
     it("keeps download, copy, close, and delete icons on matching actions", () => {
@@ -78,27 +79,28 @@ describe("dashboard navigation and tool dialogs", () => {
     it("reuses the sidebar Cover Letters icon for feature identity, not actions", () => {
         const opener = generator.slice(
             generator.indexOf("data-cover-letter-trigger"),
-            generator.indexOf("Generate Cover Letter") + 24,
+            generator.indexOf("Generate cover letter") + 24,
         );
         assert.match(opener, /AppIcon icon=\{RiArticleLine\}/);
         assert.doesNotMatch(opener, /RiAddLine|RiMailSendLine|RiMagicLine/);
 
-        const headingStart = generator.indexOf("w-10 h-10 sm:w-12 sm:h-12 bg-neutral-950");
-        const heading = generator.slice(headingStart, generator.indexOf("Cover Letter Generator") + 24);
-        assert.match(heading, /AppIcon icon=\{RiArticleLine\}/);
+        assert.match(generator, /AppIcon icon=\{RiArticleLine\}[\s\S]{0,400}Cover letter generator/);
+        const heading = generator.slice(
+            generator.indexOf("featureChrome.dialogHeader"),
+            generator.indexOf("Cover letter generator") + 24,
+        );
         assert.doesNotMatch(heading, /RiMailSendLine|RiAddLine|RiMagicLine/);
 
         const generateCta = generator.slice(
-            generator.indexOf("Generating..."),
-            generator.indexOf("Generating...") + 520,
+            generator.indexOf("Generating…"),
+            generator.indexOf("Generating…") + 520,
         );
         assert.match(generateCta, /AppIcon icon=\{RiMailSendLine\}/);
         assert.doesNotMatch(generateCta, /RiArticleLine/);
-        assert.match(generator, /AppIcon icon=\{RiMailSendLine\} size=\{16\} className="text-neutral-600"/);
-        assert.match(generator, /Generation cost/);
+        assert.match(generator, /AppIcon icon=\{RiMailSendLine\} size=\{16\}/);
+        assert.match(generator, /Uses 1 credit/);
 
-        assert.match(coverLettersPage, /RiArticleLine size=\{26\}/);
-        assert.match(coverLettersPage, /RiArticleLine size=\{20\}/);
+        assert.match(coverLettersPage, /AppIcon icon=\{RiArticleLine\}/);
         assert.doesNotMatch(coverLettersPage, /RiMagicLine|RiFileTextLine/);
         assert.match(coverLettersPage, /RiTimeLine/);
 
@@ -118,7 +120,9 @@ describe("dashboard navigation and tool dialogs", () => {
         assert.match(mobileBlock, /\.zebu-fab \{[^}]*min-width: 2\.75rem/);
         assert.match(mobileBlock, /\.zebu-fab > span \{/);
         assert.match(mobileBlock, /clip: rect\(0, 0, 0, 0\)/);
-        assert.match(coverLettersPage, /max-\[640px\]:pr-16/);
+        assert.match(mobileBlock, /overflow: visible/);
+        assert.doesNotMatch(coverLettersPage, /max-\[640px\]:pr-16/);
+        assert.match(coverLettersPage, /max-\[640px\]:pb-24/);
     });
 
     it("uses a consistent close control on tool dialogs", () => {
