@@ -6,7 +6,7 @@ import { handleApiError } from "@/lib/api-error";
 import { auth } from "@/lib/auth";
 import { generateAiResponse } from "@/lib/azure-foundry";
 import { refundUserCredits, reserveUserCredits } from "@/lib/credit-policy";
-import { db } from "@/lib/db";
+import { db, executeWithDbRetry } from "@/lib/db";
 import { checkDistributedRateLimit } from "@/lib/rate-limit";
 import { resumeContentToPrompt } from "@/lib/resume-content";
 import {
@@ -28,10 +28,10 @@ export async function GET(req: NextRequest) {
             lt(coverLettersTable.createdAt, cursor.timestamp),
             and(eq(coverLettersTable.createdAt, cursor.timestamp), lt(coverLettersTable.id, cursor.id)),
         ) : undefined;
-        const rows = await db.select().from(coverLettersTable)
+        const rows = await executeWithDbRetry(() => db.select().from(coverLettersTable)
             .where(and(eq(coverLettersTable.userId, session.user.id), cursorCondition))
             .orderBy(desc(coverLettersTable.createdAt), desc(coverLettersTable.id))
-            .limit(limit + 1);
+            .limit(limit + 1));
         const page = paginateRows(rows, limit, item => ({ id: item.id, timestamp: item.createdAt }));
 
         return NextResponse.json({ success: true, data: page.items, page: page.page });

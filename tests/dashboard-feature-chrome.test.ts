@@ -48,7 +48,7 @@ describe("dashboard feature chrome", () => {
     it("keeps cover-letter document preview distinct from dashboard chrome", () => {
         assert.match(coverLetters, /featureChrome.card/);
         assert.match(generator, /featureChrome.dialogHeader/);
-        assert.match(generator, /STIX Two Text/);
-        assert.match(generator, /fontFamily: "'STIX Two Text', serif"/);
+        assert.match(generator, /CoverLetterDocument/);
+        assert.doesNotMatch(generator, /Applicant Name|System Generated/);
     });
 });

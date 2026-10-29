@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import { generateCoverLetterHtml } from "../src/lib/cover-letter-renderer";
 
@@ -14,5 +15,14 @@ describe("Cover letter PDF renderer", () => {
         const html = generateCoverLetterHtml("Hello", "Cover Letter");
         assert.doesNotMatch(html, /https?:\/\//);
         assert.doesNotMatch(html, /<link\b/i);
+    });
+
+    it("does not infer identity from the signed-in account in the export route", () => {
+        const route = readFileSync("src/app/api/export/pdf/cover-letter/route.ts", "utf8");
+        assert.match(route, /requireAuth/);
+        assert.match(route, /getUserOwnedResume/);
+        assert.match(route, /candidateNameFromStoredResume/);
+        assert.doesNotMatch(route, /auth\.user\.name|session\.user\.name/);
+        assert.doesNotMatch(route, /body\.candidateName/);
     });
 });

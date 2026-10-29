@@ -28,18 +28,18 @@ describe("icon meaning and family", () => {
     });
 
     it("maps cover-letter extract and URL fields to search and link icons", () => {
-        assert.match(generator, /Extract Description/);
+        assert.match(generator, /Extract/);
         assert.match(generator, /AppIcon icon=\{RiFileSearchLine\}/);
         assert.match(generator, /AppIcon icon=\{RiLink\}/);
         assert.doesNotMatch(generator, /RiExternalLinkLine/);
         assert.match(generator, /featureChrome.fieldIcon/);
         assert.match(readFileSync("src/components/dashboard/feature-chrome.ts", "utf8"), /pointer-events-none absolute left-3.5/);
         const extractBlock = generator.slice(
-            generator.indexOf("Extract Description") - 400,
-            generator.indexOf("Extract Description") + 80,
+            generator.indexOf("Extract") - 400,
+            generator.indexOf("Extract") + 80,
         );
         assert.doesNotMatch(extractBlock, /RiDownload2Line/);
-        assert.match(generator, /RiDownload2Line[\s\S]{0,220}Export PDF/);
+        assert.match(generator, /RiDownload2Line[\s\S]{0,220}Download PDF/);
     });
 
     it("keeps download, copy, close, and delete icons on matching actions", () => {
@@ -91,22 +91,22 @@ describe("dashboard navigation and tool dialogs", () => {
 
         assert.match(dashboard, /feature="Applications"[\s\S]{0,200}View applications/);
         assert.match(resumesPage, /title="Resumes"/);
-        assert.match(coverLettersPage, /title="Cover Letters"/);
+        assert.match(coverLettersPage, /Cover Letters/);
         assert.match(coverLettersPage, /feature="Cover Letters"/);
     });
 
     it("reuses the sidebar Cover Letters icon for feature identity, not actions", () => {
         const opener = generator.slice(
             generator.indexOf("data-cover-letter-trigger"),
-            generator.indexOf("Generate Cover Letter") + 24,
+            generator.indexOf("Generate cover letter") + 24,
         );
         assert.match(opener, /AppIcon icon=\{RiArticleLine\}/);
         assert.doesNotMatch(opener, /RiAddLine|RiMailSendLine|RiMagicLine/);
 
         assert.match(generator, /feature="Cover Letters"/);
-        assert.match(generator, /Generating\.\.\.[\s\S]{0,400}AppIcon icon=\{RiMailSendLine\}/);
-        assert.match(generator, /AppIcon icon=\{RiMailSendLine\} size=\{16\} className="text-neutral-600"/);
-        assert.match(generator, /Generation cost/);
+        assert.match(generator, /AppIcon icon=\{RiMailSendLine\}/);
+        assert.doesNotMatch(generator, /Applicant Name|System Generated/);
+        assert.match(generator, /Uses 1 credit/);
 
         assert.match(actions, /AppIcon icon=\{RiArticleLine\}/);
         assert.doesNotMatch(actions, /RiMailSendLine/);
@@ -124,7 +124,8 @@ describe("dashboard navigation and tool dialogs", () => {
         assert.match(mobileBlock, /\.zebu-fab \{[^}]*min-width: 2\.75rem/);
         assert.match(mobileBlock, /\.zebu-fab > span \{/);
         assert.match(mobileBlock, /clip: rect\(0, 0, 0, 0\)/);
-        assert.match(coverLettersPage, /max-\[640px\]:pr-16/);
+        assert.doesNotMatch(coverLettersPage, /max-\[640px\]:pr-16/);
+        assert.match(coverLettersPage, /max-\[640px\]:pb-24/);
         assert.match(resumesPage, /max-\[640px\]:pr-16/);
     });
 

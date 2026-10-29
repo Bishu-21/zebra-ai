@@ -4,8 +4,8 @@ import { useEffect, useRef } from "react";
 
 const focusableSelector = "button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex='-1'])";
 
-export function useDialogFocus(open: boolean, onClose: () => void) {
-    const dialogRef = useRef<HTMLDivElement | null>(null);
+export function useDialogFocus<T extends HTMLElement = HTMLDivElement>(open: boolean, onClose: () => void) {
+    const dialogRef = useRef<T | null>(null);
 
     useEffect(() => {
         if (!open) return;

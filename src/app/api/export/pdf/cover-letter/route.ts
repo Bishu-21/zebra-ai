@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateCoverLetterHtml } from "@/lib/cover-letter-renderer";
-import { requireAuth } from "@/lib/auth-policy";
+import { getUserOwnedResume, requireAuth } from "@/lib/auth-policy";
+import { candidateNameFromStoredResume } from "@/lib/cover-letter-document";
 import { renderPdfBuffer } from "@/lib/pdf-browser";
 import { handleApiError } from "@/lib/api-error";
 
@@ -14,8 +15,9 @@ const MAX_COVER_LETTER_PDF_PAYLOAD_BYTES = 256 * 1024;
 
 export async function POST(req: NextRequest) {
     try {
-        const { errorResponse } = await requireAuth();
+        const { auth, errorResponse } = await requireAuth();
         if (errorResponse) return errorResponse;
+        if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
         const contentLength = Number(req.headers.get("content-length") || 0);
         if (contentLength > MAX_COVER_LETTER_PDF_PAYLOAD_BYTES) {
@@ -33,9 +35,16 @@ export async function POST(req: NextRequest) {
         }
 
         const safeTitle = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, "") || "cover-letter";
+        const resumeId = typeof body.resumeId === "string" ? body.resumeId.trim() : "";
+        let confirmedName: string | undefined;
+        if (resumeId) {
+            const resume = await getUserOwnedResume(auth.user.id, resumeId);
+            confirmedName = candidateNameFromStoredResume(resume?.content);
+        }
 
-        // 1. Generate the HTML content
-        const html = generateCoverLetterHtml(content, title || "Cover Letter");
+        const html = generateCoverLetterHtml(content, title || "Cover Letter", {
+            candidateName: confirmedName,
+        });
 
         const pdfBuffer = await renderPdfBuffer(html);
         return new Response(Buffer.from(pdfBuffer), {

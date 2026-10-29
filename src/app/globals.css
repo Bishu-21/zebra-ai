@@ -405,7 +405,7 @@ html {
 .zebu-mic--live { background: #fff; color: #0a0a0a; animation: zebu-mic-live 1.15s ease-in-out infinite; }
 .zebu-mic--large { width: 2.8rem; height: 2.8rem; }
 
-.zebu-launcher { position: fixed; right: 1.5rem; bottom: 1.5rem; z-index: 100; display: flex; align-items: center; gap: .45rem; }
+.zebu-launcher { position: fixed; right: 1.5rem; bottom: 1.5rem; z-index: 90; display: flex; align-items: center; gap: .45rem; }
 .zebu-fab { display: flex; min-height: 2.75rem; min-width: 2.75rem; align-items: center; gap: .4rem; border: 1px solid rgba(10,10,10,.12); border-radius: 999px; background: #fff; padding: 0 1.1rem 0 .15rem; color: #0a0a0a; font-size: .72rem; font-weight: 700; box-shadow: 0 4px 14px rgba(0, 0, 0, .1); transition: transform 160ms ease, box-shadow 160ms ease; }
 .zebu-fab:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0, 0, 0, .13); }
 .zebu-fab:focus-visible { outline: 3px solid #737373; outline-offset: 3px; }
@@ -461,7 +461,7 @@ html {
   .zebu-icon-button { width: 2.5rem; height: 2.5rem; }
   .zebu-composer { padding-bottom: max(.8rem, env(safe-area-inset-bottom)); }
   .zebu-launcher { right: .75rem; bottom: max(.75rem, env(safe-area-inset-bottom)); }
-  .zebu-fab { padding: 0; gap: 0; min-width: 2.75rem; }
+  .zebu-fab { padding: 0; gap: 0; min-width: 2.75rem; overflow: visible; }
   .zebu-fab > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); clip-path: inset(50%); white-space: nowrap; }
   .zebu-action-heading span:last-child { display: none; }
   .zebu-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
