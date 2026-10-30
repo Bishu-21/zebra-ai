@@ -96,9 +96,12 @@ environment variables, not in the repository.
 
 If buying credits returns “Checkout is temporarily unavailable”, check the
 server logs for the missing configuration. Order creation returns HTTP 503
-when `RAZORPAY_WEBHOOK_SECRET` or either API key is absent. For local development,
-set the test webhook secret in `.env.local` and use a public HTTPS tunnel to
-forward Razorpay test events to `/api/payments/webhook`. Configure the same
+when `RAZORPAY_WEBHOOK_SECRET` or either API key is absent. Copy the webhook
+secret from the Razorpay dashboard; do not invent one. Set
+`NEXT_PUBLIC_SUPPORT_EMAIL` to a monitored inbox before paid launch; Privacy,
+Terms, and Refunds stay without a contact address until that value exists.
+For local development, set the test webhook secret in `.env.local` and use a
+public HTTPS tunnel to forward Razorpay test events to `/api/payments/webhook`. Configure the same
 secret in the Razorpay test webhook settings, then restart the app. For a
 deployment, update its environment variables and redeploy. Do not bypass the
 webhook requirement: it recovers credit grants when browser verification is

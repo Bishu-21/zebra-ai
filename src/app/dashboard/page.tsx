@@ -208,7 +208,7 @@ async function renderDashboardContent(session: NonNullable<Awaited<ReturnType<ty
     }),
   ]);
   
-  const latestAnalysisMap: Record<string, { score: number; feedback: unknown }> = {};
+  const latestAnalysisMap: Record<string, { score: number | null; feedback: unknown }> = {};
   for (const a of resumeAnalyses) {
       latestAnalysisMap[a.resumeId] = { score: a.score, feedback: a.feedback };
   }
@@ -258,7 +258,7 @@ async function renderDashboardContent(session: NonNullable<Awaited<ReturnType<ty
           id: a.id,
           type: "analysis" as const,
           title: `Analysis: ${a.resume?.title || "Deleted Resume"}`,
-          subtext: `${a.score > 80 ? 'Excellent' : 'Average'} Quality`,
+          subtext: a.score == null ? "Review saved" : `${a.score > 80 ? "Excellent" : "Average"} Quality`,
           date: a.createdAt,
           score: a.score,
           fullData: (a.feedback || {}) as ResumeAnalysisData,

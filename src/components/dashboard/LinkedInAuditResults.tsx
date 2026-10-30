@@ -48,8 +48,8 @@ export function LinkedInAuditResults({ result }: { result: LinkedInAuditResult }
 
     <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" aria-label="Category scores">
       {LINKEDIN_AUDIT_CATEGORIES.map(category => <div key={category} className="rounded-2xl border border-neutral-200 bg-white p-4">
-        <div className="flex items-center justify-between gap-3"><span className="text-sm font-medium">{labels[category]}</span><strong className="text-sm">{result.scores.categories[category] == null ? "—" : `${result.scores.categories[category]}%`}</strong></div>
-        <div className="mt-3 h-2 overflow-hidden rounded-full bg-neutral-100"><div className="h-full rounded-full bg-neutral-900" style={{ width: `${result.scores.categories[category] || 0}%` }} /></div>
+        <div className="flex items-center justify-between gap-3"><span className="text-sm font-medium">{labels[category]}</span><strong className="text-sm">{result.scores.categories[category] == null ? "Unknown" : `${result.scores.categories[category]}%`}</strong></div>
+        <div className="mt-3 h-2 overflow-hidden rounded-full bg-neutral-100">{result.scores.categories[category] == null ? null : <div className="h-full rounded-full bg-neutral-900" style={{ width: `${result.scores.categories[category]}%` }} />}</div>
       </div>)}
     </section>
 

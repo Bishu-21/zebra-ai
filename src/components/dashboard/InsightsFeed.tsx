@@ -33,7 +33,7 @@ interface InsightItem {
     title: string;
     subtext: string;
     date: Date;
-    score: number;
+    score: number | null;
     fullData: ResumeAnalysisData | ProjectAnalysisData | TailoringData;
 }
 
@@ -93,19 +93,14 @@ export function InsightsFeed({ data }: InsightsFeedProps) {
         const normalizedData: ResumeAnalysisData = {
             score: insight.score,
             summary: (feedback.summary || feedback.recommendations?.[0] || "Analysis complete.") as string,
-            metrics: feedback.metrics || {
-                impact: 0,
-                formatting: 0,
-                ats: 0,
-                branding: 0
-            },
+            metrics: feedback.metrics,
             strengths: feedback.strengths || [],
             weaknesses: feedback.weaknesses || [],
             actionItems: feedback.actionItems || [],
             suggestedBulletPoints: feedback.suggestedBulletPoints || []
         };
 
-        setSelectedResumeScoreLabel("Resume Score");
+        setSelectedResumeScoreLabel("Resume review score");
         setSelectedResume(normalizedData);
         setIsResumeModalOpen(true);
     };
@@ -174,10 +169,10 @@ export function InsightsFeed({ data }: InsightsFeedProps) {
                                 {item.type !== "import" && (
                                     <div className="flex items-center gap-2">
                                         <span className="text-2xl font-bold text-[#0A0A0A] tracking-tight">
-                                            {item.score}
+                                            {item.score == null ? "n/a" : item.score}
                                         </span>
                                         <span className="text-xs font-semibold text-neutral-500 bg-neutral-100 px-2 py-0.5 rounded-full border border-neutral-200/80">
-                                            {item.score > 80 ? "High Match" : "Review"}
+                                            {item.type === "tailoring" ? "Role review" : "Saved score"}
                                         </span>
                                     </div>
                                 )}

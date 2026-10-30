@@ -579,3 +579,13 @@ html {
     -webkit-print-color-adjust: exact !important;
   }
 }
+
+/* Compact voice navigation: retain microphone controls without covering the workspace. */
+.zebu-fab--head { width: 48px; height: 48px; min-width: 48px; padding: 0; justify-content: center; }
+.zebu-fab--head .zebu-orb { width: 42px; height: 42px; }
+.zebu-navigation-voice .zebu-panel { width: min(340px, calc(100vw - 1.5rem)); }
+.zebu-navigation-voice .zebu-panel--compact { height: 180px; }
+.zebu-navigation-voice .zebu-panel--expanded, .zebu-navigation-voice .zebu-panel--full { width: min(340px, calc(100vw - 1.5rem)); height: min(420px, calc(100dvh - 5rem)); right: .75rem; bottom: .75rem; border-radius: 1.25rem; }
+.zebu-navigation-voice .zebu-panel__header { min-height: 52px; padding: .5rem .7rem; }
+.zebu-navigation-voice .zebu-compact .zebu-orb { width: 38px; height: 44px; }
+.zebu-navigation-voice .zebu-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }

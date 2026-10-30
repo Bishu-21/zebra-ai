@@ -10,6 +10,7 @@ import { CareerProfilePrompt } from "./CareerProfilePrompt";
 import { ZebuProvider } from "@/context/ZebuContext";
 
 const ProfileModal = dynamic(() => import("./ProfileModal").then((module) => module.ProfileModal), { ssr: false });
+const SettingsModal = dynamic(() => import("./SettingsModal").then((module) => module.SettingsModal), { ssr: false });
 const ZebuAssistant = dynamic(() => import("./ZebuAssistant").then((module) => module.ZebuAssistant), { ssr: false });
 
 interface DashboardShellProps {
@@ -23,12 +24,15 @@ interface DashboardShellProps {
 
 export function DashboardShell({ plan, credits, userName, userImage, shouldPromptCareerProfile, children }: DashboardShellProps) {
     const [isProfileOpen, setIsProfileOpen] = useState(false);
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isNavOpen, setIsNavOpen] = useState(false);
 
     const openNav = useCallback(() => setIsNavOpen(true), []);
     const closeNav = useCallback(() => setIsNavOpen(false), []);
     const openProfile = useCallback(() => setIsProfileOpen(true), []);
     const closeProfile = useCallback(() => setIsProfileOpen(false), []);
+    const openSettings = useCallback(() => setIsSettingsOpen(true), []);
+    const closeSettings = useCallback(() => setIsSettingsOpen(false), []);
 
     useEffect(() => {
         if (!isNavOpen) return;
@@ -69,6 +73,7 @@ export function DashboardShell({ plan, credits, userName, userImage, shouldPromp
                             isNavOpen={isNavOpen}
                             onOpenNavAction={openNav}
                             onOpenProfileAction={openProfile}
+                            onOpenSettingsAction={openSettings}
                         />
                         <main className="flex-grow overflow-y-auto w-full custom-scrollbar">
                             <div className="mx-auto max-w-7xl">
@@ -85,6 +90,10 @@ export function DashboardShell({ plan, credits, userName, userImage, shouldPromp
                             userImage={userImage}
                         />
                     )}
+                    <SettingsModal
+                        isOpen={isSettingsOpen}
+                        onCloseAction={closeSettings}
+                    />
                     <CareerProfilePrompt shouldPrompt={shouldPromptCareerProfile} />
                     <ZebuAssistant />
                 </>

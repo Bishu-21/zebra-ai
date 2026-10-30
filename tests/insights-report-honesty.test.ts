@@ -17,4 +17,7 @@ test("missing category metrics remain absent in the report UI", () => {
     assert.match(feed, /scoreLabel=\{selectedResumeScoreLabel\}/);
     assert.match(feed, /Job description alignment \(AI estimate\)/);
     assert.match(modal, /\{scoreLabel\}/);
+    assert.doesNotMatch(feed, /impact: 0[\s\S]*ats: 0/);
+    assert.doesNotMatch(modal, /ATS Match/);
+    assert.doesNotMatch(feed, /High Match/);
 });

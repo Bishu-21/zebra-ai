@@ -98,15 +98,15 @@ export default async function JobTrackerPage({ searchParams }: { searchParams: P
   const totalApplications = Number(applicationStats?.total ?? 0) + Number(jobStats?.total ?? 0);
   const totalInterviews = Number(applicationStats?.interviews ?? 0) + Number(jobStats?.interviews ?? 0);
   const interviewRate = totalApplications > 0
-    ? Math.round((totalInterviews / totalApplications) * 100)
-    : 0;
+    ? `${Math.round((totalInterviews / totalApplications) * 100)}%`
+    : "Unknown";
 
   return (
     <DashboardPage className="space-y-6">
       <DashboardPageHeader
         title="Applications"
         description="Track each opportunity, its documents, and the next stage from one workspace."
-        actions={<div className="flex flex-col gap-2 sm:flex-row sm:items-center"><div className="grid grid-cols-2 gap-2"><DashboardStat label="Applications" value={totalApplications} /><DashboardStat label="Interview rate" value={`${interviewRate}%`} /></div><AddApplicationDrawer resumes={userResumes.map(({ id, title }) => ({ id, title }))} /></div>}
+        actions={<div className="flex flex-col gap-2 sm:flex-row sm:items-center"><div className="grid grid-cols-2 gap-2"><DashboardStat label="Applications" value={totalApplications} /><DashboardStat label="Interview rate" value={interviewRate} /></div><AddApplicationDrawer resumes={userResumes.map(({ id, title }) => ({ id, title }))} /></div>}
       />
 
       <JobBoard

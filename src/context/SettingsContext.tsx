@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { clearSettingsRecord, readSettingsRecord, writeSettingsRecord } from "@/lib/settings-storage";
 
 export interface Settings {
     fontSize: string;
@@ -16,8 +17,8 @@ export interface Settings {
 
 interface SettingsContextType {
     settings: Settings;
-    updateSettingsAction: (newSettings: Partial<Settings>) => void;
-    resetSettingsAction: () => void;
+    updateSettingsAction: (newSettings: Partial<Settings>) => boolean;
+    resetSettingsAction: () => boolean;
 }
 
 const defaultSettings: Settings = {
@@ -37,42 +38,41 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
     const [settings, setSettings] = useState<Settings>(defaultSettings);
 
-    // Load from localStorage on mount
     useEffect(() => {
-        const saved = localStorage.getItem("zebra_settings");
-        if (saved) {
-            try {
-                const parsed = JSON.parse(saved);
-                // Migration logic for old settings keys if necessary
-                const migrated: Settings = {
-                    fontSize: parsed.fontSize || defaultSettings.fontSize,
-                    spellcheck: parsed.spellcheck !== undefined ? parsed.spellcheck : defaultSettings.spellcheck,
-                    lineWrapping: parsed.lineWrapping !== undefined ? parsed.lineWrapping : (parsed.wordWrap !== undefined ? parsed.wordWrap : defaultSettings.lineWrapping),
-                    compactView: parsed.compactView !== undefined ? parsed.compactView : (parsed.realtimeCompilation !== undefined ? !parsed.realtimeCompilation : defaultSettings.compactView),
-                    autoSave: parsed.autoSave !== undefined ? parsed.autoSave : (parsed.autoFormatting !== undefined ? parsed.autoFormatting : defaultSettings.autoSave),
-                    resumeFont: parsed.resumeFont || defaultSettings.resumeFont,
-                    previewScale: parsed.previewScale || defaultSettings.previewScale,
-                    aiTone: parsed.aiTone || defaultSettings.aiTone,
-                    autoFormatOnPaste: parsed.autoFormatOnPaste !== undefined ? parsed.autoFormatOnPaste : defaultSettings.autoFormatOnPaste,
-                };
-                queueMicrotask(() => setSettings(migrated));
-            } catch (e) {
-                console.error("Failed to parse settings", e);
-            }
+        const saved = readSettingsRecord();
+        if (!saved) return;
+        try {
+            const parsed = JSON.parse(saved);
+            const migrated: Settings = {
+                fontSize: parsed.fontSize || defaultSettings.fontSize,
+                spellcheck: parsed.spellcheck !== undefined ? parsed.spellcheck : defaultSettings.spellcheck,
+                lineWrapping: parsed.lineWrapping !== undefined ? parsed.lineWrapping : (parsed.wordWrap !== undefined ? parsed.wordWrap : defaultSettings.lineWrapping),
+                compactView: parsed.compactView !== undefined ? parsed.compactView : (parsed.realtimeCompilation !== undefined ? !parsed.realtimeCompilation : defaultSettings.compactView),
+                autoSave: parsed.autoSave !== undefined ? parsed.autoSave : (parsed.autoFormatting !== undefined ? parsed.autoFormatting : defaultSettings.autoSave),
+                resumeFont: parsed.resumeFont || defaultSettings.resumeFont,
+                previewScale: parsed.previewScale || defaultSettings.previewScale,
+                aiTone: parsed.aiTone || defaultSettings.aiTone,
+                autoFormatOnPaste: parsed.autoFormatOnPaste !== undefined ? parsed.autoFormatOnPaste : defaultSettings.autoFormatOnPaste,
+            };
+            queueMicrotask(() => setSettings(migrated));
+        } catch (e) {
+            console.error("Failed to parse settings", e);
         }
     }, []);
 
-    const updateSettingsAction = (newSettings: Partial<Settings>) => {
-        setSettings(prev => {
-            const updated = { ...prev, ...newSettings };
-            localStorage.setItem("zebra_settings", JSON.stringify(updated));
-            return updated;
-        });
+    const updateSettingsAction = (newSettings: Partial<Settings>): boolean => {
+        const updated = { ...settings, ...newSettings };
+        const persisted = writeSettingsRecord(updated);
+        if (!persisted) return false;
+        setSettings(updated);
+        return true;
     };
 
-    const resetSettingsAction = () => {
+    const resetSettingsAction = (): boolean => {
+        const cleared = clearSettingsRecord();
+        if (!cleared) return false;
         setSettings(defaultSettings);
-        localStorage.removeItem("zebra_settings");
+        return true;
     };
 
     return (

@@ -8,10 +8,10 @@ import { useSearchParams } from "next/navigation";
 import { useSettings } from "@/context/SettingsContext";
 import { useSession, authClient } from "@/lib/auth-client";
 import { useToast } from "@/components/ui/Toast";
-import { 
-    RiEqualizerLine, 
-    RiFileTextLine, 
-    RiUser3Line, 
+import {
+    RiEqualizerLine,
+    RiFileTextLine,
+    RiUser3Line,
     RiMoneyDollarCircleLine,
     RiArrowDownSLine,
     RiMailLine,
@@ -50,6 +50,7 @@ export function SettingsView({ connectionProviders, githubAppConfigured }: { con
         TABS.some(t => t.id === initialTab) ? initialTab : "general"
     );
     const [savedNotice, setSavedNotice] = useState<string | null>(null);
+    const [noticeIsError, setNoticeIsError] = useState(false);
 
     useEffect(() => {
         const tab = searchParams.get("tab") as TabType;
@@ -82,9 +83,14 @@ export function SettingsView({ connectionProviders, githubAppConfigured }: { con
         nextTab?.click();
     };
 
-    const triggerNotice = (msg: string) => {
-        setSavedNotice(msg);
-        setTimeout(() => setSavedNotice(null), 2500);
+    const triggerNotice = (ok: boolean, success: string) => {
+        setNoticeIsError(!ok);
+        setSavedNotice(ok ? success : "Could not save preferences on this device.");
+        window.setTimeout(() => setSavedNotice(null), 2500);
+    };
+
+    const persist = (patch: Parameters<typeof updateSettingsAction>[0], success: string) => {
+        triggerNotice(updateSettingsAction(patch), success);
     };
 
     const handleResetPassword = async () => {
@@ -171,7 +177,11 @@ export function SettingsView({ connectionProviders, githubAppConfigured }: { con
                             <div
                                 role="status"
                                 aria-live="polite"
-                                className="mb-4 rounded-xl border border-neutral-200/60 bg-neutral-100 p-3 text-xs font-semibold text-neutral-600"
+                                className={`mb-4 rounded-xl border p-3 text-xs font-semibold ${
+                                    noticeIsError
+                                        ? "border-red-200 bg-red-50 text-red-800"
+                                        : "border-neutral-200/60 bg-neutral-100 text-neutral-600"
+                                }`}
                             >
                                 {savedNotice}
                             </div>
@@ -190,49 +200,37 @@ export function SettingsView({ connectionProviders, githubAppConfigured }: { con
                         {/* General Tab */}
                         {activeTab === "general" && (
                             <div className="space-y-4 w-full">
-                                <SettingRow 
+                                <SettingRow
                                     title="Editor font size"
                                     description="Text size used across input fields and text editors."
                                     control={
-                                        <Select 
-                                            options={["12px", "14px", "16px", "18px", "20px"]} 
-                                            value={settings.fontSize} 
-                                            onChange={(v) => {
-                                                updateSettingsAction({ fontSize: v });
-                                                triggerNotice("Font size updated");
-                                            }} 
+                                        <Select
+                                            options={["12px", "14px", "16px", "18px", "20px"]}
+                                            value={settings.fontSize}
+                                            onChange={(v) => persist({ fontSize: v }, "Font size saved")}
                                         />
                                     }
                                 />
                                 <Divider />
-                                <SettingToggle 
+                                <SettingToggle
                                     title="Auto-save"
                                     description="Automatically save changes as you draft and compile."
                                     checked={settings.autoSave}
-                                    onChange={(v) => {
-                                        updateSettingsAction({ autoSave: v });
-                                        triggerNotice(v ? "Auto-save enabled" : "Auto-save disabled");
-                                    }}
+                                    onChange={(v) => persist({ autoSave: v }, v ? "Auto-save enabled" : "Auto-save disabled")}
                                 />
                                 <Divider />
-                                <SettingToggle 
+                                <SettingToggle
                                     title="Compact mode"
                                     description="Reduce padding for tighter spacing in editor panels."
                                     checked={settings.compactView}
-                                    onChange={(v) => {
-                                        updateSettingsAction({ compactView: v });
-                                        triggerNotice("Compact mode updated");
-                                    }}
+                                    onChange={(v) => persist({ compactView: v }, "Compact mode saved")}
                                 />
                                 <Divider />
-                                <SettingToggle 
+                                <SettingToggle
                                     title="Spellcheck"
                                     description="Enable browser spellchecking across content fields."
                                     checked={settings.spellcheck}
-                                    onChange={(v) => {
-                                        updateSettingsAction({ spellcheck: v });
-                                        triggerNotice("Spellcheck updated");
-                                    }}
+                                    onChange={(v) => persist({ spellcheck: v }, "Spellcheck saved")}
                                 />
                             </div>
                         )}
@@ -240,43 +238,36 @@ export function SettingsView({ connectionProviders, githubAppConfigured }: { con
                         {/* Editor Tab */}
                         {activeTab === "editor" && (
                             <div className="space-y-4 w-full">
-                                <SettingRow 
+                                <SettingRow
                                     title="Default resume font"
                                     description="Primary font family used for resume previews and PDF generation."
                                     control={
-                                        <Select 
-                                            options={["Latin Modern Roman", "Computer Modern", "Helvetica", "Georgia", "TeX Gyre Pagella"]} 
-                                            value={settings.resumeFont} 
-                                            onChange={(v) => {
-                                                updateSettingsAction({ resumeFont: v });
-                                                triggerNotice("Default font updated");
-                                            }} 
+                                        <Select
+                                            options={["Latin Modern Roman", "Computer Modern", "Helvetica", "Georgia", "TeX Gyre Pagella"]}
+                                            value={settings.resumeFont}
+                                            onChange={(v) => persist({ resumeFont: v }, "Default font saved")}
                                         />
                                     }
                                 />
                                 <Divider />
-                                <SettingToggle 
+                                <SettingToggle
                                     title="Line wrapping"
                                     description="Wrap long text lines inside input areas."
                                     checked={settings.lineWrapping}
-                                    onChange={(v) => {
-                                        updateSettingsAction({ lineWrapping: v });
-                                        triggerNotice("Line wrapping updated");
-                                    }}
+                                    onChange={(v) => persist({ lineWrapping: v }, "Line wrapping saved")}
                                 />
                                 <Divider />
-                                <SettingRow 
+                                <SettingRow
                                     title="Preview scale"
                                     description="Default zoom level for the live resume preview pane."
                                     control={
-                                        <Select 
-                                            options={["Auto", "100%", "85%", "75%"]} 
-                                            value={settings.previewScale === "auto" ? "Auto" : `${Math.round((settings.previewScale as number) * 100)}%`} 
+                                        <Select
+                                            options={["Auto", "100%", "85%", "75%"]}
+                                            value={settings.previewScale === "auto" ? "Auto" : `${Math.round((settings.previewScale as number) * 100)}%`}
                                             onChange={(v) => {
-                                                const scale = v === "Auto" ? "auto" : parseInt(v) / 100;
-                                                updateSettingsAction({ previewScale: scale });
-                                                triggerNotice("Preview scale updated");
-                                            }} 
+                                                const scale = v === "Auto" ? "auto" : parseInt(v, 10) / 100;
+                                                persist({ previewScale: scale }, "Preview scale saved");
+                                            }}
                                         />
                                     }
                                 />
@@ -296,10 +287,13 @@ export function SettingsView({ connectionProviders, githubAppConfigured }: { con
                                         </div>
                                         <div>
                                             <h3 className="text-base font-semibold tracking-tight text-foreground">
-                                                {user?.plan ? `${user.plan} plan` : "Starter plan"}
+                                                {user?.plan ? `${user.plan} plan` : "Plan unavailable"}
                                             </h3>
                                             <p className="mt-0.5 text-sm text-muted-foreground">
-                                                Credit balance: <span className="font-medium text-foreground">{user?.credits ?? 0}</span>
+                                                Credit balance:{" "}
+                                                <span className="font-medium text-foreground">
+                                                    {typeof user?.credits === "number" ? user.credits : "Unknown"}
+                                                </span>
                                             </p>
                                         </div>
                                     </div>
@@ -314,7 +308,7 @@ export function SettingsView({ connectionProviders, githubAppConfigured }: { con
                                 </div>
 
                                 <div className="rounded-2xl border border-neutral-200/70 bg-neutral-50 p-4 text-sm leading-6 text-muted-foreground">
-                                    Credits are used for resume reviews, job matching, and cover letter generation. Credits do not expire.
+                                    Credits are used for resume reviews, job matching, and cover letter generation. Unused paid credits remain on the account until they are spent.
                                 </div>
 
                                 <AiUsageHistory />
@@ -328,13 +322,13 @@ export function SettingsView({ connectionProviders, githubAppConfigured }: { con
                                     <div className="space-y-1.5">
                                         <label className={featureChrome.label}>Full name</label>
                                         <div className="rounded-xl border border-neutral-200/80 bg-neutral-50 p-3 text-sm font-medium text-foreground">
-                                            {user?.name || "User"}
+                                            {user?.name || "Name unavailable"}
                                         </div>
                                     </div>
                                     <div className="space-y-1.5">
                                         <label className={featureChrome.label}>Email</label>
                                         <div className="rounded-xl border border-neutral-200/80 bg-neutral-50 p-3 text-sm font-medium text-foreground">
-                                            {user?.email || "user@example.com"}
+                                            {user?.email || "Email unavailable"}
                                         </div>
                                     </div>
                                 </div>
@@ -365,9 +359,12 @@ export function SettingsView({ connectionProviders, githubAppConfigured }: { con
                                     <button
                                         type="button"
                                         onClick={() => {
-                                            resetSettingsAction();
-                                            triggerNotice("Preferences reset to defaults");
-                                            showToast("Settings reset to defaults", "success");
+                                            const reset = resetSettingsAction();
+                                            triggerNotice(reset, "Preferences reset to defaults");
+                                            showToast(
+                                                reset ? "Preferences reset to defaults" : "Could not reset preferences on this device.",
+                                                reset ? "success" : "error"
+                                            );
                                         }}
                                         className={featureChrome.secondaryButton}
                                     >
@@ -378,8 +375,12 @@ export function SettingsView({ connectionProviders, githubAppConfigured }: { con
                         )}
                     </div>
 
-                    <div className="pt-4 border-t border-neutral-200/60 mt-6 text-xs leading-5 text-neutral-600">
-                        <span>Preference changes are saved automatically.</span>
+                    <div className="mt-6 border-t border-neutral-200/60 pt-4 text-xs leading-5 text-neutral-600">
+                        <span>
+                            {savedNotice
+                                ? savedNotice
+                                : "Preference changes are saved on this device when the browser allows it."}
+                        </span>
                     </div>
                 </div>
             </div>
@@ -390,6 +391,7 @@ export function SettingsView({ connectionProviders, githubAppConfigured }: { con
 function CareerProfileSettings() {
     const [profile, setProfile] = useState<{ careerStage: string | null; professionalExperienceYears: number | null } | null>(null);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
 
     useEffect(() => {
         let active = true;
@@ -398,17 +400,30 @@ function CareerProfileSettings() {
                 if (!response.ok) throw new Error("Could not load career profile");
                 return response.json();
             })
-            .then((value) => { if (active) setProfile(value); })
-            .catch(() => { if (active) setProfile(null); })
+            .then((value) => {
+                if (!active) return;
+                setProfile(value);
+                setLoadError(null);
+            })
+            .catch(() => {
+                if (!active) return;
+                setProfile(null);
+                setLoadError("Could not load career profile. You can still try saving a new selection.");
+            })
             .finally(() => { if (active) setLoading(false); });
         return () => { active = false; };
     }, []);
 
-    if (loading) return <p className="text-xs text-neutral-500">Loading career profile...</p>;
+    if (loading) return <p className="text-sm text-muted-foreground">Loading career profile...</p>;
 
     return (
         <div className="max-w-2xl space-y-4">
-            <p className="text-xs leading-5 text-neutral-500">
+            {loadError && (
+                <p role="status" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm leading-6 text-red-800">
+                    {loadError}
+                </p>
+            )}
+            <p className="text-sm leading-6 text-muted-foreground">
                 Zebra uses this profile to apply fair expectations to students, freelancers, and experienced professionals. Resume evidence still takes priority when it shows internships or employment.
             </p>
             <CareerProfileForm
@@ -460,7 +475,7 @@ function SettingToggle({ title, description, checked, onChange }: { title: strin
 function Select({ options, value, onChange }: { options: string[]; value: string; onChange: (v: string) => void }) {
     return (
         <div className="relative inline-block w-full sm:w-auto">
-            <select 
+            <select
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 className={`${featureChrome.select} w-full sm:w-auto pr-9`}

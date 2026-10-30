@@ -1,39 +1,11 @@
 import { MetadataRoute } from 'next';
+import { PUBLIC_SITE_PAGES } from '@/lib/constants/public-pages';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://zebra-ai.app';
-  const now = new Date();
-
-  return [
-    {
-      url: `${baseUrl}`,
-      lastModified: now,
-      changeFrequency: 'daily',
-      priority: 1.0,
-    },
-    {
-      url: `${baseUrl}/terms`,
-      lastModified: now,
-      changeFrequency: 'monthly',
-      priority: 0.5,
-    },
-    {
-      url: `${baseUrl}/privacy`,
-      lastModified: now,
-      changeFrequency: 'monthly',
-      priority: 0.5,
-    },
-    {
-      url: `${baseUrl}/llms.txt`,
-      lastModified: now,
-      changeFrequency: 'weekly',
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/llms-full.txt`,
-      lastModified: now,
-      changeFrequency: 'weekly',
-      priority: 0.8,
-    },
-  ];
+  // Private workspaces and capture routes must not be indexed. Omit lastModified
+  // until actual content modification dates are tracked, rather than build times.
+  return PUBLIC_SITE_PAGES.map(({ href }) => ({
+    url: href === '/' ? baseUrl : `${baseUrl}${href}`,
+  }));
 }

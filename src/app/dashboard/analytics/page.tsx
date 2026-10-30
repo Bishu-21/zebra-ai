@@ -43,7 +43,7 @@ export default async function AnalyticsPage() {
   );
   const recentApplications = userApplications.slice(0, 5);
 
-  let avgScore = 0;
+  let avgScore: number | null = null;
   let analysesCount = 0;
   if (userResumes.length > 0) {
     const resumeIds = userResumes.map(r => r.id);
@@ -51,8 +51,9 @@ export default async function AnalyticsPage() {
         where: inArray(analysisTable.resumeId, resumeIds)
     });
     analysesCount = analyses.length;
-    if (analyses.length > 0) {
-        avgScore = Math.round(analyses.reduce((acc, curr) => acc + curr.score, 0) / analyses.length);
+    const scoredAnalyses = analyses.filter((curr): curr is typeof curr & { score: number } => typeof curr.score === "number");
+    if (scoredAnalyses.length > 0) {
+        avgScore = Math.round(scoredAnalyses.reduce((acc, curr) => acc + curr.score, 0) / scoredAnalyses.length);
     }
   }
 
@@ -65,17 +66,16 @@ export default async function AnalyticsPage() {
         orderBy: [desc(analysisTable.createdAt)],
         limit: 10
     });
-    chartScores = recentAnalyses.map(a => a.score).reverse();
+    chartScores = recentAnalyses.map(a => a.score).filter((score): score is number => typeof score === "number").reverse();
   }
 
-  // Padding for chart if less than 10 entries
-  const displayScores = chartScores.length > 0 ? chartScores : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+  const displayScores = chartScores;
 
   const stats = [
-    { label: "Total Resumes", value: userResumes.length.toString(), sub: "Active Documents", icon: RiStackLine, color: "text-[#0A0A0A]" },
-    { label: "Active Applications", value: activeApplications.length.toString(), sub: "Tracked in Pipeline", icon: RiRadarLine, color: "text-[#0A0A0A]" },
-    { label: "Average Match Score", value: `${avgScore}%`, sub: "ATS Alignment Score", icon: RiCompass3Line, color: "text-[#0A0A0A]" },
-    { label: "Total Analyses", value: analysesCount.toString(), sub: "Analysis Reports", icon: RiBarChartGroupedLine, color: "text-[#0A0A0A]" }
+    { label: "Saved resumes", value: userResumes.length.toString(), sub: "Documents in your workspace", icon: RiStackLine, color: "text-[#0A0A0A]" },
+    { label: "Open applications", value: activeApplications.length.toString(), sub: "Not rejected, withdrawn, or offer", icon: RiRadarLine, color: "text-[#0A0A0A]" },
+    { label: "Average resume review", value: avgScore == null ? "No reviews yet" : `${avgScore}%`, sub: avgScore == null ? "Review a resume to see your progress." : "Based on your saved resume reviews.", icon: RiCompass3Line, color: "text-[#0A0A0A]" },
+    { label: "Saved analyses", value: analysesCount.toString(), sub: "Resume review reports", icon: RiBarChartGroupedLine, color: "text-[#0A0A0A]" }
   ];
 
   return (
@@ -92,9 +92,9 @@ export default async function AnalyticsPage() {
               <stat.icon size={20} />
             </div>
             <p className="mb-1 text-xs font-medium text-muted-foreground">{stat.label}</p>
-            <div className="flex items-end gap-2">
-              <h3 className="text-2xl font-semibold tracking-tight">{stat.value}</h3>
-              <p className="pb-1 text-xs font-medium text-muted-foreground">{stat.sub}</p>
+            <div className="min-w-0 space-y-2">
+              <h3 className={`${stat.value === "No reviews yet" ? "text-lg" : "text-2xl"} break-words font-semibold tracking-tight`}>{stat.value}</h3>
+              <p className="text-xs leading-5 text-muted-foreground">{stat.sub}</p>
             </div>
           </div>
         ))}
@@ -115,17 +115,17 @@ export default async function AnalyticsPage() {
             </div>
 
             <div className="flex-grow flex items-end justify-between gap-3 h-48 pb-4">
-                {displayScores.map((h, i) => (
+                {displayScores.length === 0 ? (
+                    <p className="self-center text-sm text-muted-foreground">No saved analyses to chart yet.</p>
+                ) : displayScores.map((h, i) => (
                     <div key={i} className="flex-grow group/bar relative">
                         <div
                             className={`w-full rounded-t-xl transition-all duration-700 ${i === displayScores.length - 1 && h > 0 ? 'bg-black' : 'bg-black/10 hover:bg-black/30'}`}
-                            style={{ height: `${h || 2}%` }}
+                            style={{ height: `${Math.max(h, 2)}%` }}
                         />
-                        {h > 0 && (
-                            <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-all bg-black text-white text-[0.6rem] font-bold px-2 py-1 rounded pointer-events-none">
-                                {h}%
-                            </div>
-                        )}
+                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-all bg-black text-white text-[0.6rem] font-bold px-2 py-1 rounded pointer-events-none">
+                            {h}%
+                        </div>
                     </div>
                 ))}
             </div>
@@ -154,7 +154,7 @@ export default async function AnalyticsPage() {
                     </div>
                 )) : (
                     <div className="flex h-full flex-col items-center justify-center text-sm text-muted-foreground">
-                        No recent activity logged.
+                        No applications saved yet.
                     </div>
                 )}
             </div>

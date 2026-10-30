@@ -1,18 +1,37 @@
+import { ZEBU_NAV_PAGES } from "@/lib/zebu-navigation";
+
 export type ZebuWorkspaceCommand = {
-  route: "/dashboard/job-tracker";
+  route: string;
   openApplicationForm: boolean;
 };
+
+const CREATE_APPLICATION = "(?:create|add|start|make) (?:me )?(?:a |an )?(?:new )?application(?: draft)?(?: for me)?";
+const OPEN = "(?:go to|open|show me|take me to|navigate to|bring me to|switch to)";
 
 /** Route only unambiguous commands locally; questions and entity lookups go to the agent. */
 export function parseZebuWorkspaceCommand(input: string): ZebuWorkspaceCommand | null {
   const text = input.toLowerCase().replace(/[^a-z\s]/g, " ").replace(/\s+/g, " ").trim();
-  const create = "(?:create|add|start|make) (?:me )?(?:a |an )?(?:new )?application(?: draft)?(?: for me)?";
-  if (new RegExp(`^(?:please )?${create}$`).test(text)) {
+  if (new RegExp(`^(?:please )?${CREATE_APPLICATION}$`).test(text)) {
     return { route: "/dashboard/job-tracker", openApplicationForm: true };
   }
-  const navigate = "(?:go to|open|show me|take me to|navigate to|bring me to|switch to) (?:the |my )?applications(?: page)?";
-  if (new RegExp(`^(?:please )?${navigate}(?: and ${create})?$`).test(text)) {
-    return { route: "/dashboard/job-tracker", openApplicationForm: new RegExp(` and ${create}$`).test(text) };
+
+  const pagesLongestFirst = [...ZEBU_NAV_PAGES].sort((a, b) => {
+    const aLen = Math.max(...a.phrases.map((phrase) => phrase.length));
+    const bLen = Math.max(...b.phrases.map((phrase) => phrase.length));
+    return bLen - aLen;
+  });
+
+  for (const page of pagesLongestFirst) {
+    const phrase = page.phrases.map((item) => item.replace(/\s+/g, "\\s+")).join("|");
+    const navigate = new RegExp(`^(?:please )?${OPEN} (?:the |my )?(?:${phrase})(?: page)?$`);
+    const navigateAndCreate = new RegExp(`^(?:please )?${OPEN} (?:the |my )?(?:${phrase})(?: page)? and ${CREATE_APPLICATION}$`);
+    if (page.key === "applications" && navigateAndCreate.test(text)) {
+      return { route: "/dashboard/job-tracker", openApplicationForm: true };
+    }
+    if (navigate.test(text)) {
+      return { route: page.route, openApplicationForm: false };
+    }
   }
+
   return null;
 }

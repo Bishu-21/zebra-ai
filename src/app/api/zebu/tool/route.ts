@@ -17,6 +17,7 @@ export async function POST(request: Request) {
   if (!rate.success) return NextResponse.json({ error: "Too many voice tool requests." }, { status: 429 });
   const parsed = requestSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Invalid tool request." }, { status: 400 });
+  if (parsed.data.name !== "navigate_to_page") return NextResponse.json({ error: "Zebu currently supports page navigation only." }, { status: 400 });
   try {
     const args = parsed.data.callId ? { ...parsed.data.args, __requestId: parsed.data.callId } : parsed.data.args;
     return NextResponse.json(await executeZebuLiveTool(parsed.data.name, args, auth.user.id));

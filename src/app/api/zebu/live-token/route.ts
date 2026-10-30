@@ -50,7 +50,7 @@ export async function POST(request: Request) {
       systemInstruction: buildZebuLivePrompt({ userName: auth.user.name, plan: account?.plan ?? "Free", credits: account?.credits ?? 0, currentPage, currentContext, now: new Date(), timeZone }),
       speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Puck" } } },
       inputAudioTranscription: {}, outputAudioTranscription: {},
-      tools: [{ functionDeclarations: zebuLiveToolDeclarations }],
+      tools: [{ functionDeclarations: zebuLiveToolDeclarations.filter(tool => tool.name === "navigate_to_page") }],
       ...buildZebuSessionContinuity(requestData.success ? requestData.data.resumeHandle : undefined),
     };
     const now = Date.now();

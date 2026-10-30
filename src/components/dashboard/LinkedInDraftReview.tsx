@@ -56,8 +56,8 @@ export function LinkedInDraftReview({ auditId, drafts, onChange }: { auditId: st
       </label>
       <p className={`mt-2 ${featureChrome.helper}`}>Why this helps: {draft.rationale}</p>
       <div className="mt-5 flex flex-wrap gap-2">
-        <button type="button" disabled={saving === draft.id} onClick={() => decide(draft, "accepted")} className={featureChrome.primaryButton}>{saving === draft.id ? "Saving…" : "Approve draft"}</button>
-        <button type="button" disabled={saving === draft.id} onClick={() => decide(draft, "dismissed")} className={featureChrome.secondaryButton}>Dismiss</button>
+        <button type="button" disabled={saving === draft.id} onClick={() => decide(draft, "accepted")} className={featureChrome.primaryButton}>{saving === draft.id ? "Saving…" : "Approve"}</button>
+        <button type="button" disabled={saving === draft.id} onClick={() => decide(draft, "dismissed")} className={featureChrome.secondaryButton}>Reject</button>
         {draft.status === "accepted" && <button type="button" onClick={() => copy(draft)} className={featureChrome.secondaryButton}><AppIcon icon={RiFileCopyLine} size={16} />{copied === draft.id ? "Copied" : "Copy approved text"}</button>}
       </div>
     </article>)}

@@ -131,7 +131,7 @@ export function AddApplicationDrawer({ resumes, onboarding = false }: { resumes:
                       <AppIcon icon={RiLink} className={`${featureChrome.fieldIcon} pointer-events-none`} />
                       <input id="application-job-url" type="url" value={jobUrl} onChange={(event) => setJobUrl(event.target.value)} placeholder="https://company.com/jobs/..." className={`${featureChrome.input} pl-10`} />
                     </div>
-                    <button type="button" aria-label="Extract job details from URL" onClick={extract} disabled={!jobUrl.trim() || extracting} className={featureChrome.primaryButton}>{extracting ? <AppIcon icon={RiLoader4Line} className="animate-spin" /> : <AppIcon icon={RiFileSearchLine} />}</button>
+                    <button type="button" aria-label="Extract job details from URL" onClick={extract} disabled={!jobUrl.trim() || extracting} className={featureChrome.primaryButton}>{extracting ? <AppIcon icon={RiLoader4Line} className="animate-spin" /> : <AppIcon icon={RiFileSearchLine} />} Extract</button>
                   </div>
                 </div>
                 <p className={featureChrome.helper}>Or fill in the details below</p>

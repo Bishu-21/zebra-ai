@@ -107,6 +107,7 @@ export default function Home() {
               <span className="text-xs font-black uppercase tracking-widest text-accent-gray">Connect</span>
               <Link className="text-accent-dark hover:text-primary text-sm font-bold transition-colors duration-200" href="/dashboard">Dashboard</Link>
               <Link className="text-accent-dark hover:text-primary text-sm font-bold transition-colors duration-200" href="/signin">Sign in</Link>
+              <Link className="text-accent-dark hover:text-primary text-sm font-bold transition-colors duration-200" href="/sitemap">Sitemap</Link>
               <a className="text-accent-dark hover:text-primary text-sm font-bold transition-colors duration-200" href="/llms.txt">LLMs.txt</a>
             </div>
             <div className="flex flex-col gap-4">

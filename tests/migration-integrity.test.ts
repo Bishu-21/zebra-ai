@@ -65,8 +65,9 @@ describe("Evidence compiler migration", () => {
         assert.equal(journal.entries[12]?.tag, "0011_tailoring_runs");
         assert.equal(journal.entries[13]?.tag, "0012_linkedin_audits");
         assert.equal(journal.entries[14]?.tag, "0013_linkedin_workflow_rls");
-        assert.equal(last?.idx, 15);
-        assert.equal(last?.tag, "0014_github_installations");
+        assert.equal(journal.entries[15]?.tag, "0014_github_installations");
+        assert.equal(last?.idx, 16);
+        assert.equal(last?.tag, "0015_nullable_analysis_score");
     });
 
     test("quarantines direct schema scripts that bypass the migration journal", () => {

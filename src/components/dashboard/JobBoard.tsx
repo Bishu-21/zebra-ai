@@ -63,6 +63,7 @@ export function JobBoard({ initialJobs, resumes = [], versions = [] }: {
   const [filter, setFilter] = useState<Filter>("All");
   const [query, setQuery] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const visibleJobs = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -80,12 +81,18 @@ export function JobBoard({ initialJobs, resumes = [], versions = [] }: {
     const job = jobs.find((item) => item.id === id);
     if (!job) return;
     setJobs((items) => items.map((job) => job.id === id ? { ...job, status } : job));
+    setActionError(null);
     try {
       const endpoint = job.recordType === "job" ? "/api/jobs" : "/api/applications";
       const response = await fetch(endpoint, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status }) });
-      if (!response.ok) setJobs(previous);
+      if (!response.ok) {
+        setJobs(previous);
+        const payload = await response.json().catch(() => ({}));
+        setActionError(typeof payload.error === "string" ? payload.error : "Could not update application status.");
+      }
     } catch {
       setJobs(previous);
+      setActionError("Could not update application status. Check your connection and try again.");
     }
   };
 
@@ -94,11 +101,19 @@ export function JobBoard({ initialJobs, resumes = [], versions = [] }: {
     const job = jobs.find((item) => item.id === id);
     if (!job) return;
     setBusyId(id);
+    setActionError(null);
     try {
       const response = job.recordType === "job"
         ? await fetch("/api/jobs", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) })
         : await fetch(`/api/applications?id=${encodeURIComponent(id)}`, { method: "DELETE" });
-      if (response.ok) setJobs((items) => items.filter((job) => job.id !== id));
+      if (response.ok) {
+        setJobs((items) => items.filter((job) => job.id !== id));
+      } else {
+        const payload = await response.json().catch(() => ({}));
+        setActionError(typeof payload.error === "string" ? payload.error : "Could not delete this application.");
+      }
+    } catch {
+      setActionError("Could not delete this application. Check your connection and try again.");
     } finally {
       setBusyId(null);
     }
@@ -109,16 +124,22 @@ export function JobBoard({ initialJobs, resumes = [], versions = [] }: {
       <div className="flex flex-col gap-4 border-b border-neutral-200/70 p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex gap-1 overflow-x-auto pb-1 sm:pb-0">
           {FILTERS.map((item) => (
-            <button key={item} onClick={() => setFilter(item)} className={`min-h-11 whitespace-nowrap rounded-xl px-3 text-sm font-medium transition-colors ${filter === item ? "bg-foreground text-white" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}>
+            <button type="button" key={item} onClick={() => setFilter(item)} className={`min-h-11 whitespace-nowrap rounded-xl px-3 text-sm font-medium transition-colors ${filter === item ? "bg-foreground text-white" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}>
               {item}
             </button>
           ))}
         </div>
         <label className="relative block w-full sm:w-64">
           <RiSearchLine aria-hidden="true" className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" size={15} />
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search company or role" className={`${featureChrome.input} pl-10`} />
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search company or role" aria-label="Search company or role" className={`${featureChrome.input} pl-10`} />
         </label>
       </div>
+
+      {actionError ? (
+        <p role="alert" className="mx-4 mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+          {actionError}
+        </p>
+      ) : null}
 
       {visibleJobs.length === 0 ? (
         <div className="px-6 py-16 text-center">

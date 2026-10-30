@@ -214,7 +214,7 @@ export const analysis = pgTable("analysis", {
     resumeId: text("resume_id")
         .notNull()
         .references(() => resumes.id),
-    score: integer("score").notNull(),
+    score: integer("score"),
     feedback: jsonb("feedback").notNull(), // Stores structured AI insights
     createdAt: timestamp("created_at").notNull(),
 });

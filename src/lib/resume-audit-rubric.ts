@@ -327,7 +327,7 @@ export function calculateResumeAuditScores(
             if (status === "Pass") passed += criterion.weight;
             if (status === "Partial") passed += criterion.weight * 0.5;
         }
-        return assessed === 0 ? 0 : Math.round((passed / assessed) * 100);
+        return assessed === 0 ? null : Math.round((passed / assessed) * 100);
     };
 
     return {

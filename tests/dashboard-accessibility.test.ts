@@ -30,5 +30,9 @@ describe("Dashboard overlay accessibility", () => {
         assert.match(drawer, /role="dialog" aria-modal="true"/);
         assert.match(profile, /role="dialog"/);
         assert.match(profile, /aria-modal="true"/);
+        const settingsModal = readFileSync("src/components/dashboard/SettingsModal.tsx", "utf8");
+        assert.match(settingsModal, /role="dialog"/);
+        assert.match(settingsModal, /aria-modal="true"/);
+        assert.match(settingsModal, /useDialogFocus/);
     });
 });

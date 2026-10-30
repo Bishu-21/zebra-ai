@@ -6,11 +6,9 @@ import { usePathname } from "next/navigation";
 import {
     RiSettings4Line,
     RiArrowRightSLine,
-    RiMenuLine,
-    RiMicLine
+    RiMenuLine
 } from "react-icons/ri";
 import { getBreadcrumbForPath } from "@/lib/constants/navigation";
-import { useZebu } from "@/context/ZebuContext";
 import { UserAvatar } from "@/components/dashboard/UserAvatar";
 
 interface HeaderProps {
@@ -20,11 +18,11 @@ interface HeaderProps {
     isNavOpen?: boolean;
     onOpenNavAction?: () => void;
     onOpenProfileAction: () => void;
+    onOpenSettingsAction: () => void;
 }
 
-export function Header({ credits, userName, userImage, isNavOpen = false, onOpenNavAction, onOpenProfileAction }: HeaderProps) {
+export function Header({ credits, userName, userImage, isNavOpen = false, onOpenNavAction, onOpenProfileAction, onOpenSettingsAction }: HeaderProps) {
     const pathname = usePathname();
-    const zebu = useZebu();
     const breadcrumbInfo = getBreadcrumbForPath(pathname);
 
     return (
@@ -72,29 +70,21 @@ export function Header({ credits, userName, userImage, isNavOpen = false, onOpen
             </div>
 
             <div className="flex items-center gap-2.5 sm:gap-3 md:gap-5 shrink-0">
-                <button
-                    type="button"
-                    onClick={() => zebu.open(true)}
-                    className="flex h-11 w-11 items-center justify-center rounded-xl border border-neutral-200 bg-neutral-50 text-neutral-800 transition hover:border-neutral-300 hover:bg-neutral-100"
-                    title="Talk to Zebu"
-                    aria-label="Open Zebu and start listening"
-                >
-                    <RiMicLine size={18} aria-hidden="true" />
-                </button>
                 {/* Credits Badge (Hidden on Phone < 768px, available in drawer) */}
                 <div className="hidden md:flex bg-neutral-100 px-3 py-1.5 rounded-full items-center border border-neutral-200/80 shadow-xs">
                     <span className="text-xs font-semibold text-foreground">{credits} Credits</span>
                 </div>
 
-                {/* Direct Link to Settings Route (Hidden on Phone < 768px, available in drawer) */}
-                <Link
-                    href="/dashboard/settings"
+                <button
+                    type="button"
+                    onClick={onOpenSettingsAction}
                     className="hidden md:flex w-11 h-11 border border-neutral-200/80 rounded-xl items-center justify-center text-neutral-600 bg-neutral-50 hover:bg-neutral-100 hover:text-foreground hover:border-neutral-300 transition-all shadow-xs group"
-                    title="Settings"
-                    aria-label="Settings"
+                    title="Preferences"
+                    aria-label="Open preferences"
+                    aria-haspopup="dialog"
                 >
                     <RiSettings4Line size={18} aria-hidden="true" className="group-hover:rotate-45 transition-transform duration-300" />
-                </Link>
+                </button>
 
                 {/* Profile Avatar (Visible on all breakpoints) */}
                 <button

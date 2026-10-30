@@ -4,6 +4,7 @@ import React from "react";
 import { m, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { RewriteItem, ResumeAnalysisData } from "@/components/compiler/types";
+import { useDialogFocus } from "@/hooks/useDialogFocus";
 
 // --- STRATEGIC DIAGNOSTIC ICONS (Performance & Hydration Safe) ---
 const IconBox = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
@@ -44,10 +45,11 @@ const RocketIcon = ({ className = "" }) => (
     <IconBox className={className}><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.39 1.43-.78 2-1.5.57-.72 1.5-2 1.5-2.5s-1.33-1.5-2-1.5-1.78.93-2.5 1.5c-.72.57-1.4 1.11-2 1.5z" /><path d="M12 12s5.5-5.5 10.5-10.5" /><path d="m5 8 3-3" /><path d="m16 19 3-3" /></IconBox>
 );
 
-const CircularGauge = ({ value, label, icon: Icon }: { value: number; label: string; icon: React.ComponentType<{ className?: string }> }) => {
+const CircularGauge = ({ value, label, icon: Icon }: { value: number | null | undefined; label: string; icon: React.ComponentType<{ className?: string }> }) => {
     const radius = 24;
     const circumference = 2 * Math.PI * radius;
-    const strokeDashoffset = circumference - (value / 100) * circumference;
+    const known = typeof value === "number" && Number.isFinite(value);
+    const strokeDashoffset = known ? circumference - (value / 100) * circumference : circumference;
 
     return (
         <div className="bg-white border border-border-subtle p-5 rounded-[var(--radius-lg)] flex flex-col items-center text-center transition-all hover:border-neutral-300 hover:shadow-[var(--shadow-sm)] group">
@@ -64,7 +66,7 @@ const CircularGauge = ({ value, label, icon: Icon }: { value: number; label: str
                     />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-[0.7rem] font-bold text-foreground">{value}</span>
+                    <span className="text-[0.7rem] font-bold text-foreground">{known ? value : "n/a"}</span>
                 </div>
             </div>
             <div className="flex items-center gap-1.5 opacity-40 group-hover:opacity-100 transition-opacity">
@@ -83,6 +85,7 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data, scor
     scoreLabel?: string;
 }) {
     const router = useRouter();
+    const dialogRef = useDialogFocus<HTMLDivElement>(isOpen, onCloseAction);
 
     React.useEffect(() => {
         if (!isOpen) return;
@@ -101,7 +104,9 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data, scor
     if (!isOpen || !data) return null;
 
     // --- STRATEGIC DATA NORMALIZER ---
-    const score = Math.max(0, Math.min(100, Math.round(data.score ?? data.overallScore ?? 0)));
+    const rawScore = data.score ?? data.overallScore;
+    const scoreKnown = typeof rawScore === "number" && Number.isFinite(rawScore);
+    const score = scoreKnown ? Math.max(0, Math.min(100, Math.round(rawScore))) : null;
     const summary = data.summary ?? data.executiveSummary ?? "Analysis complete.";
 
     // 1. Flatten Categorized Audit (from Direct Analysis API) or use flat arrays
@@ -118,7 +123,7 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data, scor
                     if (item.status === "Pass") {
                         strengths.push(message);
                     } else if (item.status === "Fail" || item.status === "Partial") {
-                        weaknesses.push(item.status === "Partial" ? `${message} — partially met` : message);
+                        weaknesses.push(item.status === "Partial" ? `${message} (partially met)` : message);
                         if (item.fix) actionItems.push(item.fix);
                     }
                 });
@@ -137,6 +142,10 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data, scor
                 />
 
                 <m.div
+                    ref={dialogRef}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="resume-analysis-title"
                     initial={{ opacity: 0, scale: 0.98, y: 10 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.98, y: 10 }}
@@ -153,9 +162,9 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data, scor
                                 </div>
                                 <span className="text-[0.55rem] font-bold uppercase tracking-[0.3em] text-[#A3A3A3] hidden xs:inline">AI Engine</span>
                             </div>
-                            <h2 className="text-xl font-bold text-foreground tracking-tight">Analysis Results</h2>
+                            <h2 id="resume-analysis-title" className="text-xl font-bold text-foreground tracking-tight">Analysis Results</h2>
                         </div>
-                        <button onClick={onCloseAction} className="w-10 h-10 hover:bg-muted rounded-[var(--radius-md)] flex items-center justify-center text-muted-foreground transition-colors">
+                        <button type="button" onClick={onCloseAction} aria-label="Close analysis" className="w-10 h-10 hover:bg-muted rounded-[var(--radius-md)] flex items-center justify-center text-muted-foreground transition-colors">
                             <CloseIcon />
                         </button>
                     </div>
@@ -173,8 +182,8 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data, scor
                                             <div>
                                                 <p className="text-[0.55rem] font-bold uppercase tracking-[0.3em] text-[#A3A3A3] mb-3">{scoreLabel}</p>
                                                 <div className="flex items-baseline gap-2">
-                                                    <h3 className="text-5xl font-bold text-foreground tracking-tight leading-none">{score}</h3>
-                                                    <span className="text-muted-foreground text-lg font-semibold">/100</span>
+                                                    <h3 className="text-5xl font-bold text-foreground tracking-tight leading-none">{scoreKnown ? score : "n/a"}</h3>
+                                                    {scoreKnown ? <span className="text-muted-foreground text-lg font-semibold">/100</span> : <span className="text-muted-foreground text-sm font-medium">Unknown</span>}
                                                 </div>
                                             </div>
                                             <ShieldIcon className="text-primary opacity-20" />
@@ -208,10 +217,10 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data, scor
                             <div className="lg:col-span-7 space-y-8">
                                 {data.metrics && (
                                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                                    <CircularGauge value={data?.metrics?.impact ?? 0} label="Impact" icon={FlashIcon} />
-                                    <CircularGauge value={data?.metrics?.formatting ?? 0} label="Format" icon={ChartIcon} />
-                                    <CircularGauge value={data?.metrics?.ats ?? 0} label="ATS Match" icon={RocketIcon} />
-                                    <CircularGauge value={data?.metrics?.branding ?? 0} label="Identity" icon={ShieldIcon} />
+                                    <CircularGauge value={data.metrics.impact} label="Evidence" icon={FlashIcon} />
+                                    <CircularGauge value={data.metrics.formatting} label="Document" icon={ChartIcon} />
+                                    <CircularGauge value={data.metrics.ats} label="Structure" icon={RocketIcon} />
+                                    <CircularGauge value={data.metrics.branding} label="Skills" icon={ShieldIcon} />
                                 </div>
                                 )}
 
