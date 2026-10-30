@@ -1,4 +1,5 @@
 "use client";
+import { DashboardToolCard } from "./DashboardToolCard";
 
 import React, { useCallback, useRef, useState } from "react";
 import { m, AnimatePresence } from "framer-motion";
@@ -19,9 +20,9 @@ import { FeatureIcon } from "@/components/dashboard/FeatureIcon";
 import { AppIcon } from "@/components/ui/AppIcon";
 import { featureChrome } from "@/components/dashboard/feature-chrome";
 
-export function ImportResume() {
+export function ImportResume({ defaultOpen = false }: { defaultOpen?: boolean } = {}) {
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(defaultOpen);
     const [activeTab, setActiveTab] = useState<"file" | "raw">("file");
     const [isUploading, setIsUploading] = useState(false);
     const [uploadStep, setUploadStep] = useState("");
@@ -156,19 +157,12 @@ export function ImportResume() {
 
     return (
         <>
-            <button
-                type="button"
+            <DashboardToolCard
+                icon={RiUploadCloud2Line}
+                title="Import resume"
+                description="Upload a PDF, DOCX, or text file, or paste text or LaTeX."
                 onClick={() => setIsModalOpen(true)}
-                className={`${featureChrome.card} h-full cursor-pointer p-5 text-left transition-colors hover:border-neutral-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-950`}
-            >
-                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-muted text-muted-foreground">
-                    <AppIcon icon={RiUploadCloud2Line} size={20} />
-                </div>
-                <h3 className="text-base font-semibold tracking-tight text-foreground">Import resume</h3>
-                <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                    Upload a PDF, DOCX, or text file, or paste text or LaTeX.
-                </p>
-            </button>
+            />
 
             <AnimatePresence>
                 {isModalOpen && (

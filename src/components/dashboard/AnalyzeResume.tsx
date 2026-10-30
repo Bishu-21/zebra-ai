@@ -19,6 +19,8 @@ import { useDialogFocus } from "@/hooks/useDialogFocus";
 import { FeatureIcon } from "@/components/dashboard/FeatureIcon";
 import { AppIcon } from "@/components/ui/AppIcon";
 import { featureChrome } from "@/components/dashboard/feature-chrome";
+import { DashboardToolCard } from "./DashboardToolCard";
+import { RiFileTextLine } from "react-icons/ri";
 
 export function AnalyzeResume() {
   const [isOpen, setIsOpen] = useState(false);
@@ -164,26 +166,12 @@ export function AnalyzeResume() {
 
   return (
     <>
-      <div
-        role="button"
-        tabIndex={0}
+      <DashboardToolCard
+        icon={RiFileTextLine}
+        title="Review resume"
+        description="Check structure, content, and gaps against 45 evidence rules. Uses one credit."
         onClick={openReview}
-        onKeyDown={(event) => {
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            openReview();
-          }
-        }}
-        className={`${featureChrome.card} h-full cursor-pointer justify-between hover:border-neutral-300`}
-      >
-        <FeatureIcon feature="Resumes" size={18} className="text-muted-foreground" />
-        <div className="mt-6">
-            <h3 className="text-base font-semibold tracking-tight text-foreground">Review resume</h3>
-            <p className={`mt-1 ${featureChrome.helper}`}>
-                Check structure, content, and gaps against 45 evidence rules. Uses one credit.
-            </p>
-        </div>
-      </div>
+      />
 
       {/* Tool Modal */}
       <AnimatePresence>

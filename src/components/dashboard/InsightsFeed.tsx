@@ -44,6 +44,7 @@ interface InsightsFeedProps {
 export function InsightsFeed({ data }: InsightsFeedProps) {
     const router = useRouter();
     const [selectedResume, setSelectedResume] = useState<ResumeAnalysisData | null>(null);
+    const [selectedResumeScoreLabel, setSelectedResumeScoreLabel] = useState("Resume Score");
     const [selectedProject, setSelectedProject] = useState<ProjectAnalysisData | null>(null);
     const [isResumeModalOpen, setIsResumeModalOpen] = useState(false);
     const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
@@ -73,13 +74,7 @@ export function InsightsFeed({ data }: InsightsFeedProps) {
             const feedback = insight.fullData as TailoringData;
             const normalizedData: ResumeAnalysisData = {
                 score: insight.score,
-                summary: (feedback.executiveSummary || "ATS Tailoring complete.") as string,
-                metrics: {
-                    impact: feedback.matchScore ?? insight.score,
-                    formatting: 85, 
-                    ats: insight.score,
-                    branding: 75
-                },
+                summary: (feedback.executiveSummary || "Role review complete.") as string,
                 strengths: feedback.keywordsFound || [],
                 weaknesses: feedback.keywordsMissing || [],
                 actionItems: feedback.criticalGaps || [],
@@ -88,6 +83,7 @@ export function InsightsFeed({ data }: InsightsFeedProps) {
                     rationale: "Suggested for better job description alignment."
                 }))
             };
+            setSelectedResumeScoreLabel("Job description alignment (AI estimate)");
             setSelectedResume(normalizedData);
             setIsResumeModalOpen(true);
             return;
@@ -109,6 +105,7 @@ export function InsightsFeed({ data }: InsightsFeedProps) {
             suggestedBulletPoints: feedback.suggestedBulletPoints || []
         };
 
+        setSelectedResumeScoreLabel("Resume Score");
         setSelectedResume(normalizedData);
         setIsResumeModalOpen(true);
     };
@@ -219,6 +216,7 @@ export function InsightsFeed({ data }: InsightsFeedProps) {
                     isOpen={isResumeModalOpen}
                     onCloseAction={() => setIsResumeModalOpen(false)}
                     data={selectedResume}
+                    scoreLabel={selectedResumeScoreLabel}
                 />
             )}
 

@@ -12,6 +12,9 @@ import {
     RiLoader4Line
 } from "react-icons/ri";
 import { useToast } from "@/components/ui/Toast";
+import { AppIcon } from "@/components/ui/AppIcon";
+import { featureChrome } from "@/components/dashboard/feature-chrome";
+import { useDialogFocus } from "@/hooks/useDialogFocus";
 
 export interface ApplicationChangeItem {
     id: string;
@@ -48,6 +51,7 @@ export function ApplicationSuggestionsModal({
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editText, setEditText] = useState("");
     const { showToast } = useToast();
+    const dialogRef = useDialogFocus<HTMLDivElement>(isOpen, onCloseAction);
 
     const fetchChanges = React.useCallback(async () => {
         if (!applicationId) return;
@@ -78,16 +82,12 @@ export function ApplicationSuggestionsModal({
 
     useEffect(() => {
         if (!isOpen) return;
+        const previousOverflow = document.body.style.overflow;
         document.body.style.overflow = "hidden";
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === "Escape") onCloseAction();
-        };
-        window.addEventListener("keydown", handleKeyDown);
         return () => {
-            document.body.style.overflow = "unset";
-            window.removeEventListener("keydown", handleKeyDown);
+            document.body.style.overflow = previousOverflow;
         };
-    }, [isOpen, onCloseAction]);
+    }, [isOpen]);
 
     const handleUpdateStatus = async (id: string, newStatus: "approved" | "rejected" | "pending", userEdits?: string) => {
         try {
@@ -142,26 +142,32 @@ export function ApplicationSuggestionsModal({
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
+                    ref={dialogRef}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="application-suggestions-title"
                     className="relative bg-white w-full max-w-3xl rounded-3xl shadow-2xl border border-neutral-200 overflow-hidden flex flex-col max-h-[85vh]"
                 >
                     {/* Modal Header */}
-                    <div className="p-6 border-b border-neutral-200/80 flex items-center justify-between bg-[#FAF9F6] shrink-0">
-                        <div className="flex items-center gap-3">
+                    <div className="p-6 border-b border-neutral-200/80 flex items-center justify-between gap-3 bg-[#FAF9F6] shrink-0">
+                        <div className="flex min-w-0 items-center gap-3">
                             <div className="w-10 h-10 rounded-xl bg-[#0A0A0A] text-white flex items-center justify-center shadow-xs">
-                                <RiMagicLine size={20} />
+                                <AppIcon icon={RiMagicLine} size={20} />
                             </div>
-                            <div>
-                                <h2 className="text-lg font-bold text-[#0A0A0A]">Review AI Suggestions</h2>
+                            <div className="min-w-0">
+                                <h2 id="application-suggestions-title" className="text-lg font-bold text-[#0A0A0A]">Review AI Suggestions</h2>
                                 <p className="text-xs text-neutral-500 font-medium">
                                     {position} @ {company} — {pendingCount} pending, {approvedCount} applied
                                 </p>
                             </div>
                         </div>
                         <button
+                            type="button"
                             onClick={onCloseAction}
-                            className="w-8 h-8 rounded-lg bg-neutral-200/60 hover:bg-neutral-200 flex items-center justify-center text-neutral-600 hover:text-[#0A0A0A] transition-colors"
+                            aria-label="Close suggestions"
+                            className={featureChrome.iconButton}
                         >
-                            <RiCloseLine size={20} />
+                            <AppIcon icon={RiCloseLine} size={20} />
                         </button>
                     </div>
 
@@ -310,40 +316,44 @@ export function ApplicationSuggestionsModal({
                                         </div>
 
                                         {/* Action Buttons: Approve, Edit, Reject, Reset */}
-                                        <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+                                        <div className="flex flex-wrap items-center justify-end gap-2 pt-2 border-t border-slate-800">
                                             {item.status !== "pending" ? (
                                                 <button
+                                                    type="button"
                                                     onClick={() => handleUpdateStatus(item.id, "pending")}
                                                     disabled={isUpdating}
-                                                    className="inline-flex items-center gap-1 text-xs font-bold text-slate-400 hover:text-white px-3 py-1.5 rounded-lg border border-slate-800 hover:bg-slate-800 transition-colors"
+                                                    className="inline-flex min-h-11 items-center gap-1 text-xs font-bold text-slate-400 hover:text-white px-3 py-1.5 rounded-lg border border-slate-800 hover:bg-slate-800 transition-colors"
                                                 >
-                                                    <RiHistoryLine size={14} />
+                                                    <AppIcon icon={RiHistoryLine} size={14} />
                                                     Reset to Pending
                                                 </button>
                                             ) : (
                                                 <>
                                                     <button
+                                                        type="button"
                                                         onClick={() => handleUpdateStatus(item.id, "rejected")}
                                                         disabled={isUpdating}
-                                                        className="inline-flex items-center gap-1 text-xs font-bold text-rose-400 hover:text-rose-300 px-3 py-1.5 rounded-lg border border-rose-900/50 hover:bg-rose-950/40 transition-colors"
+                                                        className="inline-flex min-h-11 items-center gap-1 text-xs font-bold text-rose-400 hover:text-rose-300 px-3 py-1.5 rounded-lg border border-rose-900/50 hover:bg-rose-950/40 transition-colors"
                                                     >
-                                                        <RiCloseCircleLine size={14} />
+                                                        <AppIcon icon={RiCloseCircleLine} size={14} />
                                                         Reject
                                                     </button>
                                                     <button
+                                                        type="button"
                                                         onClick={() => startEditing(item)}
                                                         disabled={isUpdating}
-                                                        className="inline-flex items-center gap-1 text-xs font-bold text-blue-400 hover:text-blue-300 px-3 py-1.5 rounded-lg border border-blue-900/50 hover:bg-blue-950/40 transition-colors"
+                                                        className="inline-flex min-h-11 items-center gap-1 text-xs font-bold text-blue-400 hover:text-blue-300 px-3 py-1.5 rounded-lg border border-blue-900/50 hover:bg-blue-950/40 transition-colors"
                                                     >
-                                                        <RiEdit2Line size={14} />
+                                                        <AppIcon icon={RiEdit2Line} size={14} />
                                                         Custom Edit
                                                     </button>
                                                     <button
+                                                        type="button"
                                                         onClick={() => handleUpdateStatus(item.id, "approved")}
                                                         disabled={isUpdating}
-                                                        className="inline-flex items-center gap-1 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 px-4 py-1.5 rounded-lg transition-colors shadow-xs"
+                                                        className="inline-flex min-h-11 items-center gap-1 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 px-4 py-1.5 rounded-lg transition-colors shadow-xs"
                                                     >
-                                                        <RiCheckLine size={14} />
+                                                        <AppIcon icon={RiCheckLine} size={14} />
                                                         Approve
                                                     </button>
                                                 </>
@@ -358,8 +368,9 @@ export function ApplicationSuggestionsModal({
                     {/* Footer */}
                     <div className="p-4 border-t border-neutral-200 bg-[#FAF9F6] flex justify-end shrink-0">
                         <button
+                            type="button"
                             onClick={onCloseAction}
-                            className="bg-[#0A0A0A] text-white text-xs font-bold px-5 py-2.5 rounded-xl hover:bg-neutral-800 transition-colors"
+                            className={`${featureChrome.primaryButton} min-w-28`}
                         >
                             Done
                         </button>

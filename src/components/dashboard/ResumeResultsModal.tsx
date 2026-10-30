@@ -75,11 +75,12 @@ const CircularGauge = ({ value, label, icon: Icon }: { value: number; label: str
     );
 };
 
-export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
+export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data, scoreLabel = "Resume Score" }: {
     isOpen: boolean;
     onCloseAction: () => void;
     resumeId?: string;
     data: ResumeAnalysisData;
+    scoreLabel?: string;
 }) {
     const router = useRouter();
 
@@ -170,7 +171,7 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
                                     <div className="relative z-10 space-y-6">
                                         <div className="flex justify-between items-start">
                                             <div>
-                                                <p className="text-[0.55rem] font-bold uppercase tracking-[0.3em] text-[#A3A3A3] mb-3">Resume Score</p>
+                                                <p className="text-[0.55rem] font-bold uppercase tracking-[0.3em] text-[#A3A3A3] mb-3">{scoreLabel}</p>
                                                 <div className="flex items-baseline gap-2">
                                                     <h3 className="text-5xl font-bold text-foreground tracking-tight leading-none">{score}</h3>
                                                     <span className="text-muted-foreground text-lg font-semibold">/100</span>
@@ -205,12 +206,14 @@ export function ResumeResultsModal({ isOpen, onCloseAction, resumeId, data }: {
                             </div>
 
                             <div className="lg:col-span-7 space-y-8">
+                                {data.metrics && (
                                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                                     <CircularGauge value={data?.metrics?.impact ?? 0} label="Impact" icon={FlashIcon} />
                                     <CircularGauge value={data?.metrics?.formatting ?? 0} label="Format" icon={ChartIcon} />
                                     <CircularGauge value={data?.metrics?.ats ?? 0} label="ATS Match" icon={RocketIcon} />
                                     <CircularGauge value={data?.metrics?.branding ?? 0} label="Identity" icon={ShieldIcon} />
                                 </div>
+                                )}
 
                                 <div className="grid grid-cols-1 gap-6">
                                     <div className="space-y-4">

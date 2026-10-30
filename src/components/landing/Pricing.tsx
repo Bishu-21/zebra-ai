@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { m } from "framer-motion";
+import { m, useReducedMotion } from "framer-motion";
 import { PLANS, PlanId } from "@/lib/constants/plans";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
@@ -38,6 +38,7 @@ const EnterpriseIcon = ({ size = 24 }: { size?: number }) => (
 export function Pricing() {
   const router = useRouter();
   const { data: session } = useSession();
+  const reduceMotion = useReducedMotion();
   const [loading] = useState<string | null>(null);
 
   const handleSubscription = async (planId: PlanId) => {
@@ -87,8 +88,8 @@ export function Pricing() {
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-10 md:mb-16 max-w-2xl mx-auto">
           <m.div
-            initial={{ opacity: 0, y: -10 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={reduceMotion ? false : { opacity: 0, y: -10 }}
+            whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="flex items-center justify-center gap-2 mb-5"
           >
@@ -98,7 +99,7 @@ export function Pricing() {
             Choose a credit pack
           </h2>
           <p className="text-accent-dark text-lg leading-relaxed">
-            Choose a one-time credit pack based on how many resume reviews, tailoring runs, or generated documents you expect to use.
+            Buy a one-time credit pack for AI reviews, job matching, and generated drafts. Credits are not a subscription. Resume PDF export is included with a signed-in account.
           </p>
         </div>
 
@@ -106,10 +107,10 @@ export function Pricing() {
           {planCards.map((plan, index) => (
             <m.div
               key={plan.name}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              initial={reduceMotion ? false : { opacity: 0, y: 20 }}
+              whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
+              transition={{ delay: reduceMotion ? 0 : index * 0.1 }}
               className={`p-10 pt-14 rounded-3xl border-[1.5px] transition-all duration-300 relative ${
                 plan.featured
                 ? "bg-white border-primary shadow-[0px_24px_60px_-15px_rgba(0,0,0,0.1)] scale-105 z-10"

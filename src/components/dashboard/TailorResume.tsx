@@ -1,4 +1,5 @@
 "use client";
+import { DashboardToolCard } from "./DashboardToolCard";
 
 import React, { useCallback, useState } from "react";
 import { m, AnimatePresence } from "framer-motion";
@@ -267,19 +268,12 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
 
     return (
         <>
-            <button
-                type="button"
+            <DashboardToolCard
+                icon={RiFileSearchLine}
+                title="Review against a job"
+                description="Compare a resume with a job description and review suggested changes."
                 onClick={() => setIsOpen(true)}
-                className={`${featureChrome.card} h-full w-full cursor-pointer p-5 text-left transition-colors hover:border-neutral-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-950`}
-            >
-                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-muted text-muted-foreground">
-                    <AppIcon icon={RiFileSearchLine} size={20} />
-                </div>
-                <h3 className="text-base font-semibold tracking-tight text-foreground">Review against a job</h3>
-                <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                    Compare a resume with a job description and review suggested changes.
-                </p>
-            </button>
+            />
 
             <AnimatePresence>
                 {isOpen && (

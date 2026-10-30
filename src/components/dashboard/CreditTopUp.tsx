@@ -148,7 +148,12 @@ export function CreditTopUp() {
             const orderData = await orderRes.json().catch(() => ({}));
 
             if (!orderRes.ok) {
-                throw new Error(orderData.error || "Failed to create order");
+                setCheckoutError(
+                    typeof orderData.error === "string"
+                        ? orderData.error
+                        : "Could not start checkout. Please try again later."
+                );
+                return;
             }
 
             const options: RazorpayOptions = {

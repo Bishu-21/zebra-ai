@@ -7,8 +7,7 @@ import { NavAuth } from "@/components/auth/NavAuth";
 
 const SECTIONS = [
   { id: "product", label: "Product" },
-  { id: "compare", label: "Compare" },
-  { id: "about", label: "Story" },
+  { id: "how-it-works", label: "How it works" },
   { id: "pricing", label: "Pricing" },
   { id: "faq", label: "FAQ" },
 ] as const;

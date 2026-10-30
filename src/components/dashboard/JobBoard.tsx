@@ -143,7 +143,7 @@ export function JobBoard({ initialJobs, resumes = [], versions = [] }: {
                 </div>
                 <div className="relative z-10 mt-4 md:mt-0">
                   <div className="relative inline-block">
-                    <select value={job.status} onChange={(event) => updateStatus(job.id, event.target.value as Job["status"])} className={`h-11 appearance-none rounded-xl py-1.5 pl-3 pr-8 text-sm font-medium outline-none ${statusClasses(String(job.status))}`}>
+                    <select aria-label={`Status for ${job.position} at ${job.company}`} value={job.status} onChange={(event) => updateStatus(job.id, event.target.value as Job["status"])} className={`h-11 appearance-none rounded-xl py-1.5 pl-3 pr-8 text-sm font-medium outline-none ${statusClasses(String(job.status))}`}>
                       {BOARD_STATUSES.map((status) => <option key={status}>{status}</option>)}
                     </select>
                     <AppIcon icon={RiArrowDownSLine} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2" size={14} />

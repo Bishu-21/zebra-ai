@@ -4,8 +4,10 @@ import React from "react";
 import {
 RiArrowRightLine,
 RiBriefcaseLine,
-RiExternalLinkLine
+RiLink
 } from "react-icons/ri";
+import { AppIcon } from "@/components/ui/AppIcon";
+import { featureChrome } from "@/components/dashboard/feature-chrome";
 import type { ApplicationData,WorkspaceTab } from "../ApplicationWorkspace";
 
 interface Props {
@@ -27,7 +29,7 @@ export function OverviewTab({ company, setCompany, position, setPosition, url, s
     return (
                 <div className="space-y-6 bg-white border border-neutral-200 rounded-2xl p-6 shadow-sm">
                     <h2 className="text-lg font-extrabold flex items-center gap-2 border-b border-neutral-100 pb-3">
-                        <RiBriefcaseLine className="w-5 h-5 text-neutral-700" /> Section 1: Job Details
+                        <AppIcon icon={RiBriefcaseLine} size={20} className="text-neutral-700" /> Section 1: Job Details
                     </h2>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -66,9 +68,10 @@ export function OverviewTab({ company, setCompany, position, setPosition, url, s
                                         href={url}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="p-2.5 bg-neutral-100 text-neutral-700 rounded-xl hover:bg-neutral-200 transition-colors flex items-center justify-center"
+                                        aria-label="Open job listing"
+                                        className={`${featureChrome.iconButton} bg-neutral-100 text-neutral-700 hover:bg-neutral-200`}
                                     >
-                                        <RiExternalLinkLine className="w-4 h-4" />
+                                        <AppIcon icon={RiLink} size={16} />
                                     </a>
                                 )}
                             </div>

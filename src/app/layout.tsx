@@ -16,23 +16,17 @@ export const viewport: import('next').Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
   title: {
-    default: 'Zebra AI | Evidence-Based Resume Builder',
-    template: '%s | Zebra AI - ATS Resume Builder',
+    default: 'Zebra AI | Improve your resume for a specific job',
+    template: '%s | Zebra AI',
   },
   description:
-    'Build, review, and tailor evidence-based resumes with structured checks, job-description matching, live previews, and clear explanations for suggested changes.',
+    'Import an existing resume, review suggested changes for a job, and export a PDF when you are ready. Credits are used for AI reviews and generation.',
   keywords: [
     'Zebra AI',
     'zebra-ai.app',
-    'AI resume builder',
-    'ATS resume builder',
-    'ATS resume checker',
-    'resume optimizer for software engineers',
-    'developer resume builder',
-    'free ATS resume builder',
-    'resume bullet point generator',
-    'tech resume builder',
-    'AI portfolio generator',
+    'resume review',
+    'job-specific resume editor',
+    'resume PDF export',
     'job application tracker',
   ],
   authors: [{ name: 'Zebra AI Team', url: baseUrl }],
@@ -45,9 +39,9 @@ export const metadata: Metadata = {
     telephone: false,
   },
   openGraph: {
-    title: 'Zebra AI | Evidence-Based Resume Builder',
+    title: 'Zebra AI | Improve your resume for a specific job',
     description:
-      'Review resume structure, tailor content to a job description, edit with a live preview, and export a clean PDF.',
+      'Import an existing resume, review suggested changes for a job, and export a PDF when you are ready.',
     url: baseUrl,
     siteName: 'Zebra AI',
     locale: 'en_US',
@@ -63,9 +57,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Zebra AI | Evidence-Based Resume Builder',
+    title: 'Zebra AI | Improve your resume for a specific job',
     description:
-      'Build and tailor resumes with evidence-grounded suggestions and transparent scoring.',
+      'Import an existing resume, review suggested changes for a job, and export a PDF when you are ready.',
     images: ['/zebra_star.png'],
   },
   alternates: {

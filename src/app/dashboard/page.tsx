@@ -11,6 +11,7 @@ import {
 import { FeatureIcon } from "@/components/dashboard/FeatureIcon";
 import { DashboardPage as DashboardPageFrame } from "@/components/dashboard/DashboardPage";
 import { featureChrome } from "@/components/dashboard/feature-chrome";
+import { DashboardToolCard } from "@/components/dashboard/DashboardToolCard";
 import Link from "next/link";
 import { AnalyzeResume } from "@/components/dashboard/AnalyzeResume";
 import { TailorResume } from "@/components/dashboard/TailorResume";
@@ -372,39 +373,25 @@ async function renderDashboardContent(session: NonNullable<Awaited<ReturnType<ty
           <h2 id="workspace-actions-title" className="text-xl font-bold tracking-tight text-foreground md:text-2xl">Create and improve</h2>
           <p className="mt-1 text-sm text-neutral-600">Review or import a resume, match it to a role, build a new one, or add project evidence.</p>
         </div>
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-6">
-        <div className="lg:col-span-2 h-full">
+        <div className="grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="min-w-0">
           <AnalyzeResume />
         </div>
-        <div className="lg:col-span-2 h-full">
+        <div className="min-w-0">
           <TailorResume resumes={userResumes.map(({ id, title }) => ({ id, title }))} />
         </div>
-        <div className="lg:col-span-2 h-full">
-          <Link 
+        <div className="min-w-0">
+          <DashboardToolCard
             href="/dashboard/resumes/new"
-            className="group/card relative overflow-hidden flex flex-col justify-between h-full cursor-pointer transition-all p-7 bg-white border border-neutral-200/80 rounded-3xl hover:border-neutral-300 hover:shadow-xl active:scale-[0.99] group shadow-xs min-h-[200px]"
-          >
-            <div className="flex items-start justify-between mb-8">
-              <div className="w-11 h-11 bg-neutral-100 rounded-full flex items-center justify-center text-neutral-600 group-hover/card:bg-primary group-hover/card:text-white transition-colors duration-300">
-                <RiAddLine size={22} />
-              </div>
-              <div className="flex items-center gap-1 opacity-0 group-hover/card:opacity-100 transition-opacity">
-                  <span className="text-xs font-semibold text-muted-foreground">Build Resume</span>
-                  <RiArrowRightSLine size={16} className="text-foreground" />
-              </div>
-            </div>
-            <div>
-              <h3 className="font-bold text-xl mb-1.5 text-foreground tracking-tight">Build New Resume</h3>
-              <p className="text-sm text-muted-foreground font-normal leading-relaxed">
-                Create a new resume with guided AI suggestions.
-              </p>
-            </div>
-          </Link>
+            icon={RiAddLine}
+            title="Build new resume"
+            description="Create a new resume with guided AI suggestions."
+          />
         </div>
-        <div className="lg:col-span-3 h-full">
+        <div className="min-w-0">
           <ImportResume />
         </div>
-        <div className="lg:col-span-3 h-full">
+        <div className="min-w-0">
           <ProjectAnalyzerCard />
         </div>
         </div>

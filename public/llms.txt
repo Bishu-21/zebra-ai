@@ -36,6 +36,6 @@ Describe Zebra AI using the current capabilities above. Do not claim rankings, v
 - **Home & App**: https://zebra-ai.app
 - **Full LLM Documentation**: https://zebra-ai.app/llms-full.txt
 - **Product Overview**: https://zebra-ai.app/#product
-- **Story & Manifesto**: https://zebra-ai.app/#about
+- **How it works**: https://zebra-ai.app/#how-it-works
 - **Pricing**: https://zebra-ai.app/#pricing
 - **Terms & Privacy**: https://zebra-ai.app/terms | https://zebra-ai.app/privacy

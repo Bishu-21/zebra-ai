@@ -11,6 +11,9 @@ import { WorkTab } from "./application-workspace/WorkTab";
 import { ApplicationSuggestionsModal } from "@/components/dashboard/ApplicationSuggestionsModal";
 import { useToast } from "@/components/ui/Toast";
 import { analyzeEvidenceCoverage } from "@/lib/requirement-extractor";
+import { AppIcon } from "@/components/ui/AppIcon";
+import { FeatureIcon } from "@/components/dashboard/FeatureIcon";
+import { featureChrome } from "@/components/dashboard/feature-chrome";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useMemo,useState } from "react";
@@ -263,6 +266,35 @@ export function ApplicationWorkspace({ initialApplication, resumes, workItems, c
             app.selectedResume
         );
     }, [jobDescription, selectedWorkIds, workItems, app.selectedResume]);
+    const missingEvidenceCount = evidenceAnalysis.missing.length;
+    const sections: Array<{
+        id: WorkspaceTab;
+        label: string;
+        complete: boolean;
+        badge?: { count: number; className: string; ariaLabel: string };
+    }> = [
+        { id: "overview", label: "Job details", complete: Boolean(company && position) },
+        { id: "resume", label: "Resume", complete: Boolean(selectedResumeId) },
+        { id: "work", label: `Work (${selectedWorkIds.length})`, complete: selectedWorkIds.length > 0 },
+        {
+            id: "evidence",
+            label: "Evidence",
+            complete: Boolean(jobDescription),
+            badge: missingEvidenceCount > 0
+                ? { count: missingEvidenceCount, className: "bg-rose-500 text-white", ariaLabel: `${missingEvidenceCount} missing evidence items` }
+                : undefined,
+        },
+        {
+            id: "suggestions",
+            label: "AI suggestions",
+            complete: (app.changes?.length || 0) > 0,
+            badge: pendingSuggestionsCount > 0
+                ? { count: pendingSuggestionsCount, className: "bg-amber-500 text-white", ariaLabel: `${pendingSuggestionsCount} pending suggestions` }
+                : undefined,
+        },
+        { id: "review", label: "Final review", complete: Boolean(app.resumeVersionId) },
+        { id: "export", label: "Export", complete: Boolean(selectedResumeId) },
+    ];
 
     return (
         <div className="max-w-6xl mx-auto p-4 md:p-8 space-y-6 text-[#0A0A0A]">
@@ -273,9 +305,10 @@ export function ApplicationWorkspace({ initialApplication, resumes, workItems, c
                         href="/dashboard/job-tracker"
                         className="inline-flex items-center text-xs font-semibold text-neutral-500 hover:text-neutral-900 transition-colors mb-2 gap-1"
                     >
-                        <RiArrowLeftLine className="w-4 h-4" /> Back to Applications
+                        <AppIcon icon={RiArrowLeftLine} size={16} /> Back to Applications
                     </Link>
                     <div className="flex items-center gap-3 flex-wrap">
+                        <FeatureIcon feature="Applications" size={22} className="text-neutral-700" />
                         <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">
                             {position}
                         </h1>
@@ -284,30 +317,13 @@ export function ApplicationWorkspace({ initialApplication, resumes, workItems, c
                 </div>
 
                 <div className="flex items-center gap-3 flex-wrap">
-                    {/* Status Dropdown */}
-                    <div className="relative">
-                        <select
-                            value={status}
-                            onChange={(e) => {
-                                setStatus(e.target.value);
-                                handleSave({ status: e.target.value });
-                            }}
-                            className="px-3.5 py-2 border rounded-xl font-semibold text-xs transition-colors focus:ring-2 focus:ring-[#0A0A0A] outline-none cursor-pointer"
-                        >
-                            {STATUS_OPTIONS.map((opt) => (
-                                <option key={opt.value} value={opt.value}>
-                                    Status: {opt.label}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
                     <button
+                        type="button"
                         onClick={() => handleSave()}
                         disabled={isSaving}
-                        className="px-4 py-2 bg-[#0A0A0A] text-white text-xs font-bold rounded-xl hover:bg-neutral-800 transition-colors inline-flex items-center gap-1.5 shadow-sm disabled:opacity-50"
+                        className={featureChrome.primaryButton}
                     >
-                        <RiSave3Line className="w-4 h-4" />
+                        <AppIcon icon={RiSave3Line} size={16} />
                         {isSaving ? "Saving..." : "Save Changes"}
                     </button>
                 </div>
@@ -315,85 +331,57 @@ export function ApplicationWorkspace({ initialApplication, resumes, workItems, c
 
             <div className="grid items-start gap-6 md:grid-cols-[260px_minmax(0,1fr)]">
             <aside className="md:sticky md:top-6 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
-              <div className="grid grid-cols-3 gap-2 border-b border-neutral-100 pb-4 md:grid-cols-1">
-                <label className="block"><span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">Status</span><select value={status} onChange={(e) => { setStatus(e.target.value); handleSave({ status: e.target.value }); }} className="mt-1 w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs font-semibold outline-none">{STATUS_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
-                <div><span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">Deadline</span><p className="mt-2 text-xs font-semibold">{deadline ? new Date(`${deadline}T00:00:00`).toLocaleDateString() : "Not set"}</p></div>
-                <div><span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">Attached</span><p className="mt-2 text-xs font-semibold">{selectedResumeId ? "Resume selected" : "No resume"} · {selectedWorkIds.length} work</p></div>
+              <div className="grid grid-cols-1 gap-3 border-b border-neutral-100 pb-4 sm:grid-cols-3 md:grid-cols-1">
+                <label htmlFor="application-status" className="block min-w-0">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">Status</span>
+                    <select
+                        id="application-status"
+                        value={status}
+                        onChange={(e) => { setStatus(e.target.value); handleSave({ status: e.target.value }); }}
+                        className="mt-1 min-h-11 w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs font-semibold outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-950"
+                    >
+                        {STATUS_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                    </select>
+                </label>
+                <div className="min-w-0">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">Deadline</span>
+                    <p className="mt-2 text-xs font-semibold">{deadline ? new Date(`${deadline}T00:00:00`).toLocaleDateString() : "Not set"}</p>
+                </div>
+                <div className="min-w-0">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">Attached</span>
+                    <p className="mt-2 text-xs font-semibold break-words">{selectedResumeId ? "Resume selected" : "No resume"} · {selectedWorkIds.length} work</p>
+                </div>
               </div>
               <p className="mt-4 px-2 text-[10px] font-bold uppercase tracking-wider text-neutral-400">Sections</p>
-              <nav className="mt-2 flex gap-2 overflow-x-auto md:flex-col">
-                <button
-                    onClick={() => setActiveTab("overview")}
-                    className={`px-3 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-1.5 ${
-                        activeTab === "overview" ? "bg-[#0A0A0A] text-white" : "text-neutral-600 hover:bg-neutral-100"
-                    }`}
-                >
-                    <span className={`h-2 w-2 rounded-full ${company && position ? "bg-emerald-500" : "border border-neutral-400"}`} /> Job details
-                </button>
-
-                <button
-                    onClick={() => setActiveTab("resume")}
-                    className={`px-3 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-1.5 ${
-                        activeTab === "resume" ? "bg-[#0A0A0A] text-white" : "text-neutral-600 hover:bg-neutral-100"
-                    }`}
-                >
-                    <span className={`h-2 w-2 rounded-full ${selectedResumeId ? "bg-emerald-500" : "border border-neutral-400"}`} /> Resume
-                </button>
-
-                <button
-                    onClick={() => setActiveTab("work")}
-                    className={`px-3 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-1.5 ${
-                        activeTab === "work" ? "bg-[#0A0A0A] text-white" : "text-neutral-600 hover:bg-neutral-100"
-                    }`}
-                >
-                    <span className={`h-2 w-2 rounded-full ${selectedWorkIds.length ? "bg-emerald-500" : "border border-neutral-400"}`} /> Work ({selectedWorkIds.length})
-                </button>
-
-                <button
-                    onClick={() => setActiveTab("evidence")}
-                    className={`px-3 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-1.5 ${
-                        activeTab === "evidence" ? "bg-[#0A0A0A] text-white" : "text-neutral-600 hover:bg-neutral-100"
-                    }`}
-                >
-                    <span className={`h-2 w-2 rounded-full ${jobDescription ? "bg-emerald-500" : "border border-neutral-400"}`} /> Evidence
-                    {evidenceAnalysis.missing.length > 0 && (
-                        <span className="px-1.5 py-0.5 text-[9px] bg-rose-500 text-white rounded-full font-bold">
-                            {evidenceAnalysis.missing.length}
-                        </span>
-                    )}
-                </button>
-
-                <button
-                    onClick={() => setActiveTab("suggestions")}
-                    className={`px-3 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-1.5 ${
-                        activeTab === "suggestions" ? "bg-[#0A0A0A] text-white" : "text-neutral-600 hover:bg-neutral-100"
-                    }`}
-                >
-                    <span className={`h-2 w-2 rounded-full ${(app.changes?.length || 0) > 0 ? "bg-emerald-500" : "border border-neutral-400"}`} /> AI suggestions
-                    {pendingSuggestionsCount > 0 && (
-                        <span className="px-1.5 py-0.5 text-[9px] bg-amber-500 text-white rounded-full font-bold">
-                            {pendingSuggestionsCount}
-                        </span>
-                    )}
-                </button>
-
-                <button
-                    onClick={() => setActiveTab("review")}
-                    className={`px-3 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-1.5 ${
-                        activeTab === "review" ? "bg-[#0A0A0A] text-white" : "text-neutral-600 hover:bg-neutral-100"
-                    }`}
-                >
-                    <span className={`h-2 w-2 rounded-full ${app.resumeVersionId ? "bg-emerald-500" : "border border-neutral-400"}`} /> Final review
-                </button>
-
-                <button
-                    onClick={() => setActiveTab("export")}
-                    className={`px-3 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-1.5 ${
-                        activeTab === "export" ? "bg-[#0A0A0A] text-white" : "text-neutral-600 hover:bg-neutral-100"
-                    }`}
-                >
-                    <span className={`h-2 w-2 rounded-full ${selectedResumeId ? "bg-emerald-500" : "border border-neutral-400"}`} /> Export
-                </button>
+              <nav aria-label="Application sections" className="mt-2 flex flex-wrap gap-2 md:flex-col md:flex-nowrap">
+                {sections.map((section) => {
+                    const selected = activeTab === section.id;
+                    return (
+                        <button
+                            key={section.id}
+                            type="button"
+                            onClick={() => setActiveTab(section.id)}
+                            aria-current={selected ? "page" : undefined}
+                            aria-label={section.badge ? `${section.label}, ${section.badge.ariaLabel}` : section.label}
+                            className={`min-h-11 px-3 py-2 rounded-xl transition-colors text-sm font-medium flex items-center gap-1.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-950 ${
+                                selected ? "bg-[#0A0A0A] text-white" : "text-neutral-600 hover:bg-neutral-100"
+                            }`}
+                        >
+                            <span
+                                aria-hidden="true"
+                                className={`h-2 w-2 shrink-0 rounded-full ${
+                                    section.complete ? "bg-emerald-500" : selected ? "border border-white/80" : "border border-neutral-400"
+                                }`}
+                            />
+                            {section.label}
+                            {section.badge ? (
+                                <span className={`px-1.5 py-0.5 text-[11px] rounded-full font-bold ${section.badge.className}`} aria-label={section.badge.ariaLabel}>
+                                    {section.badge.count}
+                                </span>
+                            ) : null}
+                        </button>
+                    );
+                })}
               </nav>
               <div className="mt-5 space-y-4 border-t border-neutral-100 pt-4">
                 <label className="block"><span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">Notes</span><textarea value={notes} onChange={(e) => setNotes(e.target.value)} onBlur={() => handleSave({ notes })} rows={3} placeholder="Recruiter, referral, follow-up…" className="mt-2 w-full resize-none rounded-xl border border-neutral-200 px-3 py-2 text-xs outline-none" /></label>
