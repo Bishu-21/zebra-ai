@@ -1,4 +1,4 @@
-import { getSafeSession } from "@/lib/auth-helpers";
+import { getDashboardSession } from "@/lib/auth-helpers";
 import { getLatestLinkedInAudit } from "@/lib/linkedin-audit-store";
 import { LinkedInOptimizer } from "@/components/dashboard/LinkedInOptimizer";
 import type { LinkedInAuditResult } from "@/components/dashboard/LinkedInAuditResults";
@@ -7,7 +7,7 @@ import { getCandidateEvidenceGraph } from "@/lib/evidence-graph";
 import { LinkedInWeeklyPresence } from "@/components/dashboard/LinkedInWeeklyPresence";
 
 export default async function LinkedInPage() {
-  const session = await getSafeSession();
+  const session = await getDashboardSession();
   let initialResult: LinkedInAuditResult | null = null;
   let initialAuditId: string | null = null;
   let initialDrafts: LinkedInDraft[] | null = null;

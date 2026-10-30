@@ -1,5 +1,5 @@
 import React from "react";
-import { getSafeSession } from "@/lib/auth-helpers";
+import { getDashboardSession } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { resumes as resumesTable, resumeVersions as resumeVersionsTable } from "@/lib/schema";
 import { and, eq, desc, lt, or } from "drizzle-orm";
@@ -27,7 +27,7 @@ function formatTimeAgo(date: Date) {
 }
 
 export default async function ResumesPage({ searchParams }: { searchParams: Promise<{ masterCursor?: string; versionCursor?: string }> }) {
-    const session = await getSafeSession();
+    const session = await getDashboardSession();
     if (!session) return null;
     const params = await searchParams;
     const masterCursor = decodeCursor(params.masterCursor);

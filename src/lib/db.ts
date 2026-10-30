@@ -4,10 +4,23 @@ import * as schema from "./schema";
 import { isTransientDbError } from "./db-errors";
 import ws from "ws";
 
+const NEON_FETCH_TIMEOUT_MS = 10_000;
+const globalForNeonFetch = globalThis as unknown as { neonFetchTimeoutInstalled?: boolean };
+
 // Configure WebSocket constructor for Neon serverless Node.js environment
 if (typeof window === "undefined") {
   neonConfig.webSocketConstructor = ws;
   neonConfig.poolQueryViaFetch = true;
+  if (!globalForNeonFetch.neonFetchTimeoutInstalled) {
+    const previousFetch = neonConfig.fetchFunction;
+    neonConfig.fetchFunction = (url: string | URL, options?: RequestInit) => {
+      const timeout = AbortSignal.timeout(NEON_FETCH_TIMEOUT_MS);
+      const signal = options?.signal ? AbortSignal.any([options.signal, timeout]) : timeout;
+      const init = { ...options, signal };
+      return previousFetch ? previousFetch(url, init) : fetch(url, init);
+    };
+    globalForNeonFetch.neonFetchTimeoutInstalled = true;
+  }
 }
 
 /** Sanitize sensitive credentials, connection URLs, and tokens from log messages. */
@@ -33,7 +46,7 @@ const pool = globalForDb.pool ?? new Pool({
   connectionString: process.env.DATABASE_URL,
   max: poolMax,
   idleTimeoutMillis: 15000,
-  connectionTimeoutMillis: 10000,
+  connectionTimeoutMillis: 5_000,
   allowExitOnIdle: true,
 });
 

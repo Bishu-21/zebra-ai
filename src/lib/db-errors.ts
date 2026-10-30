@@ -51,6 +51,9 @@ const TRANSIENT_DB_ERROR_MARKERS = [
   "deadlock detected",
   "503",
   "504",
+  "this operation was aborted",
+  "aborterror",
+  "und_err_aborted",
 ];
 
 export function isTransientDbError(error: unknown): boolean {

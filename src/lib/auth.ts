@@ -147,7 +147,7 @@ export const auth = betterAuth({
 		// A short cache keeps revocation latency bounded while absorbing cold starts.
 		cookieCache: {
 			enabled: true,
-			maxAge: 60,
+			maxAge: 300,
 			strategy: "compact",
 		},
 	},

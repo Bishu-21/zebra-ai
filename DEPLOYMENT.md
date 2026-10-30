@@ -110,6 +110,29 @@ a captured test payment and confirm credits are granted exactly once.
 
 ## 3. Back up and migrate
 
+### Kafka staging rollout
+
+Set `KAFKA_BROKER` as a variable and `AZURE_EVENT_HUBS_CONNECTION_STRING`
+as a secret in the GitHub **staging** environment. The staging deployment
+workflow passes these to the Preview runtime only. Use the Event Hubs
+namespace's Send-only producer policy for the web app; never commit its key.
+Production Kafka configuration is a separate promotion step.
+
+The `resume-ingestion` Event Hub must exist before deployment. Resume audits
+now require a separate long-running `npm run worker` process; deploying the
+Vercel app does not start it. Configure that worker with a Listen-enabled
+consumer policy, a dedicated `KAFKA_CONSUMER_GROUP`, the staging database,
+and the staging AI settings. A Function App requires its own compatible
+trigger/hosting implementation; it cannot be assumed to execute this script.
+Do not share a resume-ingestion stream with production workers: each
+consumer group receives the stream's messages. Use an isolated Event Hubs
+namespace for staging when production consumers are active.
+
+Before production promotion, confirm a synthetic staging resume audit moves
+from pending to completed and produces a saved analysis. Verify cancellation,
+failed-job credit refunds, and no duplicate writes on message redelivery.
+Passing the web probes below does not establish worker readiness.
+
 Create a provider snapshot or logical backup. Then run the reviewed, forward-
 only migrations with the target `DATABASE_URL`:
 

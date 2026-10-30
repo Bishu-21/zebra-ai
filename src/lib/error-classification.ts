@@ -38,5 +38,7 @@ export function isTransientNavigationError(error: unknown): boolean {
         "chunkloaderror",
         "loading chunk",
         "dynamically imported module",
+        "session store is temporarily unavailable",
+        "session lookup timed out",
     ].some((marker) => message.includes(marker));
 }

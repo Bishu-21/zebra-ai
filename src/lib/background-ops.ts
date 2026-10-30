@@ -25,7 +25,7 @@ export interface BackgroundJobRecord {
  */
 export async function dispatchBackgroundJob(
     userId: string,
-    operationType: "job_extraction" | "evidence_mapping" | "tailored_compilation" | "preflight_validation",
+    operationType: "job_extraction" | "evidence_mapping" | "tailored_compilation" | "preflight_validation" | "resume_audit",
     payload: unknown,
     applicationId?: string
 ): Promise<BackgroundJobRecord> {
@@ -112,6 +112,49 @@ export async function updateBackgroundJobStatus(
             })
             .where(and(eq(backgroundJobs.id, jobId), eq(backgroundJobs.userId, userId)));
     }
+}
+
+/**
+ * Mark a still-pending job failed. Returns true only if this caller won the
+ * pending → failed race, so a credit refund can run once.
+ */
+export async function failPendingBackgroundJob(
+    userId: string,
+    jobId: string,
+    errorMessage: string,
+): Promise<boolean> {
+    const now = new Date();
+
+    if (isTestStoreActive()) {
+        const existing = testStore.backgroundJobs.get(jobId);
+        if (!existing || existing.userId !== userId || existing.status !== "pending") {
+            return false;
+        }
+        testStore.backgroundJobs.set(jobId, {
+            ...existing,
+            status: "failed",
+            errorMessage,
+            completedAt: now,
+            updatedAt: now,
+        });
+        return true;
+    }
+
+    const [updated] = await db.update(backgroundJobs)
+        .set({
+            status: "failed",
+            errorMessage,
+            completedAt: now,
+            updatedAt: now,
+        })
+        .where(and(
+            eq(backgroundJobs.id, jobId),
+            eq(backgroundJobs.userId, userId),
+            eq(backgroundJobs.status, "pending"),
+        ))
+        .returning({ id: backgroundJobs.id });
+
+    return Boolean(updated);
 }
 
 /**

@@ -4,7 +4,7 @@ import { cache } from "react";
 import { sanitizeSecretText } from "@/lib/db";
 import { collectErrorText, isTransientDbError } from "@/lib/db-errors";
 
-const SESSION_LOOKUP_TIMEOUT_MS = 15_000;
+const SESSION_LOOKUP_TIMEOUT_MS = 8_000;
 
 export class SessionUnavailableError extends Error {
     constructor() {
@@ -37,6 +37,7 @@ async function withSessionTimeout<T>(operation: Promise<T>): Promise<T> {
         ]);
     } finally {
         if (timeout) clearTimeout(timeout);
+        void operation.catch(() => undefined);
     }
 }
 
@@ -109,7 +110,7 @@ async function fetchSessionWithRetry() {
             // second query after our own deadline would leave the first running
             // and can congest the small Neon pool during a cold start.
             if (collectErrorText(err).includes("session lookup timed out")) {
-                console.error("[Auth Session Error] Session lookup exceeded the 15-second deadline.");
+                console.error("[Auth Session Error] Session lookup exceeded the deadline.");
                 throw new SessionUnavailableError();
             }
 
@@ -134,3 +135,13 @@ async function fetchSessionWithRetry() {
 export const getSafeSession = cache(async () => {
     return await fetchSessionWithRetry();
 });
+
+/** Dashboard pages share layout's session promise; do not rethrow store outages. */
+export async function getDashboardSession() {
+    try {
+        return await getSafeSession();
+    } catch (error) {
+        if (error instanceof SessionUnavailableError) return null;
+        throw error;
+    }
+}

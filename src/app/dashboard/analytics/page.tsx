@@ -1,6 +1,5 @@
 import React from "react";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { getDashboardSession } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { resumes as resumesTable, analysis as analysisTable, applications as applicationsTable } from "@/lib/schema";
 import { eq, inArray, desc } from "drizzle-orm";
@@ -18,14 +17,7 @@ import Link from "next/link";
 import { DashboardPage, DashboardPageHeader } from "@/components/dashboard/DashboardPage";
 
 export default async function AnalyticsPage() {
-  let session = null;
-  try {
-    session = await auth.api.getSession({
-      headers: await headers(),
-    });
-  } catch (e) {
-    console.error("Session fetch failed in analytics:", e);
-  }
+  const session = await getDashboardSession();
 
   if (!session) return null;
 

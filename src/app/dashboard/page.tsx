@@ -20,7 +20,7 @@ import { InsightsFeed, type TailoringData } from "@/components/dashboard/Insight
 import { ResumeVault } from "@/components/dashboard/ResumeVault";
 import { ProjectAnalyzerCard } from "@/components/dashboard/ProjectAnalyzerCard";
 import { AddApplicationDrawer } from "@/components/dashboard/AddApplicationDrawer";
-import { getSafeSession } from "@/lib/auth-helpers";
+import { getDashboardSession, getSafeSession } from "@/lib/auth-helpers";
 import { db, sanitizeSecretText } from "@/lib/db";
 import { 
     user as userTable,
@@ -38,7 +38,7 @@ import { ProjectAnalysisData } from "@/components/dashboard/ProjectAnalysisResul
 export default async function DashboardPage() {
   let session;
   try {
-      session = await getSafeSession();
+      session = await getDashboardSession();
   } catch (error) {
       const msg = sanitizeSecretText(error instanceof Error ? error.message : String(error));
       console.error("Dashboard Session Check Failed:", msg);

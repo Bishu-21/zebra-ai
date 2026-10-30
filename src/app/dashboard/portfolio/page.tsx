@@ -3,7 +3,7 @@ import { DashboardPage, DashboardPageHeader } from "@/components/dashboard/Dashb
 import { FeatureIcon } from "@/components/dashboard/FeatureIcon";
 import { AppIcon } from "@/components/ui/AppIcon";
 import { featureChrome } from "@/components/dashboard/feature-chrome";
-import { getSafeSession } from "@/lib/auth-helpers";
+import { getDashboardSession } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import {
     workItems as workItemsTable,
@@ -22,7 +22,7 @@ import { getOrCreateUniquePortfolioSlug } from "@/lib/slug-generator";
 import { PortfolioStatusCard } from "@/components/dashboard/PortfolioStatusCard";
 
 export default async function PortfolioDashboardPage() {
-    const session = await getSafeSession();
+    const session = await getDashboardSession();
     if (!session) return null;
 
     const userData = await db.query.user.findFirst({

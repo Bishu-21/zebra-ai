@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { ResumeResultsModal } from "./ResumeResultsModal";
 import { ResumeAnalysisData } from "@/components/compiler/types";
 import { readApiResponse } from "@/lib/api-response";
+import { resolveResumeAnalysisResponse } from "@/lib/analysis-job-poll";
 import { ResumeProcessingStatus } from "./ResumeProcessingStatus";
 import { loadResumeReviewOptions, type ResumeReviewOption } from "@/lib/resume-review-options";
 import { useDialogFocus } from "@/hooks/useDialogFocus";
@@ -39,7 +40,12 @@ export function AnalyzeResume() {
   const [resumeListAttempt, setResumeListAttempt] = useState(0);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const analysisAbortRef = useRef<AbortController | null>(null);
   const router = useRouter();
+
+  React.useEffect(() => () => {
+    analysisAbortRef.current?.abort();
+  }, []);
 
   const openReview = React.useCallback(() => {
     setIsLoadingResumes(true);
@@ -115,9 +121,12 @@ export function AnalyzeResume() {
   };
 
   const triggerAnalysis = async (textToAnalyze?: string, resumeId?: string) => {
+    analysisAbortRef.current?.abort();
+    const controller = new AbortController();
+    analysisAbortRef.current = controller;
+
     setIsAnalyzing(true);
     setScanStep("Reviewing your resume against 45 evidence checks...");
-
     setError(null);
 
     try {
@@ -125,12 +134,16 @@ export function AnalyzeResume() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(resumeId ? { resumeId } : { content: textToAnalyze }),
+        signal: controller.signal,
       });
 
-      const data = await readApiResponse<{ analysis: ResumeAnalysisData; resumeId: string }>(res, "Analysis failed");
+      if (res.status === 202) {
+        setScanStep("Queueing and analyzing resume...");
+      }
+
+      const data = await resolveResumeAnalysisResponse(res, { signal: controller.signal });
 
       setScanStep("Analysis Complete.");
-
       setAnalysisResult(data.analysis);
       setActiveResumeId(data.resumeId);
       setIsResultsModalOpen(true);
@@ -138,8 +151,8 @@ export function AnalyzeResume() {
       setIsUploading(false);
       setIsOpen(false);
       router.refresh();
-
     } catch (err: unknown) {
+      if (controller.signal.aborted) return;
       setError(err instanceof Error ? err.message : "Analysis failed");
       setIsAnalyzing(false);
       setIsUploading(false);

@@ -25,7 +25,8 @@ export function ZebraLoader({
                         alt=""
                         width={807}
                         height={807}
-                        loading={variant === "page" ? "eager" : "lazy"}
+                        loading="eager"
+                        fetchPriority={variant === "page" ? "high" : "auto"}
                     />
                 </div>
                 <div className="zebra-loader__contact zebra-loader__contact--front" />

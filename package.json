@@ -16,6 +16,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:health": "tsx scripts/db-health.ts",
     "db:prepare": "npm run db:migrate && npm run db:health",
+    "worker": "tsx scripts/worker.ts",
     "check": "npm run lint && npm run typecheck && npm run test && npm run build"
   },
   "dependencies": {
@@ -34,6 +35,7 @@
     "iconsax-react": "^0.0.8",
     "isomorphic-dompurify": "3.19.0",
     "jspdf": "^4.2.1",
+    "kafkajs": "^2.2.4",
     "mammoth": "^1.12.3",
     "next": "16.4.3",
     "openai": "^7.19.0",

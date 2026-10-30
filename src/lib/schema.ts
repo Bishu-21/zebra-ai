@@ -641,6 +641,9 @@ export const backgroundJobs = pgTable("background_jobs", {
         .references(() => user.id),
     applicationId: text("application_id").references(() => applications.id),
     operationType: text("operation_type").notNull(), // job_extraction, evidence_mapping, tailored_compilation, preflight_validation
+    correlationId: text("correlation_id"),
+    kafkaTopic: text("kafka_topic"),
+    artifactUrl: text("artifact_url"),
     status: text("status").notNull().default("pending"), // pending, processing, completed, failed
     progressPercent: integer("progress_percent").notNull().default(0),
     payload: jsonb("payload"),
@@ -652,6 +655,7 @@ export const backgroundJobs = pgTable("background_jobs", {
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
 }, (table) => [
     index("background_jobs_user_id_idx").on(table.userId),
+    index("background_jobs_correlation_idx").on(table.correlationId),
 ]);
 
 export const backgroundJobsRelations = relations(backgroundJobs, ({ one }) => ({

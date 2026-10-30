@@ -27,6 +27,8 @@ jobs:
       PRODUCTION_APP_URL: ${{ vars.PRODUCTION_APP_URL }}
       DEPLOY_ENVIRONMENT: ${{ inputs.environment }}
       VERCEL_CLI_VERSION: ${{ vars.VERCEL_CLI_VERSION }}
+      KAFKA_BROKER: ${{ vars.KAFKA_BROKER }}
+      AZURE_EVENT_HUBS_CONNECTION_STRING: ${{ secrets.AZURE_EVENT_HUBS_CONNECTION_STRING }}
       NEXT_TELEMETRY_DISABLED: '1'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -46,7 +48,7 @@ jobs:
           done
           [[ "$VERCEL_CLI_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo 'Pin an exact Vercel CLI version'; exit 1; }
           if [[ "$DEPLOY_ENVIRONMENT" = staging ]]; then
-            for name in PRODUCTION_DATABASE_HOST PRODUCTION_APP_URL; do
+            for name in PRODUCTION_DATABASE_HOST PRODUCTION_APP_URL KAFKA_BROKER AZURE_EVENT_HUBS_CONNECTION_STRING; do
               test -n "${!name}" || { echo "Missing deployment setting: $name"; exit 1; }
             done
           fi
@@ -76,7 +78,10 @@ jobs:
               --build-env "PRODUCTION_DATABASE_HOST=$PRODUCTION_DATABASE_HOST"
               --build-env "PRODUCTION_APP_URL=$PRODUCTION_APP_URL"
             )
-            deployment_url=$(vercel deploy --yes "${build_env[@]}" --token="$VERCEL_TOKEN")
+            deployment_url=$(vercel deploy --yes "${build_env[@]}" \
+              --env "KAFKA_BROKER=$KAFKA_BROKER" \
+              --env "AZURE_EVENT_HUBS_CONNECTION_STRING=$AZURE_EVENT_HUBS_CONNECTION_STRING" \
+              --token="$VERCEL_TOKEN")
           else
             deployment_url=$(vercel deploy --yes --prod "${build_env[@]}" --token="$VERCEL_TOKEN")
           fi

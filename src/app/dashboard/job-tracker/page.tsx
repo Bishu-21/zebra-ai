@@ -1,5 +1,5 @@
 import React from "react";
-import { getSafeSession } from "@/lib/auth-helpers";
+import { getDashboardSession } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { resumes as resumesTable, resumeVersions as resumeVersionsTable, applications as applicationsTable, jobs as jobsTable } from "@/lib/schema";
 import { and, count, eq, desc, lt, or, sql } from "drizzle-orm";
@@ -11,12 +11,7 @@ import { decodeCursor, paginateRows } from "@/lib/pagination";
 import Link from "next/link";
 
 export default async function JobTrackerPage({ searchParams }: { searchParams: Promise<{ cursor?: string }> }) {
-  let session = null;
-  try {
-    session = await getSafeSession();
-  } catch (e) {
-    console.error("Session fetch failed in job-tracker:", e);
-  }
+  const session = await getDashboardSession();
 
   if (!session) return null;
   const cursor = decodeCursor((await searchParams).cursor);

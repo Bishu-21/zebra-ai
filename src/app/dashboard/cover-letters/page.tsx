@@ -1,5 +1,5 @@
 import React, { Suspense } from "react";
-import { getSafeSession } from "@/lib/auth-helpers";
+import { getDashboardSession } from "@/lib/auth-helpers";
 import Link from "next/link";
 import { GenerateCoverLetter } from "@/components/dashboard/GenerateCoverLetter";
 import {
@@ -41,7 +41,7 @@ function CoverLettersLoadingState() {
 }
 
 export default async function CoverLettersPage({ searchParams }: { searchParams: Promise<{ cursor?: string }> }) {
-  const session = await getSafeSession();
+  const session = await getDashboardSession();
 
   if (!session) return null;
 

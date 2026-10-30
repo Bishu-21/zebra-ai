@@ -114,6 +114,8 @@ export function Sidebar({
                                 alt="Zebra AI"
                                 width={28}
                                 height={28}
+                                loading="eager"
+                                fetchPriority="high"
                                 className="w-7 h-7 object-contain group-hover:scale-105 transition-transform"
                             />
                             <h1 className="text-lg font-bold tracking-tight text-foreground">Zebra AI</h1>

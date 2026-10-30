@@ -23,7 +23,14 @@ describe("Transient database error classification", () => {
 
     test("session lookup uses the shared classifier including connect timeout", () => {
         const authHelpers = readFileSync("src/lib/auth-helpers.ts", "utf8");
+        const dbSource = readFileSync("src/lib/db.ts", "utf8");
+        const authSource = readFileSync("src/lib/auth.ts", "utf8");
         assert.match(authHelpers, /isTransientDbError\(error\)/);
+        assert.match(authHelpers, /SESSION_LOOKUP_TIMEOUT_MS = 8_000/);
+        assert.match(authHelpers, /export async function getDashboardSession/);
+        assert.match(authHelpers, /void operation\.catch\(\(\) => undefined\)/);
+        assert.match(dbSource, /AbortSignal\.timeout\(NEON_FETCH_TIMEOUT_MS\)/);
+        assert.match(authSource, /maxAge: 300/);
         assert.doesNotMatch(authHelpers, /suppressHydrationWarning/);
     });
 });
