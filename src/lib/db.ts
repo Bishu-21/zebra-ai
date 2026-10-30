@@ -1,6 +1,7 @@
 import { drizzle } from "drizzle-orm/neon-serverless";
 import { Pool, neonConfig } from "@neondatabase/serverless";
 import * as schema from "./schema";
+import { isTransientDbError } from "./db-errors";
 import ws from "ws";
 
 // Configure WebSocket constructor for Neon serverless Node.js environment
@@ -54,55 +55,7 @@ globalForDb.pool = pool;
 
 export const db = drizzle(pool, { schema });
 
-/**
- * Check if a database error is transient (e.g. socket reset, connection timeout, temporary proxy failure).
- * Recursively inspects nested cause objects.
- */
-export function isTransientDbError(error: unknown): boolean {
-  if (!error) return false;
-
-  const values: unknown[] = [];
-  const seen = new Set<unknown>();
-  let current: unknown = error;
-
-  while (current && !seen.has(current)) {
-    seen.add(current);
-    values.push(current);
-
-    if (typeof current === "object" && current !== null) {
-      const record = current as Record<string, unknown>;
-      current = record.cause;
-      if (record.body) values.push(record.body);
-    } else {
-      break;
-    }
-  }
-
-  const text = values
-    .map((value) => {
-      if (typeof value === "string") return value;
-      if (value instanceof Error) return value.message;
-      try {
-        return JSON.stringify(value);
-      } catch {
-        return String(value);
-      }
-    })
-    .join(" ")
-    .toLowerCase();
-
-  return [
-    "connection terminated",
-    "connection timeout",
-    "websocket was closed",
-    "econnreset",
-    "etimedout",
-    "neon_db_unavailable",
-    "deadlock detected",
-    "503",
-    "504"
-  ].some(term => text.includes(term));
-}
+export { isTransientDbError };
 
 /**
  * Execute a database query with bounded retries and exponential backoff for transient errors.

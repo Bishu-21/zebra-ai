@@ -40,25 +40,25 @@ export function PortfolioStatusCard({ slug, title, selectedWorkIds, isPublished 
 
     if (selectedWorkIds.length === 0) {
         return (
-            <section className="rounded-2xl border border-neutral-200/80 bg-white p-6 shadow-xs">
-                <p className="text-sm font-bold">Add something before publishing</p>
-                <p className="mt-1 text-xs leading-relaxed text-neutral-500">Your public link stays hidden until your portfolio contains at least one work item.</p>
-                <Link href="/dashboard/work" className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#0A0A0A] px-4 py-2.5 text-xs font-bold text-white"><RiAddLine /> Add your first work item</Link>
+            <section className="rounded-2xl border border-neutral-200/70 bg-white p-5 font-sans">
+                <p className="text-sm font-semibold tracking-tight">Add something before publishing</p>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">Your public link stays hidden until your portfolio contains at least one work item.</p>
+                <Link href="/dashboard/work" className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-white"><RiAddLine /> Add your first work item</Link>
             </section>
         );
     }
 
     return (
-        <section className="rounded-2xl border border-neutral-800 bg-[#0A0A0A] p-6 text-white shadow-sm" aria-live="polite">
+        <section className="rounded-2xl border border-neutral-200/70 bg-white p-5 font-sans" aria-live="polite">
             <div className="flex flex-col justify-between gap-5 md:flex-row md:items-center">
                 <div>
-                    <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-white/50">{isPublished ? "Published portfolio" : "Portfolio draft"}</p>
-                    <h2 className="mt-1 text-base font-bold">{isPublished ? `zebra-ai.app${publicUrl}` : "Ready when you are"}</h2>
-                    <p className="mt-1 text-xs text-white/55">{isPublished ? "Your selected work is visible through this link." : `${selectedWorkIds.length} work ${selectedWorkIds.length === 1 ? "item is" : "items are"} ready to publish.`}</p>
+                    <p className="text-xs font-medium text-muted-foreground">{isPublished ? "Published portfolio" : "Portfolio draft"}</p>
+                    <h2 className="mt-1 text-base font-semibold tracking-tight">{isPublished ? `zebra-ai.app${publicUrl}` : "Ready to publish"}</h2>
+                    <p className="mt-1 text-sm text-muted-foreground">{isPublished ? "Your selected work is visible through this link." : `${selectedWorkIds.length} work ${selectedWorkIds.length === 1 ? "item is" : "items are"} ready to publish.`}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                    {isPublished ? <Link href={publicUrl} target="_blank" className="inline-flex min-h-10 items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-bold text-black">View portfolio <RiExternalLinkLine /></Link> : null}
-                    <button type="button" disabled={saving} onClick={() => void setPublished(!isPublished)} className={`inline-flex min-h-10 items-center gap-2 rounded-full px-4 py-2 text-xs font-bold disabled:opacity-50 ${isPublished ? "border border-white/20 text-white" : "bg-white text-black"}`}>
+                    {isPublished ? <Link href={publicUrl} target="_blank" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 text-sm font-medium text-foreground">View portfolio <RiExternalLinkLine /></Link> : null}
+                    <button type="button" disabled={saving} onClick={() => void setPublished(!isPublished)} className={`inline-flex min-h-11 items-center gap-2 rounded-xl px-4 text-sm font-semibold disabled:opacity-50 ${isPublished ? "border border-neutral-200 bg-white text-foreground" : "bg-primary text-white"}`}>
                         {saving ? <RiLoader4Line className="animate-spin" /> : null}{isPublished ? "Unpublish" : "Publish portfolio"}
                     </button>
                 </div>

@@ -20,7 +20,9 @@ describe("Unhandled rejection regressions", () => {
     });
 
     test("background settings and live-tool promises terminate with rejection handlers", () => {
-        assert.match(settingsSource, /\.catch\(\(\) => \{ if \(active\) setProfile\(null\); \}\)/);
+        assert.match(settingsSource, /\.catch\(\(\) => \{/);
+        assert.match(settingsSource, /setProfile\(null\)/);
+        assert.match(settingsSource, /setLoadError\(/);
         assert.match(liveSource, /executeToolCalls\(message, liveSession\)\.catch/);
     });
 

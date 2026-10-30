@@ -16,11 +16,11 @@ export async function POST(req: NextRequest) {
         // Do not accept new orders until the signed webhook recovery path is configured.
         if (!process.env.RAZORPAY_WEBHOOK_SECRET?.trim()) {
             console.error("[Razorpay] Checkout disabled: webhook secret is missing.");
-            return NextResponse.json({ error: "Checkout is temporarily unavailable. Please contact support." }, { status: 503 });
+            return NextResponse.json({ error: "Checkout is temporarily unavailable. Payment recovery is not configured on this environment." }, { status: 503 });
         }
         const razorpay = getRazorpay();
         if (!razorpay) {
-            return NextResponse.json({ error: "Checkout is temporarily unavailable. Please contact support." }, { status: 503 });
+            return NextResponse.json({ error: "Checkout is temporarily unavailable. Payment recovery is not configured on this environment." }, { status: 503 });
         }
 
         // Rate limiting boundary (max 10 order creation requests per minute per user)

@@ -1,20 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { CareerProfileForm } from "./CareerProfileForm";
+import { featureChrome } from "@/components/dashboard/feature-chrome";
+import { useDialogFocus } from "@/hooks/useDialogFocus";
 
 export function CareerProfilePrompt({ shouldPrompt }: { shouldPrompt: boolean }) {
     const [open, setOpen] = useState(shouldPrompt);
+    const dismiss = useCallback(() => {
+        setOpen(false);
+        void fetch("/api/profile/career", { method: "DELETE" }).catch(() => undefined);
+    }, []);
+    const dialogRef = useDialogFocus<HTMLDivElement>(open, dismiss);
     if (!open) return null;
 
-    async function dismiss() {
-        setOpen(false);
-        await fetch("/api/profile/career", { method: "DELETE" }).catch(() => undefined);
-    }
-
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="career-profile-title">
-            <div className="w-full max-w-xl rounded-3xl border border-neutral-200 bg-white p-6 shadow-2xl sm:p-8">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div className={featureChrome.backdrop} onClick={dismiss} />
+            <div
+                ref={dialogRef}
+                className={`${featureChrome.dialog} z-10 max-w-xl p-6 sm:p-8`}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="career-profile-title"
+            >
                 <h2 id="career-profile-title" className="text-2xl font-bold tracking-tight text-black">Personalize Zebra once</h2>
                 <p className="mt-2 text-sm leading-6 text-neutral-600">
                     Tell us where you are in your career so resume scores compare you with the right expectations. You can change this later in Settings.

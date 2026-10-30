@@ -21,8 +21,8 @@ interface Props {
 export function SuggestionsTab({ handleRunTailor, isTailoring, app, approvedSuggestionsCount, pendingSuggestionsCount, setShowSuggestionsModal, setActiveTab }: Props) {
     return (
                 <div className="space-y-6 bg-white border border-neutral-200 rounded-2xl p-6 shadow-sm">
-                    <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
-                        <div>
+                    <div className="flex flex-col gap-3 border-b border-neutral-100 pb-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0">
                             <h2 className="text-lg font-extrabold flex items-center gap-2">
                                 <RiMagicLine className="w-5 h-5 text-neutral-700" /> Section 5: AI Suggestions & Review
                             </h2>
@@ -31,9 +31,10 @@ export function SuggestionsTab({ handleRunTailor, isTailoring, app, approvedSugg
                             </p>
                         </div>
                         <button
+                            type="button"
                             onClick={handleRunTailor}
                             disabled={isTailoring}
-                            className="px-3.5 py-1.5 border border-neutral-300 text-xs font-bold rounded-xl hover:bg-neutral-100 inline-flex items-center gap-1.5"
+                            className="shrink-0 px-3.5 py-1.5 min-h-11 border border-neutral-300 text-xs font-bold rounded-xl hover:bg-neutral-100 inline-flex items-center gap-1.5"
                         >
                             <RiRefreshLine className="w-4 h-4" /> Re-analyze
                         </button>

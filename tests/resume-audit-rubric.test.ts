@@ -23,6 +23,13 @@ describe("45-check resume audit rubric", () => {
         );
     });
 
+    test("keeps unassessed groups unknown instead of scoring them as zero", () => {
+        const noneAssessed = RESUME_AUDIT_RUBRIC.map((item) => ({ id: item.id, status: "Not Assessed" as const }));
+        assert.equal(calculateResumeAuditScores(noneAssessed).overall, null);
+        assert.equal(calculateResumeAuditScores(noneAssessed).impact, null);
+        assert.equal(calculateResumeAuditScores([]).overall, null);
+    });
+
     test("calculates the score from rubric results instead of trusting the model", () => {
         const allPass = RESUME_AUDIT_RUBRIC.map((item) => ({ id: item.id, status: "Pass" as const }));
         assert.equal(calculateResumeAuditScores(allPass).overall, 100);

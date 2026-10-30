@@ -109,8 +109,8 @@ export interface AuditItem {
 
 export interface ResumeAnalysisData {
     rubricVersion?: string;
-    score?: number;
-    overallScore?: number;
+    score?: number | null;
+    overallScore?: number | null;
     summary?: string;
     executiveSummary?: string;
     strengths?: string[];
@@ -127,10 +127,10 @@ export interface ResumeAnalysisData {
         readability?: string;
     };
     metrics?: {
-        impact?: number;
-        formatting?: number;
-        ats?: number;
-        branding?: number;
+        impact?: number | null;
+        formatting?: number | null;
+        ats?: number | null;
+        branding?: number | null;
     };
     // Tailoring-specific fields
     matchScore?: number;

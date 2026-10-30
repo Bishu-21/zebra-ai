@@ -30,17 +30,19 @@ export function DashboardLink({
     <Link
       href={href}
       onClick={onClick}
-      className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 relative group ${
+      aria-current={isActive ? "page" : undefined}
+      className={`flex min-h-11 items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors duration-200 relative group ${
         isActive
-          ? "bg-[#0A0A0A] text-white shadow-sm font-semibold"
-          : "text-neutral-600 hover:text-[#0A0A0A] hover:bg-neutral-100"
+          ? "bg-primary text-white shadow-sm font-semibold"
+          : "text-neutral-600 hover:text-foreground hover:bg-neutral-100"
       }`}
     >
       <span
-        className={`transition-transform duration-200 ${
+        aria-hidden="true"
+        className={`shrink-0 transition-transform duration-200 ${
           isActive
             ? "text-white"
-            : "text-neutral-400 group-hover:text-[#0A0A0A]"
+            : "text-muted-foreground group-hover:text-foreground"
         }`}
       >
         {icon}

@@ -8,7 +8,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/api/', '/dashboard/'],
+        disallow: ['/api/', '/dashboard/', '/dev/'],
       },
       {
         userAgent: [
@@ -26,7 +26,7 @@ export default function robots(): MetadataRoute.Robots {
           'cohere-ai',
         ],
         allow: ['/', '/llms.txt', '/llms-full.txt', '/privacy', '/terms', '/p/'],
-        disallow: ['/api/', '/dashboard/'],
+        disallow: ['/api/', '/dashboard/', '/dev/'],
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,

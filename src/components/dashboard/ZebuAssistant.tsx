@@ -22,16 +22,16 @@ import { ZebuDisplayCard } from "./ZebuDisplayCard";
 import { ZebuProofFlow } from "./ZebuProofFlow";
 import type { ZebuDisplayCard as Card, ZebuPlan } from "@/lib/zebu-contract";
 import { getZebuPageLabel, type ZebuSuggestion } from "@/lib/zebu-suggestions";
-import { extractJobUrlFromZebuMessage } from "@/lib/zebu-job-intake";
 import { parseZebuWorkspaceCommand, type ZebuWorkspaceCommand } from "@/lib/zebu-local-intent";
 import { isAllowedZebuRoute } from "@/lib/zebu-contract";
+import { DASHBOARD_NAV_ITEMS } from "@/lib/constants/navigation";
 
 type Message = { role: "user" | "assistant"; content: string; cards?: Card[]; followUp?: string[] };
 type ActionReceipt = { status: "working" | "completed" | "error"; label: string; action?: ZebuSuggestion };
 
 const welcome: Message = {
   role: "assistant",
-  content: "Hi, I’m Zebu. I can search your workspace, check deadlines, create drafts, and update applications.",
+  content: "Hi, I’m Zebu. Tell me which workspace page you would like to open.",
 };
 
 export function ZebuAssistant() {
@@ -47,12 +47,17 @@ export function ZebuAssistant() {
   const [input, setInput] = useState("");
   const [expanded, setExpanded] = useState(false);
   const [fallbackError, setFallbackError] = useState<string | null>(null);
+  const [pendingReply, setPendingReply] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<{ route: string; label: string } | null>(null);
   const [actionReceipt, setActionReceipt] = useState<ActionReceipt | null>(null);
   const [fullScreen, setFullScreen] = useState(false);
   const [proofFlowOpen, setProofFlowOpen] = useState(false);
 
   const executeAction = useCallback((action: Extract<ZebuPlan["action"], { type: "navigate" | "open_tool" | "start_flow" | "open_proof_flow" }>) => {
+    if (!["navigate"].includes(action.type)) {
+      setFallbackError("I can open workspace pages. Choose a destination below.");
+      return;
+    }
     if (action.type === "open_proof_flow") {
       setProofFlowOpen(true);
       setExpanded(true);
@@ -91,12 +96,8 @@ export function ZebuAssistant() {
   }, [router, zebu.pathname]);
 
   const performWorkspaceCommand = useCallback((command: ZebuWorkspaceCommand) => {
-    executeAction(command.openApplicationForm
-      ? { type: "start_flow", flow: "application" }
-      : { type: "navigate", route: command.route });
-    return command.openApplicationForm
-      ? "Opening the new application form in Applications."
-      : "Opening Applications.";
+    executeAction({ type: "navigate", route: command.route });
+    return `Opening ${getZebuPageLabel(command.route)}.`;
   }, [executeAction]);
 
   const addCards = useCallback((cards: Card[]) => {
@@ -223,27 +224,20 @@ export function ZebuAssistant() {
     setFallbackError(null);
     try {
       const workspaceCommand = parseZebuWorkspaceCommand(text);
-      if (zebu.pathname === "/dashboard/portfolio" && /\b(?:add|attach|upload|save|create)\b.+\b(?:proof|evidence|work item|project)\b/i.test(text)) {
-        executeAction({ type: "open_proof_flow" });
-        setMessages((items) => [...items, { role: "assistant", content: "I’ll help you add the project and proof here. Review the details before saving." }]);
-      } else if (workspaceCommand) {
+      if (workspaceCommand) {
         const spokenResponse = performWorkspaceCommand(workspaceCommand);
         setMessages((items) => [...items, { role: "assistant", content: spokenResponse }]);
-      } else if (extractJobUrlFromZebuMessage(text)) {
-        await sendFallback(text);
       } else {
-        try { await live.sendText(text); }
-        catch {
-          skipTranscriptText.current = null;
-          await sendFallback(text);
-        }
+        setPendingReply(true);
+        await sendFallback(text);
       }
     } catch (caught) {
       setFallbackError(caught instanceof Error ? caught.message : "Zebu is unavailable.");
     } finally {
+      setPendingReply(false);
       submissionRef.current = null;
     }
-  }, [executeAction, live, performWorkspaceCommand, sendFallback, zebu.pathname]);
+  }, [performWorkspaceCommand, sendFallback]);
 
   const runQuickAction = useCallback(async (suggestion: ZebuSuggestion) => {
     if (!suggestion.action) {
@@ -311,8 +305,7 @@ export function ZebuAssistant() {
         : live.state === "speaking" ? "Speaking · tap to interrupt"
           : live.state === "error" ? "Voice needs attention"
             : "Ready when you are";
-  const conversationalFollowUps = [...messages].reverse().find((message) => message.followUp?.length)?.followUp;
-  const latestActions: ZebuSuggestion[] = conversationalFollowUps?.map((prompt) => ({ label: prompt, prompt })) ?? zebu.suggestions;
+  const latestActions: ZebuSuggestion[] = DASHBOARD_NAV_ITEMS.filter(item => !item.match(zebu.pathname)).map(item => ({ label: item.label, prompt: `Open ${item.label}`, action: { type: "navigate", route: item.href } }));
   const pageLabel = getZebuPageLabel(zebu.pathname);
   const visibleContext = zebu.entityContext?.title || pageLabel;
   const streamingResponse = live.responseText.trim() !== committedResponseText ? live.responseText : "";
@@ -327,7 +320,7 @@ export function ZebuAssistant() {
       : zebu.isOpen ? "Wake phrase paused while this panel is open"
         : wake.state === "error" ? "Wake phrase reconnecting"
           : "Listening for Hey Zebra or Hey Zebu";
-  const micDisabled = live.state === "processing";
+  const micDisabled = live.state === "processing" || pendingReply;
   const handleMic = () => {
     if (live.state === "connecting") live.cancelPending();
     else if (live.state === "listening") stopListening();
@@ -339,14 +332,14 @@ export function ZebuAssistant() {
 
   return <>
     {zebu.isOpen ? (
-      <div className="zebu-surface">
+      <div className="zebu-surface zebu-navigation-voice">
         <section className={`zebu-panel ${expanded ? "zebu-panel--expanded" : "zebu-panel--compact"} ${fullScreen ? "zebu-panel--full" : ""}`} aria-label="Zebu live voice assistant" role="dialog" aria-modal={fullScreen || undefined}>
           <header className="zebu-panel__header">
             <div className="flex min-w-0 items-center gap-2.5">
               <span className="zebu-mark"><RiVoiceprintLine size={17} /></span>
               <div className="min-w-0">
                 <h2 className="text-sm font-bold leading-none tracking-tight">Zebu</h2>
-                <p className="mt-1 truncate text-[0.68rem] font-medium text-neutral-400">Workspace assistant · Live voice</p>
+                <p className="mt-1 truncate text-[0.68rem] font-medium text-neutral-400">Voice navigation</p>
               </div>
             </div>
             <div className="flex items-center gap-0.5">
@@ -430,7 +423,7 @@ export function ZebuAssistant() {
       </div>
     ) : (
       <div className="zebu-launcher">
-        <button type="button" onClick={() => zebu.open(true)} className="zebu-fab" aria-label="Open Zebu and start listening"><ZebuVoiceOrb state={live.state} volume={live.audioLevel} /><span>Talk to Zebu</span></button>
+        <button type="button" onClick={() => zebu.open(true)} className="zebu-fab zebu-fab--head" aria-label="Open Zebu voice navigation"><ZebuVoiceOrb state={live.state} volume={live.audioLevel} /><span className="sr-only">Talk to Zebu</span></button>
       </div>
     )}
   </>;

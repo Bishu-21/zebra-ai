@@ -18,9 +18,10 @@ describe("Dashboard identity and Zebu launcher", () => {
         assert.match(sidebar, /<UserAvatar/);
     });
 
-    it("keeps only the Talk to Zebu launcher button", () => {
-        const launcher = assistant.slice(assistant.indexOf('<div className="zebu-launcher">'));
-        assert.match(launcher, />Talk to Zebu</);
-        assert.doesNotMatch(launcher, /zebu-wake-toggle|>Hey Zebu</);
+    it("uses only a compact zebra-head navigation launcher", () => {
+        assert.match(assistant, /Open Zebu voice navigation/);
+        assert.match(assistant, /zebu-fab--head/);
+        assert.match(assistant, /useZebuLive/);
+        assert.doesNotMatch(header, /RiMicLine|start listening/);
     });
 });

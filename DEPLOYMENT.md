@@ -94,6 +94,20 @@ Use test-mode API keys and a separate test webhook secret in staging; replace
 both with live credentials for production. Keep all secrets in deployment
 environment variables, not in the repository.
 
+If buying credits returns “Checkout is temporarily unavailable”, check the
+server logs for the missing configuration. Order creation returns HTTP 503
+when `RAZORPAY_WEBHOOK_SECRET` or either API key is absent. Copy the webhook
+secret from the Razorpay dashboard; do not invent one. Set
+`NEXT_PUBLIC_SUPPORT_EMAIL` to a monitored inbox before paid launch; Privacy,
+Terms, and Refunds stay without a contact address until that value exists.
+For local development, set the test webhook secret in `.env.local` and use a
+public HTTPS tunnel to forward Razorpay test events to `/api/payments/webhook`. Configure the same
+secret in the Razorpay test webhook settings, then restart the app. For a
+deployment, update its environment variables and redeploy. Do not bypass the
+webhook requirement: it recovers credit grants when browser verification is
+interrupted. A configured secret alone does not prove webhook delivery; verify
+a captured test payment and confirm credits are granted exactly once.
+
 ## 3. Back up and migrate
 
 Create a provider snapshot or logical backup. Then run the reviewed, forward-

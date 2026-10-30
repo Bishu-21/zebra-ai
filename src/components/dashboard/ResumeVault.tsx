@@ -37,7 +37,7 @@ interface Resume {
     targetCompany?: string | null;
     versions?: ResumeVersion[];
     latestAnalysis?: {
-        score: number;
+        score: number | null;
         feedback: ResumeAnalysisData;
     };
 }
@@ -147,7 +147,7 @@ export function ResumeVault({ items }: ResumeVaultProps) {
                                             >
                                                 <RiCheckboxCircleLine className="text-[#0A0A0A]" size={12} />
                                                 <span className="text-[11px] font-semibold">
-                                                    {item.latestAnalysis ? `${item.latestAnalysis.score} pts` : "Reviewed"}
+                                                    {item.latestAnalysis ? (typeof item.latestAnalysis.score === "number" ? `${item.latestAnalysis.score} pts` : "Reviewed") : "Reviewed"}
                                                 </span>
                                             </button>
                                         )}

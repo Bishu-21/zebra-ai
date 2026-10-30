@@ -26,7 +26,7 @@
     "@sparticuz/chromium-min": "148.0.0",
     "@types/qrcode": "^1.5.6",
     "@vercel/connect": "^2.3.2",
-    "better-auth": "^1.7.5",
+    "better-auth": "1.7.7",
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.45.2",
     "framer-motion": "^12.43.0",
@@ -38,7 +38,7 @@
     "next": "16.4.3",
     "openai": "^7.19.0",
     "postgres": "^3.4.9",
-    "puppeteer-core": "25.12.0",
+    "puppeteer-core": "25.16.0",
     "qrcode": "^1.5.4",
     "razorpay": "^2.9.8",
     "react": "^19.3.0",
@@ -46,7 +46,8 @@
     "react-icons": "^5.7.0",
     "schema-dts": "^2.0.0",
     "tailwind-merge": "3.7.0",
-    "unpdf": "^1.8.1"
+    "unpdf": "^1.8.1",
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.3.3",
@@ -70,7 +71,12 @@
     "dompurify": "3.4.17",
     "nanoid": "3.3.18",
     "protobufjs": "^8.0.2",
-    "sharp": "0.35.5"
+    "sharp": "0.35.5",
+    "zod": "$zod",
+    "undici": "7.30.1",
+    "@azure/identity": {
+      "@azure/msal-node": "7.1.1"
+    }
   },
   "allowScripts": {
     "esbuild@0.28.2": true,

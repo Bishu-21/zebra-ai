@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
     RiAddLine,
     RiCloseLine,
@@ -14,6 +14,7 @@ import { m, AnimatePresence } from "framer-motion";
 
 import { PLANS, PlanId } from "@/lib/constants/plans";
 import { useHydrated } from "@/hooks/useHydrated";
+import { useDialogFocus } from "@/hooks/useDialogFocus";
 
 interface RazorpayResponse {
     razorpay_order_id: string;
@@ -59,6 +60,10 @@ export function CreditTopUp() {
     const [checkoutError, setCheckoutError] = useState<string | null>(null);
     const router = useRouter();
     const searchParams = useSearchParams();
+    const closePanel = useCallback(() => {
+        if (!loading) setIsOpen(false);
+    }, [loading]);
+    const dialogRef = useDialogFocus<HTMLDivElement>(isOpen && mounted, closePanel);
 
     React.useEffect(() => {
         const handleOpenCredits = () => setIsOpen(true);
@@ -148,7 +153,12 @@ export function CreditTopUp() {
             const orderData = await orderRes.json().catch(() => ({}));
 
             if (!orderRes.ok) {
-                throw new Error(orderData.error || "Failed to create order");
+                setCheckoutError(
+                    typeof orderData.error === "string"
+                        ? orderData.error
+                        : "Could not start checkout. Please try again later."
+                );
+                return;
             }
 
             const options: RazorpayOptions = {
@@ -237,7 +247,7 @@ export function CreditTopUp() {
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             className="absolute inset-0 bg-black/40 backdrop-blur-md"
-                            onClick={() => !loading && setIsOpen(false)}
+                            onClick={closePanel}
                         />
 
                         {/* Modal Dialog */}
@@ -246,6 +256,7 @@ export function CreditTopUp() {
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95, y: 10 }}
                             transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                            ref={dialogRef}
                             role="dialog"
                             aria-modal="true"
                             aria-labelledby="credit-checkout-title"
@@ -263,7 +274,7 @@ export function CreditTopUp() {
                                     </div>
                                 </div>
                                 <button
-                                    onClick={() => setIsOpen(false)}
+                                    onClick={closePanel}
                                     aria-label="Close credit packs"
                                     className="w-8 h-8 rounded-full bg-neutral-100 text-neutral-500 hover:bg-neutral-200 hover:text-[#0A0A0A] flex items-center justify-center transition-all"
                                 >
