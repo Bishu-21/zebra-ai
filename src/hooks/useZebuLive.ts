@@ -105,6 +105,7 @@ export function useZebuLive(options: { currentPage: string; currentContext?: str
   useEffect(() => { optionsRef.current = options; }, [options]);
 
   const [state, setState] = useState<ZebuLiveState>("idle");
+  const [connectionStage, setConnectionStage] = useState<"microphone" | "audio" | "authorizing" | "session" | null>(null);
   const [audioLevel, setAudioLevel] = useState(0);
   const [transcript, setTranscript] = useState("");
   const [responseText, setResponseText] = useState("");
@@ -218,6 +219,7 @@ export function useZebuLive(options: { currentPage: string; currentContext?: str
     const lifecycle = lifecycleRef.current;
     const connectionAttempt = ++connectionAttemptRef.current;
     setState("connecting");
+    setConnectionStage("authorizing");
     setError(null);
     sessionPromiseRef.current = (async () => {
       const tokenAbort = new AbortController();
@@ -237,7 +239,9 @@ export function useZebuLive(options: { currentPage: string; currentContext?: str
       });
       if (tokenAbortRef.current === tokenAbort) tokenAbortRef.current = null;
       const tokenData = await response.json() as TokenResponse;
+      if (connectionAttempt !== connectionAttemptRef.current || lifecycle !== lifecycleRef.current) throw new Error("Voice connection cancelled");
       if (!response.ok || !tokenData.token) throw new Error(tokenData.error || "Could not authorize Gemini Live.");
+      setConnectionStage("session");
       const ai = new GoogleGenAI({ apiKey: tokenData.token, httpOptions: { apiVersion: "v1alpha" } });
       let rejectHandshake: (error: Error) => void = () => undefined;
       let sessionReady = false;
@@ -429,6 +433,7 @@ export function useZebuLive(options: { currentPage: string; currentContext?: str
       setError(null);
       permissionFailureRef.current = false;
       setState("connecting");
+      setConnectionStage("microphone");
       let permission: ZebuMicrophonePermission = "unknown";
       void readMicrophonePermission().then(setMicrophonePermission);
       try {
@@ -448,14 +453,15 @@ export function useZebuLive(options: { currentPage: string; currentContext?: str
         setMicrophonePermission(permission);
 
         stage = "audio";
+        setConnectionStage("audio");
         const context = getAudioContext();
-        if (context.state === "suspended") await context.resume();
+        if (context.state === "suspended") await withZebuTimeout(context.resume(), 8_000, "Audio processing did not start in time");
         if (lifecycle !== lifecycleRef.current) return;
         if (context.state !== "running") throw new Error("AudioContext did not start");
 
         stage = "worklet";
         if (!workletLoadedRef.current) {
-          await context.audioWorklet.addModule("/zebu-pcm-capture.worklet.js");
+          await withZebuTimeout(context.audioWorklet.addModule("/zebu-pcm-capture.worklet.js"), 10_000, "Voice audio processor did not load in time");
           if (lifecycle !== lifecycleRef.current) return;
           workletLoadedRef.current = true;
         }
@@ -486,6 +492,8 @@ export function useZebuLive(options: { currentPage: string; currentContext?: str
         if (lifecycle !== lifecycleRef.current) return;
         setState("listening");
       } catch (caught) {
+        // A cancelled attempt must not stop the stream owned by a newer retry.
+        if (lifecycle !== lifecycleRef.current) return;
         releaseCapture();
         permission = await readMicrophonePermission();
         setMicrophonePermission(permission);
@@ -547,6 +555,9 @@ export function useZebuLive(options: { currentPage: string; currentContext?: str
     if (timeoutRef.current !== null) clearTimeout(timeoutRef.current);
     timeoutRef.current = null;
     setError(null);
+    setConnectionStage(null);
+    setTranscript("");
+    setResponseText("");
     setState("idle");
   }, [clearTurnTimeout, releaseCapture, stopPlayback]);
 
@@ -594,6 +605,7 @@ export function useZebuLive(options: { currentPage: string; currentContext?: str
 
   return {
     state,
+    connectionStage,
     audioLevel,
     transcript,
     responseText,

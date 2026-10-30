@@ -583,9 +583,32 @@ html {
 /* Compact voice navigation: retain microphone controls without covering the workspace. */
 .zebu-fab--head { width: 48px; height: 48px; min-width: 48px; padding: 0; justify-content: center; }
 .zebu-fab--head .zebu-orb { width: 42px; height: 42px; }
-.zebu-navigation-voice .zebu-panel { width: min(340px, calc(100vw - 1.5rem)); }
-.zebu-navigation-voice .zebu-panel--compact { height: 180px; }
-.zebu-navigation-voice .zebu-panel--expanded, .zebu-navigation-voice .zebu-panel--full { width: min(340px, calc(100vw - 1.5rem)); height: min(420px, calc(100dvh - 5rem)); right: .75rem; bottom: .75rem; border-radius: 1.25rem; }
-.zebu-navigation-voice .zebu-panel__header { min-height: 52px; padding: .5rem .7rem; }
-.zebu-navigation-voice .zebu-compact .zebu-orb { width: 38px; height: 44px; }
-.zebu-navigation-voice .zebu-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.zebu-navigation-voice .zebu-panel { width: min(320px, calc(100vw - 1.5rem)); right: .75rem; bottom: max(.75rem, env(safe-area-inset-bottom)); border-radius: 1.1rem; }
+.zebu-navigation-voice .zebu-panel--compact { height: auto; max-height: 148px; }
+.zebu-navigation-voice .zebu-panel--expanded { width: min(360px, calc(100vw - 1.5rem)); height: min(460px, calc(100dvh - 2rem)); }
+.zebu-navigation-voice .zebu-panel__header { min-height: 64px; flex-shrink: 0; gap: .3rem; padding: .5rem; border-bottom: 0; }
+.zebu-navigation-voice .zebu-panel__header > div:first-child { flex: 1; gap: .5rem; }
+.zebu-navigation-voice .zebu-panel__header .zebu-orb { width: 30px; height: 34px; }
+.zebu-navigation-voice .zebu-panel__status { margin-top: .25rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .65rem; color: #636363; }
+.zebu-navigation-voice .zebu-icon-button, .zebu-navigation-voice .zebu-mic { width: 40px; height: 40px; flex-shrink: 0; border-radius: .8rem; }
+.zebu-navigation-voice .zebu-mic { box-shadow: none; }
+.zebu-navigation-voice .zebu-compact__transcript { margin: 0; padding: .1rem .8rem .65rem; -webkit-line-clamp: 2; font-size: .72rem; }
+.zebu-compact-error { display: flex; align-items: center; justify-content: space-between; gap: .5rem; min-height: 40px; padding: .4rem .8rem; border-top: 1px solid #e5e5e5; background: #fff; font-size: .7rem; text-align: left; color: #525252; }
+.zebu-navigation-voice .zebu-expanded-status { justify-content: space-between; flex-shrink: 0; padding: .4rem .7rem; font-size: .6rem; color: #737373; }
+.zebu-expanded-status button { display: inline-flex; align-items: center; justify-content: center; gap: .25rem; min-height: 32px; padding: .2rem .4rem; border-radius: .5rem; color: #525252; }
+.zebu-expanded-status button[aria-pressed="true"] { background: #eaeaea; color: #171717; }
+.zebu-expanded-status button:disabled { opacity: .5; }
+.zebu-navigation-voice .zebu-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .3rem; }
+.zebu-navigation-voice .zebu-actions .zebu-suggestion { grid-column: auto; min-height: 36px; }
+.zebu-navigation-voice .zebu-actions .zebu-suggestion:nth-child(3):last-child { grid-column: auto; }
+.zebu-navigation-voice .zebu-action-heading span:last-child { display: none; }
+.zebu-navigation-voice .zebu-input { min-height: 40px; padding: .5rem .7rem; font-size: .8rem; }
+.zebu-navigation-voice .zebu-composer { padding: .65rem; }
+.zebu-navigation-voice button:focus-visible { outline: 2px solid #525252; outline-offset: -3px; }
+.zebu-connecting-icon { animation: zebu-spin 1s linear infinite; }
+@media (max-width: 640px) {
+  .zebu-navigation-voice .zebu-input { font-size: 16px; }
+  .zebu-navigation-voice .zebu-icon-button, .zebu-navigation-voice .zebu-mic { width: 44px; height: 44px; }
+  .zebu-navigation-voice .zebu-composer { padding-bottom: max(.65rem, env(safe-area-inset-bottom)); }
+}
+@media (prefers-reduced-motion: reduce) { .zebu-connecting-icon { animation: none; } }

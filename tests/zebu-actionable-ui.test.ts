@@ -75,7 +75,7 @@ describe("Zebu actionable workspace UI", () => {
 
   test("typed questions use the turn API instead of opening a live voice session", () => {
     const assistantSource = readFileSync("src/components/dashboard/ZebuAssistant.tsx", "utf8");
-    assert.match(assistantSource, /await sendFallback\(text\)/);
+    assert.match(assistantSource, /await sendFallback\(text, attempt\)/);
     assert.match(assistantSource, /fetch\("\/api\/zebu\/turn"/);
     assert.match(assistantSource, /setPendingReply\(true\)/);
     assert.doesNotMatch(assistantSource, /voiceSessionActive/);
@@ -108,13 +108,12 @@ describe("Zebu actionable workspace UI", () => {
     assert.match(assistantSource, /> Retry</);
   });
 
-  test("supports mobile peek, half-height, and explicit full-screen states", () => {
+  test("keeps compact mode content-sized and conversation within the viewport", () => {
     const assistantSource = readFileSync("src/components/dashboard/ZebuAssistant.tsx", "utf8");
     const styles = readFileSync("src/app/globals.css", "utf8");
-    assert.match(assistantSource, /zebu-panel--full/);
-    assert.match(styles, /\.zebu-panel--compact \{ height: 176px/);
-    assert.match(styles, /\.zebu-panel--expanded \{ height: min\(54dvh/);
-    assert.match(styles, /\.zebu-panel--full[^}]*height: 100dvh/);
+    assert.doesNotMatch(assistantSource, /setFullScreen|aria-modal/);
+    assert.match(styles, /\.zebu-navigation-voice \.zebu-panel--compact \{ height: auto/);
+    assert.match(styles, /\.zebu-navigation-voice \.zebu-panel--expanded[^}]*100dvh/);
     assert.match(styles, /env\(safe-area-inset-bottom\)/);
   });
 });

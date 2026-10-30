@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import {
   RiCloseLine,
   RiDeleteBin6Line,
-  RiExpandDiagonalLine,
+  RiChat1Line,
+  RiSubtractLine,
+  RiLoader4Line,
   RiMicFill,
   RiMicOffLine,
   RiRefreshLine,
@@ -25,24 +27,30 @@ import { getZebuPageLabel, type ZebuSuggestion } from "@/lib/zebu-suggestions";
 import { parseZebuWorkspaceCommand, type ZebuWorkspaceCommand } from "@/lib/zebu-local-intent";
 import { isAllowedZebuRoute } from "@/lib/zebu-contract";
 import { DASHBOARD_NAV_ITEMS } from "@/lib/constants/navigation";
+import { withZebuTimeout } from "@/lib/zebu-live-timeout";
 
 type Message = { role: "user" | "assistant"; content: string; cards?: Card[]; followUp?: string[] };
 type ActionReceipt = { status: "working" | "completed" | "error"; label: string; action?: ZebuSuggestion };
 
 const welcome: Message = {
   role: "assistant",
-  content: "Hi, I’m Zebu. Tell me which workspace page you would like to open.",
+  content: "Where would you like to go? Try “Open resumes”.",
 };
 
 export function ZebuAssistant() {
   const router = useRouter();
   const zebu = useZebu();
   const endRef = useRef<HTMLDivElement | null>(null);
+  const launcherRef = useRef<HTMLButtonElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const delayedListenRef = useRef<number | null>(null);
   const committedResponseTurn = useRef(0);
   const [committedResponseText, setCommittedResponseText] = useState("");
   const transcriptCommittedForResponse = useRef(false);
   const skipTranscriptText = useRef<string | null>(null);
   const submissionRef = useRef<string | null>(null);
+  const textAttemptRef = useRef(0);
+  const textAbortRef = useRef<AbortController | null>(null);
   const [messages, setMessages] = useState<Message[]>([welcome]);
   const [input, setInput] = useState("");
   const [expanded, setExpanded] = useState(false);
@@ -50,7 +58,6 @@ export function ZebuAssistant() {
   const [pendingReply, setPendingReply] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<{ route: string; label: string } | null>(null);
   const [actionReceipt, setActionReceipt] = useState<ActionReceipt | null>(null);
-  const [fullScreen, setFullScreen] = useState(false);
   const [proofFlowOpen, setProofFlowOpen] = useState(false);
 
   const executeAction = useCallback((action: Extract<ZebuPlan["action"], { type: "navigate" | "open_tool" | "start_flow" | "open_proof_flow" }>) => {
@@ -149,12 +156,20 @@ export function ZebuAssistant() {
   }, [pendingNavigation, zebu.pathname]);
 
   const beginListening = useCallback(() => {
+    if (delayedListenRef.current !== null) window.clearTimeout(delayedListenRef.current);
     pauseWake();
     primeAudio();
-    const start = () => { void startListening().catch(() => undefined); };
-    if (wake.enabled) window.setTimeout(start, 140);
+    const start = () => { delayedListenRef.current = null; void startListening().catch(() => undefined); };
+    if (wake.enabled) delayedListenRef.current = window.setTimeout(start, 140);
     else start();
   }, [pauseWake, primeAudio, startListening, wake.enabled]);
+
+  const endListening = useCallback(() => {
+    if (delayedListenRef.current !== null) window.clearTimeout(delayedListenRef.current);
+    delayedListenRef.current = null;
+    if (live.state === "connecting") live.cancelPending();
+    else stopListening();
+  }, [live, stopListening]);
 
   const toggleWake = useCallback(() => {
     primeAudio();
@@ -200,15 +215,31 @@ export function ZebuAssistant() {
     }
   }, [live.responseText, live.turnCount]);
 
-  const sendFallback = useCallback(async (text: string) => {
+  const cancelTextReply = useCallback(() => {
+    textAttemptRef.current += 1;
+    textAbortRef.current?.abort();
+    textAbortRef.current = null;
+    if (submissionRef.current) setInput(submissionRef.current);
+    submissionRef.current = null;
+    setPendingReply(false);
+  }, []);
+
+  const sendFallback = useCallback(async (text: string, attempt: number) => {
     const history = messages.slice(-20).map(({ role, content }) => ({ role, content }));
-    const response = await fetch("/api/zebu/turn", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: text, history, currentPage: zebu.pathname, currentContext: selectedContext }),
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Zebu could not complete that request.");
+    const requestAbort = new AbortController();
+    textAbortRef.current = requestAbort;
+    const data = await withZebuTimeout((async () => {
+      const response = await fetch("/api/zebu/turn", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text, history, currentPage: zebu.pathname, currentContext: selectedContext }),
+        signal: requestAbort.signal,
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Zebu could not complete that request.");
+      return data;
+    })(), 30_000, "Zebu took too long to reply. Your message is ready to retry.", { onTimeout: () => requestAbort.abort() });
+    if (attempt !== textAttemptRef.current) return;
     const plan = data as ZebuPlan;
     setMessages((items) => [...items, { role: "assistant", content: plan.spokenResponse, cards: plan.displayCards, followUp: plan.followUp }]);
     if (plan.action.type === "navigate" || plan.action.type === "open_tool" || plan.action.type === "start_flow" || plan.action.type === "open_proof_flow") executeAction(plan.action);
@@ -217,6 +248,7 @@ export function ZebuAssistant() {
   const sendText = useCallback(async (raw: string) => {
     const text = raw.trim();
     if (!text || submissionRef.current) return;
+    const attempt = ++textAttemptRef.current;
     submissionRef.current = text;
     skipTranscriptText.current = text;
     setMessages((items) => [...items, { role: "user", content: text }]);
@@ -229,13 +261,18 @@ export function ZebuAssistant() {
         setMessages((items) => [...items, { role: "assistant", content: spokenResponse }]);
       } else {
         setPendingReply(true);
-        await sendFallback(text);
+        await sendFallback(text, attempt);
       }
     } catch (caught) {
+      if (attempt !== textAttemptRef.current) return;
       setFallbackError(caught instanceof Error ? caught.message : "Zebu is unavailable.");
+      setInput(text);
     } finally {
-      setPendingReply(false);
-      submissionRef.current = null;
+      if (attempt === textAttemptRef.current) {
+        setPendingReply(false);
+        submissionRef.current = null;
+        textAbortRef.current = null;
+      }
     }
   }, [performWorkspaceCommand, sendFallback]);
 
@@ -288,30 +325,39 @@ export function ZebuAssistant() {
   }, [executeAction, sendText]);
 
   const close = useCallback(() => {
+    if (delayedListenRef.current !== null) window.clearTimeout(delayedListenRef.current);
+    delayedListenRef.current = null;
+    cancelTextReply();
     live.close();
     setExpanded(false);
-    setFullScreen(false);
     zebu.close();
-  }, [live, zebu]);
+    window.requestAnimationFrame(() => launcherRef.current?.focus());
+  }, [cancelTextReply, live, zebu]);
 
-  useZebuKeyboard({ isOpen: zebu.isOpen, toggle: zebu.toggle, close, primeAudio, startListening, stopListening });
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, live.state, live.responseText, proofFlowOpen]);
+  useZebuKeyboard({ isOpen: zebu.isOpen, toggle: () => zebu.isOpen ? close() : zebu.open(), close, primeAudio, startListening: () => { if (!pendingReply && live.state !== "processing") beginListening(); }, stopListening: endListening });
+  useEffect(() => () => {
+    if (delayedListenRef.current !== null) window.clearTimeout(delayedListenRef.current);
+    textAttemptRef.current += 1;
+    textAbortRef.current?.abort();
+  }, []);
+  useEffect(() => { if (expanded) inputRef.current?.focus(); }, [expanded]);
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }); }, [expanded, fallbackError, live.error, messages, live.state, live.responseText, proofFlowOpen]);
 
-  const submit = (event: FormEvent) => { event.preventDefault(); live.primeAudio(); void sendText(input); };
+  const submit = (event: FormEvent) => { event.preventDefault(); endListening(); live.close(); void sendText(input); };
   const statusText = pendingNavigation ? `Opening ${pendingNavigation.label}…`
-    : live.state === "connecting" ? "Connecting…"
+    : live.state === "connecting" ? live.connectionStage === "microphone" ? "Allow microphone…" : live.connectionStage === "audio" ? "Preparing audio…" : live.connectionStage === "authorizing" ? "Authorizing voice…" : "Connecting voice…"
     : live.state === "listening" ? "Listening"
       : live.state === "processing" ? "Working on it…"
         : live.state === "speaking" ? "Speaking · tap to interrupt"
           : live.state === "error" ? "Voice needs attention"
-            : "Ready when you are";
+            : pendingReply ? "Replying…" : "Voice or text";
   const latestActions: ZebuSuggestion[] = DASHBOARD_NAV_ITEMS.filter(item => !item.match(zebu.pathname)).map(item => ({ label: item.label, prompt: `Open ${item.label}`, action: { type: "navigate", route: item.href } }));
   const pageLabel = getZebuPageLabel(zebu.pathname);
   const visibleContext = zebu.entityContext?.title || pageLabel;
   const streamingResponse = live.responseText.trim() !== committedResponseText ? live.responseText : "";
   const compactText = pendingNavigation
     ? `Loading ${pendingNavigation.label}. Zebu will keep this conversation ready.`
-    : live.responseText.trim() || live.transcript.trim() || messages.at(-1)?.content || welcome.content;
+    : live.responseText.trim() || live.transcript.trim() || (messages.length > 1 ? messages.at(-1)?.content : "");
   const wakeLabel = !wake.supported ? "Wake word unavailable"
     : wake.enabled ? (zebu.isOpen ? "Wake word paused" : "Say “Hey Zebra” or “Hey Zebu”")
       : "Enable “Hey Zebra” or “Hey Zebu”";
@@ -322,60 +368,45 @@ export function ZebuAssistant() {
           : "Listening for Hey Zebra or Hey Zebu";
   const micDisabled = live.state === "processing" || pendingReply;
   const handleMic = () => {
-    if (live.state === "connecting") live.cancelPending();
-    else if (live.state === "listening") stopListening();
+    if (live.state === "connecting" || live.state === "listening") endListening();
     else beginListening();
   };
-  const microphoneStatus = live.microphonePermission === "granted" ? "Microphone allowed · live tool execution"
-    : live.microphonePermission === "denied" ? "Microphone denied by Chrome or Windows"
-      : "Natural voice · live tool execution";
+  const micLabel = live.state === "connecting" ? "Cancel voice connection" : live.state === "listening" ? "Stop listening" : live.state === "speaking" ? "Interrupt and speak" : live.state === "error" ? "Retry voice" : "Start listening";
 
   return <>
     {zebu.isOpen ? (
       <div className="zebu-surface zebu-navigation-voice">
-        <section className={`zebu-panel ${expanded ? "zebu-panel--expanded" : "zebu-panel--compact"} ${fullScreen ? "zebu-panel--full" : ""}`} aria-label="Zebu live voice assistant" role="dialog" aria-modal={fullScreen || undefined}>
+        <section className={`zebu-panel ${expanded ? "zebu-panel--expanded" : "zebu-panel--compact"}`} aria-label="Zebu workspace navigation" role="dialog">
           <header className="zebu-panel__header">
             <div className="flex min-w-0 items-center gap-2.5">
-              <span className="zebu-mark"><RiVoiceprintLine size={17} /></span>
+              <ZebuVoiceOrb state={live.state} volume={live.audioLevel} />
               <div className="min-w-0">
                 <h2 className="text-sm font-bold leading-none tracking-tight">Zebu</h2>
-                <p className="mt-1 truncate text-[0.68rem] font-medium text-neutral-400">Voice navigation</p>
+                <p className="zebu-panel__status" role="status">{statusText}</p>
               </div>
             </div>
             <div className="flex items-center gap-0.5">
-              <button type="button" onClick={toggleWake} className={`zebu-icon-button ${wake.enabled ? "zebu-icon-button--active" : ""}`} aria-label={wakeLabel} title={wake.error ?? wakeLabel}>
-                {wake.enabled ? <RiVoiceprintLine size={17} /> : <RiMicOffLine size={17} />}
+              {!expanded ? <button type="button" onClick={handleMic} disabled={micDisabled} className={`zebu-mic ${live.state === "listening" ? "zebu-mic--live" : ""}`} aria-label={micLabel} title={micLabel}>
+                {live.state === "connecting" ? <RiLoader4Line className="zebu-connecting-icon" size={18} /> : live.state === "listening" ? <RiStopCircleLine size={20} /> : <RiMicFill size={18} />}
+              </button> : null}
+              <button type="button" onClick={() => setExpanded((value) => !value)} className="zebu-icon-button" aria-label={expanded ? "Minimize conversation" : "Type or view conversation"} aria-expanded={expanded} title={expanded ? "Minimize" : "Type a message"}>
+                {expanded ? <RiSubtractLine size={18} /> : <RiChat1Line size={18} />}
               </button>
-              <button type="button" onClick={() => { if (!expanded) setExpanded(true); else if (!fullScreen) setFullScreen(true); else { setFullScreen(false); setExpanded(false); } }} className="zebu-icon-button" aria-label={!expanded ? "Open conversation" : !fullScreen ? "Open full screen" : "Use compact view"}>
-                <RiExpandDiagonalLine size={17} />
-              </button>
-              {expanded ? <button type="button" onClick={() => setMessages([welcome])} className="zebu-icon-button" aria-label="Clear conversation"><RiDeleteBin6Line size={16} /></button> : null}
+              {expanded ? <button type="button" onClick={() => { cancelTextReply(); live.close(); setMessages([welcome]); setInput(""); setFallbackError(null); setActionReceipt(null); }} className="zebu-icon-button" aria-label="Clear conversation"><RiDeleteBin6Line size={16} /></button> : null}
               <button type="button" onClick={close} className="zebu-icon-button" aria-label="Close Zebu"><RiCloseLine size={19} /></button>
             </div>
           </header>
 
           {!expanded ? (
-            <div className="zebu-compact">
-              <div className="zebu-compact__voice">
-                <ZebuVoiceOrb state={live.state} volume={live.audioLevel} />
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold text-neutral-900">{statusText}</p>
-                  <p className="zebu-compact__transcript" aria-live="polite">{compactText}</p>
-                </div>
-              </div>
-              {live.error ? <button type="button" onClick={() => setExpanded(true)} className="zebu-inline-error">{live.error} Open text mode</button> : null}
-              <div className="zebu-compact__controls">
-                <span className="text-[0.64rem] text-neutral-500">{wake.enabled ? "“Hey Zebra” resumes when this closes" : "Hold Space or tap the mic"}</span>
-                <button type="button" onClick={handleMic} disabled={micDisabled} className={`zebu-mic ${live.state === "listening" ? "zebu-mic--live" : ""}`} aria-label={live.state === "connecting" ? "Cancel voice connection" : live.state === "listening" ? "Stop listening" : live.state === "speaking" ? "Interrupt and speak" : "Start listening"}>
-                  {live.state === "listening" ? <RiStopCircleLine size={20} /> : <RiMicFill size={18} />}
-                </button>
-              </div>
-            </div>
+            live.error || fallbackError ? <button type="button" onClick={() => setExpanded(true)} className="zebu-compact-error">{live.error ? "Voice unavailable. Type instead" : "Message failed. Open to retry"}<RiChat1Line size={15} /></button>
+              : compactText ? <p className="zebu-compact__transcript" aria-live="polite">{compactText}</p> : null
           ) : (
             <>
               <div className="zebu-expanded-status">
-                <ZebuVoiceOrb state={live.state} volume={live.audioLevel} />
-                <div><p className="text-xs font-bold text-neutral-800">{statusText}</p><p className="mt-0.5 text-[0.63rem] text-neutral-500">{microphoneStatus} · {wakeStatus}</p></div>
+                <span>Hold Space to talk · Esc to close</span>
+                <button type="button" onClick={toggleWake} disabled={!wake.supported} aria-pressed={wake.enabled} aria-label={wakeLabel} title={wake.error ?? wakeStatus}>
+                  {wake.enabled ? <RiVoiceprintLine size={14} /> : <RiMicOffLine size={14} />} Wake {wake.enabled ? "on" : "off"}
+                </button>
               </div>
               <div className="custom-scrollbar zebu-thread" aria-live="polite">
                 {messages.map((message, index) => (
@@ -407,13 +438,13 @@ export function ZebuAssistant() {
                   <span>Choose an action or ask below</span>
                 </div>
                 <div className="zebu-actions">
-                  {latestActions.map((action) => <button key={action.prompt} type="button" disabled={micDisabled || actionReceipt?.status === "working"} onClick={() => { live.primeAudio(); void runQuickAction(action); }} className="zebu-suggestion" title={action.prompt}>{action.label}</button>)}
+                  {latestActions.slice(0, 3).map((action) => <button key={action.prompt} type="button" disabled={micDisabled || actionReceipt?.status === "working"} onClick={() => { live.primeAudio(); void runQuickAction(action); }} className="zebu-suggestion" title={action.prompt}>{action.label}</button>)}
                 </div>
                 <form onSubmit={submit} className="flex items-center gap-2">
-                  <button type="button" onClick={handleMic} disabled={micDisabled} className={`zebu-mic zebu-mic--large ${live.state === "listening" ? "zebu-mic--live" : ""}`} aria-label={live.state === "connecting" ? "Cancel voice connection" : live.state === "listening" ? "Stop listening" : "Start listening"}>
-                    {live.state === "listening" ? <RiStopCircleLine size={20} /> : <RiMicFill size={18} />}
+                  <button type="button" onClick={handleMic} disabled={micDisabled} className={`zebu-mic zebu-mic--large ${live.state === "listening" ? "zebu-mic--live" : ""}`} aria-label={micLabel} title={micLabel}>
+                    {live.state === "connecting" ? <RiLoader4Line className="zebu-connecting-icon" size={18} /> : live.state === "listening" ? <RiStopCircleLine size={20} /> : <RiMicFill size={18} />}
                   </button>
-                  <input value={input} onChange={(event) => setInput(event.target.value)} placeholder={`Ask about ${visibleContext.toLowerCase()}…`} aria-label={`Ask Zebu about ${visibleContext}`} className="zebu-input" />
+                  <input ref={inputRef} value={input} onChange={(event) => setInput(event.target.value)} placeholder="Open a page…" aria-label="Message Zebu" disabled={pendingReply} maxLength={2000} className="zebu-input" />
                   <button type="submit" disabled={!input.trim() || micDisabled} className="zebu-send" aria-label="Send"><RiSendPlane2Line /></button>
                 </form>
               </div>
@@ -423,7 +454,7 @@ export function ZebuAssistant() {
       </div>
     ) : (
       <div className="zebu-launcher">
-        <button type="button" onClick={() => zebu.open(true)} className="zebu-fab zebu-fab--head" aria-label="Open Zebu voice navigation"><ZebuVoiceOrb state={live.state} volume={live.audioLevel} /><span className="sr-only">Talk to Zebu</span></button>
+        <button ref={launcherRef} type="button" onClick={() => zebu.open()} className="zebu-fab zebu-fab--head" aria-label="Open Zebu voice navigation" aria-expanded={false}><ZebuVoiceOrb state={live.state} volume={live.audioLevel} /><span className="sr-only">Open Zebu</span></button>
       </div>
     )}
   </>;
