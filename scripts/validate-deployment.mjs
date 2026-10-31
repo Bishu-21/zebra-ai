@@ -23,7 +23,7 @@ export function validateDeployment(env) {
   const browserPack = new URL(env.CHROMIUM_PACK_URL);
   if (browserPack.protocol !== 'https:') throw new Error('CHROMIUM_PACK_URL must use HTTPS');
   if (browserPack.username || browserPack.password) throw new Error('CHROMIUM_PACK_URL must not contain credentials');
-  const checkoutConfigured = Boolean(env.RAZORPAY_KEY_SECRET?.trim() && env.RAZORPAY_WEBHOOK_SECRET?.trim() && env.NEXT_PUBLIC_RAZORPAY_KEY_ID?.trim());
+  const checkoutConfigured = env.CHECKOUT_DISABLED !== 'true' && Boolean(env.RAZORPAY_KEY_SECRET?.trim() && env.RAZORPAY_WEBHOOK_SECRET?.trim() && env.NEXT_PUBLIC_RAZORPAY_KEY_ID?.trim());
   if (checkoutConfigured && env.DEPLOY_ENVIRONMENT === 'production' && !env.NEXT_PUBLIC_RAZORPAY_KEY_ID?.startsWith('rzp_live_')) {
     throw new Error('Production requires Razorpay live credentials');
   }

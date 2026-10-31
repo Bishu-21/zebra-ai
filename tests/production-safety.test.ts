@@ -101,6 +101,7 @@ describe("Production Safety & Reliability Test Suite [Unit Test]", () => {
         });
 
         test("checkout stays off until recovery keys are all present", () => {
+            assert.strictEqual(isCheckoutConfigured({ CHECKOUT_DISABLED: "true", NEXT_PUBLIC_RAZORPAY_KEY_ID: "rzp_test", RAZORPAY_KEY_SECRET: "secret", RAZORPAY_WEBHOOK_SECRET: "webhook" }), false);
             assert.strictEqual(isCheckoutConfigured({}), false);
             assert.strictEqual(isCheckoutConfigured({
                 NEXT_PUBLIC_RAZORPAY_KEY_ID: "rzp_test",

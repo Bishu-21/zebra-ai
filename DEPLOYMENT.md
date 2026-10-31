@@ -60,6 +60,12 @@ npm run azure:smoke
 
 ## 2. Configure secrets
 
+Set `CHECKOUT_DISABLED=true` in Production until live payment credentials and
+webhook recovery are verified. This disables new checkout orders and the UI,
+while existing credits and webhook recovery remain available. The deployment
+validator permits stored test keys only while this explicit switch is active.
+Remove the switch only after live-mode validation; never invent payment keys.
+
 Set every required variable from `.env.example` in the hosting platform. At a
 minimum, configure the database, Better Auth URL/secret/origins, application
 URL, and all three `AZURE_FOUNDRY_*` values. Keep API keys server-only. Set
