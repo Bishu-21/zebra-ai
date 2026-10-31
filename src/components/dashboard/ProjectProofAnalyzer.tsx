@@ -1,16 +1,16 @@
 "use client";
 
 import React, { useState } from 'react';
-import { m, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { 
     RiGithubFill, 
     RiExternalLinkLine, 
-    RiShieldCheckLine, 
     RiErrorWarningLine, 
     RiLoader4Line,
     RiCommandLine
 } from 'react-icons/ri';
 import { ProjectAnalysisResults } from './ProjectAnalysisResults';
+import { featureChrome } from './feature-chrome';
 
 interface ProjectAnalysis {
     score: number;
@@ -58,53 +58,41 @@ export function ProjectProofAnalyzer() {
     };
 
     return (
-        <div className="w-full space-y-6">
-            {/* INPUT SECTION */}
-            <div className="bg-white border border-neutral-200/70 rounded-2xl p-6 shadow-2xs space-y-4">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-[#0A0A0A] text-white flex items-center justify-center shadow-2xs shrink-0">
-                        <RiShieldCheckLine size={20} />
-                    </div>
-                    <div>
-                        <h3 className="text-base font-bold text-[#0A0A0A] tracking-tight">Project Proof Analyzer</h3>
-                        <p className="text-xs font-normal text-neutral-500">Verify GitHub or Live Demo links for resume evidence</p>
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                    <div className="relative flex-grow">
-                        <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400">
+        <div className="w-full space-y-5">
+                <div className="space-y-1.5">
+                    <label htmlFor="project-proof-url" className={featureChrome.label}>Project URL</label>
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <div className="relative min-w-0 flex-grow">
+                        <div className={featureChrome.fieldIcon}>
                             {url.includes('github.com') ? <RiGithubFill size={16} /> : <RiExternalLinkLine size={16} />}
                         </div>
-                        <input 
-                            type="text" 
+                        <input
+                            id="project-proof-url"
+                            type="url"
                             value={url}
                             onChange={(e) => setUrl(e.target.value)}
-                            placeholder="Paste GitHub or Live Demo URL..."
-                            className="w-full h-10 bg-neutral-50 border border-neutral-200/80 rounded-full pl-10 pr-4 text-xs font-medium text-[#0A0A0A] focus:bg-white focus:border-[#0A0A0A] transition-all outline-none placeholder:text-neutral-400"
+                            placeholder="https://github.com/… or a live demo URL"
+                            className={`${featureChrome.input} pl-10`}
                         />
                     </div>
-                    <button 
+                    <button
+                        type="button"
                         onClick={handleAnalyze}
                         disabled={isLoading || !url.trim()}
-                        className="h-10 px-5 bg-[#0A0A0A] hover:bg-neutral-800 text-white rounded-full text-xs font-bold transition-all disabled:opacity-40 flex items-center gap-2 shadow-2xs active:scale-95 shrink-0"
+                        className={featureChrome.primaryButton}
                     >
                         {isLoading ? <RiLoader4Line className="animate-spin" size={15} /> : <RiCommandLine size={15} />}
-                        {isLoading ? 'Analyzing...' : 'Analyze Proof'}
+                        {isLoading ? "Checking…" : "Check project"}
                     </button>
+                    </div>
                 </div>
 
                 {error && (
-                    <m.div 
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="p-3 bg-red-50 border border-red-200/80 rounded-xl flex items-center gap-2 text-xs font-medium text-red-700"
-                    >
+                    <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
                         <RiErrorWarningLine size={16} className="shrink-0 text-red-600" />
                         <span>{error}</span>
-                    </m.div>
+                    </div>
                 )}
-            </div>
 
             {/* RESULTS SECTION */}
             <AnimatePresence mode="wait">
