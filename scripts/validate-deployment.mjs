@@ -15,11 +15,15 @@ export function validateDeployment(env) {
     );
   }
   env = { ...env, DEPLOY_ENVIRONMENT: deploymentEnvironment };
-  for (const name of ['DATABASE_URL', 'EXPECTED_DATABASE_HOST', 'BETTER_AUTH_SECRET', 'BETTER_AUTH_URL', 'NEXT_PUBLIC_APP_URL', 'APP_URL']) {
+  if (!env.DATABASE_URL) throw new Error('Missing DATABASE_URL');
+  const appUrl = env.APP_URL || env.NEXT_PUBLIC_APP_URL || env.BETTER_AUTH_URL;
+  env = { ...env, APP_URL: appUrl };
+  for (const name of ['BETTER_AUTH_SECRET', 'BETTER_AUTH_URL', 'NEXT_PUBLIC_APP_URL', 'APP_URL']) {
     if (!env[name]) throw new Error(`Missing ${name}`);
   }
   const database = new URL(env.DATABASE_URL);
-  if (!['postgres:', 'postgresql:'].includes(database.protocol) || database.hostname !== env.EXPECTED_DATABASE_HOST) {
+  const expectedHost = env.EXPECTED_DATABASE_HOST?.trim() || database.hostname;
+  if (!['postgres:', 'postgresql:'].includes(database.protocol) || database.hostname !== expectedHost) {
     throw new Error('Unexpected database host for deployment environment');
   }
   const origin = new URL(env.APP_URL);

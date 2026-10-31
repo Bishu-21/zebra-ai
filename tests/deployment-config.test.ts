@@ -36,13 +36,6 @@ test('Vercel Production target is accepted without DEPLOY_ENVIRONMENT', () => {
     assert.doesNotThrow(() => validateDeployment({ ...vercelProduction, VERCEL_ENV: 'production' }));
 });
 
-test('preview and unknown environments stay rejected without an explicit staging flag', () => {
-    const withoutFlag = Object.fromEntries(Object.entries(production).filter(([key]) => key !== 'DEPLOY_ENVIRONMENT'));
-    assert.throws(() => validateDeployment(withoutFlag), /Unknown deployment environment/);
-    assert.throws(() => validateDeployment({ ...withoutFlag, VERCEL_ENV: 'preview' }), /Unknown deployment environment/);
-    assert.throws(() => validateDeployment({ ...staging, DEPLOY_ENVIRONMENT: 'preview' }), /Unknown deployment environment/);
-});
-
 const staging = {
     DEPLOY_ENVIRONMENT: 'staging',
     DATABASE_URL: 'postgresql://test:test@localhost/staging',
@@ -58,6 +51,20 @@ const staging = {
     PRODUCTION_APP_URL: 'https://example.com',
     CHROMIUM_PACK_URL: 'https://example.com/chromium-pack.tar',
 };
+
+test('preview and unknown environments stay rejected without an explicit staging flag', () => {
+    const withoutFlag = Object.fromEntries(Object.entries(production).filter(([key]) => key !== 'DEPLOY_ENVIRONMENT'));
+    assert.throws(() => validateDeployment(withoutFlag), /Unknown deployment environment/);
+    assert.throws(() => validateDeployment({ ...withoutFlag, VERCEL_ENV: 'preview' }), /Unknown deployment environment/);
+    assert.throws(() => validateDeployment({ ...staging, DEPLOY_ENVIRONMENT: 'preview' }), /Unknown deployment environment/);
+});
+
+test('production infers database host and APP_URL when the GitHub-only pins are absent', () => {
+    const vercelProduction = Object.fromEntries(
+        Object.entries(production).filter(([key]) => key !== 'EXPECTED_DATABASE_HOST' && key !== 'APP_URL'),
+    );
+    assert.doesNotThrow(() => validateDeployment(vercelProduction));
+});
 
 test('deployment requires a secure browser pack for serverless PDF export', () => {
     for (const environment of [staging, production]) {
@@ -80,7 +87,15 @@ test('deployment refuses wrong origin, missing database and weak auth', () => {
 });
 test('deployment refuses a database outside the configured environment', () => {
     assert.throws(() => validateDeployment({ ...staging, DATABASE_URL: 'postgresql://test:test@production.example.com/app' }), /database host/);
-    assert.throws(() => validateDeployment({ ...staging, EXPECTED_DATABASE_HOST: '' }), /EXPECTED_DATABASE_HOST/);
+    assert.doesNotThrow(() => validateDeployment({ ...staging, EXPECTED_DATABASE_HOST: '' }));
+    assert.throws(
+        () => validateDeployment({
+            ...staging,
+            DATABASE_URL: 'postgresql://test:test@other.example.com/app',
+            EXPECTED_DATABASE_HOST: 'localhost',
+        }),
+        /database host/,
+    );
 });
 
 test('staging refuses the production database host or application origin', () => {
