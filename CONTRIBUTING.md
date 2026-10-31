@@ -19,16 +19,15 @@ public issue.
 ## Local setup
 
 Requirements and environment variables are documented in the
-[README](README.md#getting-started). In summary:
+[README](README.md#getting-started). Copy `.env.example` to `.env.local`,
+configure a separate development database and the services needed for your
+change, and keep `.env.local` untracked. Then run:
 
 ```bash
-npm install
-npm run db:migrate
+npm ci
+npm run db:migrate # Separate development database only
 npm run dev
 ```
-
-Copy `.env.example` to `.env.local` and provide only the services needed for
-the area you are testing. Keep `.env.local` untracked.
 
 This project uses Next.js 16. Before changing framework behavior, read the
 relevant guide in `node_modules/next/dist/docs/`; APIs and conventions may
