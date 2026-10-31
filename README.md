@@ -23,7 +23,8 @@ AI output needs human review. Scores describe the implemented rubric or job comp
 | Area | Current behavior |
 | --- | --- |
 | Resume audit | Returns a job ID; an awaited Next.js `after()` callback runs the audit within the route's 300-second budget. The UI polls for results. |
-| Kafka | Optional integration and worker code exist. The release workflow disables analysis-event publication; a worker is not required for the default audit path. |
+| Kafka | Configured: local broker in Docker Compose, Azure Event Hubs Kafka surface in cloud, topic `resume-ingestion`, `kafkajs` producer and `scripts/worker.ts`. Publication is gated by `ENABLE_KAFKA_ANALYSIS_EVENTS`; the in-request `after()` path still completes the audit if no worker is attached. |
+| Redis | Configured in Docker Compose (`redis:7.4-alpine`, port 6379, AOF-style save). Production rate-limit buckets use Postgres so every instance shares the same window. |
 | Credits | AI operations can consume credits. Saving/importing a resume is separate from AI review. Auto-Structure is labeled as a 1-credit operation. |
 | Payments | Razorpay integration exists. `CHECKOUT_DISABLED=true` closes checkout even if keys are stored. Sales require valid credentials, captured payments, and verified signed webhook delivery. |
 | PDF export | Needs local Chrome or a compatible serverless Chromium pack. A successful build does not verify PDF output. |
@@ -43,22 +44,51 @@ No unlimited AI usage, guaranteed correctness, independent security certificatio
 | AI | Azure Foundry (primary text), Gemini (fallback and Live voice) |
 | Documents | unpdf, Mammoth, Puppeteer, Chromium |
 | Payments | Razorpay |
-| Jobs | Optional Kafka / Azure Event Hubs |
+| Jobs | Kafka (`kafkajs`, topic `resume-ingestion`) on Docker Compose or Azure Event Hubs |
+| Cache | Redis 7 (Docker Compose) |
 | Hosting | Vercel |
 | Observability | Optional Azure Application Insights |
 
 ```mermaid
-flowchart LR
+flowchart TB
     Browser[Dashboard and public pages] --> App[Next.js pages and Route Handlers]
-    App --> Policy[Session, ownership, validation, rate and credit policies]
-    Policy --> DB[(Neon Postgres)]
-    Policy --> AI[Azure Foundry / Gemini]
-    Policy --> PDF[Document parsing / Chromium PDF export]
-    Policy --> Billing[Razorpay orders and signed webhooks]
-    App -. optional telemetry .-> Insights[Application Insights]
+    App --> Policy[Session, ownership, credits, rate limits]
+    Policy --> Neon[(Neon Postgres)]
+    Policy --> Redis[(Redis)]
+    Policy --> Azure[Azure Foundry]
+    Policy --> PDF[Chromium PDF export]
+    Policy --> Pay[Razorpay captured webhooks]
+    Policy --> Kafka[Kafka resume-ingestion]
+    Kafka --> Worker[Audit worker]
+    Worker --> Azure
+    Worker --> Neon
+    Azure -.-> Gemini[Gemini fallback and Live]
+    App -.-> Insights[Application Insights]
+    App -.-> After[after audit path]
+    After --> Azure
+    After --> Neon
 ```
 
-The application is a modular monolith. Production rate-limit buckets use Postgres; local/test limits use memory. AI usage recording exists in the provider gateway. Resume-job failure/refund and result/completion use transactions. These controls do not replace monitoring, backups, or end-to-end testing.
+The application is a modular monolith. Kafka and Redis are provisioned in `docker-compose.yml` (KRaft Kafka on 9092, Redis on 6379, Kafka UI on 8080). Live resume review still finishes in `after()` so a missing worker cannot leave a reserved credit stuck. Production rate-limit buckets use Postgres; local/test limits use memory. AI usage recording exists in the provider gateway. Resume-job failure/refund and result/completion use transactions.
+
+## Topics that come up in review
+
+Short answers for questions that get asked next to the stack (HAC, queues, scoring). Zebra uses a weighted rubric and grounded text, not applicant clustering.
+
+| Topic | If asked | In this repo |
+| --- | --- | --- |
+| **HAC** | Hierarchical agglomerative clustering: each item starts as its own cluster; nearest clusters merge until one tree (a dendrogram). Linkage is single, complete, average, or Ward. Complexity is typically O(n²) to O(n³). | Not used. We score **one** resume against 45 fixed checks. We do not cluster applicants or jobs. |
+| **Rubric vs model score** | The model proposes Pass / Partial / Fail. The product recalculates the number from criterion weights. | `src/lib/resume-audit-rubric.ts`, `linkedin-audit-rubric.ts` |
+| **Grounding** | A claim is allowed only if it appears in the supplied resume or work text. No invented metrics. | `src/lib/resume-grounding.ts`, LinkedIn source quotes |
+| **202 + poll** | Reserve work, return a job id, client polls until `completed` or `failed`. | `POST /api/ai/analyse`, `GET /api/jobs/[id]/status` |
+| **Credit reserve** | Decrement first; refund once if the job never finishes. | `src/lib/credit-policy.ts` |
+| **Kafka / KRaft** | Event log: producers append, consumers read a topic. Compose uses KRaft (broker + controller, no ZooKeeper). Azure Event Hubs exposes a Kafka API on 9093. | `src/lib/kafka.ts`, `scripts/worker.ts`, topic `resume-ingestion` |
+| **Redis** | In-memory store with optional disk snapshot. Used here as the local cache/broker companion. | `docker-compose.yml` service `redis` |
+| **Rate limit** | Sliding window in process memory locally; fixed window in Postgres in production so every instance shares the bucket. | `src/lib/rate-limit.ts` |
+| **Structured output** | JSON Schema `strict` so the 45 IDs cannot be omitted or duplicated. | Azure `responseFormat` on audit tasks |
+| **State machine** | Only listed application transitions are legal (Draft → Preparing → Ready → Applied → …). | `src/lib/application-state-machine.ts` |
+| **Idempotent pay** | The same captured Razorpay payment grants credits once. | `src/lib/payment-policy.ts` |
+| **RAG vs fine-tune** | Retrieval looks up rubric text. Fine-tune would retrain weights. | Deployment + rubric. No model training in this repo. |
 
 ## Getting started
 
@@ -98,7 +128,7 @@ Open [localhost:3000](http://localhost:3000). Do not run `db:migrate`, `db:prepa
 - **Email:** configure `RESEND_API_KEY` and a verified `EMAIL_FROM` together. See [email setup](docs/email-setup.md).
 - **PDF:** configure `CHROME_EXECUTABLE_PATH` locally, or a matching `CHROMIUM_PACK_URL` for serverless hosting.
 - **Payments:** keep checkout disabled until Razorpay keys, webhook secret, capture, and webhook recovery are verified. Use test mode in staging; never invent a webhook secret.
-- **Kafka:** Docker Compose provides local Kafka, Redis, and Kafka UI. These are optional development services, not proof of deployed cloud workers. Do not attach a worker to a shared staging/production stream.
+- **Kafka and Redis:** `docker compose up` starts Kafka (9092), Redis (6379), and Kafka UI (8080). Cloud Kafka uses Azure Event Hubs. Do not attach a worker to a shared staging/production stream.
 
 ## Development and verification
 
