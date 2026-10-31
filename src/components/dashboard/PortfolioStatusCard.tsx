@@ -49,7 +49,7 @@ export function PortfolioStatusCard({ slug, title, selectedWorkIds, isPublished 
         return (
             <section className="rounded-2xl border border-neutral-200/70 bg-white p-5 font-sans">
                 <p className="text-sm font-semibold tracking-tight">Add something before publishing</p>
-                <p className="mt-1 text-sm leading-6 text-muted-foreground">Your public link stays hidden until your portfolio contains at least one work item.</p>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">Your public link stays hidden until at least one work item is marked public on Work.</p>
                 <DashboardHref href="/dashboard/work" className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-white"><RiAddLine /> Add your first work item</DashboardHref>
             </section>
         );
@@ -61,7 +61,7 @@ export function PortfolioStatusCard({ slug, title, selectedWorkIds, isPublished 
                 <div>
                     <p className="text-xs font-medium text-muted-foreground">{isPublished ? "Published portfolio" : "Portfolio draft"}</p>
                     <h2 className="mt-1 text-base font-semibold tracking-tight">{isPublished ? `zebra-ai.app${publicUrl}` : "Ready to publish"}</h2>
-                    <p className="mt-1 text-sm text-muted-foreground">{isPublished ? "Your selected work is visible through this link." : `${selectedWorkIds.length} work ${selectedWorkIds.length === 1 ? "item is" : "items are"} ready to publish.`}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{isPublished ? "Work you marked public is visible through this link." : `${selectedWorkIds.length} public work ${selectedWorkIds.length === 1 ? "item is" : "items are"} ready to publish.`}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                     {isPublished ? <Link href={publicUrl} target="_blank" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 text-sm font-medium text-foreground">View portfolio <RiExternalLinkLine /></Link> : null}

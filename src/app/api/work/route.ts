@@ -6,6 +6,7 @@ import { handleApiError } from "@/lib/api-error";
 import { z } from "zod";
 import { requireAuth, notFoundResponse } from "@/lib/auth-policy";
 import { paginateRows, parsePagination } from "@/lib/pagination";
+import { syncPortfolioWorkVisibility } from "@/lib/portfolio-work-sync";
 
 const createWorkItemSchema = z.object({
     title: z.string().min(1, "Title is required"),
@@ -65,12 +66,46 @@ export async function POST(req: NextRequest) {
             updatedAt: now,
         }).returning();
 
+        if (parsed.isPublic) {
+            await syncPortfolioWorkVisibility(authCtx.user.id, newItem.id, true);
+        }
+
         return NextResponse.json({ item: newItem });
     } catch (error: unknown) {
         if (error instanceof z.ZodError) {
             return NextResponse.json({ error: error.issues?.[0]?.message || "Validation failed" }, { status: 400 });
         }
         return handleApiError(error, "POST /api/work");
+    }
+}
+
+const patchWorkItemSchema = z.object({
+    id: z.string().min(1),
+    isPublic: z.boolean(),
+});
+
+export async function PATCH(req: NextRequest) {
+    try {
+        const { auth: authCtx, errorResponse } = await requireAuth();
+        if (errorResponse) return errorResponse;
+
+        const parsed = patchWorkItemSchema.parse(await req.json());
+        const [updated] = await db.update(workItemsTable)
+            .set({ isPublic: parsed.isPublic, updatedAt: new Date() })
+            .where(and(eq(workItemsTable.id, parsed.id), eq(workItemsTable.userId, authCtx.user.id)))
+            .returning();
+
+        if (!updated) {
+            return notFoundResponse("Work item");
+        }
+
+        await syncPortfolioWorkVisibility(authCtx.user.id, updated.id, parsed.isPublic);
+        return NextResponse.json({ item: updated });
+    } catch (error: unknown) {
+        if (error instanceof z.ZodError) {
+            return NextResponse.json({ error: error.issues?.[0]?.message || "Validation failed" }, { status: 400 });
+        }
+        return handleApiError(error, "PATCH /api/work");
     }
 }
 
@@ -97,6 +132,7 @@ export async function DELETE(req: NextRequest) {
             return notFoundResponse("Work item");
         }
 
+        await syncPortfolioWorkVisibility(authCtx.user.id, deleted.id, false);
         return NextResponse.json({ success: true });
     } catch (error: unknown) {
         return handleApiError(error, "DELETE /api/work");

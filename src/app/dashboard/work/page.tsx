@@ -156,6 +156,30 @@ export default function MyWorkPage() {
         }
     };
 
+    const handleTogglePublic = async (item: WorkItem) => {
+        if (demo) {
+            setItems((prev) => prev.map((entry) => entry.id === item.id ? { ...entry, isPublic: !entry.isPublic } : entry));
+            showToast("Saved in this sample only.", "info");
+            return;
+        }
+        try {
+            const res = await fetch("/api/work", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: item.id, isPublic: !item.isPublic }),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                showToast(data.error || "Could not update visibility", "error");
+                return;
+            }
+            setItems((prev) => prev.map((entry) => entry.id === item.id ? { ...entry, isPublic: data.item.isPublic } : entry));
+            showToast(data.item.isPublic ? "Visible on your public portfolio" : "Hidden from your public portfolio", "success");
+        } catch {
+            showToast("Could not update visibility", "error");
+        }
+    };
+
     const handleDelete = async (id: string) => {
         if (!confirm("Are you sure you want to delete this work item?")) return;
 
@@ -283,15 +307,16 @@ export default function MyWorkPage() {
                                         {item.category}
                                     </span>
                                     <div className="flex items-center gap-2">
-                                        {item.isPublic ? (
-                                            <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-foreground" title="Public in Portfolio">
-                                                <AppIcon icon={RiGlobalLine} size={12} /> Public
-                                            </span>
-                                        ) : (
-                                            <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground" title="Private to You">
-                                                <AppIcon icon={RiLockLine} size={12} /> Private
-                                            </span>
-                                        )}
+                                        <button
+                                            type="button"
+                                            onClick={() => void handleTogglePublic(item)}
+                                            className={`inline-flex min-h-11 items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium ${item.isPublic ? "bg-muted text-foreground" : "bg-muted text-muted-foreground"}`}
+                                            aria-pressed={item.isPublic}
+                                            title={item.isPublic ? "Visible on public portfolio" : "Hidden from public portfolio"}
+                                        >
+                                            <AppIcon icon={item.isPublic ? RiGlobalLine : RiLockLine} size={12} />
+                                            {item.isPublic ? "Public" : "Private"}
+                                        </button>
                                         <button
                                             onClick={() => handleDelete(item.id)}
                                             className={featureChrome.iconButton}

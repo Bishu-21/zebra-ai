@@ -68,6 +68,8 @@ describe("Dashboard mobile navigation regressions", () => {
         );
 
         assert.doesNotMatch(sidebarHeader, /\{plan\}/);
-        assert.match(sidebarSource, /\{plan\} Plan/);
+        assert.doesNotMatch(sidebarSource, /\{plan\} Plan/);
+        assert.match(sidebarSource, /formatAccountPlanLabel\(livePlan\)/);
+        assert.match(sidebarSource, /liveCredits\} \{liveCredits === 1 \? "credit" : "credits"/);
     });
 });

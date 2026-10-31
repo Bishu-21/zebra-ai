@@ -22,6 +22,7 @@ import { CareerProfileForm } from "./CareerProfileForm";
 import { AiUsageHistory } from "./AiUsageHistory";
 import { ConnectedAccounts } from "./ConnectedAccounts";
 import { useDemoWorkspace } from "@/context/DemoWorkspaceContext";
+import { useCredits } from "@/context/CreditsContext";
 
 type TabType = "general" | "editor" | "career" | "billing" | "account";
 
@@ -46,6 +47,10 @@ export function SettingsView({ connectionProviders, githubAppConfigured }: { con
     const { data: session } = useSession();
     const { showToast } = useToast();
     const demo = useDemoWorkspace();
+    const liveCredits = useCredits(
+        demo ? 3 : undefined,
+        demo ? "Free" : undefined,
+    );
 
     const initialTab = (searchParams.get("tab") as TabType) || "general";
     const [activeTab, setActiveTab] = useState<TabType>(
@@ -126,6 +131,7 @@ export function SettingsView({ connectionProviders, githubAppConfigured }: { con
     const user = demo
         ? { plan: "Free", credits: 3, email: "jordan.hale@example.com", name: "Jordan Hale" }
         : session?.user as { plan?: string | null; credits?: number | null; email?: string | null; name?: string | null } | undefined;
+    const creditBalance = demo ? 3 : liveCredits.credits;
 
     return (
         <div className="mx-auto w-full max-w-7xl space-y-6 px-5 py-6 pb-32 font-sans text-sm leading-6 sm:px-6 md:px-10 md:py-10">
@@ -302,7 +308,7 @@ export function SettingsView({ connectionProviders, githubAppConfigured }: { con
                                             <p className="mt-0.5 text-sm text-muted-foreground">
                                                 Credit balance:{" "}
                                                 <span className="font-medium text-foreground">
-                                                    {typeof user?.credits === "number" ? user.credits : "Unknown"}
+                                                    {creditBalance} {creditBalance === 1 ? "credit" : "credits"}
                                                 </span>
                                             </p>
                                         </div>

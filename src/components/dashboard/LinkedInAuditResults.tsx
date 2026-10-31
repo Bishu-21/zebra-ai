@@ -9,6 +9,7 @@ export interface LinkedInAuditResult {
   summary: string;
   items: LinkedInAuditItem[];
   scores: { overall: number | null; categories: Record<LinkedInAuditCategory, number | null>; assessed: number; total: number };
+  workEvidence?: Array<{ id: string; title: string; category: string }>;
 }
 
 const labels: Record<LinkedInAuditCategory, string> = {
@@ -37,6 +38,21 @@ export function LinkedInAuditResults({ result }: { result: LinkedInAuditResult }
       </div>
       <p className={`mt-5 ${featureChrome.helper}`}>Score uses {result.scores.assessed} assessable checks out of {result.scores.total}. Review “Not Assessed” items directly on LinkedIn. This is a profile quality benchmark, not a prediction of LinkedIn search rank.</p>
     </section>
+
+    {result.workEvidence && result.workEvidence.length > 0 ? (
+      <section className={`${featureChrome.card} p-5`} aria-label="Workspace work used in this report">
+        <h3 className="text-base font-semibold tracking-tight">Workspace work used in this report</h3>
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">These saved work items were treated as evidence for experience, skills, and featured sections. They stay in your workspace until you mark them public on your portfolio.</p>
+        <ul className="mt-4 space-y-2">
+          {result.workEvidence.map((item) => (
+            <li key={item.id} className="rounded-xl bg-[#FAF9F6] px-4 py-3 text-sm">
+              <span className="font-medium text-foreground">{item.title}</span>
+              <span className="ml-2 text-xs text-muted-foreground">{item.category}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ) : null}
 
     {actions.length > 0 && <section className={`${featureChrome.card} p-5`}>
       <h3 className="text-base font-semibold tracking-tight">Start with these fixes</h3>

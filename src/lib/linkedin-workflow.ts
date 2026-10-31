@@ -73,12 +73,64 @@ export function validateLinkedInDrafts(sourceText: string, raw: unknown): Linked
     if (!parsed.success) return [];
     const draft = parsed.data;
     const exactQuote = findLinkedInSourceQuote(sourceText, draft.sourceQuote);
-    if (!exactQuote || textHasUnsupportedFacts(draft.proposedText, exactQuote)) return [];
+    if (!exactQuote || textHasUnsupportedFacts(draft.proposedText, sourceText)) return [];
     const key = `${draft.field}:${exactQuote}`;
     if (seen.has(key)) return [];
     seen.add(key);
     return [{ ...draft, sourceQuote: exactQuote, id: `${draft.field}-${index + 1}`, status: "proposed" as const, editedText: null }];
   });
+}
+
+export type WorkspaceWorkEvidence = {
+  id: string;
+  title: string;
+  category: string;
+  description?: string | null;
+  tools?: string[] | null;
+  result?: string | null;
+  proofUrl?: string | null;
+};
+
+export function formatWorkspaceWorkEvidence(items: WorkspaceWorkEvidence[]): string {
+  if (!items.length) return "";
+  return items.map((item, index) => {
+    const tools = Array.isArray(item.tools) ? item.tools.filter((tool): tool is string => typeof tool === "string" && tool.trim().length > 0) : [];
+    return [
+      `${index + 1}. ${item.title} (${item.category})`,
+      item.description?.trim() ? `What I did: ${item.description.trim()}` : null,
+      tools.length ? `Tools: ${tools.join(", ")}` : null,
+      item.result?.trim() ? `Result: ${item.result.trim()}` : null,
+      item.proofUrl?.trim() ? `Proof: ${item.proofUrl.trim()}` : null,
+    ].filter(Boolean).join("\n");
+  }).join("\n\n");
+}
+
+export function combineLinkedInEvidence(profileText: string, workItems: WorkspaceWorkEvidence[]): string {
+  const work = formatWorkspaceWorkEvidence(workItems);
+  if (!work) return profileText;
+  return `${profileText.trim()}\n\nWORKSPACE WORK START\n${work}\nWORKSPACE WORK END`;
+}
+
+export function workEvidenceForReport(items: WorkspaceWorkEvidence[]): Array<{ id: string; title: string; category: string }> {
+  return items.map((item) => ({ id: item.id, title: item.title, category: item.category }));
+}
+
+export function buildLinkedInProfilePreview(input: {
+  drafts: LinkedInDraft[];
+  workItems: WorkspaceWorkEvidence[];
+}) {
+  const pick = (field: LinkedInDraft["field"]) => {
+    const accepted = input.drafts.find((draft) => draft.field === field && draft.status === "accepted");
+    if (accepted) return accepted.editedText || accepted.proposedText;
+    const proposed = input.drafts.find((draft) => draft.field === field && draft.status === "proposed");
+    return proposed?.proposedText || null;
+  };
+  return {
+    headline: pick("headline"),
+    about: pick("about"),
+    experience: pick("experience"),
+    workItems: input.workItems,
+  };
 }
 
 export function updateLinkedInDraftDecision(drafts: readonly LinkedInDraft[], draftId: string, status: "accepted" | "dismissed", editedText: string | undefined, sourceText: string): LinkedInDraft[] {

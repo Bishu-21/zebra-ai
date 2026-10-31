@@ -17,6 +17,8 @@ import { DASHBOARD_NAV_ITEMS } from "@/lib/constants/navigation";
 import { UserAvatar } from "@/components/dashboard/UserAvatar";
 import { useDialogFocus } from "@/hooks/useDialogFocus";
 import { useDemoWorkspace } from "@/context/DemoWorkspaceContext";
+import { useCredits } from "@/context/CreditsContext";
+import { formatAccountPlanLabel } from "@/lib/constants/plans";
 
 interface SidebarProps {
     plan: string;
@@ -57,6 +59,7 @@ export function Sidebar({
     const pathname = usePathname();
     const demo = useDemoWorkspace();
     const contained = Boolean(demo);
+    const { credits: liveCredits, plan: livePlan } = useCredits(credits, plan);
 
     const isDrawerOpen = controlledIsOpen !== undefined ? controlledIsOpen : internalOpen;
     const closeDrawer = useCallback(() => {
@@ -112,7 +115,7 @@ export function Sidebar({
                 id="dashboard-navigation"
                 inert={isMobile && !isDrawerOpen ? true : undefined}
                 aria-hidden={isMobile && !isDrawerOpen ? true : undefined}
-                className={`${contained ? "absolute lg:relative h-full" : "fixed lg:sticky h-dvh"} top-0 left-0 w-[270px] max-w-[calc(100vw-2rem)] lg:max-w-none bg-muted border-r border-neutral-200/70 flex flex-col z-[70] overflow-hidden shadow-xl lg:shadow-none shrink-0 motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-out ${hideOffCanvas ? "-translate-x-full" : "translate-x-0"}`}
+                className={`${contained ? "absolute lg:relative h-full max-w-[min(17rem,calc(100%-1.5rem))]" : "fixed lg:sticky h-dvh max-w-[calc(100vw-2rem)]"} top-0 left-0 w-[270px] lg:max-w-none bg-muted border-r border-neutral-200/70 flex flex-col z-[70] overflow-hidden shadow-xl lg:shadow-none shrink-0 motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-out ${hideOffCanvas ? "-translate-x-full" : "translate-x-0"}`}
             >
                 <div className="flex flex-col h-full">
                     {/* Header Logo */}
@@ -171,8 +174,8 @@ export function Sidebar({
                         <div className="mt-8 pt-6 border-t border-neutral-200/60">
                              <div className="relative bg-white border border-neutral-200/70 rounded-2xl p-4 flex flex-col space-y-3 shadow-2xs">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-xs font-semibold text-foreground">{plan} Plan</span>
-                                    <span className="text-xs font-bold text-muted-foreground">{credits} Credits</span>
+                                    <span className="text-xs font-semibold text-foreground">{formatAccountPlanLabel(livePlan)}</span>
+                                    <span className="text-xs font-bold text-muted-foreground">{liveCredits} {liveCredits === 1 ? "credit" : "credits"}</span>
                                 </div>
                                 <p className="text-xs font-normal text-muted-foreground leading-relaxed">
                                     Credits are used for resume reviews, job matching, cover letters, and LinkedIn drafts. Saving a resume and exporting a PDF do not use a credit.

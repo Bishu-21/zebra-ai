@@ -8,6 +8,7 @@ import { ToastProvider } from "../ui/Toast";
 import { SettingsProvider } from "@/context/SettingsContext";
 import { CareerProfilePrompt } from "./CareerProfilePrompt";
 import { ZebuProvider } from "@/context/ZebuContext";
+import { CreditsProvider } from "@/context/CreditsContext";
 
 const ProfileModal = dynamic(() => import("./ProfileModal").then((module) => module.ProfileModal), { ssr: false });
 const SettingsModal = dynamic(() => import("./SettingsModal").then((module) => module.SettingsModal), { ssr: false });
@@ -55,6 +56,7 @@ export function DashboardShell({ plan, credits, userName, userImage, shouldPromp
     return (
         <SettingsProvider>
             <ZebuProvider>
+              <CreditsProvider credits={credits} plan={plan}>
               <ToastProvider>
                 <>
                     <Sidebar
@@ -100,6 +102,7 @@ export function DashboardShell({ plan, credits, userName, userImage, shouldPromp
                     <ZebuAssistant />
                 </>
               </ToastProvider>
+              </CreditsProvider>
             </ZebuProvider>
         </SettingsProvider>
     );

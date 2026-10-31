@@ -199,6 +199,7 @@ export function CreditTopUp({ checkoutAvailable = false }: { checkoutAvailable?:
                         if (verifyRes.ok) {
                             setCheckoutActive(false);
                             setSuccess(true);
+                            window.dispatchEvent(new CustomEvent("credits-changed"));
                             router.refresh();
                             setTimeout(() => {
                                 setSuccess(false);

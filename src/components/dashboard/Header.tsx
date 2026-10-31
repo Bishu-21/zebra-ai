@@ -11,6 +11,7 @@ import { getBreadcrumbForPath } from "@/lib/constants/navigation";
 import { UserAvatar } from "@/components/dashboard/UserAvatar";
 import { DashboardHref } from "@/components/dashboard/DashboardLink";
 import { useDemoWorkspace } from "@/context/DemoWorkspaceContext";
+import { useCredits } from "@/context/CreditsContext";
 
 interface HeaderProps {
     credits: number;
@@ -24,6 +25,7 @@ interface HeaderProps {
 
 export function Header({ credits, userName, userImage, isNavOpen = false, onOpenNavAction, onOpenProfileAction, onOpenSettingsAction }: HeaderProps) {
     const demo = useDemoWorkspace();
+    const { credits: liveCredits } = useCredits(credits);
     const livePath = usePathname();
     const pathname = demo?.pathname ?? livePath;
     const breadcrumbInfo = getBreadcrumbForPath(pathname);
@@ -73,9 +75,8 @@ export function Header({ credits, userName, userImage, isNavOpen = false, onOpen
             </div>
 
             <div className="flex items-center gap-2.5 sm:gap-3 md:gap-5 shrink-0">
-                {/* Credits Badge (Hidden on Phone < 768px, available in drawer) */}
-                <div className="hidden md:flex bg-neutral-100 px-3 py-1.5 rounded-full items-center border border-neutral-200/80 shadow-xs">
-                    <span className="text-xs font-semibold text-foreground">{credits} Credits</span>
+                <div className="flex min-h-11 items-center rounded-full border border-neutral-200/80 bg-neutral-100 px-3 py-1.5">
+                    <span className="text-xs font-semibold text-foreground">{liveCredits} {liveCredits === 1 ? "credit" : "credits"}</span>
                 </div>
 
                 <button

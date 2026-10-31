@@ -7,6 +7,7 @@ import { Header } from "@/components/dashboard/Header";
 import { ZebuVoiceOrb } from "@/components/dashboard/ZebuVoiceOrb";
 import { ZebuDisplayCard } from "@/components/dashboard/ZebuDisplayCard";
 import { DemoWorkspaceProvider, useDemoWorkspace } from "@/context/DemoWorkspaceContext";
+import { CreditsProvider } from "@/context/CreditsContext";
 import { ZebuProvider } from "@/context/ZebuContext";
 import { SamplePage } from "@/components/demo/SamplePages";
 import { parseZebuWorkspaceCommand } from "@/lib/zebu-local-intent";
@@ -170,7 +171,8 @@ function SampleChrome({
     const closeNav = useCallback(() => setNavOpen(false), []);
 
     return (
-        <div className="relative flex h-full min-h-0 w-full overflow-hidden bg-background font-sans text-foreground" data-demo-feature={featureId} data-demo-path={pathname}>
+        <CreditsProvider credits={3} plan="Free">
+        <div className="demo-workspace relative flex h-full min-h-0 w-full overflow-hidden bg-background font-sans text-foreground" data-demo-feature={featureId} data-demo-path={pathname}>
             <Sidebar
                 plan="Free"
                 credits={3}
@@ -199,6 +201,7 @@ function SampleChrome({
                 <SampleZebu featureId={featureId} phase={phase} localTime={localTime} interactive={interactive} />
             </div>
         </div>
+        </CreditsProvider>
     );
 }
 
