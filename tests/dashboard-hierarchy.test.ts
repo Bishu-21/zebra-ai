@@ -17,6 +17,11 @@ describe("Dashboard task hierarchy", () => {
         const analyzeAt = dashboardSource.indexOf("<AnalyzeResume");
         assert.ok(importAt > 0 && analyzeAt > importAt);
         assert.match(dashboardSource, /<ProjectAnalyzerCard \/>/);
+        const analyzer = readFileSync("src/components/dashboard/ProjectAnalyzerCard.tsx", "utf8");
+        assert.match(analyzer, /featureChrome\.dialog/);
+        assert.match(analyzer, /role="dialog"/);
+        assert.match(analyzer, /aria-label="Close project check"/);
+        assert.match(analyzer, /useDialogFocus/);
         assert.match(dashboardSource, /Saved matches/);
     });
 });

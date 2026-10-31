@@ -55,6 +55,12 @@ describe("Dashboard mobile navigation regressions", () => {
         assert.doesNotMatch(sidebarSource, /suppressHydrationWarning/);
     });
 
+    test("tool cards stay a server component so dashboard pages can pass icon functions", () => {
+        const toolCard = readFileSync("src/components/dashboard/DashboardToolCard.tsx", "utf8");
+        assert.doesNotMatch(toolCard, /"use client"/);
+        assert.doesNotMatch(toolCard, /useDemoWorkspace/);
+    });
+
     test("sidebar header does not repeat the account plan", () => {
         const sidebarHeader = sidebarSource.slice(
             sidebarSource.indexOf("Header Logo"),

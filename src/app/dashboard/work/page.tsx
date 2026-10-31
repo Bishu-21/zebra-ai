@@ -24,6 +24,8 @@ import { DashboardPage, DashboardPageHeader } from "@/components/dashboard/Dashb
 import { AppIcon } from "@/components/ui/AppIcon";
 import { featureChrome } from "@/components/dashboard/feature-chrome";
 import { useDialogFocus } from "@/hooks/useDialogFocus";
+import { useDemoWorkspace } from "@/context/DemoWorkspaceContext";
+import { PRODUCT_DEMO_WORK_ITEMS } from "@/lib/product-demo-fixture";
 
 interface WorkItem {
     id: string;
@@ -47,6 +49,7 @@ export default function MyWorkPage() {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const { showToast } = useToast();
+    const demo = useDemoWorkspace();
 
     // Form state
     const [title, setTitle] = useState("");
@@ -83,9 +86,17 @@ export default function MyWorkPage() {
 
     useEffect(() => {
         let cancelled = false;
-        queueMicrotask(() => { if (!cancelled) void fetchItems(); });
+        queueMicrotask(() => {
+            if (cancelled) return;
+            if (demo) {
+                setItems(PRODUCT_DEMO_WORK_ITEMS);
+                setLoading(false);
+                return;
+            }
+            void fetchItems();
+        });
         return () => { cancelled = true; };
-    }, [fetchItems]);
+    }, [demo, fetchItems]);
 
 
     const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -98,6 +109,23 @@ export default function MyWorkPage() {
         try {
             setSubmitting(true);
             const toolsArray = toolsInput.split(",").map(t => t.trim()).filter(Boolean);
+            if (demo) {
+                setItems(prev => [{
+                    id: `demo-work-${Date.now()}`,
+                    title: title.trim(),
+                    category,
+                    description: description || null,
+                    tools: toolsArray,
+                    result: result || null,
+                    proofUrl: proofUrl.trim() || null,
+                    isPublic,
+                    createdAt: new Date().toISOString(),
+                }, ...prev]);
+                showToast("Saved in this sample only.", "info");
+                setIsAddModalOpen(false);
+                resetForm();
+                return;
+            }
             const res = await fetch("/api/work", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -130,6 +158,12 @@ export default function MyWorkPage() {
 
     const handleDelete = async (id: string) => {
         if (!confirm("Are you sure you want to delete this work item?")) return;
+
+        if (demo) {
+            setItems(prev => prev.filter(item => item.id !== id));
+            showToast("Removed in this sample only.", "info");
+            return;
+        }
 
         try {
             const res = await fetch(`/api/work?id=${id}`, { method: "DELETE" });

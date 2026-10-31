@@ -1,7 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
+import { useDemoWorkspace } from "@/context/DemoWorkspaceContext";
+import { DashboardHref } from "@/components/dashboard/DashboardLink";
 import {
   RiArrowDownSLine,
   RiArrowRightLine,
@@ -59,6 +60,7 @@ export function JobBoard({ initialJobs, resumes = [], versions = [] }: {
   resumes?: { id: string; title: string }[];
   versions?: { id: string; title: string; company: string | null; targetRole: string | null }[];
 }) {
+  const demo = useDemoWorkspace();
   const [jobs, setJobs] = useState(initialJobs);
   const [filter, setFilter] = useState<Filter>("All");
   const [query, setQuery] = useState("");
@@ -82,6 +84,7 @@ export function JobBoard({ initialJobs, resumes = [], versions = [] }: {
     if (!job) return;
     setJobs((items) => items.map((job) => job.id === id ? { ...job, status } : job));
     setActionError(null);
+    if (demo) return;
     try {
       const endpoint = job.recordType === "job" ? "/api/jobs" : "/api/applications";
       const response = await fetch(endpoint, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status }) });
@@ -100,6 +103,10 @@ export function JobBoard({ initialJobs, resumes = [], versions = [] }: {
     if (!window.confirm("Delete this application? This cannot be undone.")) return;
     const job = jobs.find((item) => item.id === id);
     if (!job) return;
+    if (demo) {
+      setJobs((items) => items.filter((item) => item.id !== id));
+      return;
+    }
     setBusyId(id);
     setActionError(null);
     try {
@@ -156,7 +163,7 @@ export function JobBoard({ initialJobs, resumes = [], versions = [] }: {
               const detailHref = job.recordType === "job" ? null : `/dashboard/applications/${job.id}`;
               return (
               <article key={job.id} className="group relative p-5 transition-colors hover:bg-muted/30 md:grid md:grid-cols-[minmax(240px,2fr)_150px_minmax(180px,1fr)_120px_7.5rem] md:items-center md:gap-4">
-                {detailHref ? <Link href={detailHref} className="absolute inset-0" aria-label={`Open ${job.position} at ${job.company}`} /> : null}
+                {detailHref ? <DashboardHref href={detailHref} className="absolute inset-0" aria-label={`Open ${job.position} at ${job.company}`} /> : null}
                 <div className="relative pointer-events-none min-w-0">
                   <p className="truncate text-xs font-medium text-muted-foreground">{job.company}</p>
                   <h2 className="mt-1 truncate text-sm font-semibold text-foreground">{job.position}</h2>
@@ -174,7 +181,7 @@ export function JobBoard({ initialJobs, resumes = [], versions = [] }: {
                 <p className="relative pointer-events-none mt-3 text-sm text-muted-foreground md:mt-0">{formatRelativeTime(job.updatedAt)}</p>
                 <div className="relative z-10 mt-4 flex items-center justify-end gap-1 md:mt-0">
                   {detailHref ? (
-                    <Link href={detailHref} className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground" aria-label="Open application"><AppIcon icon={RiArrowRightLine} size={16} /></Link>
+                    <DashboardHref href={detailHref} className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground" aria-label="Open application"><AppIcon icon={RiArrowRightLine} size={16} /></DashboardHref>
                   ) : job.url ? (
                     <a href={job.url} target="_blank" rel="noreferrer" className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground" aria-label="Open job listing"><AppIcon icon={RiLink} size={16} /></a>
                   ) : null}

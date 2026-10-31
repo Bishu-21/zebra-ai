@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { getZebuSuggestions, type ZebuSuggestion } from "@/lib/zebu-suggestions";
+import { useDemoWorkspace } from "@/context/DemoWorkspaceContext";
 
 type ZebuContextValue = {
   isOpen: boolean;
@@ -20,7 +21,9 @@ export const ZEBU_LISTEN_REQUEST_EVENT = "zebu:listen-request";
 const ZebuContext = createContext<ZebuContextValue | null>(null);
 
 export function ZebuProvider({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
+  const demo = useDemoWorkspace();
+  const livePath = usePathname();
+  const pathname = demo?.pathname ?? livePath;
   const [isOpen, setIsOpen] = useState(false);
   const [entityContext, setEntityContextState] = useState<ZebuContextValue["entityContext"]>(null);
   const setEntityContext = useCallback((context: ZebuContextValue["entityContext"]) => setEntityContextState(context), []);

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { FeatureDemoScene } from "./FeatureDemoScene";
 import { FEATURE_DEMO_SECONDS, OVERVIEW_DEMO_SECONDS, type DemoId } from "@/lib/demo-catalog";
 import { SettingsProvider } from "@/context/SettingsContext";
+import { ToastProvider } from "@/components/ui/Toast";
 
 /** Recording-only playback. No account writes, provider calls or microphone use. */
 export function DemoCapturePlayer({ id }: { id: DemoId }) {
@@ -29,5 +30,5 @@ export function DemoCapturePlayer({ id }: { id: DemoId }) {
         window.addEventListener("zebra-demo-play", play);
         return () => { window.removeEventListener("zebra-demo-play", play); if (timer.current) clearInterval(timer.current); };
     }, [id]);
-    return <SettingsProvider><div data-demo-status={status} data-demo-seconds={seconds.toFixed(2)}><FeatureDemoScene id={id} seconds={seconds} /></div></SettingsProvider>;
+    return <SettingsProvider><ToastProvider><div data-demo-status={status} data-demo-seconds={seconds.toFixed(2)}><FeatureDemoScene id={id} seconds={seconds} /></div></ToastProvider></SettingsProvider>;
 }

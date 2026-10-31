@@ -34,12 +34,12 @@ export function Benefits() {
                     viewport={{ once: true }}
                     transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                 >
-                    <p className="mb-5 text-xs font-bold uppercase tracking-[0.2em] text-black">How it works</p>
+                    <p className="mb-5 text-xs font-medium uppercase tracking-wide text-muted-foreground">How it works</p>
                     <h2 className="text-4xl font-bold leading-[1.1] tracking-[-0.04em] text-foreground md:text-6xl">
-                        Review the work before it lands on the page.
+                        Import, review suggestions, export a PDF.
                     </h2>
                     <p className="mt-5 max-w-xl text-base leading-7 text-accent-dark md:text-lg">
-                        Zebra helps you turn an existing resume and a target job into an editable document. You stay in control of every change.
+                        You import a resume, compare it with a job, and approve each change. The original file stays. You apply on the employer site.
                     </p>
                 </m.div>
 
