@@ -21,7 +21,8 @@ public issue.
 Requirements and environment variables are documented in the
 [README](README.md#getting-started). Copy `.env.example` to `.env.local`,
 configure a separate development database and the services needed for your
-change, and keep `.env.local` untracked. Then run:
+change, and keep `.env.local` untracked. Use Node.js **24.x** and npm, matching
+CI and hosting. Then run:
 
 ```bash
 npm ci
@@ -41,7 +42,10 @@ differ from earlier Next.js versions.
 3. Add or update tests for behavior changes. Regression fixes should include a
    test that fails without the fix whenever practical.
 4. Keep database changes forward-only and add a reviewed migration under
-   `drizzle/`. Do not use `drizzle-kit push --force` against production.
+   `drizzle/`. Applying a production migration needs separate review and
+   approval; the hosting build runs read-only schema health checks. Do not run
+   `db:prepare`, migrations, or `drizzle-kit push --force` on production as part
+   of development or a documentation change.
 5. Preserve user evidence in AI-assisted features. Do not fabricate resume
    claims, qualifications, metrics, or application history.
 6. Update documentation and `.env.example` when configuration or user-facing
@@ -75,7 +79,23 @@ clearly in the pull request and list the checks you did run.
 - Complete the pull request template and link related issues.
 - Explain user-visible behavior, risk, migrations, and configuration changes.
 - Include screenshots or recordings for visual changes.
+- Use synthetic data and label fixtures or simulations as such. The README
+  dashboard image and its capture notes live in [docs/images](docs/images/README.md).
+- Document current behavior separately from proposals. Do not claim ATS
+  acceptance, employment outcomes, coverage percentages, performance targets,
+  or production readiness without supporting evidence.
 - Keep the branch current and respond to review feedback with follow-up commits.
+
+Do not merge while required CI checks fail. Application releases follow
+[DEPLOYMENT.md](DEPLOYMENT.md): validate staging, verify the relevant user
+journeys, then obtain production environment approval. Do not enable checkout,
+start shared-stream workers, change secrets, or apply database migrations as
+an incidental part of a contribution.
+
+For product/account support, email
+[accounts@zebra-ai.app](mailto:accounts@zebra-ai.app). Conduct reports follow
+[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md); vulnerabilities follow
+[SECURITY.md](SECURITY.md). Keep both kinds of report private.
 
 Maintainers may ask for changes, close inactive proposals, or decline work that
 does not fit the product direction. All accepted contributions are licensed
