@@ -14,7 +14,7 @@ export function FaqSection() {
   };
 
   return (
-    <section id="faq" className="pt-[120px] pb-24 px-5 md:px-8 bg-white overflow-hidden relative border-t border-border-subtle">
+    <section id="faq" className="relative overflow-x-clip border-t border-border-subtle bg-white px-4 pb-16 pt-16 sm:px-5 sm:pb-24 sm:pt-24 md:px-8 lg:pt-[120px]">
       <div className="section-stripes" aria-hidden="true" />
 
       <div className="max-w-7xl mx-auto relative z-10">
@@ -32,11 +32,11 @@ export function FaqSection() {
             </span>
           </m.div>
           
-          <h2 className="text-4xl md:text-6xl font-bold tracking-[-0.04em] leading-[1.1] mb-6 md:mb-8 text-foreground">
+          <h2 className="mb-6 text-3xl font-bold leading-[1.1] tracking-[-0.04em] text-foreground sm:text-4xl md:mb-8 lg:text-6xl">
             Credits, imports, and export.
           </h2>
           
-          <p className="text-accent-dark text-lg leading-relaxed">
+          <p className="text-base leading-relaxed text-accent-dark sm:text-lg">
             Short answers about what Zebra reviews, how credits work, and what you can export.
           </p>
         </div>
@@ -52,7 +52,7 @@ export function FaqSection() {
                 whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: reduceMotion ? 0 : idx * 0.04 }}
-                className={`group transition-all duration-300 bg-white border rounded-3xl p-6 md:p-7 shadow-xs ${
+                className={`group rounded-3xl border bg-white p-4 shadow-xs transition-all duration-300 sm:p-6 md:p-7 ${
                   isOpen
                     ? "border-neutral-300 shadow-md"
                     : "border-neutral-200/80 hover:border-neutral-300"
@@ -60,25 +60,25 @@ export function FaqSection() {
               >
                 <button
                   onClick={() => toggleFaq(idx)}
-                  className="w-full text-left flex items-start justify-between gap-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+                  className="flex w-full min-h-11 items-start justify-between gap-3 text-left sm:gap-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
                   aria-expanded={isOpen}
                 >
-                  <div className="flex items-start gap-4">
-                    <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-colors duration-300 ${
+                  <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+                    <div className={`hidden size-11 shrink-0 items-center justify-center rounded-xl transition-colors duration-300 sm:flex ${
                       isOpen
                         ? "bg-primary text-white"
                         : "bg-neutral-100 text-neutral-600 group-hover:bg-primary group-hover:text-white"
                     }`}>
                       <RiQuestionLine size={20} />
                     </div>
-                    <div className="pt-2">
-                      <h3 className="font-bold text-lg md:text-xl text-foreground tracking-tight leading-snug">
+                    <div className="min-w-0 sm:pt-2">
+                      <h3 className="text-base font-bold leading-snug tracking-tight text-foreground sm:text-lg md:text-xl">
                         {item.question}
                       </h3>
                     </div>
                   </div>
                   
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-1 transition-colors ${
+                  <div className={`mt-0.5 flex size-11 shrink-0 items-center justify-center rounded-xl transition-colors ${
                     isOpen ? "bg-neutral-100 text-foreground" : "bg-neutral-50 text-neutral-400 group-hover:text-foreground"
                   }`}>
                     {isOpen ? <RiSubtractLine size={18} /> : <RiAddLine size={18} />}
@@ -93,7 +93,7 @@ export function FaqSection() {
                       exit={reduceMotion ? undefined : { height: 0, opacity: 0 }}
                       transition={{ duration: reduceMotion ? 0 : 0.2, ease: "easeInOut" }}
                     >
-                      <div className="pl-15 pr-4 pt-4 mt-4 border-t border-neutral-100">
+                      <div className="mt-4 border-t border-neutral-100 pt-4 sm:pl-14">
                         <p className="text-xs md:text-sm text-neutral-600 font-normal leading-relaxed">
                           {item.answer}
                         </p>

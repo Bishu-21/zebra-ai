@@ -612,3 +612,35 @@ html {
   .zebu-navigation-voice .zebu-composer { padding-bottom: max(.65rem, env(safe-area-inset-bottom)); }
 }
 @media (prefers-reduced-motion: reduce) { .zebu-connecting-icon { animation: none; } }
+
+/* Landing demo: size Zebu against the workspace frame, not the page viewport. */
+.demo-workspace .zebu-panel,
+.demo-workspace .zebu-navigation-voice .zebu-panel {
+  width: min(320px, calc(100% - 1.5rem));
+  max-width: calc(100% - 1rem);
+  right: .75rem;
+  bottom: .75rem;
+}
+.demo-workspace .zebu-navigation-voice .zebu-panel--expanded {
+  width: min(360px, calc(100% - 1.5rem));
+  height: min(460px, calc(100% - 2rem));
+}
+@media (max-width: 640px) {
+  .demo-workspace .zebu-panel,
+  .demo-workspace .zebu-navigation-voice .zebu-panel,
+  .demo-workspace .zebu-navigation-voice .zebu-panel--expanded {
+    width: calc(100% - 1rem);
+    right: .5rem;
+    bottom: .5rem;
+  }
+  .demo-workspace .zebu-panel--expanded,
+  .demo-workspace .zebu-navigation-voice .zebu-panel--expanded {
+    height: min(70%, 24rem);
+  }
+  .demo-workspace .zebu-panel--full {
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+  }
+}

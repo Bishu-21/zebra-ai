@@ -98,9 +98,9 @@ export function Pricing() {
   ];
 
   return (
-    <section id="pricing" className="pt-[100px] pb-24 px-5 md:px-8 bg-background">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-10 md:mb-16 max-w-2xl mx-auto">
+    <section id="pricing" className="overflow-x-clip bg-background px-4 pb-16 pt-16 sm:px-5 sm:pb-24 sm:pt-24 md:px-8 lg:pt-[100px]">
+      <div className="mx-auto max-w-7xl">
+        <div className="mx-auto mb-10 max-w-2xl text-center md:mb-16">
           <m.div
             initial={reduceMotion ? false : { opacity: 0, y: -10 }}
             whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
@@ -109,10 +109,10 @@ export function Pricing() {
           >
             <span className="text-xs font-bold tracking-[0.2em] uppercase text-primary">One-time credit packs</span>
           </m.div>
-          <h2 className="text-4xl md:text-6xl font-bold tracking-[-0.04em] leading-[1.1] mb-5 md:mb-6 text-foreground">
+          <h2 className="mb-5 text-3xl font-bold leading-[1.1] tracking-[-0.04em] text-foreground sm:text-4xl md:mb-6 lg:text-6xl">
             Choose a credit pack
           </h2>
-          <p className="text-accent-dark text-lg leading-relaxed">
+          <p className="text-base leading-relaxed text-accent-dark sm:text-lg">
             One-time packs for reviews, job matching, cover letters, and LinkedIn drafts. Saving a resume and exporting a PDF do not use a credit. Credits are not a subscription.
           </p>
           {checkoutAvailable === false ? (
@@ -120,7 +120,7 @@ export function Pricing() {
           ) : null}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 gap-5 sm:gap-6 lg:grid-cols-3 lg:gap-8">
           {planCards.map((plan, index) => (
             <m.div
               key={plan.name}
@@ -128,10 +128,10 @@ export function Pricing() {
               whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: reduceMotion ? 0 : index * 0.1 }}
-              className={`p-10 pt-14 rounded-3xl border-[1.5px] transition-all duration-300 relative ${
+              className={`relative rounded-3xl border-[1.5px] p-6 pt-14 transition-all duration-300 sm:p-8 sm:pt-14 lg:p-10 lg:pt-14 ${
                 plan.featured
-                ? "bg-white border-primary shadow-[0px_24px_60px_-15px_rgba(0,0,0,0.1)] scale-105 z-10"
-                : "bg-white/60 border-black/5 hover:border-black/30"
+                ? "z-10 border-primary bg-white shadow-[0px_24px_60px_-15px_rgba(0,0,0,0.1)]"
+                : "border-black/5 bg-white/60 hover:border-black/30"
               }`}
             >
               {plan.featured && (

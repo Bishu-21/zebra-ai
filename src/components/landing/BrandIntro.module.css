@@ -147,6 +147,17 @@
 
 /* ── Mobile ── */
 
+@media (max-width: 380px) {
+  .lockup {
+    font-size: 2rem;
+  }
+
+  .markFrame {
+    width: 3.25rem;
+    height: 3.25rem;
+  }
+}
+
 @media (max-width: 520px) {
   @keyframes word-left {
     0% {
