@@ -1,9 +1,20 @@
 import { pathToFileURL } from 'node:url';
 
+export function resolveDeploymentEnvironment(env) {
+  const explicit = env.DEPLOY_ENVIRONMENT?.trim();
+  if (explicit === 'staging' || explicit === 'production') return explicit;
+  if (env.VERCEL_ENV === 'production') return 'production';
+  return null;
+}
+
 export function validateDeployment(env) {
-  if (!['staging', 'production'].includes(env.DEPLOY_ENVIRONMENT)) {
-    throw new Error('Unknown deployment environment');
+  const deploymentEnvironment = resolveDeploymentEnvironment(env);
+  if (!deploymentEnvironment) {
+    throw new Error(
+      'Unknown deployment environment. Set DEPLOY_ENVIRONMENT to staging or production, or deploy the Vercel Production target (VERCEL_ENV=production). Preview deploys must set DEPLOY_ENVIRONMENT=staging.',
+    );
   }
+  env = { ...env, DEPLOY_ENVIRONMENT: deploymentEnvironment };
   for (const name of ['DATABASE_URL', 'EXPECTED_DATABASE_HOST', 'BETTER_AUTH_SECRET', 'BETTER_AUTH_URL', 'NEXT_PUBLIC_APP_URL', 'APP_URL']) {
     if (!env[name]) throw new Error(`Missing ${name}`);
   }

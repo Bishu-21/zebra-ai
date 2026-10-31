@@ -31,6 +31,18 @@ test('production accepts closed checkout but requires live keys when fully confi
     assert.doesNotThrow(() => validateDeployment({ ...production, RAZORPAY_KEY_SECRET: '' }));
 });
 
+test('Vercel Production target is accepted without DEPLOY_ENVIRONMENT', () => {
+    const vercelProduction = Object.fromEntries(Object.entries(production).filter(([key]) => key !== 'DEPLOY_ENVIRONMENT'));
+    assert.doesNotThrow(() => validateDeployment({ ...vercelProduction, VERCEL_ENV: 'production' }));
+});
+
+test('preview and unknown environments stay rejected without an explicit staging flag', () => {
+    const withoutFlag = Object.fromEntries(Object.entries(production).filter(([key]) => key !== 'DEPLOY_ENVIRONMENT'));
+    assert.throws(() => validateDeployment(withoutFlag), /Unknown deployment environment/);
+    assert.throws(() => validateDeployment({ ...withoutFlag, VERCEL_ENV: 'preview' }), /Unknown deployment environment/);
+    assert.throws(() => validateDeployment({ ...staging, DEPLOY_ENVIRONMENT: 'preview' }), /Unknown deployment environment/);
+});
+
 const staging = {
     DEPLOY_ENVIRONMENT: 'staging',
     DATABASE_URL: 'postgresql://test:test@localhost/staging',
