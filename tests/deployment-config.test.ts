@@ -24,6 +24,7 @@ const production = {
 };
 
 test('production accepts closed checkout but requires live keys when fully configured', () => {
+    assert.doesNotThrow(() => validateDeployment({ ...production, CHECKOUT_DISABLED: 'true', NEXT_PUBLIC_RAZORPAY_KEY_ID: 'rzp_test_example' }));
     assert.doesNotThrow(() => validateDeployment(production));
     assert.throws(() => validateDeployment({ ...production, NEXT_PUBLIC_RAZORPAY_KEY_ID: 'rzp_test_example' }), /live credentials/);
     assert.doesNotThrow(() => validateDeployment({ ...production, RAZORPAY_WEBHOOK_SECRET: '' }));

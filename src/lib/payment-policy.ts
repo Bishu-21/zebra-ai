@@ -21,6 +21,7 @@ export type PaymentGrantResult =
 export function isCheckoutConfigured(
     environment: Record<string, string | undefined> = process.env,
 ): boolean {
+    if (environment.CHECKOUT_DISABLED === "true") return false;
     return Boolean(
         environment.RAZORPAY_WEBHOOK_SECRET?.trim()
         && environment.RAZORPAY_KEY_SECRET?.trim()
