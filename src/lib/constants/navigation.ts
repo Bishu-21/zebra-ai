@@ -46,8 +46,8 @@ export const DASHBOARD_NAV_ITEMS: NavigationItem[] = [
   },
   {
     href: "/dashboard/linkedin",
-    label: "LinkedIn Optimizer",
-    breadcrumb: "LinkedIn Optimizer",
+    label: "LinkedIn review",
+    breadcrumb: "LinkedIn review",
     match: (pathname: string) => pathname.startsWith("/dashboard/linkedin"),
   },
   {

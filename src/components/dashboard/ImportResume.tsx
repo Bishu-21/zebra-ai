@@ -160,7 +160,7 @@ export function ImportResume({ defaultOpen = false }: { defaultOpen?: boolean } 
             <DashboardToolCard
                 icon={RiUploadCloud2Line}
                 title="Import resume"
-                description="Upload a PDF, DOCX, or text file, or paste text or LaTeX."
+                description="Upload a PDF, DOCX, or text file, or paste text. Saving the resume does not use a credit."
                 onClick={() => setIsModalOpen(true)}
             />
 
@@ -207,7 +207,7 @@ export function ImportResume({ defaultOpen = false }: { defaultOpen?: boolean } 
                                         <h2 id="import-resume-title" className="text-base font-semibold tracking-tight text-foreground">
                                             Import resume
                                         </h2>
-                                        <p className={featureChrome.helper}>Upload a document or paste text</p>
+                                        <p className={featureChrome.helper}>Upload a document or paste text. This save does not use a credit.</p>
                                     </div>
                                 </div>
                                 <button

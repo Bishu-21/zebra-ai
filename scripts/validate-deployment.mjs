@@ -23,10 +23,8 @@ export function validateDeployment(env) {
   const browserPack = new URL(env.CHROMIUM_PACK_URL);
   if (browserPack.protocol !== 'https:') throw new Error('CHROMIUM_PACK_URL must use HTTPS');
   if (browserPack.username || browserPack.password) throw new Error('CHROMIUM_PACK_URL must not contain credentials');
-  if (!env.RAZORPAY_KEY_SECRET?.trim() || !env.RAZORPAY_WEBHOOK_SECRET?.trim()) {
-    throw new Error('Deployment requires payment and webhook secrets');
-  }
-  if (env.DEPLOY_ENVIRONMENT === 'production' && !env.NEXT_PUBLIC_RAZORPAY_KEY_ID?.startsWith('rzp_live_')) {
+  const checkoutConfigured = Boolean(env.RAZORPAY_KEY_SECRET?.trim() && env.RAZORPAY_WEBHOOK_SECRET?.trim() && env.NEXT_PUBLIC_RAZORPAY_KEY_ID?.trim());
+  if (checkoutConfigured && env.DEPLOY_ENVIRONMENT === 'production' && !env.NEXT_PUBLIC_RAZORPAY_KEY_ID?.startsWith('rzp_live_')) {
     throw new Error('Production requires Razorpay live credentials');
   }
   if (env.DEPLOY_ENVIRONMENT === 'staging') {
@@ -42,7 +40,7 @@ export function validateDeployment(env) {
     if (!origin.hostname.startsWith('staging.')) {
       throw new Error('Staging APP_URL must use a staging. hostname');
     }
-    if (!env.NEXT_PUBLIC_RAZORPAY_KEY_ID?.startsWith('rzp_test_')) {
+    if (checkoutConfigured && !env.NEXT_PUBLIC_RAZORPAY_KEY_ID?.startsWith('rzp_test_')) {
       throw new Error('Staging requires Razorpay test credentials');
     }
   }

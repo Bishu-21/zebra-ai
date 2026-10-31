@@ -580,14 +580,14 @@ export function ResumeEditor({ initialData, isStripeVersion }: ResumeEditorProps
                             </div>
                             <div>
                                 <p className="text-xs font-black text-secondary">Legacy import preserved</p>
-                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">The original text is safe. Map it into editable sections before reviewing.</p>
+                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">The original text is safe. Mapping sections uses 1 credit.</p>
                             </div>
                         </div>
                         <button
                             onClick={handleReconstruct}
                             className="px-4 py-1.5 bg-primary hover:bg-primary-dark text-white text-[10px] font-black rounded-[var(--radius-md)] transition-all shadow-lg shadow-primary/20 active:scale-95"
                         >
-                            Auto-Structure
+                            Auto-Structure (1 credit)
                         </button>
                     </m.div>
                 )}

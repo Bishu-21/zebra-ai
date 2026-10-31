@@ -287,7 +287,7 @@ export function SettingsView({ connectionProviders, githubAppConfigured }: { con
                                         </div>
                                         <div>
                                             <h3 className="text-base font-semibold tracking-tight text-foreground">
-                                                {user?.plan ? `${user.plan} plan` : "Plan unavailable"}
+                                                Pay-as-you-go credits
                                             </h3>
                                             <p className="mt-0.5 text-sm text-muted-foreground">
                                                 Credit balance:{" "}

@@ -66,7 +66,7 @@ const pageLabels: Record<string, string> = {
   "/dashboard/portfolio": "Portfolio",
   "/dashboard/analytics": "Analytics",
   "/dashboard/settings": "Settings",
-  "/dashboard/linkedin": "LinkedIn Optimizer",
+  "/dashboard/linkedin": "LinkedIn review",
 };
 
 function getParentPath(pathname: string): string {

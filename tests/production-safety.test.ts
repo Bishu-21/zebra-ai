@@ -6,7 +6,7 @@ import { reserveUserCredits, refundUserCredits } from "../src/lib/credit-policy"
 import { validateUploadedFile, MAX_RESUME_FILE_SIZE_BYTES } from "../src/lib/upload-safety";
 import { testStore } from "../src/lib/test-store";
 import { sanitizeSecretText } from "../src/lib/db";
-import { verifyRazorpayHmac } from "../src/lib/payment-policy";
+import { isCheckoutConfigured, verifyRazorpayHmac } from "../src/lib/payment-policy";
 import crypto from "node:crypto";
 
 describe("Production Safety & Reliability Test Suite [Unit Test]", () => {
@@ -99,20 +99,37 @@ describe("Production Safety & Reliability Test Suite [Unit Test]", () => {
             assert.strictEqual(verifyRazorpayHmac(`${body} `, signature, secret), false);
             assert.strictEqual(verifyRazorpayHmac(body, "not-a-valid-signature", secret), false);
         });
+
+        test("checkout stays off until recovery keys are all present", () => {
+            assert.strictEqual(isCheckoutConfigured({}), false);
+            assert.strictEqual(isCheckoutConfigured({
+                NEXT_PUBLIC_RAZORPAY_KEY_ID: "rzp_test",
+                RAZORPAY_KEY_SECRET: "secret",
+            }), false);
+            assert.strictEqual(isCheckoutConfigured({
+                NEXT_PUBLIC_RAZORPAY_KEY_ID: "rzp_test",
+                RAZORPAY_KEY_SECRET: "secret",
+                RAZORPAY_WEBHOOK_SECRET: "whsec",
+            }), true);
+        });
     });
 
     describe("3. Credit Reservation & Automatic Refund Controls", () => {
         test("3.1 Reserves credits and handles refund on failure", async () => {
             const userId = "usr_safety_test";
-            process.env.TEST_AUTH_USER_ID = userId;
+            const env = process.env as Record<string, string | undefined>;
+            env.TEST_AUTH_USER_ID = userId;
+            env.NODE_ENV = "test";
+            testStore.credits.set(userId, 5);
+            testStore.creditRefunds.set(userId, 0);
 
-            // Reserve credits
             const reserved = await reserveUserCredits(userId, 1);
             assert.strictEqual(reserved.success, true);
+            assert.strictEqual(testStore.credits.get(userId), 4);
 
-            // Refund credits on failure
             const refunded = await refundUserCredits(userId, 1);
             assert.strictEqual(refunded, true);
+            assert.strictEqual(testStore.credits.get(userId), 5);
         });
     });
 

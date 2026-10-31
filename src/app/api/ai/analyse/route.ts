@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import crypto from "crypto";
 import { sanitizeSecretText } from "@/lib/db";
 import { analyseSchema } from "@/lib/validation";
@@ -8,6 +8,9 @@ import { checkDistributedRateLimit } from "@/lib/rate-limit";
 import { resumeContentToPrompt } from "@/lib/resume-content";
 import { dispatchBackgroundJob } from "@/lib/background-ops";
 import { dispatchKafkaJob, RESUME_INGESTION_TOPIC } from "@/lib/kafka";
+import { handleResumeIngestionMessage } from "@/lib/resume-audit-job";
+
+export const maxDuration = 300;
 
 export async function POST(req: NextRequest) {
     const { auth: authCtx, errorResponse } = await requireAuth();
@@ -41,6 +44,14 @@ export async function POST(req: NextRequest) {
 
     const correlationId = crypto.randomUUID();
     const activeResumeId = resumeId || crypto.randomUUID();
+    const payload = {
+        jobId: "",
+        userId: authCtx.user.id,
+        resumeId: activeResumeId,
+        sourceText: sourceForAnalysis,
+        title: title || "Resume analysis draft",
+        isNewDraft: !resumeId,
+    };
 
     try {
         const job = await dispatchBackgroundJob(
@@ -49,24 +60,35 @@ export async function POST(req: NextRequest) {
             {
                 resumeId: activeResumeId,
                 sourceText: sourceForAnalysis,
-                title: title || "Resume analysis draft",
-                isNewDraft: !resumeId,
+                title: payload.title,
+                isNewDraft: payload.isNewDraft,
             }
         );
+        payload.jobId = job.id;
+        const message = JSON.stringify(payload);
 
-        await dispatchKafkaJob(
-            RESUME_INGESTION_TOPIC,
-            activeResumeId,
-            {
-                jobId: job.id,
-                userId: authCtx.user.id,
-                resumeId: activeResumeId,
-                sourceText: sourceForAnalysis,
-                title: title || "Resume analysis draft",
-                isNewDraft: !resumeId,
-            },
-            correlationId
-        );
+        after(async () => {
+            await handleResumeIngestionMessage(message).catch((error: unknown) => {
+                console.error(
+                    "In-request resume analysis failed:",
+                    sanitizeSecretText(error instanceof Error ? error.message : String(error)),
+                );
+            });
+        });
+
+        if (process.env.ENABLE_KAFKA_ANALYSIS_EVENTS === "true") after(async () => {
+            await dispatchKafkaJob(
+                RESUME_INGESTION_TOPIC,
+                activeResumeId,
+                payload,
+                correlationId,
+            ).catch((error: unknown) => {
+                console.warn(
+                    "Optional Kafka dispatch skipped:",
+                    sanitizeSecretText(error instanceof Error ? error.message : String(error)),
+                );
+            });
+        });
 
         return NextResponse.json(
             {
@@ -81,7 +103,7 @@ export async function POST(req: NextRequest) {
         await refundUserCredits(authCtx.user.id, 1);
         console.error("Failed to queue resume analysis job:", sanitizeSecretText(error instanceof Error ? error.message : String(error)));
         return NextResponse.json(
-            { error: "Failed to queue analysis job. Your credit was refunded." },
+            { error: "Failed to start analysis. Your credit was refunded." },
             { status: 500 }
         );
     }

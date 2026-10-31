@@ -5,6 +5,7 @@ import { db, sanitizeSecretText } from "@/lib/db";
 import { user as userTable } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
+import { isCheckoutConfigured } from "@/lib/payment-policy";
 
 export const dynamic = "force-dynamic";
 
@@ -83,6 +84,7 @@ async function DashboardAuthenticatedLayout({
             userName={user.name}
             userImage={user.image}
             shouldPromptCareerProfile={shouldPromptCareerProfile}
+            checkoutAvailable={isCheckoutConfigured()}
         >
             {children}
         </DashboardShell>

@@ -182,7 +182,7 @@ ${pageContent.slice(0, 15_000)}`,
             return NextResponse.json(
                 {
                     error: "Failed to import this job listing automatically.",
-                    suggestion: "Copy and paste the job description manually, then retry the analysis.",
+                    suggestion: "Paste the job description in the form and save the application. You do not need extraction to continue.",
                 },
                 { status: 502 },
             );

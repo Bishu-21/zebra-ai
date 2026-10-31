@@ -161,7 +161,7 @@ export function ConnectedAccounts({ available, githubAppConfigured }: { availabl
             <div>
               <p className="font-medium">{name} · linked account</p>
               <p className="text-xs text-neutral-600">{loading ? "Checking…" : linked ? "Linked to this Zebra account" : available[provider] ? "Not linked" : "Setup required by Zebra"}</p>
-              {provider === "linkedin" && <p className="mt-1 text-xs text-neutral-500">Full profile sections still require your export or approved LinkedIn API access.</p>}
+              {provider === "linkedin" && <p className="mt-1 text-xs text-neutral-500">This link is sign-in identity only. It does not import your profile or post updates. Use LinkedIn review with a pasted export for drafts.</p>}
               {provider === "github" && <p className="mt-1 text-xs text-neutral-500">Repository access requires a separate GitHub App installation. A link is not repository access.</p>}
             </div>
             {linked ? <button type="button" disabled={busy !== null} onClick={() => disconnect(provider, linked.id)} className="rounded-lg border border-neutral-300 px-3 py-2 text-xs font-semibold disabled:opacity-50">Disconnect</button>

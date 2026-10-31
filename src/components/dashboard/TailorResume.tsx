@@ -271,7 +271,7 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
             <DashboardToolCard
                 icon={RiFileSearchLine}
                 title="Review against a job"
-                description="Compare a resume with a job description and review suggested changes."
+                description="Compare a resume with a job description. Uses one credit. You approve each edit before export."
                 onClick={() => setIsOpen(true)}
             />
 

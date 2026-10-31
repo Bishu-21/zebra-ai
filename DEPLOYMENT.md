@@ -7,7 +7,7 @@ The repository now defines four workflows:
 - `CI`: every pull request, pushes to `main` and `staging`, and release runs. Installs the lockfile, audits runtime dependencies, lints, typechecks, tests, and builds without production secrets.
 - `Release`: manually run from `main` in Actions. It checks the selected commit, deploys that same commit to staging, then requests production environment approval. Releases are serialized and never cancelled mid-migration.
 - `Validate staging`: runs on pushes to `codex/release-candidate` before merging. It runs CI, then deploys that exact commit to the staging Preview target when the repository variable `STAGING_READY` is `true`. The staging GitHub environment must permit that branch. Manual runs become available after the workflow reaches the default branch.
-- `Deploy environment`: reusable deployment job; verifies the existing `zebra-ai` Vercel project, then starts a Vercel-hosted Preview or Production build. The build validates the target, compiles the app, applies forward migrations, and verifies the schema before Vercel publishes it. The job then probes `/` and `/api/auth/ok` for HTTP 200.
+- `Deploy environment`: reusable deployment job; verifies the existing `zebra-ai` Vercel project, then starts a Vercel-hosted Preview or Production build. The build validates the target, compiles the app, checks schema health without applying migrations before Vercel publishes it. The job then probes `/` and `/api/auth/ok` for HTTP 200.
 
 **Activation is required:** workflow files alone do not create hosting resources, secrets, or branch protections. Keep `STAGING_READY` unset until the separate staging database, Preview variables, hostname, and GitHub secrets are configured. Then set it to `true` and push the release branch to run `Validate staging`; complete the manual smoke tests before merging to `main`. `vercel.json` disables Vercel's automatic Git deployments so pushes cannot bypass CI; configure the release workflow before merging this file. Manual Vercel deployments and deploy hooks must also be restricted operationally. Sensitive Vercel variables cannot be pulled into GitHub Actions; the Vercel-hosted build uses them directly. Do not use `vercel build --prebuilt` with `[SENSITIVE]` placeholders.
 
@@ -98,8 +98,9 @@ If buying credits returns “Checkout is temporarily unavailable”, check the
 server logs for the missing configuration. Order creation returns HTTP 503
 when `RAZORPAY_WEBHOOK_SECRET` or either API key is absent. Copy the webhook
 secret from the Razorpay dashboard; do not invent one. Set
-`NEXT_PUBLIC_SUPPORT_EMAIL` to a monitored inbox before paid launch; Privacy,
-Terms, and Refunds stay without a contact address until that value exists.
+`NEXT_PUBLIC_SUPPORT_EMAIL=accounts@zebra-ai.app` on the host. Privacy, Terms,
+Refunds, and account-deletion requests use that inbox (the app also falls
+back to it if the variable is missing).
 For local development, set the test webhook secret in `.env.local` and use a
 public HTTPS tunnel to forward Razorpay test events to `/api/payments/webhook`. Configure the same
 secret in the Razorpay test webhook settings, then restart the app. For a
@@ -118,31 +119,37 @@ workflow passes these to the Preview runtime only. Use the Event Hubs
 namespace's Send-only producer policy for the web app; never commit its key.
 Production Kafka configuration is a separate promotion step.
 
-The `resume-ingestion` Event Hub must exist before deployment. Resume audits
-now require a separate long-running `npm run worker` process; deploying the
-Vercel app does not start it. Configure that worker with a Listen-enabled
-consumer policy, a dedicated `KAFKA_CONSUMER_GROUP`, the staging database,
-and the staging AI settings. A Function App requires its own compatible
-trigger/hosting implementation; it cannot be assumed to execute this script.
-Do not share a resume-ingestion stream with production workers: each
-consumer group receives the stream's messages. Use an isolated Event Hubs
-namespace for staging when production consumers are active.
+Resume analysis completes inside the web request (`after()` on
+`POST /api/ai/analyse`, `maxDuration` 300). Kafka and `npm run worker` are
+optional. Do not start a production worker against a shared Event Hub unless
+that namespace is isolated from other environments. If you do run a worker,
+use a Listen-enabled consumer policy, a dedicated `KAFKA_CONSUMER_GROUP`,
+and the same database the web app uses. Jobs are claimed so only one runner
+executes an audit.
 
-Before production promotion, confirm a synthetic staging resume audit moves
-from pending to completed and produces a saved analysis. Verify cancellation,
-failed-job credit refunds, and no duplicate writes on message redelivery.
-Passing the web probes below does not establish worker readiness.
+`ENABLE_KAFKA_ANALYSIS_EVENTS` defaults off. The release workflow explicitly
+sets it to `false`; resume content is not published to a shared Event Hub.
+The awaited `after()` callback keeps the audit inside Vercel's request lifetime.
+Failure/refund and result-save/completion each commit in one transaction.
+Timeout requests are refused until the job has reached the 320-second deadline.
 
-Create a provider snapshot or logical backup. Then run the reviewed, forward-
-only migrations with the target `DATABASE_URL`:
+Before production promotion, confirm a synthetic resume audit moves from
+pending to completed and produces a saved analysis. Verify cancellation,
+timeout refunds, failed-job credit refunds, and no duplicate writes if a
+worker is also enabled. Passing the web probes below does not establish
+payment or PDF readiness.
+
+For this release, migrations are explicitly prohibited. The Vercel build runs
+`db:health` only, which reads schema metadata. Do not run `db:prepare` or apply
+0015 against the current production Neon host. Review any future migration
+separately, with a backup and explicit approval.
 
 ```bash
-npm run db:prepare
+npm run db:health
 ```
 
-The current migration creates new evidence/compiler tables and does not delete
-or rewrite existing resumes. Do not deploy application code if migration or
-health verification fails.
+Do not deploy application code if schema health verification fails. Missing
+objects require separate review; deployment must not silently migrate them.
 
 `db:health` checks connectivity plus the authentication, resume, analysis, and
 distributed-rate-limit tables. A successful ping by itself is not sufficient.

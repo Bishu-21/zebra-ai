@@ -48,7 +48,7 @@ jobs:
           done
           [[ "$VERCEL_CLI_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo 'Pin an exact Vercel CLI version'; exit 1; }
           if [[ "$DEPLOY_ENVIRONMENT" = staging ]]; then
-            for name in PRODUCTION_DATABASE_HOST PRODUCTION_APP_URL KAFKA_BROKER AZURE_EVENT_HUBS_CONNECTION_STRING; do
+            for name in PRODUCTION_DATABASE_HOST PRODUCTION_APP_URL; do
               test -n "${!name}" || { echo "Missing deployment setting: $name"; exit 1; }
             done
           fi
@@ -72,18 +72,20 @@ jobs:
             --build-env "DEPLOY_ENVIRONMENT=$DEPLOY_ENVIRONMENT"
             --build-env "APP_URL=$APP_URL"
             --build-env "EXPECTED_DATABASE_HOST=$EXPECTED_DATABASE_HOST"
+            --build-env "NEXT_PUBLIC_SUPPORT_EMAIL=accounts@zebra-ai.app"
           )
+          runtime_env=(--env "NEXT_PUBLIC_SUPPORT_EMAIL=accounts@zebra-ai.app" --env "ENABLE_KAFKA_ANALYSIS_EVENTS=false")
           if [[ "$DEPLOY_ENVIRONMENT" = staging ]]; then
             build_env+=(
               --build-env "PRODUCTION_DATABASE_HOST=$PRODUCTION_DATABASE_HOST"
               --build-env "PRODUCTION_APP_URL=$PRODUCTION_APP_URL"
             )
-            deployment_url=$(vercel deploy --yes "${build_env[@]}" \
+            deployment_url=$(vercel deploy --yes "${build_env[@]}" "${runtime_env[@]}" \
               --env "KAFKA_BROKER=$KAFKA_BROKER" \
               --env "AZURE_EVENT_HUBS_CONNECTION_STRING=$AZURE_EVENT_HUBS_CONNECTION_STRING" \
               --token="$VERCEL_TOKEN")
           else
-            deployment_url=$(vercel deploy --yes --prod "${build_env[@]}" --token="$VERCEL_TOKEN")
+            deployment_url=$(vercel deploy --yes --prod "${build_env[@]}" "${runtime_env[@]}" --token="$VERCEL_TOKEN")
           fi
           [[ "$deployment_url" =~ ^https://[a-zA-Z0-9.-]+\.vercel\.app$ ]] || { echo 'Unexpected deployment URL'; exit 1; }
           echo "url=$deployment_url" >> "$GITHUB_OUTPUT"

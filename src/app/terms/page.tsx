@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import { getSupportEmail } from "@/lib/constants/support";
 
 export const metadata = {
     title: "Terms of Service | Zebra AI",
@@ -7,7 +8,7 @@ export const metadata = {
 };
 
 export default function TermsOfServicePage() {
-    const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim();
+    const supportEmail = getSupportEmail();
     return (
         <div className="min-h-screen bg-[#FAFAFA]">
             <nav className="h-16 border-b border-black/5 bg-white/80 backdrop-blur-md sticky top-0 z-50 flex items-center px-8">
@@ -106,7 +107,7 @@ export default function TermsOfServicePage() {
                     </Section>
 
                     <Section title="12. Contact">
-                        <p>For questions about these Terms: {supportEmail ? <a href={`mailto:${supportEmail}`} className="underline">{supportEmail}</a> : "A contact address will be published before paid launch."}</p>
+                        <p>For questions about these Terms: <a href={`mailto:${supportEmail}`} className="underline">{supportEmail}</a></p>
                     </Section>
                 </div>
 

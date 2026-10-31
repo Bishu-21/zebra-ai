@@ -74,7 +74,7 @@ export default async function AnalyticsPage() {
     <DashboardPage>
       <DashboardPageHeader
         title="Analytics"
-        description="Review resume scores and application activity using data already saved in your workspace."
+        description="Counts of resumes, applications, and reviews already saved in your workspace. This is not employer or ATS performance."
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

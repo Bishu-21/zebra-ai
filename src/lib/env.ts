@@ -21,6 +21,9 @@ const serverEnvironmentSchema = z.object({
     GITHUB_APP_PRIVATE_KEY: optionalText,
     GITHUB_APP_SLUG: optionalText,
     GITHUB_WEBHOOK_SECRET: optionalText,
+    KAFKA_BROKER: optionalText,
+    AZURE_EVENT_HUBS_CONNECTION_STRING: optionalText,
+    KAFKA_CONSUMER_GROUP: optionalText,
 }).superRefine((env, context) => {
     const production = env.NODE_ENV === "production";
     if (production && !env.DATABASE_URL) {

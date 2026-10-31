@@ -22,7 +22,7 @@ export const FAQ_ITEMS: FaqItem[] = [
   {
     question: "How do credits work?",
     answer:
-      "New accounts receive starter credits. AI reviews, job matching, and generation use credits. Credit packs are one-time purchases, not a subscription. Pack sizes and prices are shown before you buy. PDF export uses your signed-in account and does not spend a credit.",
+      "New accounts receive starter credits. Resume reviews, job matching, cover letters, and LinkedIn drafts use credits. Saving a resume and exporting a PDF do not. Credit packs are one-time purchases (10 for ₹99, 50 for ₹400, 100 for ₹800), not a subscription. If checkout is unavailable, existing credits still work.",
   },
   {
     question: "What files can I import?",

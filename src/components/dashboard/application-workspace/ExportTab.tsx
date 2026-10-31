@@ -33,7 +33,7 @@ export function ExportTab({ company, app, selectedResumeId, setStatus, handleSav
                                 <RiDownloadLine className="w-4 h-4 text-neutral-700" /> Export Resume PDF
                             </h3>
                             <p className="text-xs text-neutral-600 leading-relaxed">
-                                Download your final resume version ready for submission to {company}.
+                                Download the PDF here. Submit it on {company}&apos;s site or ATS. Zebra does not send the application for you.
                             </p>
                             {app.resumeVersionId ? (
                                 <Link
@@ -62,7 +62,7 @@ export function ExportTab({ company, app, selectedResumeId, setStatus, handleSav
                                 <RiCheckLine className="w-4 h-4 text-emerald-600" /> Mark Application Status
                             </h3>
                             <p className="text-xs text-neutral-600 leading-relaxed">
-                                Record when you submit your application so your Dashboard displays the correct next step.
+                                After you submit on the employer site, mark applied so your tracker stays accurate.
                             </p>
                             <button
                                 onClick={() => {

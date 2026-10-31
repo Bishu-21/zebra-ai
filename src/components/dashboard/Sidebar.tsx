@@ -25,6 +25,7 @@ interface SidebarProps {
     isOpen?: boolean;
     onCloseAction?: () => void;
     onOpenProfileAction: () => void;
+    checkoutAvailable?: boolean;
 }
 
 const NAV_ICONS: Record<string, React.ReactNode> = {
@@ -34,7 +35,7 @@ const NAV_ICONS: Record<string, React.ReactNode> = {
     "/dashboard/work": <FeatureIcon feature="Work" size={18} />,
     "/dashboard/cover-letters": <FeatureIcon feature="Cover Letters" size={18} />,
     "/dashboard/portfolio": <FeatureIcon feature="Portfolio" size={18} />,
-    "/dashboard/linkedin": <FeatureIcon feature="LinkedIn Optimizer" size={18} />,
+    "/dashboard/linkedin": <FeatureIcon feature="LinkedIn review" size={18} />,
     "/dashboard/analytics": <FeatureIcon feature="Analytics" size={18} />,
     "/dashboard/settings": <FeatureIcon feature="Settings" size={18} />,
 };
@@ -46,7 +47,8 @@ export function Sidebar({
     userImage,
     isOpen: controlledIsOpen,
     onCloseAction,
-    onOpenProfileAction
+    onOpenProfileAction,
+    checkoutAvailable = false,
 }: SidebarProps) {
     const [internalOpen, setInternalOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
@@ -160,9 +162,9 @@ export function Sidebar({
                                     <span className="text-xs font-bold text-muted-foreground">{credits} Credits</span>
                                 </div>
                                 <p className="text-xs font-normal text-muted-foreground leading-relaxed">
-                                    Use credits for resume reviews, tailoring, and cover letters.
+                                    Credits are used for resume reviews, job matching, cover letters, and LinkedIn drafts. Saving a resume and exporting a PDF do not use a credit.
                                 </p>
-                                <CreditTopUp />
+                                <CreditTopUp checkoutAvailable={checkoutAvailable} />
                              </div>
                         </div>
                     </div>

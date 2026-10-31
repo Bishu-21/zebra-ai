@@ -79,7 +79,10 @@ export function AddApplicationDrawer({ resumes, onboarding = false }: { resumes:
     try {
       const response = await fetch("/api/jobs/scrape", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: jobUrl.trim() }) });
       const data = await response.json();
-      if (!response.ok || !data.success) throw new Error(data.error || data.details || "Could not extract this listing.");
+      if (!response.ok || !data.success) {
+        const hint = typeof data.suggestion === "string" ? ` ${data.suggestion}` : " Paste the job description below and continue.";
+        throw new Error(`${data.error || data.details || "Could not extract this listing."}${hint}`);
+      }
       setForm((current) => ({ ...current, company: data.company || current.company, position: data.position || current.position, jobDescription: data.description || current.jobDescription }));
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not extract this listing."); }
     finally { setExtracting(false); }
@@ -134,7 +137,7 @@ export function AddApplicationDrawer({ resumes, onboarding = false }: { resumes:
                     <button type="button" aria-label="Extract job details from URL" onClick={extract} disabled={!jobUrl.trim() || extracting} className={featureChrome.primaryButton}>{extracting ? <AppIcon icon={RiLoader4Line} className="animate-spin" /> : <AppIcon icon={RiFileSearchLine} />} Extract</button>
                   </div>
                 </div>
-                <p className={featureChrome.helper}>Or fill in the details below</p>
+                <p className={featureChrome.helper}>Extract is optional. Many job sites block automatic import. Paste the description below and you can still save the application.</p>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Field label="Company *" value={form.company} onChange={(value) => update("company", value)} placeholder="Company name" />
                   <Field label="Position / role *" value={form.position} onChange={(value) => update("position", value)} placeholder="Target role" />

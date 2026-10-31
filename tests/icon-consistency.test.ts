@@ -81,11 +81,11 @@ describe("dashboard navigation and tool dialogs", () => {
         assert.match(sidebar, /feature="Work"/);
         assert.match(sidebar, /feature="Cover Letters"/);
         assert.match(sidebar, /feature="Portfolio"/);
-        assert.match(sidebar, /feature="LinkedIn Optimizer"/);
+        assert.match(sidebar, /feature="LinkedIn review"/);
         assert.match(sidebar, /feature="Analytics"/);
         assert.match(sidebar, /feature="Settings"/);
 
-        for (const label of ["Home", "Applications", "Resumes", "Work", "Cover Letters", "Portfolio", "LinkedIn Optimizer", "Analytics", "Settings"]) {
+        for (const label of ["Home", "Applications", "Resumes", "Work", "Cover Letters", "Portfolio", "LinkedIn review", "Analytics", "Settings"]) {
             assert.match(navigation, new RegExp(`label: "${label}"`));
         }
 

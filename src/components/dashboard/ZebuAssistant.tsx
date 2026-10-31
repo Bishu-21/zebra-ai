@@ -34,7 +34,7 @@ type ActionReceipt = { status: "working" | "completed" | "error"; label: string;
 
 const welcome: Message = {
   role: "assistant",
-  content: "Where would you like to go? Try “Open resumes”.",
+  content: "I can open pages in your workspace. I cannot apply to jobs, post to LinkedIn, or spend credits. Try “Open resumes”. Voice needs a microphone; typing always works.",
 };
 
 export function ZebuAssistant() {

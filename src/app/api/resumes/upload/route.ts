@@ -4,13 +4,18 @@ import { db, sanitizeSecretText } from "@/lib/db";
 import { resumes as resumesTable } from "@/lib/schema";
 import { requireAuth } from "@/lib/auth-policy";
 import { MAX_STORED_RESUME_LENGTH, MAX_TITLE_LENGTH } from "@/lib/validation";
-import { reserveUserCredits, refundUserCredits } from "@/lib/credit-policy";
+import { checkDistributedRateLimit } from "@/lib/rate-limit";
 import { extractResumeText, ingestResumeText } from "@/lib/resume-ingestion";
 import { stringifyResumeContent } from "@/lib/resume-content";
 
 export async function POST(req: NextRequest) {
     const { auth: authCtx, errorResponse } = await requireAuth();
     if (errorResponse) return errorResponse;
+
+    const rateCheck = await checkDistributedRateLimit(`resume-upload:${authCtx.user.id}`, 8, 60_000);
+    if (!rateCheck.success) {
+        return NextResponse.json({ error: "Too many uploads. Try again in a minute." }, { status: 429 });
+    }
 
     const formData = await req.formData();
     const fileValue = formData.get("file");
@@ -26,16 +31,10 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: `Title must be under ${MAX_TITLE_LENGTH} characters.` }, { status: 400 });
     }
 
-    const credit = await reserveUserCredits(authCtx.user.id, 1);
-    if (!credit.success) {
-        return NextResponse.json({ error: credit.error || "Insufficient credits." }, { status: 402 });
-    }
-
     let sourceText: string;
     try {
         sourceText = await extractResumeText(fileValue);
     } catch (error: unknown) {
-        await refundUserCredits(authCtx.user.id, 1);
         return NextResponse.json(
             { error: error instanceof Error ? error.message : "Could not read the uploaded document." },
             { status: 400 },
@@ -72,10 +71,9 @@ export async function POST(req: NextRequest) {
             warnings: result.warnings,
         });
     } catch (error: unknown) {
-        await refundUserCredits(authCtx.user.id, 1);
         console.error("Resume upload ingestion failed:", sanitizeSecretText(error instanceof Error ? error.message : String(error)));
         return NextResponse.json(
-            { error: "The resume could not be structured, so nothing was saved. Your credit was refunded." },
+            { error: "The resume could not be structured, so nothing was saved. No credit was used." },
             { status: 502 },
         );
     }

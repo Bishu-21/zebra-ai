@@ -182,7 +182,7 @@ export function AnalyzeResume() {
       <DashboardToolCard
         icon={RiFileTextLine}
         title="Review resume"
-        description="Check structure, content, and gaps against 45 evidence rules. Uses one credit."
+        description="Check structure, content, and gaps against 45 evidence rules. Uses one credit. Saving the file first is free."
         onClick={openReview}
       />
 
@@ -213,7 +213,7 @@ export function AnalyzeResume() {
                           <FeatureIcon feature="Resumes" size={18} className="text-muted-foreground" />
                           <div className="min-w-0">
                               <h2 id="resume-review-title" className="text-base font-semibold tracking-tight text-foreground">Review resume</h2>
-                              <p className={featureChrome.helper}>Structure, content, and evidence gaps. Uses one credit.</p>
+                              <p className={featureChrome.helper}>Structure, content, and evidence gaps. This review uses one credit. If it does not start, the credit is returned.</p>
                           </div>
                       </div>
                       <button

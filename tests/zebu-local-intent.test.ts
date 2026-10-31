@@ -34,6 +34,10 @@ test("LinkedIn Optimizer opens the sidebar route and is not treated as missing",
     route: "/dashboard/linkedin",
     openApplicationForm: false,
   });
+  assert.deepEqual(parseZebuWorkspaceCommand("Open LinkedIn review"), {
+    route: "/dashboard/linkedin",
+    openApplicationForm: false,
+  });
   assert.deepEqual(parseZebuWorkspaceCommand("Please take me to LinkedIn"), {
     route: "/dashboard/linkedin",
     openApplicationForm: false,

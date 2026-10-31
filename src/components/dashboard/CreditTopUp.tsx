@@ -50,7 +50,7 @@ declare global {
     }
 }
 
-export function CreditTopUp() {
+export function CreditTopUp({ checkoutAvailable = false }: { checkoutAvailable?: boolean }) {
     const [isOpen, setIsOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
@@ -110,7 +110,7 @@ export function CreditTopUp() {
         if (showPricing && planId && PLANS[planId as PlanId]) {
             queueMicrotask(() => {
                 setIsOpen(true);
-                if (scriptLoaded) {
+                if (scriptLoaded && checkoutAvailable) {
                     const newUrl = window.location.pathname;
                     window.history.replaceState({}, "", newUrl);
                     void handlePurchase(planId);
@@ -135,6 +135,10 @@ export function CreditTopUp() {
     ];
 
     async function handlePurchase(planId: string) {
+        if (!checkoutAvailable) {
+            setCheckoutError("Checkout is not available on this environment. Credits already on your account still work.");
+            return;
+        }
         if (loading || checkoutActive) return;
         setLoading(true);
         setCheckoutError(null);
@@ -269,8 +273,8 @@ export function CreditTopUp() {
                                         <RiFlashlightLine size={20} />
                                     </div>
                                     <div>
-                                        <h2 id="credit-checkout-title" className="text-lg font-bold tracking-tight text-[#0A0A0A]">Get More Credits</h2>
-                                        <p className="text-xs font-normal text-neutral-500">Choose a pack to tailor applications and prepare better profiles.</p>
+                                        <h2 id="credit-checkout-title" className="text-lg font-bold tracking-tight text-[#0A0A0A]">Credit packs</h2>
+                                        <p className="text-xs font-normal text-neutral-500">One-time packs. Reviews, matching, cover letters, and LinkedIn drafts use credits.</p>
                                     </div>
                                 </div>
                                 <button
@@ -284,6 +288,11 @@ export function CreditTopUp() {
 
                             {/* Content */}
                             <div className="p-6 sm:p-8 overflow-y-auto custom-scrollbar">
+                                {!checkoutAvailable && (
+                                    <p role="status" className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+                                        Checkout is not available on this environment. You can still use the credits already on your account.
+                                    </p>
+                                )}
                                 {checkoutError && <p role="alert" className="mb-5 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">{checkoutError}</p>}
                                 {success ? (
                                     <m.div
@@ -332,7 +341,7 @@ export function CreditTopUp() {
                                                 </div>
 
                                                 <button
-                                                    disabled={loading || checkoutActive || !scriptLoaded}
+                                                    disabled={!checkoutAvailable || loading || checkoutActive || !scriptLoaded}
                                                     onClick={() => handlePurchase(p.id)}
                                                     className={`w-full mt-6 py-2.5 rounded-full text-xs font-bold transition-all shadow-2xs ${
                                                         p.popular
@@ -340,7 +349,7 @@ export function CreditTopUp() {
                                                             : 'bg-white border border-neutral-200/80 text-[#0A0A0A] hover:bg-neutral-100'
                                                     } disabled:opacity-40 active:scale-95`}
                                                 >
-                                                    {loading ? "Creating order..." : !scriptLoaded ? "Loading checkout..." : checkoutActive ? "Checkout open" : `Buy ${p.credits} credits`}
+                                                    {!checkoutAvailable ? "Checkout unavailable" : loading ? "Creating order..." : !scriptLoaded ? "Loading checkout..." : checkoutActive ? "Checkout open" : `Buy ${p.credits} credits`}
                                                 </button>
                                             </m.div>
                                         ))}
@@ -351,7 +360,9 @@ export function CreditTopUp() {
                             {/* Footer */}
                             <div className="px-6 py-4 bg-white border-t border-neutral-200/60 text-center shrink-0">
                                 <p className="text-xs font-medium text-neutral-600">
-                                    Checkout via Razorpay • Credits appear after payment verification
+                                    {checkoutAvailable
+                                        ? "Checkout via Razorpay. Credits appear after payment is verified. If you close the window, wait and refresh before paying again."
+                                        : "Buying credits is paused until checkout recovery is configured."}
                                 </p>
                                 <a href="/refunds" className="mt-2 inline-block text-xs font-semibold text-neutral-800 underline">Read the refund policy</a>
                             </div>

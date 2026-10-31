@@ -2,7 +2,8 @@ import type { ResumeAnalysisData } from "@/components/compiler/types";
 import { readApiResponse } from "@/lib/api-response";
 
 export const ANALYSIS_POLL_INTERVAL_MS = 2_000;
-export const ANALYSIS_POLL_TIMEOUT_MS = 3 * 60 * 1000;
+/** Wait past the analyse route maxDuration (300s) so a live job is not abandoned mid-run. */
+export const ANALYSIS_POLL_TIMEOUT_MS = 320_000;
 
 export interface ResumeAnalysisOutcome {
     analysis: ResumeAnalysisData;
@@ -60,9 +61,14 @@ export function isQueuedAnalysisResponse(status: number, body: Record<string, un
 async function abandonQueuedAnalysisJob(
     jobId: string,
     fetchImpl: typeof fetch,
+    reason: "timeout" | "cancel",
 ): Promise<boolean> {
     try {
-        const response = await fetchImpl(`/api/jobs/${jobId}/abandon`, { method: "POST" });
+        const response = await fetchImpl(`/api/jobs/${jobId}/abandon`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ reason }),
+        });
         const payload = await readApiResponse<{ refunded?: boolean }>(
             response,
             "Could not release the analysis credit",
@@ -102,7 +108,11 @@ export async function pollResumeAnalysisJob(
     const startedAt = now();
 
     const releaseIfUnstarted = async (reason: "timeout" | "cancelled"): Promise<never> => {
-        const refunded = await abandonQueuedAnalysisJob(jobId, fetchImpl);
+        const refunded = await abandonQueuedAnalysisJob(
+            jobId,
+            fetchImpl,
+            reason === "timeout" ? "timeout" : "cancel",
+        );
         throw reason === "timeout" ? timedOutError(refunded) : cancelledError(refunded);
     };
 

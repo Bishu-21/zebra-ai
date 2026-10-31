@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import { getSupportEmail } from "@/lib/constants/support";
 
 export const metadata = {
     title: "Privacy Policy | Zebra AI",
@@ -7,7 +8,7 @@ export const metadata = {
 };
 
 export default function PrivacyPolicyPage() {
-    const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim();
+    const supportEmail = getSupportEmail();
     return (
         <div className="min-h-screen bg-[#FAFAFA]">
             <nav className="h-16 border-b border-black/5 bg-white/80 backdrop-blur-md sticky top-0 z-50 flex items-center px-8">
@@ -67,7 +68,7 @@ export default function PrivacyPolicyPage() {
                     </Section>
 
                     <Section title="5. Data Retention">
-                        <p>Account and resume data is retained while your account is active. {supportEmail ? <>To request deletion, email <a href={`mailto:${supportEmail}`} className="underline">{supportEmail}</a>.</> : "A contact address for deletion requests will be published before paid launch."} We will explain any records that must be kept for payment, security, or legal reasons. Self-service account deletion is not currently available.</p>
+                        <p>Account and resume data is retained while your account is active. To request deletion, email <a href={`mailto:${supportEmail}`} className="underline">{supportEmail}</a>. We will explain any records that must be kept for payment, security, or legal reasons. Self-service account deletion is not currently available.</p>
                     </Section>
 
                     <Section title="6. Third-Party Services">
@@ -101,7 +102,7 @@ export default function PrivacyPolicyPage() {
                     </Section>
 
                     <Section title="10. Contact">
-                        <p>For privacy-related inquiries: {supportEmail ? <a href={`mailto:${supportEmail}`} className="underline">{supportEmail}</a> : "A contact address will be published before paid launch."}</p>
+                        <p>For privacy-related inquiries: <a href={`mailto:${supportEmail}`} className="underline">{supportEmail}</a></p>
                     </Section>
                 </div>
 

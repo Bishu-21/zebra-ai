@@ -1,13 +1,12 @@
 import crypto from "crypto";
 import { z } from "zod";
-import { db, executeWithDbRetry, sanitizeSecretText } from "@/lib/db";
-import { analysis as analysisTable, resumes as resumesTable, user as userTable } from "@/lib/schema";
+import { db, sanitizeSecretText } from "@/lib/db";
+import { analysis as analysisTable, backgroundJobs, resumes as resumesTable, user as userTable } from "@/lib/schema";
 import { aiResumeAnalysisSchema } from "@/lib/validation";
 import { getUserOwnedResume } from "@/lib/auth-policy";
-import { refundUserCredits } from "@/lib/credit-policy";
 import { generateAiResponse } from "@/lib/azure-foundry";
 import { careerStageHasExpectedProfessionalExperience, CAREER_STAGE_LABELS, type CareerStage } from "@/lib/career-profile";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { extractJsonObject } from "@/lib/resume-ingestion";
 import {
     createLegacyResumeContent,
@@ -24,7 +23,11 @@ import {
     RESUME_AUDIT_RESPONSE_FORMAT,
     RESUME_AUDIT_RUBRIC_VERSION,
 } from "@/lib/resume-audit-rubric";
-import { getBackgroundJob, updateBackgroundJobStatus } from "@/lib/background-ops";
+import {
+    claimProcessingBackgroundJob,
+    failResumeAuditAndRefund,
+    getBackgroundJob,
+} from "@/lib/background-ops";
 
 export const resumeIngestionMessageSchema = z.object({
     jobId: z.string().min(1),
@@ -177,13 +180,24 @@ export async function executeResumeAudit(input: ResumeIngestionMessage): Promise
     const analysisRecord = {
         id: crypto.randomUUID(),
         resumeId: input.resumeId,
-        score: feedback.score,
+        // Production analysis.score is still NOT NULL until 0015 is applied.
+        // Keep JSON feedback.score nullable so the UI can show Unknown.
+        score: typeof feedback.score === "number" ? feedback.score : 0,
         feedback,
         createdAt: new Date(),
     };
 
-    if (input.isNewDraft) {
-        await db.transaction(async (tx) => {
+    const result = { analysis: feedback, resumeId: input.resumeId };
+    // Claim completion and save results in one transaction. Timeout/refund wins
+    // against this row lock, or completion wins; neither can leave a partial save.
+    await db.transaction(async (tx) => {
+        const now = new Date();
+        const [completed] = await tx.update(backgroundJobs)
+            .set({ status: "completed", progressPercent: 100, result, completedAt: now, updatedAt: now })
+            .where(and(eq(backgroundJobs.id, input.jobId), eq(backgroundJobs.userId, input.userId), eq(backgroundJobs.status, "processing")))
+            .returning({ id: backgroundJobs.id });
+        if (!completed) throw new Error("Analysis job is no longer processing");
+        if (input.isNewDraft) {
             await tx.insert(resumesTable).values({
                 id: input.resumeId,
                 userId: input.userId,
@@ -193,11 +207,9 @@ export async function executeResumeAudit(input: ResumeIngestionMessage): Promise
                 createdAt: new Date(),
                 updatedAt: new Date(),
             });
-            await tx.insert(analysisTable).values(analysisRecord);
-        });
-    } else {
-        await executeWithDbRetry(() => db.insert(analysisTable).values(analysisRecord));
-    }
+        }
+        await tx.insert(analysisTable).values(analysisRecord);
+    });
 
     return { analysis: feedback, resumeId: input.resumeId };
 }
@@ -222,19 +234,21 @@ export async function handleResumeIngestionMessage(
     if (!job) throw new Error(`Background job ${message.jobId} was not found`);
     if (job.status === "completed" || job.status === "failed") return "skipped";
 
-    await updateBackgroundJobStatus(message.userId, message.jobId, "processing", 10);
+    const claimed = await claimProcessingBackgroundJob(message.userId, message.jobId);
+    if (!claimed) return "skipped";
     await options?.heartbeat?.();
 
     try {
-        const result = await executeResumeAudit(message);
+        await executeResumeAudit(message);
         await options?.heartbeat?.();
-        await updateBackgroundJobStatus(message.userId, message.jobId, "completed", 100, result);
         return "completed";
     } catch (error: unknown) {
         const errorMessage = sanitizeSecretText(error instanceof Error ? error.message : String(error));
         console.error(`[resume-ingestion] Job ${message.jobId} failed:`, errorMessage);
-        await updateBackgroundJobStatus(message.userId, message.jobId, "failed", job.progressPercent, undefined, errorMessage);
-        await refundUserCredits(message.userId, 1);
-        return "failed";
+        const claimedFailure = await failResumeAuditAndRefund(message.userId, message.jobId, errorMessage);
+        if (claimedFailure) {
+            return "failed";
+        }
+        return "skipped";
     }
 }

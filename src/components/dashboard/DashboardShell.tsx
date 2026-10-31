@@ -19,10 +19,11 @@ interface DashboardShellProps {
     userName: string;
     userImage?: string | null;
     shouldPromptCareerProfile: boolean;
+    checkoutAvailable: boolean;
     children: React.ReactNode;
 }
 
-export function DashboardShell({ plan, credits, userName, userImage, shouldPromptCareerProfile, children }: DashboardShellProps) {
+export function DashboardShell({ plan, credits, userName, userImage, shouldPromptCareerProfile, checkoutAvailable, children }: DashboardShellProps) {
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isNavOpen, setIsNavOpen] = useState(false);
@@ -64,6 +65,7 @@ export function DashboardShell({ plan, credits, userName, userImage, shouldPromp
                         isOpen={isNavOpen}
                         onCloseAction={closeNav}
                         onOpenProfileAction={openProfile}
+                        checkoutAvailable={checkoutAvailable}
                     />
                     <div className="min-w-0 flex-grow flex flex-col h-dvh overflow-hidden relative">
                         <Header

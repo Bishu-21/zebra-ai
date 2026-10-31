@@ -16,18 +16,18 @@ describe("resume-ingestion worker", () => {
     });
 
     test("marks jobs processing then completed, and refunds a failed audit", () => {
-        assert.match(job, /updateBackgroundJobStatus\(message\.userId, message\.jobId, "processing", 10\)/);
-        assert.match(job, /updateBackgroundJobStatus\(message\.userId, message\.jobId, "completed", 100, result\)/);
-        assert.match(job, /updateBackgroundJobStatus\(message\.userId, message\.jobId, "failed"/);
-        assert.match(job, /refundUserCredits\(message\.userId, 1\)/);
+        assert.match(job, /claimProcessingBackgroundJob\(message\.userId, message\.jobId\)/);
+        assert.match(job, /eq\(backgroundJobs.status, "processing"\)/);
+        assert.match(job, /failResumeAuditAndRefund\(message\.userId, message\.jobId, errorMessage\)/);
+        assert.match(job, /typeof feedback.score === "number" \? feedback.score : 0/);
         assert.match(job, /if \(job\.status === "completed" \|\| job\.status === "failed"\) return "skipped"/);
+        assert.match(job, /if \(!claimed\) return "skipped"/);
     });
 
     test("abandons unstarted resume audits and refunds once", () => {
         const abandon = readFileSync("src/app/api/jobs/[id]/abandon/route.ts", "utf8");
         const ops = readFileSync("src/lib/background-ops.ts", "utf8");
-        assert.match(abandon, /failPendingBackgroundJob/);
-        assert.match(abandon, /refundUserCredits\(authCtx\.user\.id, 1\)/);
+        assert.match(abandon, /failResumeAuditAndRefund/);
         assert.match(abandon, /operationType !== "resume_audit"/);
         assert.match(ops, /eq\(backgroundJobs\.status, "pending"\)/);
     });
@@ -36,6 +36,12 @@ describe("resume-ingestion worker", () => {
         assert.match(job, /generateAiResponse\(\{/);
         assert.match(job, /task: "audit"/);
         assert.doesNotMatch(analyse, /generateAiResponse/);
+        assert.match(analyse, /after\(/);
+        assert.match(analyse, /handleResumeIngestionMessage\(message\)/);
+        assert.match(analyse, /await dispatchKafkaJob/);
+        assert.match(analyse, /ENABLE_KAFKA_ANALYSIS_EVENTS === "true"/);
+        assert.match(analyse, /after\(async \(\) =>/);
+        assert.match(analyse, /await handleResumeIngestionMessage/);
         assert.match(worker, /handleResumeIngestionMessage\(raw, \{ heartbeat \}\)/);
         assert.match(worker, /sessionTimeout: 360_000/);
     });

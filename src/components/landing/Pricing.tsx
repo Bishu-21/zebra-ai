@@ -40,13 +40,27 @@ export function Pricing() {
   const { data: session } = useSession();
   const reduceMotion = useReducedMotion();
   const [loading] = useState<string | null>(null);
+  const [checkoutAvailable, setCheckoutAvailable] = useState<boolean | null>(null);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    fetch("/api/payments/status")
+      .then((response) => response.json())
+      .then((body: { checkoutAvailable?: boolean }) => {
+        if (!cancelled) setCheckoutAvailable(body.checkoutAvailable === true);
+      })
+      .catch(() => {
+        if (!cancelled) setCheckoutAvailable(false);
+      });
+    return () => { cancelled = true; };
+  }, []);
 
   const handleSubscription = async (planId: PlanId) => {
     if (!session) {
-      // Trigger the Auth Modal
       window.dispatchEvent(new CustomEvent("open-auth"));
       return;
     }
+    if (!checkoutAvailable) return;
     router.push(`/dashboard?showPricing=true&plan=${planId}`);
   };
 
@@ -99,8 +113,11 @@ export function Pricing() {
             Choose a credit pack
           </h2>
           <p className="text-accent-dark text-lg leading-relaxed">
-            Buy a one-time credit pack for AI reviews, job matching, and generated drafts. Credits are not a subscription. Resume PDF export is included with a signed-in account.
+            One-time packs for reviews, job matching, cover letters, and LinkedIn drafts. Saving a resume and exporting a PDF do not use a credit. Credits are not a subscription.
           </p>
+          {checkoutAvailable === false ? (
+            <p className="mt-4 text-sm text-amber-800">Checkout is not available on this environment. You can still sign in and use credits already on your account.</p>
+          ) : null}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -147,13 +164,13 @@ export function Pricing() {
 
               <button
                 onClick={() => handleSubscription(plan.id)}
-                disabled={loading !== null}
+                disabled={loading !== null || (Boolean(session) && checkoutAvailable === false)}
                 className={`w-full py-4 rounded-xl font-bold text-sm tracking-wide transition-all active:scale-[0.98] disabled:opacity-50 ${
                 plan.featured
                 ? "bg-primary text-white hover:bg-primary-dark shadow-lg shadow-black/15"
                 : "bg-white text-foreground border-[1.5px] border-black/10 hover:border-black/30 hover:bg-neutral-50"
               }`}>
-                {loading === plan.id ? "Processing..." : plan.cta}
+                {loading === plan.id ? "Processing..." : !session ? "Sign in to buy" : checkoutAvailable === false ? "Checkout unavailable" : plan.cta}
               </button>
             </m.div>
           ))}

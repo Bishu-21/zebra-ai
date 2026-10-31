@@ -1,6 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { validateDeployment } from '../scripts/validate-deployment.mjs';
+import { readFileSync } from 'node:fs';
+
+test('hosting build checks schema without applying migrations', () => {
+    const config = JSON.parse(readFileSync('vercel.json', 'utf8'));
+    assert.match(config.buildCommand, /npm run db:health/);
+    assert.doesNotMatch(config.buildCommand, /db:prepare|db:migrate|drizzle-kit/);
+});
 
 const production = {
     DEPLOY_ENVIRONMENT: 'production',
@@ -16,11 +23,11 @@ const production = {
     CHROMIUM_PACK_URL: 'https://example.com/chromium-pack.tar',
 };
 
-test('production requires live payment keys and webhook configuration', () => {
+test('production accepts closed checkout but requires live keys when fully configured', () => {
     assert.doesNotThrow(() => validateDeployment(production));
     assert.throws(() => validateDeployment({ ...production, NEXT_PUBLIC_RAZORPAY_KEY_ID: 'rzp_test_example' }), /live credentials/);
-    assert.throws(() => validateDeployment({ ...production, RAZORPAY_WEBHOOK_SECRET: '' }), /webhook secrets/);
-    assert.throws(() => validateDeployment({ ...production, RAZORPAY_KEY_SECRET: '' }), /webhook secrets/);
+    assert.doesNotThrow(() => validateDeployment({ ...production, RAZORPAY_WEBHOOK_SECRET: '' }));
+    assert.doesNotThrow(() => validateDeployment({ ...production, RAZORPAY_KEY_SECRET: '' }));
 });
 
 const staging = {

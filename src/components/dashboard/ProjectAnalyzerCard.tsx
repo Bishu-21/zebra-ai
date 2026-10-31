@@ -14,7 +14,7 @@ export function ProjectAnalyzerCard() {
       <DashboardToolCard
         icon={RiShieldCheckLine}
         title="Check my project"
-        description="Analyze repository code and review project proof points."
+        description="Fetch a public project URL and review proof points. Private repos need GitHub App access in Settings."
         onClick={() => setIsOpen(true)}
       />
 

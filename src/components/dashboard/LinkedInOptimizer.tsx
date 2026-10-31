@@ -85,8 +85,8 @@ export function LinkedInOptimizer({ initialResult, initialAuditId, initialDrafts
 
   return <DashboardPage>
     <DashboardPageHeader
-      title="LinkedIn Optimizer"
-      description="Bring your profile evidence, choose a target role, then review specific edits grounded in your own words. Your LinkedIn URL identifies the profile; Zebra does not scrape it or post changes to your account."
+      title="LinkedIn review"
+      description="Paste or import a LinkedIn PDF/TXT export, then review suggested wording. Zebra does not log in to LinkedIn, scrape your profile, or post for you. Copy drafts and publish them on LinkedIn yourself."
     />
 
     <nav aria-label="Optimization steps" className="grid gap-3 text-sm sm:grid-cols-3">
@@ -127,12 +127,12 @@ export function LinkedInOptimizer({ initialResult, initialAuditId, initialDrafts
     {result && <div className="space-y-5">
       <div className={`${featureChrome.card} p-5`}>
         <p className={featureChrome.helper}>Step 2 · Audit</p>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">Review what the evidence supports, then ask the agent for editable profile text.</p>
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">Review what the evidence supports, then generate editable profile text you can copy.</p>
       </div>
       <LinkedInAuditResults result={result} />
       {auditId && !drafts && <div className={`${featureChrome.card} p-5`}>
         <h2 className="text-base font-semibold tracking-tight">Turn the findings into profile edits</h2>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">The agent will propose evidence-linked headline, About, and experience rewrites. One draft generation costs one credit; no credit is charged again when reopening saved drafts.</p>
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">This creates headline, About, and experience drafts from your pasted text. One draft generation costs one credit. Reopening saved drafts does not charge again. You still copy the text into LinkedIn.</p>
         <button type="button" disabled={busy || drafting} onClick={createDrafts} className={`${featureChrome.primaryButton} mt-4`}>{drafting ? "Drafting…" : "Create reviewable drafts · 1 credit"}</button>
       </div>}
     </div>}

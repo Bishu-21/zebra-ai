@@ -28,7 +28,7 @@ describe("Zebu actionable workspace UI", () => {
     assert.equal(getZebuPageLabel("/dashboard"), "Home");
     assert.equal(getZebuPageLabel("/dashboard/resumes/resume_123"), "Resume editor");
     assert.equal(getZebuPageLabel("/dashboard/applications/app_123"), "Application workspace");
-    assert.equal(getZebuPageLabel("/dashboard/linkedin"), "LinkedIn Optimizer");
+    assert.equal(getZebuPageLabel("/dashboard/linkedin"), "LinkedIn review");
   });
 
   test("live sessions receive and refresh the current route", () => {

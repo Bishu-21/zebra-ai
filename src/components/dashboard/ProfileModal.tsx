@@ -19,6 +19,7 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/Toast";
 import { useDialogFocus } from "@/hooks/useDialogFocus";
 import { UserAvatar } from "@/components/dashboard/UserAvatar";
+import { SUPPORT_EMAIL } from "@/lib/constants/support";
 
 interface ProfileModalProps {
     isOpen: boolean;
@@ -34,7 +35,6 @@ export function ProfileModal({ isOpen, onCloseAction, userName, userImage }: Pro
     const router = useRouter();
     const { showToast } = useToast();
     const { data: session } = useSession();
-    const user = session?.user as { plan?: string | null } | undefined;
     const [view, setView] = useState<ViewState>("menu");
     const [newName, setNewName] = useState(userName);
     const [isSaving, setIsSaving] = useState(false);
@@ -192,7 +192,7 @@ export function ProfileModal({ isOpen, onCloseAction, userName, userImage }: Pro
                                                 <div className="space-y-2">
                                                     <AccountAction icon={RiIdCardLine} title="Public Identity" subtitle="Update name and avatar" onClick={() => setView("edit")} />
                                                     <AccountAction icon={RiShieldLine} title="Security" subtitle="Password and account safety" onClick={() => setView("security")} />
-                                                    <AccountAction icon={RiMoneyDollarCircleLine} title="Billing" subtitle={user?.plan ? `Plan: ${user.plan}` : "Plan: Starter"} onClick={() => setView("billing")} />
+                                                    <AccountAction icon={RiMoneyDollarCircleLine} title="Billing" subtitle="One-time credit packs" onClick={() => setView("billing")} />
                                                 </div>
                                             </div>
                                         </div>
@@ -254,7 +254,7 @@ export function ProfileModal({ isOpen, onCloseAction, userName, userImage }: Pro
 
                                             <div className="pt-4 border-t border-neutral-200/60">
                                                 <h5 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Account requests</h5>
-                                                <p className="text-xs text-neutral-600 leading-relaxed">To request access, correction, or account deletion, {process.env.NEXT_PUBLIC_SUPPORT_EMAIL ? <>email <a className="underline" href={`mailto:${process.env.NEXT_PUBLIC_SUPPORT_EMAIL}?subject=Zebra%20AI%20privacy%20request`}>{process.env.NEXT_PUBLIC_SUPPORT_EMAIL}</a></> : "a working contact address will be published before paid launch"}. We will review any payment records that must be retained.</p>
+                                                <p className="text-xs text-neutral-600 leading-relaxed">To request access, correction, or account deletion, email <a className="underline" href={`mailto:${SUPPORT_EMAIL}?subject=Zebra%20AI%20privacy%20request`}>{SUPPORT_EMAIL}</a>. We will review any payment records that must be retained.</p>
                                             </div>
                                         </div>
                                     </m.div>
@@ -273,21 +273,17 @@ export function ProfileModal({ isOpen, onCloseAction, userName, userImage }: Pro
                                                 <RiMoneyDollarCircleLine size={20} />
                                             </div>
                                             <h4 className="text-base font-bold text-[#0A0A0A]">
-                                                 {user?.plan ? `${user.plan} Plan` : "Starter Plan"}
+                                                 Pay-as-you-go credits
                                             </h4>
                                             <p className="text-xs font-normal text-neutral-500 mt-1 mb-5 leading-relaxed">
-                                                 {user?.plan && user.plan !== "Free" && user.plan !== "Starter"
-                                                     ? `You are currently on the ${user.plan} plan.`
-                                                     : "Upgrade your tier to unlock advanced resume tailoring and extra credits."}
+                                                 Credit packs are one-time purchases (10 / ₹99, 50 / ₹400, 100 / ₹800), not a subscription.
                                             </p>
-                                            {(!user?.plan || user.plan === "Free" || user.plan === "Starter") && (
-                                                <button
-                                                    onClick={handleUpgrade}
-                                                    className="w-full py-2.5 bg-[#0A0A0A] text-white rounded-full text-xs font-bold shadow-2xs hover:bg-neutral-800 active:scale-95 transition-all"
-                                                >
-                                                    Upgrade Plan
-                                                </button>
-                                            )}
+                                            <button
+                                                onClick={handleUpgrade}
+                                                className="w-full py-2.5 bg-[#0A0A0A] text-white rounded-full text-xs font-bold shadow-2xs hover:bg-neutral-800 active:scale-95 transition-all"
+                                            >
+                                                Buy credits
+                                            </button>
                                         </div>
                                     </m.div>
                                 )}

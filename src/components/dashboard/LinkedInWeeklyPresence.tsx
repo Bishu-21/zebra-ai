@@ -69,8 +69,8 @@ export function LinkedInWeeklyPresence({ userId, proofs }: { userId: string; pro
       </select>
     </label>}
     <div className="mt-5 grid gap-4 lg:grid-cols-2">
-      <div className="rounded-xl border border-neutral-200/70 p-4"><h3 className="text-sm font-semibold">Post starting point</h3><p className="mt-2 whitespace-pre-line text-sm leading-6 text-foreground">{postIdea}</p><a href="https://www.linkedin.com/dashboard/share/" target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex min-h-11 items-center text-sm font-medium underline">Start a post</a></div>
-      <div className="rounded-xl border border-neutral-200/70 p-4"><h3 className="text-sm font-semibold">Comment angle</h3><p className="mt-2 text-sm leading-6 text-foreground">{commentAngle}</p><a href="https://www.linkedin.com/feed/" target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex min-h-11 items-center text-sm font-medium underline">Open feed</a></div>
+      <div className="rounded-xl border border-neutral-200/70 p-4"><h3 className="text-sm font-semibold">Post starting point</h3><p className="mt-2 whitespace-pre-line text-sm leading-6 text-foreground">{postIdea}</p><a href="https://www.linkedin.com/dashboard/share/" target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex min-h-11 items-center text-sm font-medium underline">Open LinkedIn to post (leaves Zebra)</a></div>
+      <div className="rounded-xl border border-neutral-200/70 p-4"><h3 className="text-sm font-semibold">Comment angle</h3><p className="mt-2 text-sm leading-6 text-foreground">{commentAngle}</p><a href="https://www.linkedin.com/feed/" target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex min-h-11 items-center text-sm font-medium underline">Open LinkedIn feed (leaves Zebra)</a></div>
     </div>
     <div className="mt-5">
       <label htmlFor="linkedin-activity-url" className={featureChrome.label}>Completed activity URL</label>

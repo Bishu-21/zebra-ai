@@ -7,7 +7,7 @@ export const ZEBU_NAV_PAGES = [
   { key: "work", route: "/dashboard/work", phrases: ["work", "work library"] },
   { key: "cover_letters", route: "/dashboard/cover-letters", phrases: ["cover letters", "cover letter"] },
   { key: "portfolio", route: "/dashboard/portfolio", phrases: ["portfolio"] },
-  { key: "linkedin", route: "/dashboard/linkedin", phrases: ["linkedin optimizer", "linkedin"] },
+  { key: "linkedin", route: "/dashboard/linkedin", phrases: ["linkedin optimizer", "linkedin review", "linkedin"] },
   { key: "analytics", route: "/dashboard/analytics", phrases: ["analytics"] },
   { key: "settings", route: "/dashboard/settings", phrases: ["settings"] },
 ] as const;

@@ -225,7 +225,7 @@ async function renderDashboardContent(session: NonNullable<Awaited<ReturnType<ty
   const stats: StatItem[] = [
     { label: "My Resumes", value: resumeCount.value, icon: RiFileTextLine },
     { label: "Resume Reviews", value: analysisCount.value, icon: RiCheckboxCircleLine },
-    { label: "Role Matches", value: optimisationCount.value, icon: RiFlashlightLine },
+    { label: "Saved matches", value: optimisationCount.value, icon: RiFlashlightLine },
     { label: "Credits", icon: RiRadarLine, customValue: credits },
   ];
 
@@ -366,14 +366,15 @@ async function renderDashboardContent(session: NonNullable<Awaited<ReturnType<ty
         </Link>
       </div>
 
-      <details className="rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-xs">
-        <summary className="cursor-pointer text-sm font-bold text-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary">More tools</summary>
       <section aria-labelledby="workspace-actions-title" className="mb-12 mt-8">
         <div className="mb-5">
-          <h2 id="workspace-actions-title" className="text-xl font-bold tracking-tight text-foreground md:text-2xl">Create and improve</h2>
-          <p className="mt-1 text-sm text-neutral-600">Review or import a resume, match it to a role, build a new one, or add project evidence.</p>
+          <h2 id="workspace-actions-title" className="text-xl font-bold tracking-tight text-foreground md:text-2xl">Prepare your next application</h2>
+          <p className="mt-1 text-sm text-neutral-600">Import a resume (free), review it (1 credit), then attach it to a job and approve edits before you export a PDF.</p>
         </div>
         <div className="grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="min-w-0">
+          <ImportResume />
+        </div>
         <div className="min-w-0">
           <AnalyzeResume />
         </div>
@@ -385,11 +386,8 @@ async function renderDashboardContent(session: NonNullable<Awaited<ReturnType<ty
             href="/dashboard/resumes/new"
             icon={RiAddLine}
             title="Build new resume"
-            description="Create a new resume with guided AI suggestions."
+            description="Open a blank resume in the editor. Saving it does not use a credit."
           />
-        </div>
-        <div className="min-w-0">
-          <ImportResume />
         </div>
         <div className="min-w-0">
           <ProjectAnalyzerCard />
@@ -423,7 +421,6 @@ async function renderDashboardContent(session: NonNullable<Awaited<ReturnType<ty
             <InsightsFeed data={intelligenceReports} />
         )}
       </div>
-      </details>
     </DashboardPageFrame>
   );
 }

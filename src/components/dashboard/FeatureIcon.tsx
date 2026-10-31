@@ -19,6 +19,7 @@ export const featureIcons = {
     "Cover Letters": RiArticleLine,
     Portfolio: RiGlobalLine,
     "LinkedIn Optimizer": RiLinkedinLine,
+    "LinkedIn review": RiLinkedinLine,
     Analytics: RiLineChartLine,
     Settings: RiSettings4Line,
 };
