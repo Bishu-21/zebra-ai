@@ -7,7 +7,8 @@ import {
     user as userTable,
     certifications as certificationsTable
 } from "@/lib/schema";
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
+import { selectPublicPortfolioWork } from "@/lib/portfolio-public";
 import { 
     RiFolder2Line, 
     RiExternalLinkLine, 
@@ -50,17 +51,13 @@ export default async function PublicPortfolioPage({ params }: PortfolioPageProps
     });
     if (!targetUser) notFound();
 
-    // 4. Fetch Work Items strictly for this specific user
-    const selectedWorkIds = Array.isArray(portfolio.selectedWorkIds)
-        ? portfolio.selectedWorkIds.filter((id): id is string => typeof id === "string")
-        : [];
-    const userWorkItems = selectedWorkIds.length === 0 ? [] : await db.query.workItems.findMany({
+    const ownedWorkItems = await db.query.workItems.findMany({
         where: and(
             eq(workItemsTable.userId, targetUser.id),
             eq(workItemsTable.isPublic, true),
-            inArray(workItemsTable.id, selectedWorkIds),
         ),
     });
+    const userWorkItems = selectPublicPortfolioWork(ownedWorkItems, portfolio.selectedWorkIds);
 
     // 5. Fetch Certifications strictly for this specific user
     const userCertifications = await db.query.certifications.findMany({

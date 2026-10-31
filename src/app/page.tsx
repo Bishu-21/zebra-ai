@@ -28,7 +28,7 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-background text-foreground selection:bg-primary/20 selection:text-primary font-sans scroll-smooth">
+    <div className="flex min-h-screen flex-col overflow-x-clip bg-background font-sans text-foreground scroll-smooth selection:bg-primary/20 selection:text-primary">
       <JsonLd schema={faqPageSchema} />
       <AuthModal />
       <BrandIntro />
@@ -36,24 +36,24 @@ export default function Home() {
 
       {/* TopNavBar */}
       <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-[12px] border-b-[1px] border-border-subtle">
-        <div className="relative max-w-[1400px] mx-auto px-5 md:px-6 h-20 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3 group">
+        <div className="relative mx-auto flex h-16 max-w-[1400px] items-center justify-between gap-3 px-4 sm:h-20 sm:px-5 md:px-6">
+          <Link href="/" className="flex min-w-0 items-center gap-2.5 group sm:gap-3">
             <Image
                 src="/zebra_star.png"
                 alt="Zebra AI resume builder"
                 width={32}
                 height={32}
-                className="w-8 h-8 object-contain group-hover:rotate-12 transition-transform duration-300"
+                className="h-8 w-8 shrink-0 object-contain transition-transform duration-300 group-hover:rotate-12"
             />
-            <span className="text-xl font-bold tracking-[-0.05em] text-foreground">Zebra AI</span>
+            <span className="truncate text-lg font-bold tracking-[-0.05em] text-foreground sm:text-xl">Zebra AI</span>
           </Link>
-          <div className="hidden md:flex items-center gap-10">
+          <div className="hidden items-center gap-6 lg:flex xl:gap-10">
             <Link className="text-accent-gray hover:text-foreground text-xs font-bold uppercase tracking-widest transition-all duration-200" href="#product">Product</Link>
             <Link className="text-accent-gray hover:text-foreground text-xs font-bold uppercase tracking-widest transition-all duration-200" href="#how-it-works">How it works</Link>
             <Link className="text-accent-gray hover:text-foreground text-xs font-bold uppercase tracking-widest transition-all duration-200" href="#pricing">Pricing</Link>
             <Link className="text-accent-gray hover:text-foreground text-xs font-bold uppercase tracking-widest transition-all duration-200" href="#faq">FAQ</Link>
           </div>
-          <div className="hidden md:block">
+          <div className="hidden lg:block">
             <Suspense fallback={
               <div className="w-28 h-10 bg-black/5 rounded-xl" />
             }>
@@ -64,7 +64,7 @@ export default function Home() {
         </div>
       </nav>
 
-      <main className="pt-20">
+      <main className="pt-16 sm:pt-20">
         <div id="product">
           <Hero />
         </div>
@@ -78,7 +78,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="w-full bg-white border-t border-border-subtle">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center px-5 md:px-12 py-14 md:py-16 gap-10 md:gap-12 max-w-7xl mx-auto">
+        <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-10 px-4 py-12 sm:px-5 md:flex-row md:items-center md:gap-12 md:px-12 md:py-16">
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <Image

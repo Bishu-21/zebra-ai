@@ -93,7 +93,7 @@ export function ProductDemo() {
     };
 
     return (
-        <figure ref={stageRef} id="demo" className="w-full scroll-mt-28 font-sans" aria-label="Zebra AI feature walkthrough" aria-describedby={captionId}>
+        <figure ref={stageRef} id="demo" className="w-full min-w-0 max-w-full scroll-mt-24 font-sans sm:scroll-mt-28" aria-label="Zebra AI feature walkthrough" aria-describedby={captionId}>
             <div className="mb-5 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
                 <div>
                     <p className="text-xs font-medium text-muted-foreground">Product walkthrough</p>
@@ -101,7 +101,7 @@ export function ProductDemo() {
                 </div>
                 <p className="max-w-md text-sm leading-6 text-muted-foreground">Play the sample, or click inside it. Same screens as the signed-in dashboard.</p>
             </div>
-            <nav aria-label="Choose a feature" className="mb-4 flex gap-1 overflow-x-auto border-b border-neutral-200 pb-2">
+            <nav aria-label="Choose a feature" className="-mx-4 mb-4 flex gap-1 overflow-x-auto overscroll-x-contain border-b border-neutral-200 px-4 pb-2 sm:mx-0 sm:px-0">
                 {ITEMS.map((item) => (
                     <button
                         key={item.id}
@@ -118,9 +118,9 @@ export function ProductDemo() {
                 initial={false}
                 animate={{ opacity: 1 }}
                 transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
-                className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm"
+                className="isolate overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm"
             >
-                <div className="relative h-[min(78dvh,54rem)] min-h-[28rem] w-full">
+                <div className="relative h-[min(62dvh,28rem)] min-h-[20rem] w-full sm:h-[min(70dvh,42rem)] sm:min-h-[28rem] lg:h-[min(78dvh,54rem)]">
                     <SettingsProvider persist={false}>
                         <ToastProvider>
                             <FeatureDemoScene
@@ -147,14 +147,14 @@ export function ProductDemo() {
                         </p>
                         <p className="mt-1 text-xs leading-5 text-muted-foreground">{DEMO_DISCLOSURE} Play walks through the pages. Pause to click the sidebar, dialogs, and Zebu.</p>
                     </div>
-                    <div className="flex shrink-0 flex-wrap gap-2">
+                    <div className="flex w-full shrink-0 flex-wrap gap-2 sm:w-auto">
                         <button
                             type="button"
                             onClick={() => {
                                 if (playing) setPathname(displayPath);
                                 setUserPlaying(!playing);
                             }}
-                            className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-neutral-200 bg-white px-3 text-xs font-medium text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+                            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-neutral-200 bg-white px-3 text-xs font-medium text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 sm:w-auto"
                         >
                             <AppIcon icon={playing ? RiPauseCircleLine : RiPlayCircleLine} size={16} />
                             {playing ? "Pause" : "Play"}

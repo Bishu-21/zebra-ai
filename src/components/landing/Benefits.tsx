@@ -25,7 +25,7 @@ export function Benefits() {
     const reduceMotion = useReducedMotion();
 
     return (
-        <section id="how-it-works" className="relative scroll-mt-20 border-y border-border-subtle bg-white px-5 py-20 md:px-8 md:py-28">
+        <section id="how-it-works" className="relative scroll-mt-20 overflow-x-clip border-y border-border-subtle bg-white px-4 py-14 sm:px-5 sm:py-20 md:px-8 md:py-28">
             <div className="mx-auto max-w-7xl">
                 <m.div
                     className="mb-12 max-w-2xl md:mb-16"
@@ -35,7 +35,7 @@ export function Benefits() {
                     transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                 >
                     <p className="mb-5 text-xs font-medium uppercase tracking-wide text-muted-foreground">How it works</p>
-                    <h2 className="text-4xl font-bold leading-[1.1] tracking-[-0.04em] text-foreground md:text-6xl">
+                    <h2 className="text-3xl font-bold leading-[1.1] tracking-[-0.04em] text-foreground sm:text-4xl lg:text-6xl">
                         Import, review suggestions, export a PDF.
                     </h2>
                     <p className="mt-5 max-w-xl text-base leading-7 text-accent-dark md:text-lg">
@@ -43,7 +43,7 @@ export function Benefits() {
                     </p>
                 </m.div>
 
-                <div className="grid gap-6 md:grid-cols-3 md:gap-8">
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
                     {BENEFITS.map((benefit, index) => (
                         <m.article
                             key={benefit.title}

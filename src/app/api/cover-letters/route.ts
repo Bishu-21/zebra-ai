@@ -149,7 +149,12 @@ Requirements:
                 updatedAt: new Date(),
             });
 
-            return NextResponse.json({ success: true, id: newLetterId, content: letterContent });
+            return NextResponse.json({
+                success: true,
+                id: newLetterId,
+                content: letterContent,
+                remainingCredits: reservation.remainingCredits,
+            });
         } catch (error) {
             await refundUserCredits(session.user.id, 1);
             throw error;

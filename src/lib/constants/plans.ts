@@ -23,3 +23,14 @@ export const PLANS = {
 } as const;
 
 export type PlanId = keyof typeof PLANS;
+
+const PACK_PLAN_IDS = new Set<string>(Object.keys(PLANS));
+const PACK_PLAN_NAMES = new Set<string>(Object.values(PLANS).map((pack) => pack.name));
+
+/** Sidebar/settings label. Pack names already include “credits”; do not append “Plan”. */
+export function formatAccountPlanLabel(plan: string | null | undefined): string {
+    const value = (plan || "Free").trim();
+    if (!value || value === "Free") return "Free plan";
+    if (PACK_PLAN_IDS.has(value) || PACK_PLAN_NAMES.has(value)) return "Pay-as-you-go";
+    return value;
+}

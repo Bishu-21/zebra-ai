@@ -35,7 +35,7 @@ export function PublicMobileNav() {
   const closeMenu = () => setIsOpen(false);
 
   return (
-    <div className="md:hidden">
+    <div className="shrink-0 lg:hidden">
       <button
         type="button"
         aria-label={isOpen ? "Close navigation menu" : "Open navigation menu"}
@@ -52,7 +52,7 @@ export function PublicMobileNav() {
           <button
             type="button"
             aria-label="Close navigation menu"
-            className="fixed inset-0 top-20 z-30 bg-black/20 backdrop-blur-[2px]"
+            className="fixed inset-0 top-16 z-30 bg-black/20 backdrop-blur-[2px] sm:top-20"
             onClick={closeMenu}
           />
           <div

@@ -33,6 +33,7 @@ import { SettingsView } from "@/components/dashboard/SettingsView";
 import { AppIcon } from "@/components/ui/AppIcon";
 import { APPLICATION_WORKSPACE_FIXTURE } from "@/lib/application-workspace-fixture";
 import {
+    PRODUCT_DEMO_CONTENT,
     PRODUCT_DEMO_COVER_LETTER,
     PRODUCT_DEMO_RESUME,
     PRODUCT_DEMO_WORK_ITEMS,
@@ -64,10 +65,26 @@ const linkedInDrafts: LinkedInDraft[] = [
         sourceQuote: "I build accessible React interfaces for public services.",
         proposedText: "Frontend Engineer | React and TypeScript | Accessible public services",
         rationale: "Connects the target role with the work described in the source text.",
-        status: "proposed",
+        status: "accepted",
+        editedText: null,
+    },
+    {
+        id: "example-about",
+        field: "about",
+        sourceQuote: PRODUCT_DEMO_CONTENT.basics.summary,
+        proposedText: PRODUCT_DEMO_CONTENT.basics.summary,
+        rationale: "Keeps the About section aligned with saved workspace evidence.",
+        status: "accepted",
         editedText: null,
     },
 ];
+
+const demoLinkedInProfileText = [
+    `Headline: Frontend Engineer`,
+    `About: ${PRODUCT_DEMO_CONTENT.basics.summary}`,
+    `Experience: ${PRODUCT_DEMO_CONTENT.experience[0].role} at ${PRODUCT_DEMO_CONTENT.experience[0].company}. ${PRODUCT_DEMO_CONTENT.experience[0].highlights.join(" ")}`,
+    `Featured: ${PRODUCT_DEMO_WORK_ITEMS[0].title}. ${PRODUCT_DEMO_WORK_ITEMS[0].description}`,
+].join("\n\n");
 
 function HomePage() {
     return (
@@ -258,7 +275,12 @@ function PortfolioPage() {
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
                     {PRODUCT_DEMO_WORK_ITEMS.map((item) => (
                         <div key={item.id} className={featureChrome.card}>
-                            <p className="text-sm font-semibold">{item.title}</p>
+                            <div className="flex items-center justify-between">
+                                <p className="text-sm font-semibold">{item.title}</p>
+                                <span className="text-xs font-medium text-muted-foreground">
+                                    {item.isPublic ? "Visible on public page" : "Private"}
+                                </span>
+                            </div>
                             <p className="mt-1 text-sm leading-6 text-muted-foreground">{item.description}</p>
                         </div>
                     ))}
@@ -348,6 +370,9 @@ export function SamplePage({ pathname }: { pathname: string }) {
                 initialDrafts={linkedInDrafts}
                 initialUrl="https://www.linkedin.com/in/example-jordan-hale"
                 initialTargetRole="Frontend Engineer"
+                initialProfileText={demoLinkedInProfileText}
+                workItems={PRODUCT_DEMO_WORK_ITEMS}
+                profileName="Jordan Hale"
             >
                 <LinkedInDraftReview auditId="example-only" drafts={linkedInDrafts} onChange={() => undefined} />
             </LinkedInOptimizer>

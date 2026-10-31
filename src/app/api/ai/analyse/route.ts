@@ -96,6 +96,7 @@ export async function POST(req: NextRequest) {
                 jobId: job.id,
                 resumeId: activeResumeId,
                 status: "pending",
+                remainingCredits: credit.remainingCredits,
             },
             { status: 202 }
         );

@@ -22,6 +22,7 @@ import { AppIcon } from "@/components/ui/AppIcon";
 import { featureChrome } from "@/components/dashboard/feature-chrome";
 import { DashboardToolCard } from "./DashboardToolCard";
 import { RiFileTextLine } from "react-icons/ri";
+import { announceCreditsChanged } from "@/context/CreditsContext";
 
 export function AnalyzeResume() {
   const [isOpen, setIsOpen] = useState(false);
@@ -139,6 +140,7 @@ export function AnalyzeResume() {
 
       if (res.status === 202) {
         setScanStep("Queueing and analyzing resume...");
+        announceCreditsChanged();
       }
 
       const data = await resolveResumeAnalysisResponse(res, { signal: controller.signal });

@@ -54,7 +54,7 @@ export default async function PortfolioDashboardPage() {
             <PortfolioStatusCard
                 slug={portfolioSlug}
                 title={portfolio?.title || userData?.name || "Portfolio"}
-                selectedWorkIds={((portfolio?.selectedWorkIds as string[] | null)?.length ? portfolio?.selectedWorkIds as string[] : workItems.map((item) => item.id))}
+                selectedWorkIds={((portfolio?.selectedWorkIds as string[] | null)?.length ? portfolio?.selectedWorkIds as string[] : workItems.filter((item) => item.isPublic).map((item) => item.id))}
                 isPublished={portfolio?.isPublished ?? false}
             />
 
@@ -87,6 +87,9 @@ export default async function PortfolioDashboardPage() {
                                     <div className="flex items-center justify-between">
                                         <span className="rounded-md bg-muted px-2.5 py-0.5 text-xs font-medium text-foreground">
                                             {item.category}
+                                        </span>
+                                        <span className="text-xs font-medium text-muted-foreground">
+                                            {item.isPublic ? "Visible on public page" : "Private"}
                                         </span>
                                     </div>
                                     <h3 className="text-sm font-semibold tracking-tight text-foreground">{item.title}</h3>

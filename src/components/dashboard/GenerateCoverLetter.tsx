@@ -22,6 +22,7 @@ import { CoverLetterDocument } from "@/components/dashboard/CoverLetterDocument"
 import { FeatureIcon } from "@/components/dashboard/FeatureIcon";
 import { AppIcon } from "@/components/ui/AppIcon";
 import { featureChrome } from "@/components/dashboard/feature-chrome";
+import { announceCreditsChanged } from "@/context/CreditsContext";
 
 type ResumeOption = { id: string; title: string; candidateName?: string };
 
@@ -140,6 +141,8 @@ export function GenerateCoverLetter({ resumes }: { resumes: ResumeOption[] }) {
             if (data.success) {
                 setGeneratedContent(data.content);
                 setSuccess(true);
+                if (typeof data.remainingCredits === "number") announceCreditsChanged(data.remainingCredits);
+                else announceCreditsChanged();
                 router.refresh();
             } else {
                 setError(data.error || "Generation failed.");

@@ -6,17 +6,22 @@ import { useRef, useState, type FormEvent, type ReactNode } from "react";
 import { LinkedInAuditResults, type LinkedInAuditResult } from "./LinkedInAuditResults";
 import { LinkedInSeoChecklist } from "./LinkedInSeoChecklist";
 import { LinkedInDraftReview } from "./LinkedInDraftReview";
-import { validateLinkedInProfileUrl, type LinkedInDraft } from "@/lib/linkedin-workflow";
+import { LinkedInProfilePreview } from "./LinkedInProfilePreview";
+import { announceCreditsChanged } from "@/context/CreditsContext";
+import { validateLinkedInProfileUrl, type LinkedInDraft, type WorkspaceWorkEvidence } from "@/lib/linkedin-workflow";
 
-export function LinkedInOptimizer({ initialResult, initialAuditId, initialDrafts, initialUrl, initialTargetRole, children }: {
+export function LinkedInOptimizer({ initialResult, initialAuditId, initialDrafts, initialUrl, initialTargetRole, initialProfileText, workItems = [], profileName, children }: {
   initialResult?: LinkedInAuditResult | null;
   initialAuditId?: string | null;
   initialDrafts?: LinkedInDraft[] | null;
   initialUrl?: string | null;
   initialTargetRole?: string | null;
+  initialProfileText?: string | null;
+  workItems?: WorkspaceWorkEvidence[];
+  profileName?: string;
   children?: ReactNode;
 }) {
-  const [profileText, setProfileText] = useState("");
+  const [profileText, setProfileText] = useState(initialProfileText || "");
   const [linkedinUrl, setLinkedinUrl] = useState(initialUrl || "");
   const [targetRole, setTargetRole] = useState(initialTargetRole || "");
   const [result, setResult] = useState<LinkedInAuditResult | null>(initialResult || null);
@@ -61,6 +66,7 @@ export function LinkedInOptimizer({ initialResult, initialAuditId, initialDrafts
       setResult(data.analysis);
       setAuditId(data.auditId);
       setDrafts(null);
+      if (typeof data.remainingCredits === "number") announceCreditsChanged(data.remainingCredits);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "The audit could not be completed.");
     } finally {
@@ -79,6 +85,7 @@ export function LinkedInOptimizer({ initialResult, initialAuditId, initialDrafts
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Could not create profile drafts.");
       setDrafts(data.drafts);
+      if (typeof data.remainingCredits === "number") announceCreditsChanged(data.remainingCredits);
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not create profile drafts."); }
     finally { requestPending.current = false; setDrafting(false); }
   }
@@ -123,6 +130,22 @@ export function LinkedInOptimizer({ initialResult, initialAuditId, initialDrafts
       </div>
       {error && <p role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}
     </form>
+
+    {workItems.length > 0 && <section className={`${featureChrome.card} p-5`} aria-label="Workspace work available for this review">
+      <p className={featureChrome.helper}>Workspace work</p>
+      <h2 className="mt-1 text-base font-semibold tracking-tight">Saved work included in this review</h2>
+      <p className="mt-2 text-sm leading-6 text-muted-foreground">These items from Work are used as experience and featured evidence in the report and preview. Mark them public on Work if they should also appear on your portfolio.</p>
+      <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+        {workItems.map((item) => (
+          <li key={item.id} className="rounded-xl bg-[#FAF9F6] px-4 py-3 text-sm">
+            <p className="font-medium text-foreground">{item.title}</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">{item.category}{item.result ? ` · ${item.result}` : ""}</p>
+          </li>
+        ))}
+      </ul>
+    </section>}
+
+    <LinkedInProfilePreview name={profileName} drafts={drafts || []} workItems={workItems} />
 
     {result && <div className="space-y-5">
       <div className={`${featureChrome.card} p-5`}>

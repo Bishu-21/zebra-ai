@@ -22,13 +22,38 @@ describe("Public landing page regressions", () => {
   });
 
   test("mobile menu is mounted in the fixed header and desktop auth stays separate", () => {
-    const desktopAuthPosition = homeSource.indexOf('<div className="hidden md:block">');
+    const desktopAuthPosition = homeSource.indexOf('<div className="hidden lg:block">');
     const mobileNavPosition = homeSource.indexOf("<PublicMobileNav />");
     const headerEndPosition = homeSource.indexOf("</nav>");
 
     assert.ok(desktopAuthPosition > -1);
     assert.ok(mobileNavPosition > desktopAuthPosition);
     assert.ok(mobileNavPosition < headerEndPosition);
+    assert.match(homeSource, /hidden items-center gap-6 lg:flex/);
+    assert.match(mobileNavSource, /lg:hidden/);
+    assert.doesNotMatch(mobileNavSource, /md:hidden/);
+  });
+
+  test("landing layout stays inside the viewport on phones and tablets", () => {
+    const pricingSource = readFileSync("src/components/landing/Pricing.tsx", "utf8");
+    const sceneSource = readFileSync("src/components/demo/FeatureDemoScene.tsx", "utf8");
+    const sidebarSource = readFileSync("src/components/dashboard/Sidebar.tsx", "utf8");
+    const cssSource = readFileSync("src/app/globals.css", "utf8");
+
+    assert.match(homeSource, /overflow-x-clip/);
+    assert.match(heroSource, /flex-col gap-3 sm:mt-8 sm:w-auto sm:flex-row/);
+    assert.match(heroSource, /text-\[2rem\].*sm:text-5xl lg:text-7xl/);
+    assert.match(demoSource, /h-\[min\(62dvh,28rem\)\]/);
+    assert.match(demoSource, /sm:h-\[min\(70dvh,42rem\)\]/);
+    assert.match(demoSource, /lg:h-\[min\(78dvh,54rem\)\]/);
+    assert.match(demoSource, /overflow-x-auto overscroll-x-contain/);
+    assert.match(demoSource, /isolate overflow-hidden/);
+    assert.match(pricingSource, /lg:grid-cols-3/);
+    assert.doesNotMatch(pricingSource, /scale-105/);
+    assert.match(sceneSource, /demo-workspace/);
+    assert.match(sidebarSource, /max-w-\[min\(17rem,calc\(100%-1\.5rem\)\)\]/);
+    assert.match(cssSource, /\.demo-workspace \.zebu-panel/);
+    assert.match(cssSource, /width: calc\(100% - 1rem\)/);
   });
 
   test("landing focuses on import, review, and export", () => {
