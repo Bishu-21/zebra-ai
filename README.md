@@ -33,7 +33,19 @@ No unlimited AI usage, guaranteed correctness, independent security certificatio
 
 ## Stack and architecture
 
-Next.js 16 App Router, React 19, TypeScript, Tailwind CSS 4, Better Auth, Drizzle ORM, and Neon Postgres. AI features use Azure Foundry and Gemini; provider preference depends on the feature. Documents use `unpdf`, Mammoth, Puppeteer, and Chromium. Payments use Razorpay. Azure language analysis and Application Insights are optional.
+| Layer | Technology |
+| --- | --- |
+| Runtime | Node.js 24.x, npm |
+| App | Next.js 16 App Router, React 19, TypeScript |
+| UI | Tailwind CSS 4, Framer Motion |
+| Auth | Better Auth |
+| Database | Neon Postgres, Drizzle ORM |
+| AI | Azure Foundry (primary text), Gemini (fallback and Live voice) |
+| Documents | unpdf, Mammoth, Puppeteer, Chromium |
+| Payments | Razorpay |
+| Jobs | Optional Kafka / Azure Event Hubs |
+| Hosting | Vercel |
+| Observability | Optional Azure Application Insights |
 
 ```mermaid
 flowchart LR
