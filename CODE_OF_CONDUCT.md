@@ -49,13 +49,22 @@ individual officially represents the project in public spaces.
 ## Reporting and enforcement
 
 Report abusive, harassing, or otherwise unacceptable behavior privately to
-the project owner, [@Bishu-21](https://github.com/Bishu-21), through the
-contact method listed on their GitHub profile. Do not disclose sensitive
-details in a public issue.
+[accounts@zebra-ai.app](mailto:accounts@zebra-ai.app), with the subject
+`Community conduct report`. The project maintainer is
+[@Bishu-21](https://github.com/Bishu-21). Do not disclose sensitive details in
+a public issue.
 
-All reports will be reviewed promptly and fairly. Maintainers will respect
-the privacy and security of reporters and will take corrective action that is
-appropriate to the circumstances.
+Include the relevant project space, links or dates, a description of what
+happened, and any immediate safety concerns. Share only the personal data
+needed to understand the report. Security vulnerabilities should follow
+[SECURITY.md](SECURITY.md) instead.
+
+Maintainers assess reports in context and may request clarification before
+deciding on corrective action. Report details are shared only as needed for
+assessment and enforcement; absolute confidentiality and a fixed response
+time are not promised. To request reconsideration of a moderation decision,
+reply privately with the relevant context. Retaliation against reporters is
+unacceptable.
 
 ## Enforcement guidelines
 
