@@ -35,10 +35,11 @@ const defaultSettings: Settings = {
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
-export function SettingsProvider({ children }: { children: React.ReactNode }) {
+export function SettingsProvider({ children, persist = true }: { children: React.ReactNode; persist?: boolean }) {
     const [settings, setSettings] = useState<Settings>(defaultSettings);
 
     useEffect(() => {
+        if (!persist) return;
         const saved = readSettingsRecord();
         if (!saved) return;
         try {
@@ -58,19 +59,23 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         } catch (e) {
             console.error("Failed to parse settings", e);
         }
-    }, []);
+    }, [persist]);
 
     const updateSettingsAction = (newSettings: Partial<Settings>): boolean => {
         const updated = { ...settings, ...newSettings };
-        const persisted = writeSettingsRecord(updated);
-        if (!persisted) return false;
+        if (persist) {
+            const persisted = writeSettingsRecord(updated);
+            if (!persisted) return false;
+        }
         setSettings(updated);
         return true;
     };
 
     const resetSettingsAction = (): boolean => {
-        const cleared = clearSettingsRecord();
-        if (!cleared) return false;
+        if (persist) {
+            const cleared = clearSettingsRecord();
+            if (!cleared) return false;
+        }
         setSettings(defaultSettings);
         return true;
     };

@@ -41,17 +41,31 @@ describe("Public landing page regressions", () => {
     assert.doesNotMatch(manifestSource, /beat the ATS|get shortlisted|ultimate/i);
   });
 
-  test("product demo exposes poster, captions, controls, and reduced-motion copy", () => {
+  test("product demo plays the sample workspace and respects reduced motion", () => {
     assert.match(demoSource, /useReducedMotion/);
-    assert.match(demoSource, /controls/);
-    assert.match(demoSource, /poster=\{POSTER_SRC\}/);
-    assert.match(demoSource, /kind="captions"/);
-    assert.match(demoSource, /walkthrough\.vtt/);
-    assert.match(demoSource, /preload="none"/);
+    assert.match(demoSource, /FeatureDemoScene/);
+    assert.match(demoSource, /DEMO_DISCLOSURE/);
+    assert.match(demoSource, /Pause/);
+    assert.match(demoSource, /Play/);
+    assert.match(demoSource, /interactive=\{interactive\}/);
+    assert.doesNotMatch(demoSource, /Download video|walkthrough\.mp4/);
+    assert.doesNotMatch(demoSource, /ATS Editor|scrape|auto-post/i);
     assert.match(benefitsSource, /Keep the original resume/);
     assert.match(benefitsSource, /See how experience fits a role/);
     assert.match(benefitsSource, /Approve edits before you export/);
     assert.match(faqSource, /not a subscription/);
     assert.match(faqSource, /DOCX export is not available/);
+  });
+
+  test("application preview uses the product workspace instead of a fabricated approval card", () => {
+    const scene = readFileSync("src/components/demo/FeatureDemoScene.tsx", "utf8");
+    const pages = readFileSync("src/components/demo/SamplePages.tsx", "utf8");
+    assert.match(scene, /<Sidebar/);
+    assert.match(scene, /<Header/);
+    assert.match(scene, /inert=\{interactive \? undefined : true\}/);
+    assert.match(pages, /<ApplicationWorkspace/);
+    assert.match(pages, /initialApplication=\{APPLICATION_WORKSPACE_FIXTURE\.application\}/);
+    assert.doesNotMatch(pages, /Suggested wording|>Approve<|>Reject</);
+    assert.doesNotMatch(scene, /DemoCursor|cursorPose/);
   });
 });

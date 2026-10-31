@@ -16,6 +16,7 @@ import { FeatureIcon } from "./FeatureIcon";
 import { DASHBOARD_NAV_ITEMS } from "@/lib/constants/navigation";
 import { UserAvatar } from "@/components/dashboard/UserAvatar";
 import { useDialogFocus } from "@/hooks/useDialogFocus";
+import { useDemoWorkspace } from "@/context/DemoWorkspaceContext";
 
 interface SidebarProps {
     plan: string;
@@ -54,6 +55,8 @@ export function Sidebar({
     const [isMobile, setIsMobile] = useState(false);
     const router = useRouter();
     const pathname = usePathname();
+    const demo = useDemoWorkspace();
+    const contained = Boolean(demo);
 
     const isDrawerOpen = controlledIsOpen !== undefined ? controlledIsOpen : internalOpen;
     const closeDrawer = useCallback(() => {
@@ -79,6 +82,10 @@ export function Sidebar({
 
     const handleSignOut = async (e: React.MouseEvent) => {
         e.stopPropagation();
+        if (demo) {
+            demo.notifySample();
+            return;
+        }
         await signOut({
             fetchOptions: {
                 onSuccess: () => {
@@ -94,7 +101,7 @@ export function Sidebar({
         <>
             {isDrawerOpen ? (
                 <div
-                    className="lg:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-[60]"
+                    className={`lg:hidden ${contained ? "absolute" : "fixed"} inset-0 bg-black/40 backdrop-blur-sm z-[60]`}
                     onClick={closeDrawer}
                 />
             ) : null}
@@ -105,12 +112,18 @@ export function Sidebar({
                 id="dashboard-navigation"
                 inert={isMobile && !isDrawerOpen ? true : undefined}
                 aria-hidden={isMobile && !isDrawerOpen ? true : undefined}
-                className={`fixed lg:sticky top-0 left-0 h-dvh w-[270px] max-w-[calc(100vw-2rem)] lg:max-w-none bg-muted border-r border-neutral-200/70 flex flex-col z-[70] overflow-hidden shadow-xl lg:shadow-none shrink-0 motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-out ${hideOffCanvas ? "-translate-x-full" : "translate-x-0"}`}
+                className={`${contained ? "absolute lg:relative h-full" : "fixed lg:sticky h-dvh"} top-0 left-0 w-[270px] max-w-[calc(100vw-2rem)] lg:max-w-none bg-muted border-r border-neutral-200/70 flex flex-col z-[70] overflow-hidden shadow-xl lg:shadow-none shrink-0 motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-out ${hideOffCanvas ? "-translate-x-full" : "translate-x-0"}`}
             >
                 <div className="flex flex-col h-full">
                     {/* Header Logo */}
                     <div className="h-16 px-6 border-b border-neutral-200/70 flex items-center justify-between shrink-0">
-                        <Link href="/dashboard" className="flex items-center gap-2.5 group" onClick={closeDrawer}>
+                        <Link href="/dashboard" className="flex items-center gap-2.5 group" onClick={(event) => {
+                            if (demo) {
+                                event.preventDefault();
+                                demo.navigate("/dashboard");
+                            }
+                            closeDrawer();
+                        }}>
                             <Image
                                 src="/zebra_star.svg"
                                 alt="Zebra AI"

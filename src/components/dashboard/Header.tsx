@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
     RiSettings4Line,
@@ -10,6 +9,8 @@ import {
 } from "react-icons/ri";
 import { getBreadcrumbForPath } from "@/lib/constants/navigation";
 import { UserAvatar } from "@/components/dashboard/UserAvatar";
+import { DashboardHref } from "@/components/dashboard/DashboardLink";
+import { useDemoWorkspace } from "@/context/DemoWorkspaceContext";
 
 interface HeaderProps {
     credits: number;
@@ -22,7 +23,9 @@ interface HeaderProps {
 }
 
 export function Header({ credits, userName, userImage, isNavOpen = false, onOpenNavAction, onOpenProfileAction, onOpenSettingsAction }: HeaderProps) {
-    const pathname = usePathname();
+    const demo = useDemoWorkspace();
+    const livePath = usePathname();
+    const pathname = demo?.pathname ?? livePath;
     const breadcrumbInfo = getBreadcrumbForPath(pathname);
 
     return (
@@ -51,15 +54,15 @@ export function Header({ credits, userName, userImage, isNavOpen = false, onOpen
 
                 {/* Desktop & Tablet Dynamic Breadcrumbs (>= 768px) */}
                 <nav aria-label="Breadcrumbs" className="hidden md:flex items-center gap-2 text-sm font-medium text-muted-foreground min-w-0">
-                    <Link href="/dashboard" className="hover:text-foreground cursor-pointer transition-colors shrink-0">
+                    <DashboardHref href="/dashboard" className="hover:text-foreground cursor-pointer transition-colors shrink-0">
                         Zebra AI
-                    </Link>
+                    </DashboardHref>
                     <RiArrowRightSLine size={16} aria-hidden="true" className="text-muted-foreground shrink-0" />
                     {breadcrumbInfo.parent ? (
                         <>
-                            <Link href={breadcrumbInfo.parent.href} className="hover:text-foreground cursor-pointer transition-colors shrink-0">
+                            <DashboardHref href={breadcrumbInfo.parent.href} className="hover:text-foreground cursor-pointer transition-colors shrink-0">
                                 {breadcrumbInfo.parent.label}
-                            </Link>
+                            </DashboardHref>
                             <RiArrowRightSLine size={16} aria-hidden="true" className="text-muted-foreground shrink-0" />
                             <span className="text-foreground font-semibold truncate">{breadcrumbInfo.title}</span>
                         </>

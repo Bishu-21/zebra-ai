@@ -14,9 +14,10 @@ import { analyzeEvidenceCoverage } from "@/lib/requirement-extractor";
 import { AppIcon } from "@/components/ui/AppIcon";
 import { FeatureIcon } from "@/components/dashboard/FeatureIcon";
 import { featureChrome } from "@/components/dashboard/feature-chrome";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useMemo,useState } from "react";
+import { useDemoWorkspace } from "@/context/DemoWorkspaceContext";
+import { DashboardHref } from "@/components/dashboard/DashboardLink";
 import {
 RiArrowLeftLine,
 RiSave3Line
@@ -67,6 +68,7 @@ interface ApplicationWorkspaceProps {
     resumes: UserResume[];
     workItems: UserWorkItem[];
     certifications?: UserCertification[];
+    initialStep?: WorkspaceTab;
 }
 
 const STATUS_OPTIONS = [
@@ -82,15 +84,16 @@ const STATUS_OPTIONS = [
 
 export type WorkspaceTab = "overview" | "resume" | "work" | "evidence" | "suggestions" | "review" | "export";
 
-export function ApplicationWorkspace({ initialApplication, resumes, workItems, certifications: initialCertifications }: ApplicationWorkspaceProps) {
+export function ApplicationWorkspace({ initialApplication, resumes, workItems, certifications: initialCertifications, initialStep }: ApplicationWorkspaceProps) {
     const searchParams = useSearchParams();
     const { showToast } = useToast();
+    const demo = useDemoWorkspace();
 
     const [app, setApp] = useState<ApplicationData>(initialApplication);
 
     const initialTabParam = searchParams.get("step") as WorkspaceTab | null;
     const [activeTab, setActiveTab] = useState<WorkspaceTab>(
-        initialTabParam || "overview"
+        initialStep || initialTabParam || "overview"
     );
 
     const [company, setCompany] = useState(app.company);
@@ -174,6 +177,12 @@ export function ApplicationWorkspace({ initialApplication, resumes, workItems, c
                 notes: updatedFields?.notes ?? notes,
                 outcome: updatedFields?.outcome ?? outcome,
             };
+
+            if (demo) {
+                setApp((current) => ({ ...current, ...payload }));
+                showToast("Saved in this sample only.", "info");
+                return;
+            }
 
             const res = await fetch("/api/applications", {
                 method: "PATCH",
@@ -301,12 +310,12 @@ export function ApplicationWorkspace({ initialApplication, resumes, workItems, c
             {/* Header / Navigation */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-neutral-200 pb-6">
                 <div>
-                    <Link
+                    <DashboardHref
                         href="/dashboard/job-tracker"
                         className="inline-flex items-center text-xs font-semibold text-neutral-500 hover:text-neutral-900 transition-colors mb-2 gap-1"
                     >
                         <AppIcon icon={RiArrowLeftLine} size={16} /> Back to Applications
-                    </Link>
+                    </DashboardHref>
                     <div className="flex items-center gap-3 flex-wrap">
                         <FeatureIcon feature="Applications" size={22} className="text-neutral-700" />
                         <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">

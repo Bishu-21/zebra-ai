@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useDemoWorkspace } from "@/context/DemoWorkspaceContext";
+import { DashboardHref } from "@/components/dashboard/DashboardLink";
 import { RiAddLine, RiExternalLinkLine, RiLoader4Line, RiRefreshLine } from "react-icons/ri";
 
 type PortfolioStatusCardProps = {
@@ -14,11 +16,16 @@ type PortfolioStatusCardProps = {
 
 export function PortfolioStatusCard({ slug, title, selectedWorkIds, isPublished }: PortfolioStatusCardProps) {
     const router = useRouter();
+    const demo = useDemoWorkspace();
     const [saving, setSaving] = useState(false);
     const [receipt, setReceipt] = useState<{ published: boolean; message: string; canUndo: boolean } | null>(null);
     const publicUrl = `/p/${slug}`;
 
     const setPublished = async (published: boolean) => {
+        if (demo) {
+            demo.notifySample();
+            return;
+        }
         setSaving(true);
         setReceipt(null);
         try {
@@ -43,7 +50,7 @@ export function PortfolioStatusCard({ slug, title, selectedWorkIds, isPublished 
             <section className="rounded-2xl border border-neutral-200/70 bg-white p-5 font-sans">
                 <p className="text-sm font-semibold tracking-tight">Add something before publishing</p>
                 <p className="mt-1 text-sm leading-6 text-muted-foreground">Your public link stays hidden until your portfolio contains at least one work item.</p>
-                <Link href="/dashboard/work" className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-white"><RiAddLine /> Add your first work item</Link>
+                <DashboardHref href="/dashboard/work" className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-white"><RiAddLine /> Add your first work item</DashboardHref>
             </section>
         );
     }

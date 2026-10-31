@@ -21,6 +21,7 @@ import {
 import { CareerProfileForm } from "./CareerProfileForm";
 import { AiUsageHistory } from "./AiUsageHistory";
 import { ConnectedAccounts } from "./ConnectedAccounts";
+import { useDemoWorkspace } from "@/context/DemoWorkspaceContext";
 
 type TabType = "general" | "editor" | "career" | "billing" | "account";
 
@@ -44,6 +45,7 @@ export function SettingsView({ connectionProviders, githubAppConfigured }: { con
     const { settings, updateSettingsAction, resetSettingsAction } = useSettings();
     const { data: session } = useSession();
     const { showToast } = useToast();
+    const demo = useDemoWorkspace();
 
     const initialTab = (searchParams.get("tab") as TabType) || "general";
     const [activeTab, setActiveTab] = useState<TabType>(
@@ -61,9 +63,11 @@ export function SettingsView({ connectionProviders, githubAppConfigured }: { con
 
     const handleTabChange = (tabId: TabType, trigger?: HTMLButtonElement) => {
         setActiveTab(tabId);
-        const params = new URLSearchParams(searchParams.toString());
-        params.set("tab", tabId);
-        window.history.replaceState(null, "", `/dashboard/settings?${params.toString()}`);
+        if (!demo) {
+            const params = new URLSearchParams(searchParams.toString());
+            params.set("tab", tabId);
+            window.history.replaceState(null, "", `/dashboard/settings?${params.toString()}`);
+        }
         trigger?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
     };
 
@@ -94,6 +98,10 @@ export function SettingsView({ connectionProviders, githubAppConfigured }: { con
     };
 
     const handleResetPassword = async () => {
+        if (demo) {
+            demo.notifySample();
+            return;
+        }
         if (!session?.user?.email) {
             showToast("No email associated with account", "error");
             return;
@@ -115,7 +123,9 @@ export function SettingsView({ connectionProviders, githubAppConfigured }: { con
     };
 
     const activeTabMeta = TABS.find(t => t.id === activeTab) || TABS[0];
-    const user = session?.user as { plan?: string | null; credits?: number | null; email?: string | null; name?: string | null } | undefined;
+    const user = demo
+        ? { plan: "Free", credits: 3, email: "jordan.hale@example.com", name: "Jordan Hale" }
+        : session?.user as { plan?: string | null; credits?: number | null; email?: string | null; name?: string | null } | undefined;
 
     return (
         <div className="mx-auto w-full max-w-7xl space-y-6 px-5 py-6 pb-32 font-sans text-sm leading-6 sm:px-6 md:px-10 md:py-10">

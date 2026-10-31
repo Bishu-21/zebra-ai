@@ -21,9 +21,8 @@ export function Hero() {
             <m.div
                 className="max-w-3xl"
                 {...enter}
-                transition={{ duration: 0.6, delay: prefersReducedMotion ? 0 : 1.15, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ duration: prefersReducedMotion ? 0 : 0.4, delay: 0, ease: [0.22, 1, 0.36, 1] }}
             >
-                <p className="mb-5 text-xs font-bold uppercase tracking-[0.18em] text-primary">Resume review for a specific job</p>
                 <h1 className="mb-6 text-4xl font-bold leading-[0.95] tracking-[-0.06em] text-foreground sm:text-5xl md:text-7xl">
                     Improve your resume for a specific job.
                 </h1>
@@ -59,7 +58,7 @@ export function Hero() {
             <m.div
                 className="mt-12 md:mt-16"
                 {...enter}
-                transition={{ duration: 0.6, delay: prefersReducedMotion ? 0 : 1.28, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ duration: prefersReducedMotion ? 0 : 0.4, delay: 0, ease: [0.22, 1, 0.36, 1] }}
             >
                 <ProductDemo />
             </m.div>

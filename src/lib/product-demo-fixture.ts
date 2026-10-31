@@ -60,6 +60,28 @@ export const PRODUCT_DEMO_RESUME: ResumeData = {
     content: PRODUCT_DEMO_CONTENT,
 };
 
+export const PRODUCT_DEMO_WORK_ITEMS = [
+    {
+        id: "demo-work-grants-portal",
+        title: "Accessible grants portal",
+        category: "Project" as const,
+        description: "Built React forms with draft saving and clearer validation for civic grant applicants.",
+        tools: ["TypeScript", "React", "Next.js"],
+        result: "Applicants can save drafts and return without losing work.",
+        proofUrl: "https://example.com/jordan/grants-portal",
+        isPublic: true,
+        createdAt: "2026-10-20T12:00:00.000Z",
+    },
+];
+
+export const PRODUCT_DEMO_COVER_LETTER = {
+    id: "demo-letter-riverbend",
+    title: "Frontend Engineer · Riverbend Civic Lab",
+    content: "Dear Hiring Team,\n\nI am applying for the Frontend Engineer role at Riverbend Civic Lab. My experience building accessible React interfaces matches the practical focus of your team.\n\nIn my recent work, I rebuilt a grants portal so applicants could save drafts and return to their applications. I worked with designers to make the forms clearer and easier to use.\n\nI would welcome the opportunity to discuss how this experience could support your team.\n\nSincerely,\nJordan Hale",
+    createdAt: new Date("2026-10-20T12:00:00.000Z"),
+    resumeId: PRODUCT_DEMO_RESUME.id,
+};
+
 export const PRODUCT_DEMO_STEPS = [
     {
         id: "import",
