@@ -5,33 +5,33 @@ export interface FaqItem {
 
 export const FAQ_ITEMS: FaqItem[] = [
   {
-    question: "What does Zebra AI review?",
+    question: "What does Zebra AI do?",
     answer:
-      "Zebra AI reviews resume content with a documented 45-check rubric covering structure, contact information, projects, skills, education, writing, and applicable work experience. Job-specific matching is performed only when you provide a job description.",
+      "Zebra AI helps you turn an existing resume and a target job into a reviewed, editable document. You can import a file, run a structured review, compare the resume with a job description, accept or reject suggested edits, and export a PDF.",
   },
   {
-    question: "What can I do in Zebra AI?",
+    question: "Does tailoring overwrite my original resume?",
     answer:
-      "You can import or build resumes, run structured reviews, tailor a resume to a job description, review suggested changes, export PDFs, publish a portfolio, and track job applications.",
+      "No. Suggested edits for a job application stay pending until you accept, edit, or reject them. The original resume remains in place. The version you export includes only the changes you approved.",
   },
   {
-    question: "Does Zebra AI guarantee that every ATS will accept my resume?",
+    question: "Does Zebra AI guarantee that an ATS or employer will accept my resume?",
     answer:
-      "No tool can guarantee acceptance by every proprietary ATS. Zebra flags common readability and formatting risks, encourages conventional section structure, and compares your evidence with a supplied job description. Final results can still vary by employer and ATS configuration.",
+      "No. No tool can promise that. Zebra flags common formatting and readability issues and compares your evidence with a job description you provide. Results still depend on the employer and their systems.",
   },
   {
-    question: "How does Zebra AI differ from ChatGPT or generic AI writers?",
+    question: "How do credits work?",
     answer:
-      "Zebra uses structured resume data, fixed review criteria, and evidence-preserving suggestions. Recommended changes remain pending until you review them, and unsupported employers, achievements, or measurements are prohibited.",
+      "New accounts receive starter credits. Resume reviews, job matching, cover letters, and LinkedIn drafts use credits. Saving a resume and exporting a PDF do not. Credit packs are one-time purchases (10 for ₹99, 50 for ₹400, 100 for ₹800), not a subscription. If checkout is unavailable, existing credits still work.",
   },
   {
-    question: "Can I import an existing PDF or raw text resume?",
+    question: "What files can I import?",
     answer:
-      "Yes. Zebra AI supports PDF and raw-text imports and maps readable content into editable resume sections. You should review imported fields because PDF extraction quality depends on the source layout.",
+      "You can import PDF, DOCX, or plain text, or paste text directly. Mapped fields should be reviewed because extraction quality depends on the source layout.",
   },
   {
-    question: "Is Zebra AI free to get started?",
+    question: "What can I export?",
     answer:
-      "Yes. New accounts receive starter credits. AI reviews, tailoring, and generation features consume credits; available balances and pack details are shown before purchase.",
+      "You can export a resume or cover letter as a PDF. DOCX export is not available.",
   },
 ];

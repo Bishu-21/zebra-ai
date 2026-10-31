@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
+import Link from "next/link";
 import { RiAlertLine, RiRestartLine } from "react-icons/ri";
 import { isTransientNavigationError } from "@/lib/error-classification";
+import { featureChrome } from "@/components/dashboard/feature-chrome";
 
 export default function DashboardError(props: { error: Error & { digest?: string }; retry: () => void }) {
     const { error, retry } = props;
@@ -13,29 +15,35 @@ export default function DashboardError(props: { error: Error & { digest?: string
     }, [error, isTransient]);
 
     return (
-        <div className="flex-grow flex items-center justify-center bg-[#FBFBFB] p-6">
-            <div className="max-w-md w-full bg-white border border-black/8 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.05)] p-8 text-center space-y-6">
-                <div className="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center mx-auto text-red-500">
+        <div className="flex flex-grow items-center justify-center bg-[#FBFBFB] p-6">
+            <div className="w-full max-w-md space-y-6 rounded-2xl border border-neutral-200/70 bg-white p-8 text-center">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-red-50 text-red-500">
                     <RiAlertLine size={24} />
                 </div>
 
                 <div className="space-y-2">
-                    <h2 className="text-lg font-black text-[#171717] tracking-tight">Segment Isolation</h2>
-                    <p className="text-sm text-[#737373] leading-relaxed">
-                        The dashboard encountered a localized exception. Your session remains secure, and you can attempt to hot-reload this segment.
+                    <h2 className="text-lg font-semibold tracking-tight text-foreground">
+                        {isTransient ? "This page was interrupted" : "This page could not be loaded"}
+                    </h2>
+                    <p className="text-sm leading-6 text-muted-foreground">
+                        {isTransient
+                            ? "A brief navigation interruption occurred. Your saved work is still in your account. Try this page again."
+                            : "Something went wrong while opening this dashboard view. Your saved resumes, applications, and credits are unchanged. You can try again or return to Home."}
                     </p>
                 </div>
 
-                <button
-                    onClick={() => retry()}
-                    className="w-full h-11 bg-[#171717] hover:bg-[#0A0A0A] text-white rounded-xl font-bold transition-all active:scale-[0.98] flex items-center justify-center gap-2"
-                >
-                    <RiRestartLine size={16} />
-                    Re-initialize Workspace
-                </button>
-
-                <div className="pt-2">
-                    <p className="text-[10px] font-mono text-black/20 uppercase tracking-[0.2em]">Error Code: {error?.digest || "LOCAL_REJECTION"}</p>
+                <div className="flex flex-col gap-3">
+                    <button
+                        type="button"
+                        onClick={() => retry()}
+                        className={featureChrome.primaryButton}
+                    >
+                        <RiRestartLine size={16} />
+                        Try again
+                    </button>
+                    <Link href="/dashboard" className={featureChrome.secondaryButton}>
+                        Back to dashboard
+                    </Link>
                 </div>
             </div>
         </div>

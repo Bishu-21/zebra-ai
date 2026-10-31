@@ -1,27 +1,28 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { createZebuKeyboardHandlers, type ZebuKeyboardOptions } from "@/lib/zebu-keyboard";
 
-export function useZebuKeyboard(options: { isOpen: boolean; toggle: () => void; close: () => void; primeAudio: () => void; startListening: () => void | Promise<void>; stopListening: () => void }) {
+export function useZebuKeyboard(options: ZebuKeyboardOptions) {
+  const optionsRef = useRef(options);
+  useEffect(() => { optionsRef.current = options; }, [options]);
   useEffect(() => {
-    const down = (event: KeyboardEvent) => {
-      if (event.ctrlKey && event.shiftKey && event.code === "KeyZ") { event.preventDefault(); options.toggle(); return; }
-      if (!options.isOpen) return;
-      if (event.code === "Escape") { event.preventDefault(); options.close(); return; }
-      const target = event.target as HTMLElement | null;
-      const typing = target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.isContentEditable;
-      if (event.code === "Space" && !typing && !event.repeat) {
-        event.preventDefault();
-        options.primeAudio();
-        try { void Promise.resolve(options.startListening()).catch(() => undefined); }
-        catch { /* The voice hook reports the actionable error in the assistant. */ }
-      }
+    const handlers = createZebuKeyboardHandlers({
+      isOpen: options.isOpen,
+      toggle: () => optionsRef.current.toggle(),
+      close: () => optionsRef.current.close(),
+      primeAudio: () => optionsRef.current.primeAudio(),
+      startListening: () => optionsRef.current.startListening(),
+      stopListening: () => optionsRef.current.stopListening(),
+    });
+    window.addEventListener("keydown", handlers.down);
+    window.addEventListener("keyup", handlers.up);
+    window.addEventListener("blur", handlers.release);
+    return () => {
+      window.removeEventListener("keydown", handlers.down);
+      window.removeEventListener("keyup", handlers.up);
+      window.removeEventListener("blur", handlers.release);
+      handlers.release();
     };
-    const up = (event: KeyboardEvent) => {
-      if (options.isOpen && event.code === "Space") options.stopListening();
-    };
-    window.addEventListener("keydown", down);
-    window.addEventListener("keyup", up);
-    return () => { window.removeEventListener("keydown", down); window.removeEventListener("keyup", up); };
-  }, [options]);
+  }, [options.isOpen]);
 }

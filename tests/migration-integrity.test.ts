@@ -62,8 +62,23 @@ describe("Evidence compiler migration", () => {
         assert.match(usageSql, /ADD COLUMN IF NOT EXISTS "latency_ms" integer/);
         const runsSql = readFileSync(tailoringRunsMigrationPath, "utf8");
         assert.match(runsSql, /CREATE TABLE IF NOT EXISTS "tailoring_runs"/);
-        assert.equal(last?.idx, 12);
-        assert.equal(last?.tag, "0011_tailoring_runs");
+        assert.equal(journal.entries[12]?.tag, "0011_tailoring_runs");
+        assert.equal(journal.entries[13]?.tag, "0012_linkedin_audits");
+        assert.equal(journal.entries[14]?.tag, "0013_linkedin_workflow_rls");
+        assert.equal(journal.entries[15]?.tag, "0014_github_installations");
+        assert.equal(journal.entries[16]?.tag, "0015_nullable_analysis_score");
+        assert.equal(last?.idx, 17);
+        assert.equal(last?.tag, "0016_background_jobs_kafka_tracking");
+    });
+
+    test("adds nullable Kafka tracking fields and an index only to background jobs", () => {
+        const sql = readFileSync(new URL("../drizzle/0016_background_jobs_kafka_tracking.sql", import.meta.url), "utf8");
+        for (const column of ["correlation_id", "kafka_topic", "artifact_url"]) {
+            assert.ok(sql.includes(`ALTER TABLE "background_jobs" ADD COLUMN "${column}" text;`));
+        }
+        assert.match(sql, /CREATE INDEX "background_jobs_correlation_idx" ON "background_jobs" USING btree \("correlation_id"\)/);
+        assert.doesNotMatch(sql, /NOT NULL|DROP|DELETE/);
+        assert.equal((sql.match(/ALTER TABLE/g) ?? []).length, 3);
     });
 
     test("quarantines direct schema scripts that bypass the migration journal", () => {

@@ -1,5 +1,9 @@
 import React from "react";
-import { getSafeSession } from "@/lib/auth-helpers";
+import { DashboardPage, DashboardPageHeader } from "@/components/dashboard/DashboardPage";
+import { FeatureIcon } from "@/components/dashboard/FeatureIcon";
+import { AppIcon } from "@/components/ui/AppIcon";
+import { featureChrome } from "@/components/dashboard/feature-chrome";
+import { getDashboardSession } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import {
     workItems as workItemsTable,
@@ -9,10 +13,8 @@ import {
 import { eq, desc } from "drizzle-orm";
 import Link from "next/link";
 import {
-    RiExternalLinkLine,
+    RiLink,
     RiAddLine,
-    RiStackLine,
-    RiAwardLine,
     RiCheckLine
 } from "react-icons/ri";
 
@@ -20,7 +22,7 @@ import { getOrCreateUniquePortfolioSlug } from "@/lib/slug-generator";
 import { PortfolioStatusCard } from "@/components/dashboard/PortfolioStatusCard";
 
 export default async function PortfolioDashboardPage() {
-    const session = await getSafeSession();
+    const session = await getDashboardSession();
     if (!session) return null;
 
     const userData = await db.query.user.findFirst({
@@ -43,18 +45,11 @@ export default async function PortfolioDashboardPage() {
     });
 
     return (
-        <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-8 pb-32">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-[#0A0A0A] mb-1">
-                        Portfolio
-                    </h1>
-                    <p className="text-xs font-normal text-neutral-500 leading-relaxed">
-                        Manage public proof items, project evidence, and credentials showcased in your shareable portfolio.
-                    </p>
-                </div>
-            </div>
+        <DashboardPage>
+            <DashboardPageHeader
+                title="Portfolio"
+                description="Choose which work and credentials appear on your public portfolio."
+            />
 
             <PortfolioStatusCard
                 slug={portfolioSlug}
@@ -65,26 +60,20 @@ export default async function PortfolioDashboardPage() {
 
             {/* Grid 1: Projects & Work Items */}
             <div className="space-y-4">
-                <div className="flex items-center justify-between border-b border-neutral-200/70 pb-3">
-                    <h2 className="text-sm font-bold text-[#0A0A0A] flex items-center gap-2">
-                        <RiStackLine className="w-4 h-4 text-neutral-600" /> Work Items & Projects ({workItems.length})
+                <div className="flex items-center justify-between gap-3">
+                    <h2 className={`${featureChrome.sectionTitle} flex items-center gap-2`}>
+                        <FeatureIcon feature="Work" size={16} className="text-muted-foreground" /> Work items ({workItems.length})
                     </h2>
-                    <Link
-                        href="/dashboard/work"
-                        className="text-xs font-semibold text-neutral-600 hover:text-[#0A0A0A] transition-colors flex items-center gap-1"
-                    >
-                        <RiAddLine size={14} /> Add Work Item
+                    <Link href="/dashboard/work" className="inline-flex items-center gap-1 text-sm font-medium text-foreground hover:underline">
+                        <AppIcon icon={RiAddLine} size={14} /> Add work item
                     </Link>
                 </div>
 
                 {workItems.length === 0 ? (
-                    <div className="bg-white border border-neutral-200/70 rounded-2xl p-10 text-center space-y-3 shadow-2xs">
-                        <p className="text-xs text-neutral-500 font-medium">No work items found in your library.</p>
-                        <Link
-                            href="/dashboard/work"
-                            className="inline-flex items-center gap-2 px-4 py-2 bg-[#0A0A0A] text-white text-xs font-bold rounded-full hover:bg-neutral-800 transition-all"
-                        >
-                            <RiAddLine size={14} /> Add your first project
+                    <div className={featureChrome.emptyState}>
+                        <p className="text-sm text-muted-foreground">No work items yet.</p>
+                        <Link href="/dashboard/work" className={`${featureChrome.primaryButton} mt-4`}>
+                            <AppIcon icon={RiAddLine} size={14} /> Add your first project
                         </Link>
                     </div>
                 ) : (
@@ -92,17 +81,17 @@ export default async function PortfolioDashboardPage() {
                         {workItems.map((item) => (
                             <div
                                 key={item.id}
-                                className="bg-white border border-neutral-200/70 rounded-2xl p-5 flex flex-col justify-between hover:border-neutral-300 hover:shadow-xs transition-all space-y-3"
+                                className={`${featureChrome.card} justify-between gap-3`}
                             >
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-between">
-                                        <span className="px-2.5 py-0.5 text-[10px] font-semibold bg-neutral-100 text-[#0A0A0A] rounded-full border border-neutral-200/80">
+                                        <span className="rounded-md bg-muted px-2.5 py-0.5 text-xs font-medium text-foreground">
                                             {item.category}
                                         </span>
                                     </div>
-                                    <h3 className="font-bold text-sm text-[#0A0A0A]">{item.title}</h3>
+                                    <h3 className="text-sm font-semibold tracking-tight text-foreground">{item.title}</h3>
                                     {item.description && (
-                                        <p className="text-xs text-neutral-500 line-clamp-3 leading-relaxed">
+                                        <p className="line-clamp-3 text-sm leading-6 text-muted-foreground">
                                             {item.description}
                                         </p>
                                     )}
@@ -110,7 +99,7 @@ export default async function PortfolioDashboardPage() {
                                 <div className="pt-3 border-t border-neutral-100 flex items-center justify-between">
                                     <Link
                                         href="/dashboard/work"
-                                        className="text-xs font-semibold text-neutral-600 hover:text-[#0A0A0A]"
+                                        className="text-sm font-medium text-foreground hover:underline"
                                     >
                                         Manage in Work →
                                     </Link>
@@ -124,37 +113,37 @@ export default async function PortfolioDashboardPage() {
             {/* Grid 2: Certifications */}
             <div className="space-y-4 pt-2">
                 <div className="flex items-center justify-between border-b border-neutral-200/70 pb-3">
-                    <h2 className="text-sm font-bold text-[#0A0A0A] flex items-center gap-2">
-                        <RiAwardLine className="w-4 h-4 text-emerald-600" /> Certifications & Credentials ({certifications.length})
+                    <h2 className={featureChrome.sectionTitle}>
+                        Certifications ({certifications.length})
                     </h2>
                 </div>
 
                 {certifications.length === 0 ? (
-                    <div className="bg-white border border-neutral-200/70 rounded-2xl p-8 text-center text-xs text-neutral-500 font-medium shadow-2xs">
-                        No certifications added yet. Attach certifications in your job application workspace or user profile.
+                    <div className={`${featureChrome.emptyState} text-sm text-muted-foreground`}>
+                        No certifications added yet. Attach them in an application workspace or your profile.
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                         {certifications.map((cert) => (
                             <div
                                 key={cert.id}
-                                className="bg-white border border-neutral-200/70 rounded-2xl p-5 flex flex-col justify-between hover:border-neutral-300 transition-all space-y-3 shadow-2xs"
+                                className={`${featureChrome.card} justify-between gap-3`}
                             >
                                 <div className="space-y-1">
-                                    <div className="flex items-center gap-1.5 text-emerald-600 text-xs font-semibold">
-                                        <RiCheckLine size={14} /> Credential details
+                                    <div className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+                                        <AppIcon icon={RiCheckLine} size={14} /> Credential
                                     </div>
-                                    <h3 className="font-bold text-sm text-[#0A0A0A]">{cert.title}</h3>
-                                    <p className="text-xs text-neutral-500">Issuer: {cert.issuer}</p>
+                                    <h3 className="text-sm font-semibold tracking-tight text-foreground">{cert.title}</h3>
+                                    <p className="text-sm text-muted-foreground">Issuer: {cert.issuer}</p>
                                 </div>
                                 {cert.credentialUrl && (
                                     <a
                                         href={cert.credentialUrl}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1 pt-2 border-t border-neutral-100"
+                                        className="flex items-center gap-1 border-t border-neutral-200/70 pt-2 text-sm font-medium text-foreground hover:underline"
                                     >
-                                        View Credential <RiExternalLinkLine size={12} />
+                                        View credential <AppIcon icon={RiLink} size={12} />
                                     </a>
                                 )}
                             </div>
@@ -162,6 +151,6 @@ export default async function PortfolioDashboardPage() {
                     </div>
                 )}
             </div>
-        </div>
+        </DashboardPage>
     );
 }

@@ -11,11 +11,12 @@ describe("Dashboard task hierarchy", () => {
         assert.match(dashboardSource, />View applications</);
     });
 
-    test("moves supporting tools and activity behind an accessible disclosure", () => {
-        assert.match(dashboardSource, /<details[^>]*>/);
-        assert.match(dashboardSource, /<summary[^>]*>/);
-        assert.match(dashboardSource, />More tools</);
-        assert.match(dashboardSource, /<AnalyzeResume \/>/);
+    test("shows import then review as the visible prepare path", () => {
+        assert.doesNotMatch(dashboardSource, />More tools</);
+        const importAt = dashboardSource.indexOf("<ImportResume");
+        const analyzeAt = dashboardSource.indexOf("<AnalyzeResume");
+        assert.ok(importAt > 0 && analyzeAt > importAt);
         assert.match(dashboardSource, /<ProjectAnalyzerCard \/>/);
+        assert.match(dashboardSource, /Saved matches/);
     });
 });

@@ -3,8 +3,7 @@ import { ResumeEditor } from "@/components/dashboard/ResumeEditor";
 import { db } from "@/lib/db";
 import { resumes as resumesTable, resumeVersions as resumeVersionsTable } from "@/lib/schema";
 import { eq, and } from "drizzle-orm";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { getDashboardSession } from "@/lib/auth-helpers";
 import { redirect } from "next/navigation";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { ZebuEntityContext } from "@/components/dashboard/ZebuEntityContext";
@@ -15,14 +14,9 @@ export default async function ResumeEditorPage(props: {
 }) {
     const params = await props.params;
     const searchParams = await props.searchParams;
-    const session = await auth.api.getSession({
-        headers: await headers(),
-    });
+    const session = await getDashboardSession();
 
-    if (!session) {
-        const returnUrl = `/dashboard/resumes/${params.id}${searchParams.version ? `?version=${searchParams.version}` : ""}`;
-        redirect(`/signin?returnTo=${encodeURIComponent(returnUrl)}`);
-    }
+    if (!session) return null;
 
     // Skip DB query for "new" — only fetch existing resumes
     let resume = null;

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { m } from "framer-motion";
+import { m, useReducedMotion } from "framer-motion";
 import { PLANS, PlanId } from "@/lib/constants/plans";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
@@ -38,14 +38,29 @@ const EnterpriseIcon = ({ size = 24 }: { size?: number }) => (
 export function Pricing() {
   const router = useRouter();
   const { data: session } = useSession();
+  const reduceMotion = useReducedMotion();
   const [loading] = useState<string | null>(null);
+  const [checkoutAvailable, setCheckoutAvailable] = useState<boolean | null>(null);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    fetch("/api/payments/status")
+      .then((response) => response.json())
+      .then((body: { checkoutAvailable?: boolean }) => {
+        if (!cancelled) setCheckoutAvailable(body.checkoutAvailable === true);
+      })
+      .catch(() => {
+        if (!cancelled) setCheckoutAvailable(false);
+      });
+    return () => { cancelled = true; };
+  }, []);
 
   const handleSubscription = async (planId: PlanId) => {
     if (!session) {
-      // Trigger the Auth Modal
       window.dispatchEvent(new CustomEvent("open-auth"));
       return;
     }
+    if (!checkoutAvailable) return;
     router.push(`/dashboard?showPricing=true&plan=${planId}`);
   };
 
@@ -55,7 +70,7 @@ export function Pricing() {
       name: PLANS.starter.name,
       icon: <FlashIcon />,
       price: PLANS.starter.displayPrice,
-      description: "Perfect for students & single applications.",
+      description: "For occasional resume reviews and applications.",
       features: [`${PLANS.starter.credits} AI Credits`, "Resume Quality Reviews", "Job Description Matching", "PDF Resume Export"],
       cta: `Buy ${PLANS.starter.credits} Credits`,
       featured: false
@@ -65,7 +80,7 @@ export function Pricing() {
       name: PLANS.pro.name,
       icon: <CrownIcon />,
       price: PLANS.pro.displayPrice,
-      description: "Strategic edge for active job seekers.",
+      description: "For reviewing and tailoring multiple applications.",
       features: [`${PLANS.pro.credits} AI Credits`, "Resume Quality Reviews", "Job Description Matching", "Cover Letter Generation"],
       cta: `Buy ${PLANS.pro.credits} Credits`,
       featured: true
@@ -75,7 +90,7 @@ export function Pricing() {
       name: PLANS.enterprise.name,
       icon: <EnterpriseIcon />,
       price: PLANS.enterprise.displayPrice,
-      description: "Full suite for career excellence.",
+      description: "For frequent reviews, tailoring, and cover letters.",
       features: [`${PLANS.enterprise.credits} AI Credits`, "Resume Quality Reviews", "Job Description Matching", "Cover Letter Generation"],
       cta: `Buy ${PLANS.enterprise.credits} Credits`,
       featured: false
@@ -87,29 +102,32 @@ export function Pricing() {
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-10 md:mb-16 max-w-2xl mx-auto">
           <m.div
-            initial={{ opacity: 0, y: -10 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={reduceMotion ? false : { opacity: 0, y: -10 }}
+            whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="flex items-center justify-center gap-2 mb-5"
           >
             <span className="text-xs font-bold tracking-[0.2em] uppercase text-primary">One-time credit packs</span>
           </m.div>
           <h2 className="text-4xl md:text-6xl font-bold tracking-[-0.04em] leading-[1.1] mb-5 md:mb-6 text-foreground">
-            Premium Career Tools, <span className="text-primary">Localized</span>
+            Choose a credit pack
           </h2>
           <p className="text-accent-dark text-lg leading-relaxed">
-            Choose a one-time credit pack based on how many resume reviews, tailoring runs, or generated documents you expect to use.
+            One-time packs for reviews, job matching, cover letters, and LinkedIn drafts. Saving a resume and exporting a PDF do not use a credit. Credits are not a subscription.
           </p>
+          {checkoutAvailable === false ? (
+            <p className="mt-4 text-sm text-amber-800">Checkout is not available on this environment. You can still sign in and use credits already on your account.</p>
+          ) : null}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {planCards.map((plan, index) => (
             <m.div
               key={plan.name}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              initial={reduceMotion ? false : { opacity: 0, y: 20 }}
+              whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
+              transition={{ delay: reduceMotion ? 0 : index * 0.1 }}
               className={`p-10 pt-14 rounded-3xl border-[1.5px] transition-all duration-300 relative ${
                 plan.featured
                 ? "bg-white border-primary shadow-[0px_24px_60px_-15px_rgba(0,0,0,0.1)] scale-105 z-10"
@@ -118,7 +136,7 @@ export function Pricing() {
             >
               {plan.featured && (
                 <div className="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-primary text-white text-xs font-bold uppercase tracking-wider rounded-full shadow-lg shadow-black/10">
-                  Most Popular
+                  Featured pack
                 </div>
               )}
               <div className="flex items-center justify-between mb-8 mt-2">
@@ -146,13 +164,13 @@ export function Pricing() {
 
               <button
                 onClick={() => handleSubscription(plan.id)}
-                disabled={loading !== null}
+                disabled={loading !== null || (Boolean(session) && checkoutAvailable === false)}
                 className={`w-full py-4 rounded-xl font-bold text-sm tracking-wide transition-all active:scale-[0.98] disabled:opacity-50 ${
                 plan.featured
                 ? "bg-primary text-white hover:bg-primary-dark shadow-lg shadow-black/15"
                 : "bg-white text-foreground border-[1.5px] border-black/10 hover:border-black/30 hover:bg-neutral-50"
               }`}>
-                {loading === plan.id ? "Processing..." : plan.cta}
+                {loading === plan.id ? "Processing..." : !session ? "Sign in to buy" : checkoutAvailable === false ? "Checkout unavailable" : plan.cta}
               </button>
             </m.div>
           ))}

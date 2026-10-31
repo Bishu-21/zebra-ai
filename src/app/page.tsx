@@ -1,6 +1,5 @@
 import { Hero } from "@/components/landing/Hero";
-import { About } from "@/components/landing/About";
-import { AeoComparison } from "@/components/landing/AeoComparison";
+import { Benefits } from "@/components/landing/Benefits";
 import { Pricing } from "@/components/landing/Pricing";
 import { FaqSection } from "@/components/landing/FaqSection";
 import { FAQ_ITEMS } from "@/data/faq";
@@ -12,6 +11,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import Image from "next/image";
 import { PublicMobileNav } from "@/components/landing/PublicMobileNav";
+import { BrandIntro } from "@/components/landing/BrandIntro";
 
 export default function Home() {
   const faqPageSchema: WithContext<FAQPage> = {
@@ -31,6 +31,7 @@ export default function Home() {
     <div className="flex flex-col min-h-screen bg-background text-foreground selection:bg-primary/20 selection:text-primary font-sans scroll-smooth">
       <JsonLd schema={faqPageSchema} />
       <AuthModal />
+      <BrandIntro />
       <div className="grain-overlay" />
 
       {/* TopNavBar */}
@@ -48,8 +49,7 @@ export default function Home() {
           </Link>
           <div className="hidden md:flex items-center gap-10">
             <Link className="text-accent-gray hover:text-foreground text-xs font-bold uppercase tracking-widest transition-all duration-200" href="#product">Product</Link>
-            <Link className="text-accent-gray hover:text-foreground text-xs font-bold uppercase tracking-widest transition-all duration-200" href="#compare">Compare</Link>
-            <Link className="text-accent-gray hover:text-foreground text-xs font-bold uppercase tracking-widest transition-all duration-200" href="#about">Story</Link>
+            <Link className="text-accent-gray hover:text-foreground text-xs font-bold uppercase tracking-widest transition-all duration-200" href="#how-it-works">How it works</Link>
             <Link className="text-accent-gray hover:text-foreground text-xs font-bold uppercase tracking-widest transition-all duration-200" href="#pricing">Pricing</Link>
             <Link className="text-accent-gray hover:text-foreground text-xs font-bold uppercase tracking-widest transition-all duration-200" href="#faq">FAQ</Link>
           </div>
@@ -69,9 +69,7 @@ export default function Home() {
           <Hero />
         </div>
 
-        <AeoComparison />
-
-        <About />
+        <Benefits />
 
         <Pricing />
 
@@ -93,27 +91,31 @@ export default function Home() {
               <div className="text-2xl font-bold tracking-tighter text-foreground">Zebra AI</div>
             </div>
             <p className="text-accent-dark font-medium text-sm max-w-xs leading-relaxed">
-              Build resumes from real evidence, tailor them to specific roles, and review every suggested change before applying it.
+              Import a resume, review suggested changes for a job, and export a PDF when you are ready.
             </p>
             <p className="text-accent-gray text-xs font-bold uppercase tracking-widest pt-2">© 2026 Zebra AI (zebra-ai.app). All rights reserved.</p>
           </div>
           <div className="flex flex-wrap gap-x-12 gap-y-6">
             <div className="flex flex-col gap-4">
               <span className="text-xs font-black uppercase tracking-widest text-accent-gray">Product</span>
-              <Link className="text-accent-dark hover:text-primary text-sm font-bold transition-colors duration-200" href="#product">ATS Editor</Link>
-              <Link className="text-accent-dark hover:text-primary text-sm font-bold transition-colors duration-200" href="#compare">Comparison</Link>
-              <Link className="text-accent-dark hover:text-primary text-sm font-bold transition-colors duration-200" href="#faq">FAQs</Link>
+              <Link className="text-accent-dark hover:text-primary text-sm font-bold transition-colors duration-200" href="#product">Product</Link>
+              <Link className="text-accent-dark hover:text-primary text-sm font-bold transition-colors duration-200" href="#how-it-works">How it works</Link>
+              <Link className="text-accent-dark hover:text-primary text-sm font-bold transition-colors duration-200" href="#pricing">Pricing</Link>
+              <Link className="text-accent-dark hover:text-primary text-sm font-bold transition-colors duration-200" href="#faq">FAQ</Link>
             </div>
             <div className="flex flex-col gap-4">
               <span className="text-xs font-black uppercase tracking-widest text-accent-gray">Connect</span>
               <Link className="text-accent-dark hover:text-primary text-sm font-bold transition-colors duration-200" href="/dashboard">Dashboard</Link>
               <Link className="text-accent-dark hover:text-primary text-sm font-bold transition-colors duration-200" href="/signin">Sign in</Link>
+              <Link className="text-accent-dark hover:text-primary text-sm font-bold transition-colors duration-200" href="/sitemap">Sitemap</Link>
               <a className="text-accent-dark hover:text-primary text-sm font-bold transition-colors duration-200" href="/llms.txt">LLMs.txt</a>
             </div>
             <div className="flex flex-col gap-4">
               <span className="text-xs font-black uppercase tracking-widest text-accent-gray">Legal</span>
               <Link className="text-accent-dark hover:text-primary text-sm font-bold transition-colors duration-200" href="/terms">Terms</Link>
               <Link className="text-accent-dark hover:text-primary text-sm font-bold transition-colors duration-200" href="/privacy">Privacy</Link>
+              <Link className="text-accent-dark hover:text-primary text-sm font-bold transition-colors duration-200" href="/cookies">Cookies</Link>
+              <Link className="text-accent-dark hover:text-primary text-sm font-bold transition-colors duration-200" href="/refunds">Refunds</Link>
             </div>
           </div>
         </div>

@@ -1,0 +1,184 @@
+.intro {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #fdfdfd;
+  color: #0a0a0a;
+  pointer-events: none;
+  animation: intro-exit 2.15s cubic-bezier(0.76, 0, 0.24, 1) both;
+}
+
+.lockup {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, "Helvetica Neue", Arial, sans-serif;
+  font-size: clamp(2.75rem, 7vw, 5.5rem);
+  font-weight: 750;
+  letter-spacing: -0.07em;
+  line-height: 1;
+  position: relative;
+}
+
+.wordLeft,
+.wordRight {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.wordLeft {
+  animation: word-left 1.45s cubic-bezier(0.76, 0, 0.24, 1) both;
+}
+
+.wordRight {
+  animation: word-right 1.45s cubic-bezier(0.76, 0, 0.24, 1) both;
+}
+
+.markFrame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(5rem, 10vw, 7.5rem);
+  height: clamp(5rem, 10vw, 7.5rem);
+  flex-shrink: 0;
+  animation: mark-reveal 1.45s cubic-bezier(0.76, 0, 0.24, 1) both;
+  will-change: transform, opacity;
+}
+
+.mark {
+  width: 88%;
+  height: 88%;
+  object-fit: contain;
+  animation: mark-settle 1.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.line {
+  position: absolute;
+  bottom: -0.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(34rem, calc(100vw - 3rem));
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(10, 10, 10, 0.22), transparent);
+  transform-origin: center;
+  animation: line-draw 1.45s cubic-bezier(0.76, 0, 0.24, 1) both;
+}
+
+/* ── Animations ── */
+
+@keyframes word-left {
+  0% {
+    transform: translateX(3.5rem);
+    opacity: 0;
+  }
+  18% {
+    opacity: 1;
+  }
+  68%, 100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes word-right {
+  0% {
+    transform: translateX(-3.5rem);
+    opacity: 0;
+  }
+  18% {
+    opacity: 1;
+  }
+  68%, 100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes mark-reveal {
+  0% {
+    transform: rotate(-4deg) scale(0.82);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  55%, 100% {
+    transform: rotate(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes mark-settle {
+  0% {
+    opacity: 1;
+    transform: scale(1.08) rotate(3deg);
+  }
+  58%, 100% {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+  }
+}
+
+@keyframes line-draw {
+  0%, 22% {
+    transform: translateX(-50%) scaleX(0);
+    opacity: 0;
+  }
+  58%, 100% {
+    transform: translateX(-50%) scaleX(1);
+    opacity: 1;
+  }
+}
+
+@keyframes intro-exit {
+  0%, 78% {
+    opacity: 1;
+    visibility: visible;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+/* ── Mobile ── */
+
+@media (max-width: 520px) {
+  @keyframes word-left {
+    0% {
+      transform: translateX(2rem);
+      opacity: 0;
+    }
+    18% {
+      opacity: 1;
+    }
+    68%, 100% {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes word-right {
+    0% {
+      transform: translateX(-2rem);
+      opacity: 0;
+    }
+    18% {
+      opacity: 1;
+    }
+    68%, 100% {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro {
+    display: none;
+  }
+}

@@ -1,21 +1,21 @@
 import React from "react";
-import { getSafeSession } from "@/lib/auth-helpers";
+import { getDashboardSession } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { resumes as resumesTable, resumeVersions as resumeVersionsTable } from "@/lib/schema";
 import { and, eq, desc, lt, or } from "drizzle-orm";
 import Link from "next/link";
 import {
-    RiFileTextLine,
     RiAddLine,
     RiTimeLine,
-    RiArrowRightLine,
-    RiMagicLine,
-    RiShieldCheckLine,
-    RiDownloadLine
+    RiDownload2Line,
 } from "react-icons/ri";
 import { ImportResume } from "@/components/dashboard/ImportResume";
 import { TailorResume } from "@/components/dashboard/TailorResume";
 import { decodeCursor, paginateRows } from "@/lib/pagination";
+import { DashboardPage, DashboardPageHeader } from "@/components/dashboard/DashboardPage";
+import { FeatureIcon } from "@/components/dashboard/FeatureIcon";
+import { AppIcon } from "@/components/ui/AppIcon";
+import { featureChrome } from "@/components/dashboard/feature-chrome";
 
 function formatTimeAgo(date: Date) {
     const now = new Date();
@@ -27,7 +27,7 @@ function formatTimeAgo(date: Date) {
 }
 
 export default async function ResumesPage({ searchParams }: { searchParams: Promise<{ masterCursor?: string; versionCursor?: string }> }) {
-    const session = await getSafeSession();
+    const session = await getDashboardSession();
     if (!session) return null;
     const params = await searchParams;
     const masterCursor = decodeCursor(params.masterCursor);
@@ -73,89 +73,70 @@ export default async function ResumesPage({ searchParams }: { searchParams: Prom
     }));
 
     return (
-        <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-8 pb-32">
-            {/* Header Section */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-[#0A0A0A] mb-1">
-                        Resumes
-                    </h1>
-                    <p className="text-xs font-normal text-neutral-500 leading-relaxed">
-                        Manage your master base resumes and compiled tailored versions.
-                    </p>
-                </div>
-                <div className="flex items-center gap-3">
-                    <Link
-                        href="/dashboard/resumes/new"
-                        className="px-4 py-2 bg-[#0A0A0A] text-white text-xs font-bold rounded-full hover:bg-neutral-800 transition-all flex items-center gap-2 shadow-2xs"
-                    >
-                        <RiAddLine size={16} /> Create Master Resume
+        <DashboardPage className="max-[640px]:pr-16">
+            <DashboardPageHeader
+                title="Resumes"
+                description="Import or create a resume, review it, and save versions for specific roles."
+                actions={
+                    <Link href="/dashboard/resumes/new" className={featureChrome.primaryButton}>
+                        <AppIcon icon={RiAddLine} size={16} />
+                        Create resume
                     </Link>
-                </div>
-            </div>
+                }
+            />
 
-            {/* Quick Action Tools */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <ImportResume />
                 <TailorResume resumes={formattedResumes} />
             </div>
 
-            {/* Section 1: Master Base Resumes */}
-            <div className="space-y-4">
-                <div className="flex items-center justify-between border-b border-neutral-200/70 pb-3">
-                    <h2 className="text-sm font-bold text-[#0A0A0A] flex items-center gap-2">
-                        <RiShieldCheckLine className="w-4 h-4 text-emerald-600" /> Master Base Resumes
-                    </h2>
-                </div>
+            <section className="space-y-4">
+                <h2 className={`${featureChrome.sectionTitle} flex items-center gap-2`}>
+                    <FeatureIcon feature="Resumes" size={16} className="text-muted-foreground" />
+                    Your resumes
+                </h2>
 
                 {masterResumes.length === 0 ? (
-                    <div className="bg-white border border-neutral-200/70 rounded-2xl p-10 text-center space-y-3 shadow-2xs">
-                        <div className="w-12 h-12 bg-neutral-100 rounded-xl flex items-center justify-center text-neutral-400 mx-auto">
-                            <RiFileTextLine size={24} />
-                        </div>
-                        <h3 className="text-sm font-bold text-[#0A0A0A]">No Master Resumes Found</h3>
-                        <p className="text-xs text-neutral-500 max-w-sm mx-auto">
-                            Create or import your master resume source to start generating tailored versions for job applications.
+                    <div className={featureChrome.emptyState}>
+                        <FeatureIcon feature="Resumes" size={22} className="text-muted-foreground" />
+                        <h3 className="mt-4 text-base font-semibold tracking-tight text-foreground">No resumes yet</h3>
+                        <p className="mt-1 max-w-sm text-sm leading-6 text-muted-foreground">
+                            Import an existing resume above, or create one to start editing.
                         </p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                         {masterResumes.map((resume) => (
-                            <div
-                                key={resume.id}
-                                className="bg-white border border-neutral-200/80 rounded-3xl p-6 flex flex-col justify-between hover:border-neutral-300 hover:shadow-lg transition-all space-y-4"
-                            >
-                                <div className="space-y-3">
-                                    <div className="flex items-center justify-between">
-                                        <span className="px-2.5 py-1 text-[10px] font-bold bg-neutral-100 text-neutral-600 rounded-full">
-                                            Master Base
-                                        </span>
-                                        <span className="text-[10px] text-neutral-400 font-semibold flex items-center gap-1">
-                                            <RiTimeLine size={12} /> {formatTimeAgo(resume.updatedAt)}
+                            <div key={resume.id} className={`${featureChrome.card} justify-between gap-4`}>
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between gap-2">
+                                        <span className="text-xs font-medium text-muted-foreground">Base resume</span>
+                                        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                                            <AppIcon icon={RiTimeLine} size={12} />
+                                            {formatTimeAgo(resume.updatedAt)}
                                         </span>
                                     </div>
-                                    <h3 className="font-extrabold text-base text-[#0A0A0A] line-clamp-1">
+                                    <h3 className="line-clamp-1 text-sm font-semibold tracking-tight text-foreground">
                                         {resume.title}
                                     </h3>
-                                    <p className="text-xs text-neutral-500 line-clamp-3 leading-relaxed">
+                                    <p className="text-sm leading-6 text-muted-foreground">
                                         Open this resume to review or edit its structured content.
                                     </p>
                                 </div>
-
-                                <div className="flex items-center justify-between pt-4 border-t border-neutral-100">
+                                <div className="flex items-center justify-between gap-2 border-t border-neutral-200/70 pt-3">
                                     <Link
                                         href={`/dashboard/resumes/${resume.id}`}
-                                        className="text-xs font-bold text-[#0A0A0A] hover:underline flex items-center gap-1"
+                                        className="text-sm font-medium text-foreground hover:underline"
                                     >
-                                        Edit Resume <RiArrowRightLine size={14} />
+                                        Edit resume
                                     </Link>
                                     <Link
                                         href={`/api/export/pdf?id=${resume.id}`}
                                         target="_blank"
-                                        className="p-2 text-neutral-500 hover:text-black rounded-lg hover:bg-neutral-100 transition-colors"
-                                        title="Export PDF"
+                                        className={featureChrome.iconButton}
+                                        aria-label="Download PDF"
                                     >
-                                        <RiDownloadLine size={16} />
+                                        <AppIcon icon={RiDownload2Line} size={16} />
                                     </Link>
                                 </div>
                             </div>
@@ -163,64 +144,59 @@ export default async function ResumesPage({ searchParams }: { searchParams: Prom
                     </div>
                 )}
                 {masterPage.page.nextCursor && (
-                    <Link href={`/dashboard/resumes?masterCursor=${encodeURIComponent(masterPage.page.nextCursor)}${params.versionCursor ? `&versionCursor=${encodeURIComponent(params.versionCursor)}` : ""}`} className="inline-flex rounded-xl border border-neutral-200 bg-white px-4 py-2 text-xs font-bold text-neutral-700 hover:bg-neutral-50">
+                    <Link
+                        href={`/dashboard/resumes?masterCursor=${encodeURIComponent(masterPage.page.nextCursor)}${params.versionCursor ? `&versionCursor=${encodeURIComponent(params.versionCursor)}` : ""}`}
+                        className={featureChrome.secondaryButton}
+                    >
                         View older resumes
                     </Link>
                 )}
-            </div>
+            </section>
 
-            {/* Section 2: Compiled Tailored Versions */}
             {tailoredVersions.length > 0 && (
-                <div className="space-y-6 pt-6">
-                    <div className="flex items-center justify-between border-b border-neutral-200 pb-4">
-                        <h2 className="text-lg font-extrabold text-[#0A0A0A] flex items-center gap-2">
-                            <RiMagicLine className="w-5 h-5 text-indigo-600" /> Tailored Versions
-                        </h2>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <section className="space-y-4">
+                    <h2 className={featureChrome.sectionTitle}>Tailored versions</h2>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                         {tailoredVersions.map((ver) => (
-                            <div
-                                key={ver.id}
-                                className="bg-white border border-neutral-200/80 rounded-3xl p-6 flex flex-col justify-between hover:border-neutral-300 hover:shadow-lg transition-all space-y-4"
-                            >
-                                <div className="space-y-3">
-                                    <div className="flex items-center justify-between">
-                                        <span className="px-2.5 py-1 text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-full">
-                                            Tailored Version
-                                        </span>
-                                        <span className="text-[10px] text-neutral-400 font-semibold flex items-center gap-1">
-                                            <RiTimeLine size={12} /> {formatTimeAgo(ver.createdAt)}
+                            <div key={ver.id} className={`${featureChrome.card} justify-between gap-4`}>
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between gap-2">
+                                        <span className="text-xs font-medium text-muted-foreground">Tailored version</span>
+                                        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                                            <AppIcon icon={RiTimeLine} size={12} />
+                                            {formatTimeAgo(ver.createdAt)}
                                         </span>
                                     </div>
-                                    <h3 className="font-extrabold text-base text-[#0A0A0A] line-clamp-1">
+                                    <h3 className="line-clamp-1 text-sm font-semibold tracking-tight text-foreground">
                                         {ver.title}
                                     </h3>
                                     {ver.company && (
-                                        <p className="text-xs font-semibold text-neutral-600">
-                                            Role: {ver.targetRole || "Target Position"} @ {ver.company}
+                                        <p className="text-sm leading-6 text-muted-foreground">
+                                            {ver.targetRole || "Target role"} at {ver.company}
                                         </p>
                                     )}
                                 </div>
-
-                                <div className="flex items-center justify-between pt-4 border-t border-neutral-100">
+                                <div className="border-t border-neutral-200/70 pt-3">
                                     <Link
                                         href={`/dashboard/resumes/${ver.resumeId}?version=${ver.id}`}
-                                        className="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1"
+                                        className="text-sm font-medium text-foreground hover:underline"
                                     >
-                                        View Tailored Version <RiArrowRightLine size={14} />
+                                        View version
                                     </Link>
                                 </div>
                             </div>
                         ))}
                     </div>
                     {versionPage.page.nextCursor && (
-                        <Link href={`/dashboard/resumes?versionCursor=${encodeURIComponent(versionPage.page.nextCursor)}${params.masterCursor ? `&masterCursor=${encodeURIComponent(params.masterCursor)}` : ""}`} className="inline-flex rounded-xl border border-neutral-200 bg-white px-4 py-2 text-xs font-bold text-neutral-700 hover:bg-neutral-50">
+                        <Link
+                            href={`/dashboard/resumes?versionCursor=${encodeURIComponent(versionPage.page.nextCursor)}${params.masterCursor ? `&masterCursor=${encodeURIComponent(params.masterCursor)}` : ""}`}
+                            className={featureChrome.secondaryButton}
+                        >
                             View older tailored versions
                         </Link>
                     )}
-                </div>
+                </section>
             )}
-        </div>
+        </DashboardPage>
     );
 }

@@ -4,6 +4,7 @@ import { resumeVersions as resumeVersionsTable } from "@/lib/schema";
 import { saveVersionSchema } from "@/lib/validation";
 import crypto from "crypto";
 import { requireAuth, getUserOwnedResume, notFoundResponse } from "@/lib/auth-policy";
+import { resolveResumeVersionContent } from "@/lib/resume-version-content";
 
 export async function POST(req: NextRequest) {
     try {
@@ -22,11 +23,16 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: validation.error.issues[0].message }, { status: 400 });
         }
 
-        const { resumeId, title, company, targetRole, jobDescription, content, matchScore, feedback } = validation.data;
+        const { resumeId, title, company, targetRole, jobDescription, matchScore, feedback } = validation.data;
 
         const resume = await getUserOwnedResume(authCtx.user.id, resumeId);
         if (!resume) {
             return notFoundResponse("Base resume");
+        }
+
+        const content = resolveResumeVersionContent(undefined, resume.content);
+        if (!content) {
+            return NextResponse.json({ error: "Base resume content is unavailable" }, { status: 409 });
         }
 
         const versionId = crypto.randomUUID();

@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
             if (userPlan === "Free") {
                 return NextResponse.json({
                     error: "PREMIUM_REQUIRED",
-                    message: "Executive templates require an eligible paid credit pack.",
+                    message: "Executive templates require a purchased credit pack.",
                     upgradeUrl: "/dashboard/settings?tab=billing"
                 }, { status: 403 });
             }

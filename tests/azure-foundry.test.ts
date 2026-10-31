@@ -150,6 +150,11 @@ describe("Azure Foundry request shaping", () => {
     assert.equal(TASK_BUDGETS.audit.reasoningEffort, "medium");
   });
 
+  test("reserves enough visible output for a structured role match", () => {
+    assert.ok(TASK_BUDGETS.tailor.maxOutputTokens >= 6000);
+    assert.equal(TASK_BUDGETS.tailor.reasoningEffort, "low");
+  });
+
   test("keeps usable text from an incomplete response", () => {
     assert.equal(
       getUsableAzureResponseText({
@@ -217,6 +222,7 @@ describe("Azure Foundry fallback policy", () => {
   test("falls back only for transient provider failures", () => {
     assert.equal(shouldFallbackToGemini({ status: 408 }), true);
     assert.equal(shouldFallbackToGemini({ status: 429 }), true);
+    assert.equal(shouldFallbackToGemini({ status: 500 }), true);
     assert.equal(shouldFallbackToGemini({ status: 503 }), true);
     assert.equal(shouldFallbackToGemini({ status: 400 }), false);
     assert.equal(shouldFallbackToGemini({ status: 401 }), false);

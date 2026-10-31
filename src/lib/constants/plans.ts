@@ -1,24 +1,24 @@
 export const PLANS = {
     starter: {
         id: "starter",
-        name: "Plains Zebra",
-        credits: 5,
+        name: "10 credits",
+        credits: 10,
         priceInINR: 99,
         displayPrice: "₹99",
     },
     pro: {
         id: "pro",
-        name: "Mountain Zebra",
+        name: "50 credits",
         credits: 50,
-        priceInINR: 499,
-        displayPrice: "₹499",
+        priceInINR: 400,
+        displayPrice: "₹400",
     },
     enterprise: {
         id: "enterprise",
-        name: "Grevy's Zebra",
-        credits: 200,
-        priceInINR: 1299,
-        displayPrice: "₹1299",
+        name: "100 credits",
+        credits: 100,
+        priceInINR: 800,
+        displayPrice: "₹800",
     },
 } as const;
 

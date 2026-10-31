@@ -1,12 +1,14 @@
 import React from "react";
 import Link from "next/link";
+import { getSupportEmail } from "@/lib/constants/support";
 
 export const metadata = {
     title: "Terms of Service | Zebra AI",
-    description: "Zebra AI Terms of Service — the rules and guidelines for using our platform.",
+    description: "Zebra AI Terms of Service: the rules and guidelines for using the platform.",
 };
 
 export default function TermsOfServicePage() {
+    const supportEmail = getSupportEmail();
     return (
         <div className="min-h-screen bg-[#FAFAFA]">
             <nav className="h-16 border-b border-black/5 bg-white/80 backdrop-blur-md sticky top-0 z-50 flex items-center px-8">
@@ -16,7 +18,7 @@ export default function TermsOfServicePage() {
             </nav>
             <main className="max-w-3xl mx-auto px-6 py-16">
                 <h1 className="text-4xl font-black tracking-tight mb-2">Terms of Service</h1>
-                <p className="text-sm text-black/40 font-semibold mb-12">Last updated: April 6, 2026</p>
+                <p className="text-sm text-black/40 font-semibold mb-12">Last updated: October 30, 2026</p>
 
                 <div className="prose-zebra space-y-10">
                     <Section title="1. Acceptance of Terms">
@@ -24,12 +26,14 @@ export default function TermsOfServicePage() {
                     </Section>
 
                     <Section title="2. Description of Service">
-                        <p>Zebra AI is an AI-powered career document platform that provides:</p>
+                        <p>Zebra AI is a resume and job-application workspace that provides:</p>
                         <ul>
-                            <li>A real-time resume compiler with live preview.</li>
-                            <li>AI-assisted content generation (copilot and RAG assistant).</li>
-                            <li>Template-based resume formatting and export.</li>
-                            <li>Career analytics and job tracking tools.</li>
+                            <li>A structured resume editor with live preview.</li>
+                            <li>AI-assisted suggestions that remain pending until you approve them. Original resumes stay intact while Applications review writes pending changes.</li>
+                            <li>PDF export of resumes and cover letters. DOCX export is not available.</li>
+                            <li>Job application tracking, LinkedIn profile review drafts you copy yourself, and account analytics based on saved workspace data.</li>
+                            <li>Zebu, a signed-in voice and text workspace assistant. Zebu can open pages and search your saved records. It does not post to LinkedIn, submit job applications, or spend credits.</li>
+                            <li>Optional public portfolio pages for selected work.</li>
                         </ul>
                     </Section>
 
@@ -48,7 +52,7 @@ export default function TermsOfServicePage() {
                             <li><strong>Credit Packs:</strong> Paid packs provide the number of credits displayed at checkout. Credits are not an unlimited subscription.</li>
                             <li>Payments are processed securely via Razorpay.</li>
                             <li>Purchases are one-time charges and do not auto-renew.</li>
-                            <li>Any refund eligibility and process will be shown at purchase or provided by support in accordance with applicable law.</li>
+                            <li>See our <Link href="/refunds" className="underline">Refund Policy</Link> for how to request a review of a purchase.</li>
                         </ul>
                     </Section>
 
@@ -73,9 +77,9 @@ export default function TermsOfServicePage() {
                     </Section>
 
                     <Section title="7. AI Disclaimer">
-                        <p>AI features powered primarily through Microsoft Azure Foundry, with an optional Google Gemini fallback, are provided as an assistive tool:</p>
+                        <p>AI features for reviews, matching, drafts, and audits use Microsoft Azure Foundry first, with an optional Google Gemini fallback. Zebu typed replies prefer Gemini when configured. These features are provided as an assistive tool:</p>
                         <ul>
-                            <li>AI suggestions may contain inaccuracies — always review before using.</li>
+                            <li>AI suggestions may contain inaccuracies. Always review them before using or publishing.</li>
                             <li>Zebra AI is not responsible for hiring outcomes based on AI-generated content.</li>
                             <li>AI processing is subject to third-party provider availability and terms.</li>
                         </ul>
@@ -103,7 +107,7 @@ export default function TermsOfServicePage() {
                     </Section>
 
                     <Section title="12. Contact">
-                        <p>For questions about these Terms, contact us at: <strong>legal@zebra-ai.app</strong></p>
+                        <p>For questions about these Terms: <a href={`mailto:${supportEmail}`} className="underline">{supportEmail}</a></p>
                     </Section>
                 </div>
 

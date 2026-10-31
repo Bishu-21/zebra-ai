@@ -25,7 +25,7 @@ export const TASK_BUDGETS: Record<TaskType, TaskBudget> = {
   copilot: { maxOutputTokens: 500, reasoningEffort: "low" },
   zebu: { maxOutputTokens: 500, reasoningEffort: "low" },
   audit: { maxOutputTokens: 16_000, reasoningEffort: "medium" },
-  tailor: { maxOutputTokens: 3000, reasoningEffort: "medium" },
+  tailor: { maxOutputTokens: 6000, reasoningEffort: "low" },
   parse: { maxOutputTokens: 5000, reasoningEffort: "low" },
   "cover-letter": { maxOutputTokens: 2200, reasoningEffort: "medium" },
   "job-extraction": { maxOutputTokens: 900, reasoningEffort: "low" },
@@ -326,10 +326,15 @@ function getConfiguredAzureOrFallback(): AzureFoundryConfig | null {
   return getAzureFoundryConfig();
 }
 
-function logAzureFallback(task: TaskType, error: unknown): void {
+function logProviderFallback(from: "azure" | "gemini", task: TaskType, error: unknown): void {
   const status = getErrorStatus(error);
   const reason = status ? `HTTP ${status}` : error instanceof Error ? error.name : "unknown error";
-  console.warn(`[AI] Azure Foundry ${task} request failed (${reason}); using Gemini fallback.`);
+  const destination = from === "azure" ? "Gemini" : "Azure";
+  console.warn(`[AI] ${from === "azure" ? "Azure Foundry" : "Gemini"} ${task} request failed (${reason}); using ${destination} fallback.`);
+}
+
+function logAzureFallback(task: TaskType, error: unknown): void {
+  logProviderFallback("azure", task, error);
 }
 
 async function recordAiOperation(
@@ -411,22 +416,36 @@ export async function generateAiResponse(
   let provider: "azure" | "gemini" | undefined;
   try {
     const gemini = options.allowGeminiFallback === false ? null : getGeminiClient();
-    if (options.preferGemini && gemini) {
-      provider = "gemini";
-      const text = await generateGeminiResponse(options, gemini);
-      await recordAiOperation(options, { provider, status: "success", latencyMs: Date.now() - startedAt, output: text });
-      return text;
-    }
     const azureConfig = getConfiguredAzureOrFallback();
+    if (options.preferGemini && gemini) {
+      try {
+        provider = "gemini";
+        const text = await generateGeminiResponse(options, gemini);
+        await recordAiOperation(options, { provider, status: "success", latencyMs: Date.now() - startedAt, output: text });
+        return text;
+      } catch (error) {
+        if (!azureConfig || !shouldFallbackToGemini(error)) throw error;
+        logProviderFallback("gemini", options.task, error);
+      }
+    }
 
     if (azureConfig) {
       try {
         provider = "azure";
         const client = getAzureFoundryClient(azureConfig);
-        const response = await client.responses.create(
-          buildAzureRequest(options, azureConfig),
-          getAzureRequestOptions(options.task),
-        );
+        let response;
+        try {
+          response = await client.responses.create(
+            buildAzureRequest(options, azureConfig),
+            getAzureRequestOptions(options.task),
+          );
+        } catch (error) {
+          if (!options.responseFormat || getErrorStatus(error) !== 400) throw error;
+          response = await client.responses.create(
+            buildAzureRequest({ ...options, responseFormat: undefined }, azureConfig),
+            getAzureRequestOptions(options.task),
+          );
+        }
 
         const responseText = getUsableAzureResponseText(response);
         if (responseText) {

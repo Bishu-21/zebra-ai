@@ -9,6 +9,7 @@ import { user } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { isAllowedZebuRoute } from "@/lib/zebu-contract";
+import { buildZebuSessionContinuity } from "@/lib/zebu-live-session-config";
 
 export const runtime = "nodejs";
 
@@ -16,6 +17,7 @@ const requestSchema = z.object({
   timeZone: z.string().trim().min(1).max(80).optional(),
   currentPage: z.string().trim().min(1).max(300).optional(),
   currentContext: z.string().trim().max(300).optional(),
+  resumeHandle: z.string().max(8_192).optional(),
 });
 
 function resolveTimeZone(value: string | undefined): string {
@@ -48,7 +50,8 @@ export async function POST(request: Request) {
       systemInstruction: buildZebuLivePrompt({ userName: auth.user.name, plan: account?.plan ?? "Free", credits: account?.credits ?? 0, currentPage, currentContext, now: new Date(), timeZone }),
       speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Puck" } } },
       inputAudioTranscription: {}, outputAudioTranscription: {},
-      tools: [{ functionDeclarations: zebuLiveToolDeclarations }],
+      tools: [{ functionDeclarations: zebuLiveToolDeclarations.filter(tool => tool.name === "navigate_to_page") }],
+      ...buildZebuSessionContinuity(requestData.success ? requestData.data.resumeHandle : undefined),
     };
     const now = Date.now();
     const token = await ai.authTokens.create({ config: { uses: 1, expireTime: new Date(now + ZEBU_LIVE_SESSION_MS).toISOString(), newSessionExpireTime: new Date(now + 60_000).toISOString(), liveConnectConstraints: { model: ZEBU_LIVE_MODEL, config } } });

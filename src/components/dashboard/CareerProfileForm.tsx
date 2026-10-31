@@ -6,6 +6,7 @@ import {
     CAREER_STAGES,
     type CareerStage,
 } from "@/lib/career-profile";
+import { featureChrome } from "@/components/dashboard/feature-chrome";
 
 interface CareerProfileFormProps {
     initialStage?: string | null;
@@ -58,7 +59,7 @@ export function CareerProfileForm({ initialStage, initialYears, onSaved, compact
     return (
         <div className={compact ? "space-y-4" : "space-y-5"}>
             <div>
-                <label className="mb-2 block text-[11px] font-bold uppercase tracking-wider text-neutral-500">
+                <label className={`mb-2 ${featureChrome.label}`}>
                     Which best describes you?
                 </label>
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -67,7 +68,7 @@ export function CareerProfileForm({ initialStage, initialYears, onSaved, compact
                             key={stage}
                             type="button"
                             onClick={() => setCareerStage(stage)}
-                            className={`rounded-xl border px-4 py-3 text-left text-xs font-semibold transition-colors ${careerStage === stage ? "border-black bg-black text-white" : "border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50"}`}
+                            className={`min-h-11 rounded-xl border px-4 py-3 text-left text-sm font-medium transition-colors ${careerStage === stage ? "border-foreground bg-foreground text-white" : "border-neutral-200 bg-white text-foreground hover:bg-muted"}`}
                         >
                             {CAREER_STAGE_LABELS[stage]}
                         </button>
@@ -77,7 +78,7 @@ export function CareerProfileForm({ initialStage, initialYears, onSaved, compact
 
             {careerStage === "professional" && (
                 <div>
-                    <label htmlFor="professional-years" className="mb-2 block text-[11px] font-bold uppercase tracking-wider text-neutral-500">
+                    <label htmlFor="professional-years" className={`mb-2 ${featureChrome.label}`}>
                         Years of professional experience
                     </label>
                     <input
@@ -88,7 +89,7 @@ export function CareerProfileForm({ initialStage, initialYears, onSaved, compact
                         step={1}
                         value={years}
                         onChange={(event) => setYears(event.target.value)}
-                        className="w-full rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm outline-none focus:border-black focus:bg-white"
+                        className={featureChrome.input}
                         placeholder="For example, 3"
                     />
                 </div>
@@ -99,7 +100,7 @@ export function CareerProfileForm({ initialStage, initialYears, onSaved, compact
                     type="button"
                     onClick={save}
                     disabled={saving || (careerStage === "professional" && years === "")}
-                    className="rounded-xl bg-black px-5 py-3 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-40"
+                    className={featureChrome.primaryButton}
                 >
                     {saving ? "Saving..." : "Save career profile"}
                 </button>

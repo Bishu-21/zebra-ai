@@ -4,7 +4,7 @@ import path from "path";
 const nextConfig: NextConfig = {
   // Neon transactions use ws's Node transport. Bundling its optional native
   // masking loader breaks runtime WebSocket frames in Vercel functions.
-  serverExternalPackages: ["ws"],
+  serverExternalPackages: ["ws", "kafkajs"],
   allowedDevOrigins: ["127.0.0.1"],
   // Dev streaming can attach many drain listeners to Next's gzip wrapper.
   // Keep production compression enabled while avoiding that dev-only warning.

@@ -14,6 +14,7 @@ describe("Error classification", () => {
     test("classifies browser network and chunk failures as transient", () => {
         assert.equal(isTransientNavigationError(new Error("network error")), true);
         assert.equal(isTransientNavigationError(new Error("Loading chunk 123 failed")), true);
+        assert.equal(isTransientNavigationError(new Error("The session store is temporarily unavailable.")), true);
     });
 
     test("does not hide application exceptions", () => {

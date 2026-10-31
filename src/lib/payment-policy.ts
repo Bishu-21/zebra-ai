@@ -18,18 +18,22 @@ export type PaymentGrantResult =
     | { status: "not_found" }
     | { status: "invalid"; reason: string };
 
+export function isCheckoutConfigured(
+    environment: Record<string, string | undefined> = process.env,
+): boolean {
+    return Boolean(
+        environment.RAZORPAY_WEBHOOK_SECRET?.trim()
+        && environment.RAZORPAY_KEY_SECRET?.trim()
+        && environment.NEXT_PUBLIC_RAZORPAY_KEY_ID?.trim(),
+    );
+}
+
 export function verifyRazorpayHmac(message: string, signature: string, secret: string): boolean {
     if (!/^[a-f\d]{64}$/i.test(signature)) return false;
 
     const expected = crypto.createHmac("sha256", secret).update(message).digest();
     const received = Buffer.from(signature, "hex");
     return received.length === expected.length && crypto.timingSafeEqual(received, expected);
-}
-
-function planLabel(planId: PlanId): string {
-    if (planId === "starter") return "Starter";
-    if (planId === "pro") return "Pro";
-    return "Enterprise";
 }
 
 /**
@@ -76,6 +80,9 @@ export async function grantCreditsForCapturedPayment(
     }
 
     if (pendingTx.status === "success") {
+        if (pendingTx.paymentId !== input.paymentId) {
+            return { status: "invalid", reason: "Order was fulfilled by a different payment." };
+        }
         return { status: "already_processed", addedCredits: plan.credits };
     }
     if (pendingTx.status !== "pending") {
@@ -100,7 +107,7 @@ export async function grantCreditsForCapturedPayment(
         const [updatedUser] = await tx.update(userTable)
             .set({
                 credits: sql`${userTable.credits} + ${plan.credits}`,
-                plan: planLabel(planId),
+                plan: plan.name,
             })
             .where(eq(userTable.id, pendingTx.userId))
             .returning({ id: userTable.id });

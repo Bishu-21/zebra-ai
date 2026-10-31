@@ -58,7 +58,7 @@ export const PRODUCT_CAPABILITIES = {
         route: null,
         owner: "platform",
         evidence: "Retention workflow requires support review",
-        userLanguage: "Contact support to request account deletion",
+        userLanguage: "Email accounts@zebra-ai.app to request account deletion",
     },
     zebuWorkspaceWrites: {
         id: "zebu-workspace-writes",

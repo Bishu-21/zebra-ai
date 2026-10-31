@@ -5,10 +5,25 @@ import { db, sanitizeSecretText } from "@/lib/db";
 import { user as userTable } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
+import { isCheckoutConfigured } from "@/lib/payment-policy";
 
 export const dynamic = "force-dynamic";
 
-export default async function DashboardLayout({
+const dashboardFrameClassName = "min-h-screen bg-background flex font-sans text-foreground overflow-hidden";
+
+export default function DashboardLayout({
+    children,
+}: {
+    children: React.ReactNode;
+}) {
+    return (
+        <div className={dashboardFrameClassName}>
+            <DashboardAuthenticatedLayout>{children}</DashboardAuthenticatedLayout>
+        </div>
+    );
+}
+
+async function DashboardAuthenticatedLayout({
     children,
 }: {
     children: React.ReactNode;
@@ -22,7 +37,7 @@ export default async function DashboardLayout({
         const msg = sanitizeSecretText(error instanceof Error ? error.message : String(error));
         console.error("Dashboard Session Check Failed:", msg);
         return (
-            <main className="min-h-screen bg-[#FAF9F6] px-6 py-20 text-center">
+            <main className="min-h-screen w-full bg-[#FAF9F6] px-6 py-20 text-center">
                 <div className="mx-auto max-w-md rounded-3xl border border-amber-200 bg-white p-8 shadow-sm">
                     <h1 className="text-2xl font-bold text-[#0A0A0A]">Session service unavailable</h1>
                     <p className="mt-3 text-sm leading-6 text-neutral-600">
@@ -49,7 +64,6 @@ export default async function DashboardLayout({
     let shouldPromptCareerProfile = false;
 
     try {
-        // Fetch fresh user data from DB with fallback for transient DB outages
         const currentUser = await db.query.user.findFirst({
             where: eq(userTable.id, user.id)
         });
@@ -70,6 +84,7 @@ export default async function DashboardLayout({
             userName={user.name}
             userImage={user.image}
             shouldPromptCareerProfile={shouldPromptCareerProfile}
+            checkoutAvailable={isCheckoutConfigured()}
         >
             {children}
         </DashboardShell>

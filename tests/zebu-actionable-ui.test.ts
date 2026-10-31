@@ -14,6 +14,7 @@ describe("Zebu actionable workspace UI", () => {
       "/dashboard/portfolio",
       "/dashboard/analytics",
       "/dashboard/settings",
+      "/dashboard/linkedin",
     ];
 
     for (const page of pages) {
@@ -27,6 +28,7 @@ describe("Zebu actionable workspace UI", () => {
     assert.equal(getZebuPageLabel("/dashboard"), "Home");
     assert.equal(getZebuPageLabel("/dashboard/resumes/resume_123"), "Resume editor");
     assert.equal(getZebuPageLabel("/dashboard/applications/app_123"), "Application workspace");
+    assert.equal(getZebuPageLabel("/dashboard/linkedin"), "LinkedIn review");
   });
 
   test("live sessions receive and refresh the current route", () => {
@@ -71,6 +73,32 @@ describe("Zebu actionable workspace UI", () => {
     assert.match(assistantSource, /Opening \$\{pendingNavigation\.label\}/);
   });
 
+  test("typed questions use the turn API instead of opening a live voice session", () => {
+    const assistantSource = readFileSync("src/components/dashboard/ZebuAssistant.tsx", "utf8");
+    assert.match(assistantSource, /await sendFallback\(text, attempt\)/);
+    assert.match(assistantSource, /fetch\("\/api\/zebu\/turn"/);
+    assert.match(assistantSource, /setPendingReply\(true\)/);
+    assert.doesNotMatch(assistantSource, /voiceSessionActive/);
+    assert.doesNotMatch(assistantSource, /await live\.sendText\(text\)/);
+  });
+
+  test("turn context includes credit balance so Zebu does not send people to Settings for it", () => {
+    const turn = readFileSync("src/app/api/zebu/turn/route.ts", "utf8");
+    assert.match(turn, /credits: "credits" in sessionUser \? sessionUser\.credits : undefined/);
+    assert.match(turn, /Do not navigate to Settings unless the user asked to open Settings/);
+  });
+
+  test("preferred Gemini Zebu turns fall back to Azure on transient Gemini failures", () => {
+    const foundry = readFileSync("src/lib/azure-foundry.ts", "utf8");
+    const turn = readFileSync("src/app/api/zebu/turn/route.ts", "utf8");
+    assert.match(turn, /preferGemini: true/);
+    assert.match(foundry, /if \(options\.preferGemini && gemini\)/);
+    assert.match(foundry, /logProviderFallback\("gemini"/);
+    assert.match(foundry, /if \(!azureConfig \|\| !shouldFallbackToGemini\(error\)\) throw error;/);
+    assert.match(foundry, /getErrorStatus\(error\) !== 400/);
+    assert.match(foundry, /responseFormat: undefined/);
+  });
+
   test("clear shortcuts bypass model interpretation and expose action receipts", () => {
     const assistantSource = readFileSync("src/components/dashboard/ZebuAssistant.tsx", "utf8");
     const homeActions = getZebuSuggestions("/dashboard");
@@ -80,13 +108,12 @@ describe("Zebu actionable workspace UI", () => {
     assert.match(assistantSource, /> Retry</);
   });
 
-  test("supports mobile peek, half-height, and explicit full-screen states", () => {
+  test("keeps compact mode content-sized and conversation within the viewport", () => {
     const assistantSource = readFileSync("src/components/dashboard/ZebuAssistant.tsx", "utf8");
     const styles = readFileSync("src/app/globals.css", "utf8");
-    assert.match(assistantSource, /zebu-panel--full/);
-    assert.match(styles, /\.zebu-panel--compact \{ height: 176px/);
-    assert.match(styles, /\.zebu-panel--expanded \{ height: min\(54dvh/);
-    assert.match(styles, /\.zebu-panel--full[^}]*height: 100dvh/);
+    assert.doesNotMatch(assistantSource, /setFullScreen|aria-modal/);
+    assert.match(styles, /\.zebu-navigation-voice \.zebu-panel--compact \{ height: auto/);
+    assert.match(styles, /\.zebu-navigation-voice \.zebu-panel--expanded[^}]*100dvh/);
     assert.match(styles, /env\(safe-area-inset-bottom\)/);
   });
 });

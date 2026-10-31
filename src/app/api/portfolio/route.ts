@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, sanitizeSecretText } from "@/lib/db";
 import { portfolios as portfoliosTable } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
@@ -25,8 +25,8 @@ export async function GET() {
 
         return NextResponse.json({ portfolio: portfolio || null });
     } catch (error: unknown) {
-        console.error("GET /api/portfolio Error:", error);
-        return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to fetch portfolio" }, { status: 500 });
+        console.error("GET /api/portfolio Error:", sanitizeSecretText(error instanceof Error ? error.message : String(error)));
+        return NextResponse.json({ error: "Failed to fetch portfolio" }, { status: 500 });
     }
 }
 
@@ -84,8 +84,7 @@ export async function POST(req: Request) {
         if (error instanceof z.ZodError) {
             return NextResponse.json({ error: error.issues?.[0]?.message || "Validation failed" }, { status: 400 });
         }
-        console.error("POST /api/portfolio Error:", error);
-        return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to save portfolio" }, { status: 500 });
+        console.error("POST /api/portfolio Error:", sanitizeSecretText(error instanceof Error ? error.message : String(error)));
+        return NextResponse.json({ error: "Failed to save portfolio" }, { status: 500 });
     }
 }
-

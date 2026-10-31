@@ -1,25 +1,27 @@
 "use client";
+import { DashboardToolCard } from "./DashboardToolCard";
 
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { m, AnimatePresence } from "framer-motion";
 import {
-    RiCloseCircleLine,
+    RiCloseLine,
     RiCheckboxCircleLine,
     RiErrorWarningLine,
-    RiInformationLine,
-    RiMagicLine,
     RiArrowDropDownLine,
     RiLoader4Line,
-    RiArrowRightLine,
-    RiFileTextLine,
     RiUploadCloud2Line,
-    RiFocus3Line,
-    RiArrowRightSLine
+    RiLink,
+    RiFileSearchLine,
+    RiSaveLine,
+    RiRefreshLine,
 } from "react-icons/ri";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/Toast";
-import { RiSaveLine, RiBuildingLine, RiBriefcaseLine, RiRefreshLine } from "react-icons/ri";
 import { getErrorMessage } from "@/lib/async-error-handler";
+import { useDialogFocus } from "@/hooks/useDialogFocus";
+import { FeatureIcon } from "@/components/dashboard/FeatureIcon";
+import { AppIcon } from "@/components/ui/AppIcon";
+import { featureChrome } from "@/components/dashboard/feature-chrome";
 
 export interface Resume {
     id: string;
@@ -54,20 +56,78 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
     const [analysis, setAnalysis] = useState<TailorAnalysis | null>(null);
     const [availableResumes, setAvailableResumes] = useState<Resume[]>(resumes);
     const [isUploadingResume, setIsUploadingResume] = useState(false);
+    const [jobUrl, setJobUrl] = useState("");
+    const [importingJob, setImportingJob] = useState(false);
+    const [jobSource, setJobSource] = useState("");
     const fileInputRef = React.useRef<HTMLInputElement>(null);
+    const jobFileInputRef = React.useRef<HTMLInputElement>(null);
     const router = useRouter();
+    const closeDialog = useCallback(() => {
+        if (!(loading || isUploadingResume || importingJob)) setIsOpen(false);
+    }, [importingJob, isUploadingResume, loading]);
+    const dialogRef = useDialogFocus(isOpen, closeDialog);
+
+    const importJobUrl = useCallback(async (url: string) => {
+        setImportingJob(true);
+        setError(null);
+        setJobSource("");
+        try {
+            const response = await fetch("/api/jobs/scrape", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ url }),
+            });
+            const data = await response.json();
+            if (!response.ok || !data.success) throw new Error(data.error || "Could not read this job page. Upload a PDF or paste its description.");
+            if (!data.description?.trim()) throw new Error("The page did not provide a readable job description. Upload a PDF or paste the description.");
+            setFormData(current => ({ ...current, company: data.company || "", targetRole: data.position || "", jobDescription: data.description }));
+            setAnalysis(null);
+            setJobSource(data.fieldSource === "page-metadata" ? `${url} (page text imported; check company and role)` : url);
+        } catch (cause) {
+            setError(`${cause instanceof Error ? cause.message : "Could not import this job page."} Any text already entered has been kept.`);
+        } finally {
+            setImportingJob(false);
+        }
+    }, []);
 
     React.useEffect(() => {
         const open = () => {
             setIsOpen(true);
             sessionStorage.removeItem("zebu:pending-tool");
+            const pendingUrl = sessionStorage.getItem("zebu:pending-job-url");
+            if (pendingUrl) {
+                sessionStorage.removeItem("zebu:pending-job-url");
+                setJobUrl(pendingUrl);
+                void importJobUrl(pendingUrl);
+            }
         };
         window.addEventListener("zebu:open-role_match", open);
         if (sessionStorage.getItem("zebu:pending-tool") === "role_match") open();
         return () => window.removeEventListener("zebu:open-role_match", open);
-    }, []);
+    }, [importJobUrl]);
 
-    const isBusy = loading || isUploadingResume;
+    const isBusy = loading || isUploadingResume || importingJob;
+
+    const importJobFile = async (file?: File) => {
+        if (!file || isBusy) return;
+        setImportingJob(true);
+        setError(null);
+        setJobSource("");
+        try {
+            const body = new FormData();
+            body.append("file", file);
+            const response = await fetch("/api/jobs/extract", { method: "POST", body });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Could not read the job document.");
+            setFormData(current => ({ ...current, jobDescription: data.jobDescription, company: "", targetRole: "" }));
+            setAnalysis(null);
+            setJobSource(file.name);
+        } catch (cause) {
+            setError(`${cause instanceof Error ? cause.message : "Could not read the job document."} Any text already entered has been kept.`);
+        } finally {
+            setImportingJob(false);
+            if (jobFileInputRef.current) jobFileInputRef.current.value = "";
+        }
+    };
 
     const refreshDashboard = () => {
         try {
@@ -81,15 +141,10 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
     React.useEffect(() => {
         if (!isOpen) return;
         document.body.style.overflow = "hidden";
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === "Escape" && !isBusy) setIsOpen(false);
-        };
-        window.addEventListener("keydown", handleKeyDown);
         return () => {
             document.body.style.overflow = "unset";
-            window.removeEventListener("keydown", handleKeyDown);
         };
-    }, [isOpen, isBusy]);
+    }, [isOpen]);
 
     const handleResumeUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -179,13 +234,6 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
         if (savingVersion) return;
         if (!formData.resumeId || !formData.jobDescription || !analysis) return;
 
-        const baseResume = availableResumes.find(r => r.id === formData.resumeId);
-        if (!baseResume) return;
-        if (typeof baseResume.content !== "string" || !baseResume.content) {
-            showToast("The selected resume content is unavailable. Refresh and try again.", "error");
-            return;
-        }
-
         setSavingVersion(true);
         try {
             const res = await fetch("/api/resume-versions", {
@@ -197,8 +245,6 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                     company: formData.company,
                     targetRole: formData.targetRole,
                     jobDescription: formData.jobDescription,
-                    // Save an unchanged snapshot. Suggested edits remain pending human review.
-                    content: baseResume.content,
                     matchScore: analysis.matchScore,
                     feedback: analysis
                 }),
@@ -222,91 +268,81 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
 
     return (
         <>
-            {/* Launcher Card */}
-            <div
+            <DashboardToolCard
+                icon={RiFileSearchLine}
+                title="Review against a job"
+                description="Compare a resume with a job description. Uses one credit. You approve each edit before export."
                 onClick={() => setIsOpen(true)}
-                className="group/card relative overflow-hidden flex flex-col justify-between w-full h-full cursor-pointer transition-all p-7 bg-white border border-neutral-200/80 rounded-3xl hover:border-neutral-300 hover:shadow-xl active:scale-[0.99] group shadow-xs"
-            >
-                <div className="flex items-start justify-between mb-8">
-                    <div className="w-11 h-11 bg-neutral-100 rounded-full flex items-center justify-center text-neutral-600 group-hover/card:bg-[#0A0A0A] group-hover/card:text-white transition-colors duration-300">
-                        <RiFocus3Line size={22} />
-                    </div>
-                    <div className="flex items-center gap-1 opacity-0 group-hover/card:opacity-100 transition-opacity">
-                        <span className="text-xs font-semibold text-neutral-500">Job Matcher</span>
-                        <RiArrowRightSLine size={16} className="text-[#0A0A0A]" />
-                    </div>
-                </div>
+            />
 
-                <div>
-                    <h3 className="font-bold text-xl mb-1.5 text-[#0A0A0A] tracking-tight">How Well Does This Fit the Job?</h3>
-                    <p className="text-xs text-neutral-500 font-normal leading-relaxed">
-                        Match your experience against specific job descriptions.
-                    </p>
-                </div>
-            </div>
-
-            {/* Tool Modal */}
             <AnimatePresence>
                 {isOpen && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
                         <m.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="fixed inset-0 bg-black/40 backdrop-blur-md"
-                            onClick={() => !isBusy && setIsOpen(false)}
+                            className={featureChrome.backdrop}
+                            onClick={closeDialog}
                         />
 
                         <m.div
-                            initial={{ scale: 0.96, opacity: 0, y: 12 }}
+                            ref={dialogRef}
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="role-match-title"
+                            initial={{ scale: 0.98, opacity: 0, y: 8 }}
                             animate={{ scale: 1, opacity: 1, y: 0 }}
-                            exit={{ scale: 0.96, opacity: 0, y: 12 }}
-                            transition={{ duration: 0.2, ease: "easeOut" }}
-                            className="relative bg-white w-full max-w-2xl max-h-[85vh] rounded-3xl shadow-2xl border border-neutral-200/80 flex flex-col overflow-hidden z-10"
+                            exit={{ scale: 0.98, opacity: 0, y: 8 }}
+                            transition={{ duration: 0.16, ease: "easeOut" }}
+                            className={`${featureChrome.dialog} max-w-2xl`}
                         >
-                            {/* Header */}
-                            <div className="px-6 py-5 border-b border-neutral-200/60 flex items-center justify-between bg-white sticky top-0 z-20">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-11 h-11 rounded-full bg-[#0A0A0A] text-white flex items-center justify-center shadow-2xs shrink-0">
-                                        <RiFocus3Line size={22} />
-                                    </div>
-                                    <div>
-                                        <h2 className="text-lg font-bold tracking-tight text-[#0A0A0A]">How Well Does This Fit the Job?</h2>
-                                        <p className="text-xs font-normal text-neutral-500">Analyze profile &amp; job description alignment</p>
+                            <div className={featureChrome.dialogHeader}>
+                                <div className="flex min-w-0 flex-1 items-start gap-2.5 sm:items-center">
+                                    <FeatureIcon feature="Resumes" size={18} className="text-muted-foreground" />
+                                    <div className="min-w-0">
+                                        <h2 id="role-match-title" className="text-base font-semibold tracking-tight text-foreground">
+                                            Review against a job
+                                        </h2>
+                                        <p className={featureChrome.helper}>Compare a resume with a job description</p>
                                     </div>
                                 </div>
                                 <button
-                                    onClick={() => !isBusy && setIsOpen(false)}
-                                    className="w-8 h-8 rounded-full bg-neutral-100 text-neutral-500 hover:bg-neutral-200 hover:text-[#0A0A0A] flex items-center justify-center transition-all disabled:opacity-40"
+                                    type="button"
+                                    onClick={closeDialog}
+                                    aria-label="Close job match"
+                                    className={featureChrome.iconButton}
                                     disabled={isBusy}
                                 >
-                                    <RiCloseCircleLine size={18} />
+                                    <AppIcon icon={RiCloseLine} size={18} />
                                 </button>
                             </div>
 
-                            <div className="flex-grow overflow-y-auto p-6 sm:p-8 space-y-6">
+                            <div className={`${featureChrome.dialogBody} space-y-5`}>
                                 {!analysis ? (
-                                    <div className="space-y-6">
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="space-y-5">
+                                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                             <div className="space-y-1.5 sm:col-span-2">
-                                                <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider flex items-center gap-1.5">
-                                                    <RiFileTextLine size={14} />
-                                                    Base Profile
+                                                <label htmlFor="role-match-resume" className={featureChrome.label}>
+                                                    Base resume
                                                 </label>
-                                                <div className="flex flex-col sm:flex-row gap-2">
+                                                <div className="flex flex-col gap-2 sm:flex-row">
                                                     <div className="relative flex-1">
-                                                    <select
-                                                        disabled={isBusy}
-                                                        className="w-full bg-neutral-50 border border-neutral-200/80 focus:bg-white focus:border-[#0A0A0A] rounded-full px-4 py-2.5 text-xs font-semibold text-[#0A0A0A] outline-none transition-all appearance-none cursor-pointer disabled:opacity-50"
-                                                        value={formData.resumeId}
-                                                        onChange={(e) => setFormData({...formData, resumeId: e.target.value})}
-                                                    >
-                                                        {availableResumes.map(r => <option key={r.id} value={r.id}>{r.title}</option>)}
-                                                        {availableResumes.length === 0 && <option value="">No resumes yet</option>}
-                                                    </select>
-                                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-400">
-                                                        <RiArrowDropDownLine size={20} />
-                                                    </div>
+                                                        <select
+                                                            id="role-match-resume"
+                                                            disabled={isBusy}
+                                                            className={featureChrome.select}
+                                                            value={formData.resumeId}
+                                                            onChange={(e) => setFormData({ ...formData, resumeId: e.target.value })}
+                                                        >
+                                                            {availableResumes.map((r) => (
+                                                                <option key={r.id} value={r.id}>{r.title}</option>
+                                                            ))}
+                                                            {availableResumes.length === 0 && <option value="">No resumes yet</option>}
+                                                        </select>
+                                                        <div className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400">
+                                                            <AppIcon icon={RiArrowDropDownLine} size={20} />
+                                                        </div>
                                                     </div>
                                                     <input
                                                         ref={fileInputRef}
@@ -319,156 +355,176 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                                                         type="button"
                                                         onClick={() => fileInputRef.current?.click()}
                                                         disabled={isBusy}
-                                                        className="shrink-0 inline-flex items-center justify-center gap-2 rounded-full border border-neutral-200 bg-white px-4 py-2.5 text-xs font-bold text-neutral-800 hover:border-neutral-400 disabled:opacity-40"
+                                                        className={featureChrome.secondaryButton}
                                                     >
-                                                        {isUploadingResume ? <RiLoader4Line className="animate-spin" size={15} /> : <RiUploadCloud2Line size={15} />}
+                                                        {isUploadingResume ? (
+                                                            <AppIcon icon={RiLoader4Line} size={15} className="animate-spin" />
+                                                        ) : (
+                                                            <AppIcon icon={RiUploadCloud2Line} size={15} />
+                                                        )}
                                                         {isUploadingResume ? "Structuring..." : "Upload resume"}
                                                     </button>
                                                 </div>
-                                                <p className="text-[10px] text-neutral-500">PDF, DOCX, or TXT up to 5MB. The original source is preserved for review.</p>
+                                                <p className={featureChrome.helper}>PDF, DOCX, or TXT up to 5MB. The original source is preserved for review.</p>
                                             </div>
 
                                             <div className="space-y-1.5">
-                                                <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider flex items-center gap-1.5">
-                                                    <RiBuildingLine size={14} />
-                                                    Company
-                                                </label>
+                                                <label htmlFor="role-match-company" className={featureChrome.label}>Company</label>
                                                 <input
+                                                    id="role-match-company"
                                                     type="text"
                                                     disabled={isBusy}
-                                                    placeholder="e.g. Google"
-                                                    className="w-full bg-neutral-50 border border-neutral-200/80 focus:bg-white focus:border-[#0A0A0A] rounded-full px-4 py-2.5 text-xs font-semibold text-[#0A0A0A] outline-none transition-all disabled:opacity-50"
+                                                    placeholder="e.g. Example Co."
+                                                    className={featureChrome.input}
                                                     value={formData.company}
-                                                    onChange={(e) => setFormData({...formData, company: e.target.value})}
+                                                    onChange={(e) => setFormData({ ...formData, company: e.target.value })}
                                                 />
                                             </div>
 
                                             <div className="space-y-1.5">
-                                                <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider flex items-center gap-1.5">
-                                                    <RiBriefcaseLine size={14} />
-                                                    Role
-                                                </label>
+                                                <label htmlFor="role-match-role" className={featureChrome.label}>Role</label>
                                                 <input
+                                                    id="role-match-role"
                                                     type="text"
                                                     disabled={isBusy}
-                                                    placeholder="e.g. Frontend Dev"
-                                                    className="w-full bg-neutral-50 border border-neutral-200/80 focus:bg-white focus:border-[#0A0A0A] rounded-full px-4 py-2.5 text-xs font-semibold text-[#0A0A0A] outline-none transition-all disabled:opacity-50"
+                                                    placeholder="e.g. Frontend developer"
+                                                    className={featureChrome.input}
                                                     value={formData.targetRole}
-                                                    onChange={(e) => setFormData({...formData, targetRole: e.target.value})}
+                                                    onChange={(e) => setFormData({ ...formData, targetRole: e.target.value })}
                                                 />
                                             </div>
                                         </div>
 
                                         <div className="space-y-1.5">
-                                            <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider flex items-center gap-1.5">
-                                                <RiInformationLine size={14} />
-                                                Target Job Description
-                                            </label>
-
-                                            <div className="relative overflow-hidden rounded-2xl border border-neutral-200/80 bg-neutral-50/50">
-                                                <AnimatePresence>
-                                                    {loading && (
-                                                        <m.div
-                                                            initial={{ opacity: 0 }}
-                                                            animate={{ opacity: 1 }}
-                                                            exit={{ opacity: 0 }}
-                                                            className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-white/80 backdrop-blur-xs gap-4 p-6"
-                                                        >
-                                                            <RiLoader4Line className="animate-spin text-[#0A0A0A]" size={32} />
-                                                            <div className="flex flex-col items-center gap-2 text-center">
-                                                                <span className="text-xs font-bold text-[#0A0A0A]">{scanStep}</span>
-                                                                <div className="w-40 h-1.5 bg-neutral-200 rounded-full overflow-hidden">
-                                                                    <m.div
-                                                                        className="h-full bg-[#0A0A0A]"
-                                                                        initial={{ width: "0%" }}
-                                                                        animate={{ width: "100%" }}
-                                                                        transition={{ duration: 6, ease: "linear" }}
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                        </m.div>
-                                                    )}
-                                                </AnimatePresence>
-
-                                                <textarea
-                                                    placeholder="Paste the full job requirements from the recruiter..."
-                                                    className="w-full min-h-[220px] p-4 text-xs font-medium text-[#0A0A0A] focus:outline-none transition-all resize-none leading-relaxed bg-transparent placeholder:text-neutral-400"
-                                                    value={formData.jobDescription}
-                                                    onChange={(e) => setFormData({...formData, jobDescription: e.target.value})}
-                                                    disabled={isBusy}
+                                            <label htmlFor="role-match-job-url" className={featureChrome.label}>Job link</label>
+                                            <div className="flex flex-col gap-2 sm:flex-row">
+                                                <div className="relative min-w-0 flex-1">
+                                                    <AppIcon icon={RiLink} size={16} className={featureChrome.fieldIcon} />
+                                                    <input
+                                                        id="role-match-job-url"
+                                                        type="url"
+                                                        value={jobUrl}
+                                                        onChange={(event) => setJobUrl(event.target.value)}
+                                                        disabled={isBusy}
+                                                        placeholder="https://company.com/careers/role"
+                                                        className={`${featureChrome.input} pl-10`}
+                                                    />
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => void importJobUrl(jobUrl.trim())}
+                                                    disabled={isBusy || !jobUrl.trim()}
+                                                    className={featureChrome.primaryButton}
+                                                >
+                                                    <AppIcon icon={RiFileSearchLine} size={16} />
+                                                    {importingJob ? "Importing…" : "Import job"}
+                                                </button>
+                                                <input
+                                                    ref={jobFileInputRef}
+                                                    type="file"
+                                                    accept=".pdf,.txt,application/pdf,text/plain"
+                                                    className="hidden"
+                                                    onChange={(event) => void importJobFile(event.target.files?.[0])}
                                                 />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => jobFileInputRef.current?.click()}
+                                                    disabled={isBusy}
+                                                    className={featureChrome.secondaryButton}
+                                                >
+                                                    Upload PDF or TXT
+                                                </button>
                                             </div>
+                                            {jobSource && (
+                                                <p role="status" className={featureChrome.helper}>
+                                                    Imported from {jobSource}. Check the fields and description before analysis.
+                                                </p>
+                                            )}
+                                            {importingJob && (
+                                                <p role="status" className={featureChrome.helper}>Reading the job source…</p>
+                                            )}
+                                        </div>
+
+                                        <div className="relative space-y-1.5">
+                                            <label htmlFor="role-match-description" className={featureChrome.label}>
+                                                Job description
+                                            </label>
+                                            <AnimatePresence>
+                                                {loading && (
+                                                    <m.div
+                                                        initial={{ opacity: 0 }}
+                                                        animate={{ opacity: 1 }}
+                                                        exit={{ opacity: 0 }}
+                                                        className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-3 rounded-xl bg-white/90 p-6"
+                                                    >
+                                                        <AppIcon icon={RiLoader4Line} size={24} className="animate-spin text-foreground" />
+                                                        <p className="text-sm font-medium text-foreground">{scanStep}</p>
+                                                    </m.div>
+                                                )}
+                                            </AnimatePresence>
+                                            <textarea
+                                                id="role-match-description"
+                                                placeholder="Import a job link or PDF above, or paste the description here."
+                                                className={`${featureChrome.textarea} min-h-[180px]`}
+                                                value={formData.jobDescription}
+                                                onChange={(e) => setFormData({ ...formData, jobDescription: e.target.value })}
+                                                disabled={isBusy}
+                                            />
                                         </div>
 
                                         {error && (
-                                            <m.div
-                                                initial={{ opacity: 0, y: 8 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                className="p-3 bg-red-50 border border-red-200/80 rounded-xl flex items-center justify-between gap-3 text-xs font-medium text-red-700"
-                                            >
+                                            <div className="flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
                                                 <div className="flex items-center gap-2">
-                                                    <RiErrorWarningLine size={16} className="shrink-0 text-red-600" />
+                                                    <AppIcon icon={RiErrorWarningLine} size={16} className="text-red-600" />
                                                     <span>{error}</span>
                                                 </div>
                                                 <button
                                                     type="button"
-                                                    onClick={handleTailor}
-                                                    disabled={loading}
-                                                    className="px-3 py-1.5 bg-white text-red-700 border border-red-200 rounded-full font-bold text-xs hover:bg-red-100/50 transition-all flex items-center gap-1 shrink-0"
+                                                    onClick={() => formData.jobDescription.trim() ? void handleTailor() : jobUrl.trim() ? void importJobUrl(jobUrl.trim()) : jobFileInputRef.current?.click()}
+                                                    disabled={isBusy}
+                                                    className={featureChrome.secondaryButton}
                                                 >
-                                                    <RiRefreshLine size={14} />
+                                                    <AppIcon icon={RiRefreshLine} size={14} />
                                                     Retry
                                                 </button>
-                                            </m.div>
+                                            </div>
                                         )}
                                     </div>
                                 ) : (
-                                    <div className="space-y-6">
-                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                            <div className="bg-[#0A0A0A] text-white p-6 rounded-2xl flex flex-col items-center justify-center text-center">
-                                                <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 mb-1">Match Potential</p>
-                                                <h3 className="text-5xl font-black text-white">{analysis.matchScore}%</h3>
-                                                <div className="mt-3 w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
-                                                    <m.div
-                                                        initial={{ width: 0 }}
-                                                        animate={{ width: `${analysis.matchScore}%` }}
-                                                        transition={{ duration: 1.2, ease: "easeOut" }}
-                                                        className="h-full bg-emerald-400"
-                                                    />
-                                                </div>
+                                    <div className="space-y-5">
+                                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                                            <div className={`${featureChrome.card} items-center text-center`}>
+                                                <p className={featureChrome.helper}>Match score</p>
+                                                <p className="mt-1 text-3xl font-semibold tracking-tight text-foreground">{analysis.matchScore}%</p>
                                             </div>
-
-                                            <div className="sm:col-span-2 bg-neutral-50 border border-neutral-200/80 p-5 rounded-2xl flex flex-col justify-center">
-                                                <h4 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">Role Fit Assessment</h4>
-                                                <p className="text-xs font-semibold text-[#0A0A0A] leading-relaxed">
-                                                    {analysis.roleFit}
-                                                </p>
+                                            <div className={`${featureChrome.card} sm:col-span-2`}>
+                                                <p className={featureChrome.helper}>Role fit</p>
+                                                <p className="mt-1 text-sm leading-6 text-foreground">{analysis.roleFit}</p>
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                             <div className="space-y-2">
-                                                <h4 className="font-semibold flex items-center gap-1.5 text-xs text-neutral-500">
-                                                    <RiCheckboxCircleLine size={16} className="text-emerald-600" />
-                                                    Target Keywords Found
+                                                <h4 className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+                                                    <AppIcon icon={RiCheckboxCircleLine} size={16} className="text-emerald-600" />
+                                                    Keywords found
                                                 </h4>
                                                 <div className="flex flex-wrap gap-1.5">
                                                     {(analysis.keywordsFound || []).map((kw: string, i: number) => (
-                                                        <span key={i} className="px-3 py-1 bg-emerald-50 text-emerald-800 rounded-full text-xs font-semibold border border-emerald-200/60">
+                                                        <span key={i} className="rounded-lg bg-muted px-2.5 py-1 text-xs font-medium text-foreground">
                                                             {kw}
                                                         </span>
                                                     ))}
                                                 </div>
                                             </div>
-
                                             <div className="space-y-2">
-                                                <h4 className="font-semibold flex items-center gap-1.5 text-xs text-neutral-500">
-                                                    <RiErrorWarningLine size={16} className="text-amber-600" />
-                                                    Critical Profile Gaps
+                                                <h4 className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+                                                    <AppIcon icon={RiErrorWarningLine} size={16} className="text-amber-600" />
+                                                    Missing keywords
                                                 </h4>
                                                 <div className="flex flex-wrap gap-1.5">
                                                     {(analysis.keywordsMissing || []).map((kw: string, i: number) => (
-                                                        <span key={i} className="px-3 py-1 bg-amber-50 text-amber-800 rounded-full text-xs font-semibold border border-amber-200/60">
+                                                        <span key={i} className="rounded-lg bg-muted px-2.5 py-1 text-xs font-medium text-foreground">
                                                             {kw}
                                                         </span>
                                                     ))}
@@ -476,73 +532,65 @@ export function TailorResume({ resumes }: { resumes: Resume[] }) {
                                             </div>
                                         </div>
 
-                                        <div className="bg-neutral-50 border border-neutral-200/80 p-5 rounded-2xl space-y-3">
-                                            <h4 className="font-bold text-xs text-[#0A0A0A] flex items-center gap-2">
-                                                <RiMagicLine size={16} className="text-neutral-500" />
-                                                Priority Recommendations
-                                            </h4>
-                                            <div className="space-y-2">
+                                        <div className={`${featureChrome.card} space-y-3`}>
+                                            <h4 className="text-sm font-semibold text-foreground">Suggested changes</h4>
+                                            <ol className="space-y-2">
                                                 {(analysis.tailoringSuggestions || []).map((tip: string, i: number) => (
-                                                    <div key={i} className="flex items-start gap-3 p-3 bg-white rounded-xl border border-neutral-200/60 text-xs font-medium text-neutral-700 leading-relaxed">
-                                                        <span className="w-5 h-5 bg-[#0A0A0A] text-white rounded-full flex items-center justify-center text-[10px] font-bold shrink-0">
+                                                    <li key={i} className="flex items-start gap-3 text-sm leading-6 text-neutral-700">
+                                                        <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-muted text-xs font-medium text-foreground">
                                                             {i + 1}
                                                         </span>
                                                         <span>{tip}</span>
-                                                    </div>
+                                                    </li>
                                                 ))}
-                                            </div>
+                                            </ol>
                                         </div>
                                     </div>
                                 )}
                             </div>
 
-                            {/* Footer */}
-                            <div className="px-6 py-4 border-t border-neutral-200/60 flex items-center justify-end bg-white sticky bottom-0 z-20 gap-3">
-                                <div className="flex items-center gap-3">
-                                    {!analysis ? (
-                                        <>
-                                            <button
-                              onClick={() => setIsOpen(false)}
-                              disabled={isBusy}
-                                                className="px-5 py-2.5 rounded-full text-xs font-semibold text-neutral-500 hover:text-[#0A0A0A] transition-all"
-                                            >
-                                                Cancel
-                                            </button>
-                                            <button
-                                                onClick={handleTailor}
-                                                disabled={isBusy || !formData.resumeId || !formData.jobDescription.trim()}
-                                                className="px-6 py-2.5 bg-[#0A0A0A] text-white rounded-full text-xs font-bold shadow-2xs hover:bg-neutral-800 active:scale-95 transition-all inline-flex items-center gap-2 disabled:opacity-40"
-                                            >
-                                                {loading ? "Analyzing..." : "Run Analysis"}
-                                                {!loading && <RiArrowRightLine size={15} />}
-                                            </button>
-                                        </>
-                                    ) : (
-                                        <div className="flex items-center gap-2">
-                                            <button
-                                                onClick={() => {
-                                                    setAnalysis(null);
-                                                    setIsOpen(false);
-                                                }}
-                                                className="px-5 py-2.5 rounded-full text-xs font-semibold text-neutral-500 hover:text-[#0A0A0A] transition-all"
-                                            >
-                                                Close
-                                            </button>
-                                            <button
-                                                onClick={handleSaveVersion}
-                                                disabled={savingVersion}
-                                                className="px-6 py-2.5 bg-[#0A0A0A] text-white rounded-full text-xs font-bold shadow-2xs hover:bg-neutral-800 active:scale-95 transition-all inline-flex items-center gap-2 disabled:opacity-40"
-                                            >
-                                                {savingVersion ? (
-                                                    <RiLoader4Line className="animate-spin" size={15} />
-                                                ) : (
-                                                    <RiSaveLine size={15} />
-                                                )}
-                                                {savingVersion ? "Saving..." : "Save analysis snapshot"}
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
+                            <div className={featureChrome.dialogFooter}>
+                                {!analysis ? (
+                                    <>
+                                        <button type="button" onClick={closeDialog} disabled={isBusy} className={featureChrome.ghostButton}>
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={handleTailor}
+                                            disabled={isBusy || !formData.resumeId || !formData.jobDescription.trim()}
+                                            className={featureChrome.primaryButton}
+                                        >
+                                            {loading ? "Analyzing..." : "Run analysis"}
+                                        </button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setAnalysis(null);
+                                                setIsOpen(false);
+                                            }}
+                                            className={featureChrome.ghostButton}
+                                        >
+                                            Close
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={handleSaveVersion}
+                                            disabled={savingVersion}
+                                            className={featureChrome.primaryButton}
+                                        >
+                                            {savingVersion ? (
+                                                <AppIcon icon={RiLoader4Line} size={15} className="animate-spin" />
+                                            ) : (
+                                                <AppIcon icon={RiSaveLine} size={15} />
+                                            )}
+                                            {savingVersion ? "Saving..." : "Save analysis snapshot"}
+                                        </button>
+                                    </>
+                                )}
                             </div>
                         </m.div>
                     </div>

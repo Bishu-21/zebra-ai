@@ -1,7 +1,6 @@
 import React from "react";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { redirect, notFound } from "next/navigation";
+import { getDashboardSession } from "@/lib/auth-helpers";
+import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { applications as applicationsTable, resumes as resumesTable, workItems as workItemsTable, certifications as certificationsTable } from "@/lib/schema";
 import { eq, and, desc } from "drizzle-orm";
@@ -11,13 +10,9 @@ import { ZebuEntityContext } from "@/components/dashboard/ZebuEntityContext";
 export default async function ApplicationDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
 
-    const session = await auth.api.getSession({
-        headers: await headers(),
-    });
+    const session = await getDashboardSession();
 
-    if (!session?.user) {
-        redirect(`/signin?returnTo=${encodeURIComponent(`/dashboard/applications/${id}`)}`);
-    }
+    if (!session?.user) return null;
 
     const application = await db.query.applications.findFirst({
         where: and(eq(applicationsTable.id, id), eq(applicationsTable.userId, session.user.id)),

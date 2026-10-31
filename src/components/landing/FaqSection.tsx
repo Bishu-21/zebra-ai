@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
-import { m, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence, useReducedMotion } from "framer-motion";
 import { FAQ_ITEMS } from "@/data/faq";
 import { RiQuestionLine, RiAddLine, RiSubtractLine } from "react-icons/ri";
 
 export function FaqSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const reduceMotion = useReducedMotion();
 
   const toggleFaq = (index: number) => {
     setOpenIndex(openIndex === index ? null : index);
@@ -20,8 +21,8 @@ export function FaqSection() {
         {/* Zebra Section Header */}
         <div className="max-w-2xl mb-12 md:mb-16">
           <m.div
-            initial={{ opacity: 0, x: -20 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={reduceMotion ? false : { opacity: 0, x: -20 }}
+            whileInView={reduceMotion ? undefined : { opacity: 1, x: 0 }}
             viewport={{ once: true }}
             className="flex items-center gap-2 mb-6"
           >
@@ -32,12 +33,11 @@ export function FaqSection() {
           </m.div>
           
           <h2 className="text-4xl md:text-6xl font-bold tracking-[-0.04em] leading-[1.1] mb-6 md:mb-8 text-foreground">
-            Everything you need <br />
-            <span className="text-foreground">to know.</span>
+            Credits, imports, and export.
           </h2>
           
           <p className="text-accent-dark text-lg leading-relaxed">
-            Clear answers about resume reviews, job-description matching, imports, scoring, and credits.
+            Short answers about what Zebra reviews, how credits work, and what you can export.
           </p>
         </div>
 
@@ -48,10 +48,10 @@ export function FaqSection() {
             return (
               <m.div
                 key={idx}
-                initial={{ opacity: 0, y: 15 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={reduceMotion ? false : { opacity: 0, y: 15 }}
+                whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: idx * 0.04 }}
+                transition={{ delay: reduceMotion ? 0 : idx * 0.04 }}
                 className={`group transition-all duration-300 bg-white border rounded-3xl p-6 md:p-7 shadow-xs ${
                   isOpen
                     ? "border-neutral-300 shadow-md"
@@ -60,7 +60,7 @@ export function FaqSection() {
               >
                 <button
                   onClick={() => toggleFaq(idx)}
-                  className="w-full text-left flex items-start justify-between gap-4 focus:outline-none"
+                  className="w-full text-left flex items-start justify-between gap-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
                   aria-expanded={isOpen}
                 >
                   <div className="flex items-start gap-4">
@@ -88,10 +88,10 @@ export function FaqSection() {
                 <AnimatePresence initial={false}>
                   {isOpen && (
                     <m.div
-                      initial={{ height: 0, opacity: 0 }}
+                      initial={reduceMotion ? false : { height: 0, opacity: 0 }}
                       animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2, ease: "easeInOut" }}
+                      exit={reduceMotion ? undefined : { height: 0, opacity: 0 }}
+                      transition={{ duration: reduceMotion ? 0 : 0.2, ease: "easeInOut" }}
                     >
                       <div className="pl-15 pr-4 pt-4 mt-4 border-t border-neutral-100">
                         <p className="text-xs md:text-sm text-neutral-600 font-normal leading-relaxed">

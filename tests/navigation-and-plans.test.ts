@@ -68,11 +68,20 @@ describe("Navigation & Plans Configuration Test Suite [Unit Test]", () => {
     test("3. Commercial Model Plans consistency and credit allocations", () => {
         const planKeys = Object.keys(PLANS) as PlanId[];
         assert.deepStrictEqual(planKeys, ["starter", "pro", "enterprise"]);
+        assert.deepStrictEqual(
+            planKeys.map((key) => ({ id: PLANS[key].id, credits: PLANS[key].credits, priceInINR: PLANS[key].priceInINR })),
+            [
+                { id: "starter", credits: 10, priceInINR: 99 },
+                { id: "pro", credits: 50, priceInINR: 400 },
+                { id: "enterprise", credits: 100, priceInINR: 800 },
+            ],
+        );
 
         for (const key of planKeys) {
             const plan = PLANS[key];
             assert.ok(plan.id, `Plan ${key} must have an id`);
             assert.ok(plan.name, `Plan ${key} must have a name`);
+            assert.doesNotMatch(plan.name, /plains|mountain|grevy/i);
             assert.ok(plan.credits > 0, `Plan ${key} must provide positive credits`);
             assert.ok(plan.priceInINR > 0, `Plan ${key} must have valid INR price`);
             assert.ok(plan.displayPrice.startsWith("₹"), `Plan ${key} display price must be in INR format`);

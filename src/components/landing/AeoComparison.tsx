@@ -1,4 +1,5 @@
 import type { IconType } from "react-icons";
+import styles from "./AeoComparison.module.css";
 import {
   RiArticleLine,
   RiCheckboxCircleLine,
@@ -90,7 +91,10 @@ export function AeoComparison() {
           {COMPARISON_FEATURES.map((feature) => {
             const Icon = feature.icon;
             return (
-              <article key={feature.title} className="grid gap-5 rounded-3xl border border-neutral-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md md:grid-cols-[1.1fr_1fr_1fr] md:gap-8 md:p-6">
+              <article
+                key={feature.title}
+                className={`${styles.row} grid gap-5 rounded-3xl border border-neutral-200 bg-white p-5 shadow-sm hover:shadow-md md:grid-cols-[1.1fr_1fr_1fr] md:gap-8 md:p-6`}
+              >
                 <div className="flex items-start gap-4">
                   <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-neutral-100 text-neutral-700">
                     <Icon aria-hidden="true" size={21} />

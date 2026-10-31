@@ -1,6 +1,8 @@
 import { test, describe, beforeEach, afterEach } from "node:test";
 import assert from "node:assert";
-import { getAuthBaseURL, getTrustedOrigins, auth } from "../src/lib/auth";
+import { readFileSync } from "node:fs";
+import { getAuthBaseURL, getTrustedOrigins, auth, ACCOUNT_LINKING, buildSocialProviders } from "../src/lib/auth";
+import { SIGN_IN_SOCIAL_PROVIDERS } from "../src/lib/auth-providers";
 
 describe("Better Auth Environment & Origin Configuration [Unit Test]", () => {
     let origEnv: NodeJS.ProcessEnv;
@@ -96,6 +98,33 @@ describe("Better Auth Environment & Origin Configuration [Unit Test]", () => {
 
         test("3.3 OAuth state does not require a database write before redirect", () => {
             assert.strictEqual(auth.options.account?.storeStateStrategy, "cookie");
+        });
+
+        test("3.4 sign-in stays Google-only and linking trusts exactly LinkedIn and GitHub", () => {
+            assert.deepEqual([...SIGN_IN_SOCIAL_PROVIDERS], ["google"]);
+            const form = readFileSync(new URL("../src/components/auth/AuthForm.tsx", import.meta.url), "utf8");
+            assert.match(form, /SignInSocialProvider/);
+            assert.match(form, /handleSocialSignIn\("google"\)/);
+            assert.doesNotMatch(form, /handleSocialSignIn\("(linkedin|github)"\)/);
+            const providers = buildSocialProviders({
+                GOOGLE_CLIENT_ID: "g",
+                GOOGLE_CLIENT_SECRET: "gs",
+                LINKEDIN_CLIENT_ID: "l",
+                LINKEDIN_CLIENT_SECRET: "ls",
+                GITHUB_CLIENT_ID: "gh",
+                GITHUB_CLIENT_SECRET: "ghs",
+            });
+            assert.deepEqual(Object.keys(providers).sort(), ["github", "google", "linkedin"]);
+            assert.equal(providers.linkedin?.disableSignUp, true);
+            assert.equal(providers.github?.disableSignUp, true);
+            assert.equal("disableSignUp" in (providers.google ?? {}), false);
+            assert.deepEqual(providers.github?.scope, ["read:user", "user:email"]);
+            assert.equal(providers.github?.disableDefaultScope, true);
+            assert.equal(auth.options.account?.accountLinking?.enabled, true);
+            assert.equal(auth.options.account?.accountLinking?.disableImplicitLinking, true);
+            assert.equal(auth.options.account?.accountLinking?.updateUserInfoOnLink, false);
+            assert.deepEqual(auth.options.account?.accountLinking?.trustedProviders, ["linkedin", "github"]);
+            assert.deepEqual([...ACCOUNT_LINKING.trustedProviders], ["linkedin", "github"]);
         });
     });
 

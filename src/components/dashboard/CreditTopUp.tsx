@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
     RiAddLine,
     RiCloseLine,
@@ -14,6 +14,7 @@ import { m, AnimatePresence } from "framer-motion";
 
 import { PLANS, PlanId } from "@/lib/constants/plans";
 import { useHydrated } from "@/hooks/useHydrated";
+import { useDialogFocus } from "@/hooks/useDialogFocus";
 
 interface RazorpayResponse {
     razorpay_order_id: string;
@@ -30,6 +31,7 @@ interface RazorpayOptions {
     image?: string;
     order_id: string;
     handler: (response: RazorpayResponse) => Promise<void>;
+    modal?: { ondismiss: () => void };
     prefill: {
         name: string;
         email: string;
@@ -48,23 +50,41 @@ declare global {
     }
 }
 
-export function CreditTopUp() {
+export function CreditTopUp({ checkoutAvailable = false }: { checkoutAvailable?: boolean }) {
     const [isOpen, setIsOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
     const mounted = useHydrated();
     const [scriptLoaded, setScriptLoaded] = useState(false);
+    const [checkoutActive, setCheckoutActive] = useState(false);
+    const [checkoutError, setCheckoutError] = useState<string | null>(null);
     const router = useRouter();
     const searchParams = useSearchParams();
+    const closePanel = useCallback(() => {
+        if (!loading) setIsOpen(false);
+    }, [loading]);
+    const dialogRef = useDialogFocus<HTMLDivElement>(isOpen && mounted, closePanel);
 
     React.useEffect(() => {
         const handleOpenCredits = () => setIsOpen(true);
         window.addEventListener("open-credits", handleOpenCredits);
 
-        const existingScript = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
-        if (existingScript) {
+        if (!isOpen) return () => window.removeEventListener("open-credits", handleOpenCredits);
+        if (window.Razorpay) {
             queueMicrotask(() => setScriptLoaded(true));
             return () => window.removeEventListener("open-credits", handleOpenCredits);
+        }
+        const existingScript = document.querySelector<HTMLScriptElement>('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+        if (existingScript) {
+            const onLoad = () => setScriptLoaded(true);
+            const onError = () => setCheckoutError("Payment checkout could not load. Refresh and try again.");
+            existingScript.addEventListener("load", onLoad);
+            existingScript.addEventListener("error", onError);
+            return () => {
+                window.removeEventListener("open-credits", handleOpenCredits);
+                existingScript.removeEventListener("load", onLoad);
+                existingScript.removeEventListener("error", onError);
+            };
         }
 
         const script = document.createElement("script");
@@ -74,14 +94,14 @@ export function CreditTopUp() {
             setScriptLoaded(true);
         };
         script.onerror = () => {
-            console.error("Razorpay script load failed.");
+            setCheckoutError("Payment checkout could not load. Refresh and try again.");
         };
         document.body.appendChild(script);
 
         return () => {
             window.removeEventListener("open-credits", handleOpenCredits);
         };
-    }, []);
+    }, [isOpen]);
 
     React.useEffect(() => {
         if (!mounted) return;
@@ -90,7 +110,7 @@ export function CreditTopUp() {
         if (showPricing && planId && PLANS[planId as PlanId]) {
             queueMicrotask(() => {
                 setIsOpen(true);
-                if (scriptLoaded) {
+                if (scriptLoaded && checkoutAvailable) {
                     const newUrl = window.location.pathname;
                     window.history.replaceState({}, "", newUrl);
                     void handlePurchase(planId);
@@ -115,8 +135,13 @@ export function CreditTopUp() {
     ];
 
     async function handlePurchase(planId: string) {
-        if (loading) return;
+        if (!checkoutAvailable) {
+            setCheckoutError("Checkout is not available on this environment. Credits already on your account still work.");
+            return;
+        }
+        if (loading || checkoutActive) return;
         setLoading(true);
+        setCheckoutError(null);
 
         try {
             if (typeof window.Razorpay === "undefined") {
@@ -132,7 +157,12 @@ export function CreditTopUp() {
             const orderData = await orderRes.json().catch(() => ({}));
 
             if (!orderRes.ok) {
-                throw new Error(orderData.error || "Failed to create order");
+                setCheckoutError(
+                    typeof orderData.error === "string"
+                        ? orderData.error
+                        : "Could not start checkout. Please try again later."
+                );
+                return;
             }
 
             const options: RazorpayOptions = {
@@ -143,6 +173,10 @@ export function CreditTopUp() {
                 description: `Purchase ${PLANS[planId as PlanId].credits} Credits`,
                 image: typeof window !== "undefined" ? `${window.location.origin}/zebra_star.svg` : "",
                 order_id: orderData.id,
+                modal: { ondismiss: () => {
+                    setCheckoutActive(false);
+                    setCheckoutError("Checkout was closed. If you completed payment, check your credit balance before trying again.");
+                } },
                 prefill: {
                     name: "",
                     email: "",
@@ -151,41 +185,48 @@ export function CreditTopUp() {
                     color: "#0A0A0A",
                 },
                 handler: async function (response: RazorpayResponse) {
-                    const verifyRes = await fetch("/api/payments/verify", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            razorpay_order_id: response.razorpay_order_id,
-                            razorpay_payment_id: response.razorpay_payment_id,
-                            razorpay_signature: response.razorpay_signature,
-                            planId: planId
-                        }),
-                    });
+                    try {
+                        const verifyRes = await fetch("/api/payments/verify", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_signature: response.razorpay_signature,
+                            }),
+                        });
 
-                    if (verifyRes.ok) {
-                        setSuccess(true);
-                        router.refresh();
-                        setTimeout(() => {
-                            setSuccess(false);
-                            setIsOpen(false);
-                        }, 2500);
-                    } else {
-                        const verifyData = await verifyRes.json().catch(() => ({}));
-                        alert(verifyData.error || "Payment verification failed. Please try again or contact support.");
+                        if (verifyRes.ok) {
+                            setCheckoutActive(false);
+                            setSuccess(true);
+                            router.refresh();
+                            setTimeout(() => {
+                                setSuccess(false);
+                                setIsOpen(false);
+                            }, 2500);
+                        } else {
+                            const verifyData = await verifyRes.json().catch(() => ({}));
+                            setCheckoutActive(false);
+                            setCheckoutError(verifyData.error || "Payment verification failed. Contact support with your payment ID.");
+                        }
+                    } catch {
+                        setCheckoutActive(false);
+                        setCheckoutError("Could not verify the payment. Contact support with your payment ID before paying again.");
                     }
                 },
             };
 
             const rzp = new window.Razorpay(options);
             rzp.on('payment.failed', function (response: { error: { description: string } }) {
-                alert(`Payment failed: ${response.error?.description || "Transaction failed"}`);
+                setCheckoutError(`Payment failed: ${response.error?.description || "Transaction failed"}. Retry in checkout or close it.`);
             });
+            setCheckoutActive(true);
             rzp.open();
 
         } catch (err: unknown) {
             console.error("Payment initiation error:", err);
             const msg = err instanceof Error ? err.message : "Could not reach payment server. Please try again.";
-            alert(msg);
+            setCheckoutError(msg);
         } finally {
             setLoading(false);
         }
@@ -210,7 +251,7 @@ export function CreditTopUp() {
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             className="absolute inset-0 bg-black/40 backdrop-blur-md"
-                            onClick={() => !loading && setIsOpen(false)}
+                            onClick={closePanel}
                         />
 
                         {/* Modal Dialog */}
@@ -219,6 +260,10 @@ export function CreditTopUp() {
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95, y: 10 }}
                             transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                            ref={dialogRef}
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="credit-checkout-title"
                             className="relative bg-white w-full max-w-3xl rounded-3xl shadow-2xl border border-neutral-100 overflow-hidden flex flex-col max-h-[90vh]"
                         >
                             {/* Header */}
@@ -228,12 +273,13 @@ export function CreditTopUp() {
                                         <RiFlashlightLine size={20} />
                                     </div>
                                     <div>
-                                        <h2 className="text-lg font-bold tracking-tight text-[#0A0A0A]">Get More Credits</h2>
-                                        <p className="text-xs font-normal text-neutral-500">Choose a pack to tailor applications and prepare better profiles.</p>
+                                        <h2 id="credit-checkout-title" className="text-lg font-bold tracking-tight text-[#0A0A0A]">Credit packs</h2>
+                                        <p className="text-xs font-normal text-neutral-500">One-time packs. Reviews, matching, cover letters, and LinkedIn drafts use credits.</p>
                                     </div>
                                 </div>
                                 <button
-                                    onClick={() => setIsOpen(false)}
+                                    onClick={closePanel}
+                                    aria-label="Close credit packs"
                                     className="w-8 h-8 rounded-full bg-neutral-100 text-neutral-500 hover:bg-neutral-200 hover:text-[#0A0A0A] flex items-center justify-center transition-all"
                                 >
                                     <RiCloseLine size={18} />
@@ -242,6 +288,12 @@ export function CreditTopUp() {
 
                             {/* Content */}
                             <div className="p-6 sm:p-8 overflow-y-auto custom-scrollbar">
+                                {!checkoutAvailable && (
+                                    <p role="status" className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+                                        Checkout is not available on this environment. You can still use the credits already on your account.
+                                    </p>
+                                )}
+                                {checkoutError && <p role="alert" className="mb-5 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">{checkoutError}</p>}
                                 {success ? (
                                     <m.div
                                         initial={{ opacity: 0, scale: 0.95 }}
@@ -270,7 +322,7 @@ export function CreditTopUp() {
                                             >
                                                 {p.popular && (
                                                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#0A0A0A] text-white text-[10px] font-bold uppercase tracking-wider px-3.5 py-0.5 rounded-full shadow-2xs z-10 whitespace-nowrap">
-                                                        Most Popular
+                                                        Featured pack
                                                     </div>
                                                 )}
                                                 <div className="w-full flex flex-col items-center">
@@ -289,7 +341,7 @@ export function CreditTopUp() {
                                                 </div>
 
                                                 <button
-                                                    disabled={loading}
+                                                    disabled={!checkoutAvailable || loading || checkoutActive || !scriptLoaded}
                                                     onClick={() => handlePurchase(p.id)}
                                                     className={`w-full mt-6 py-2.5 rounded-full text-xs font-bold transition-all shadow-2xs ${
                                                         p.popular
@@ -297,7 +349,7 @@ export function CreditTopUp() {
                                                             : 'bg-white border border-neutral-200/80 text-[#0A0A0A] hover:bg-neutral-100'
                                                     } disabled:opacity-40 active:scale-95`}
                                                 >
-                                                    {loading ? "Processing..." : "Get Credits"}
+                                                    {!checkoutAvailable ? "Checkout unavailable" : loading ? "Creating order..." : !scriptLoaded ? "Loading checkout..." : checkoutActive ? "Checkout open" : `Buy ${p.credits} credits`}
                                                 </button>
                                             </m.div>
                                         ))}
@@ -307,9 +359,12 @@ export function CreditTopUp() {
 
                             {/* Footer */}
                             <div className="px-6 py-4 bg-white border-t border-neutral-200/60 text-center shrink-0">
-                                <p className="text-xs font-medium text-neutral-400">
-                                    Secure checkout via Razorpay • Instant credit activation
+                                <p className="text-xs font-medium text-neutral-600">
+                                    {checkoutAvailable
+                                        ? "Checkout via Razorpay. Credits appear after payment is verified. If you close the window, wait and refresh before paying again."
+                                        : "Buying credits is paused until checkout recovery is configured."}
                                 </p>
+                                <a href="/refunds" className="mt-2 inline-block text-xs font-semibold text-neutral-800 underline">Read the refund policy</a>
                             </div>
                         </m.div>
                     </div>
